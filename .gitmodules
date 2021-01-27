@@ -1,6 +1,3 @@
 [submodule "themes/reveal-hugo"]
 	path = themes/reveal-hugo
 	url = https://github.com/dzello/reveal-hugo
-[submodule "themes/hyde"]
-	path = themes/hyde
-	url = https://github.com/spf13/hyde.git

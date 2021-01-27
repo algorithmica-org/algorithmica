@@ -1,1 +1,0 @@
-body{background:#121212;color:#fff}h1,h2,h3,h4,h5,h6{color:#eee}a{color:#ea3}.division section a:not(:hover){color:#ef8!important}pre,code{background-color:#222!important}blockquote{color:#999;margin:0;padding-left:1em;border-left:.5em #333 solid}footer{color:#999}img{filter:invert(100%)sepia(100%)saturate(0%)hue-rotate(288deg)brightness(102%)contrast(102%)}
