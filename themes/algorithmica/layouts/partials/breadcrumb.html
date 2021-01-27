@@ -7,7 +7,7 @@
 {{ else if not .p1.IsHome }}
 {{ template "breadcrumbnav" (dict "p1" .p1.Site.Home "p2" .p2 )  }}
 {{ end }}
-  <a href="{{ .p1.Permalink }}">
+  <a href="{{ .p1.RelPermalink }}">
     {{ cond (isset .p1.Params "menutitle") .p1.Params.MenuTitle .p1.Title }}
   </a>
   {{ if ne .p1 .p2 }}<span class='slash'>/</span>{{ end }}

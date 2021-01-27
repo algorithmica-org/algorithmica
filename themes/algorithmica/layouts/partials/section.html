@@ -1,8 +1,8 @@
 <section>
-  <a href='{{.Permalink}}'>{{ .Title }}</a>
+  <a href='{{.RelPermalink}}'>{{ .Title }}</a>
   <ul>
   {{ range .Pages }}
-    <li><a href='{{.Permalink}}'>{{ .Title }}</a></li>
+    <li><a href='{{.RelPermalink}}'>{{ .Title }}</a></li>
   {{ end }}
 </ul>
 </section>
