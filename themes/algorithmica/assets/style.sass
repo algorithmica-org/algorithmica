@@ -1,0 +1,261 @@
+$font-text: 'Georgia', serif
+$font-code: 'Inconsolata', monospace
+$font-headings: 'Garamond', serif
+$dimmed: #666
+$borders: 1px solid #eaecef
+
+
+/* fonts */
+@font-face
+  font-family: 'CMU'
+  src: url(fonts/cmu.woff2)
+
+@font-face
+  font-family: 'Georgia'
+  src: url(fonts/georgia.woff2)
+
+@font-face
+  font-family: 'Inconsolata'
+  src: url(fonts/inconsolata.woff2)
+
+@font-face
+  font-family: 'Garamond'
+  src: url(fonts/garamond.woff2)
+
+@font-face
+  font-family: "Open Sans"
+  src: url(fonts/opensans.woff2)
+
+
+/* layout */
+html, body
+  height: 100%
+  margin: 0
+
+body
+  font-family: $font-text
+  display: flex
+  flex-direction: column
+
+main
+  flex: 1 0 auto
+  margin: auto
+  width: 100%
+  min-width: 500px
+  max-width: 850px
+
+menu
+  display: flex
+  justify-content: space-between
+  padding: 2px 8px
+
+  nav
+    text-overflow: ellipsis
+    overflow: hidden
+    white-space: nowrap
+
+    a
+      color: inherit
+
+  .slash
+    margin: 0 4px
+    color: $dimmed
+
+  .actions
+    display: flex
+    justify-content: space-between
+    width: 125px
+    margin-left: 8px
+
+    img
+      width: 16px
+      opacity: 0.4
+
+      &:hover
+        opacity: 1
+        cursor: pointer
+
+header
+  margin-top: 50px
+
+article
+  font-size: 16px
+  padding: 6px
+  margin-top: -40px
+
+  img
+    display: block
+    margin: auto
+    max-width: 90%
+
+.division
+  display: flex
+  flex-wrap: wrap
+  justify-content: center
+  width: 100%
+
+  section
+    font-family: $font-headings
+    width: 275px
+    margin-top: 8px
+
+    a:not(ul a)
+      font-size: 1.5em
+      
+      &:not(:hover)
+        color: #0b0080
+
+    ul
+      margin: 4px 0
+      padding-left: 28px
+
+      a
+        font-size: 1.1em
+        margin-left: -4px
+
+footer
+  flex-shrink: 0;
+  text-align: center
+  color: $dimmed
+  font-size: 0.75em
+  margin: 50px 0 5px
+  padding: 4px
+
+/* headers */
+h1, h2, h3, h4, h5, h6
+  font-family: $font-headings
+  color: #111
+  font-weight: normal
+  line-height: 125%;
+  margin-top: 1em;
+  margin-bottom: 0em;
+
+h1
+  font-size: 2.5em
+  text-align: center
+  margin-top: 0
+  margin-bottom: 25px
+
+h2
+  font-size: 2em
+
+h3
+  font-size: 1.5em
+
+h2, h3
+  padding-bottom: 5px;
+  border-bottom: $borders
+
+/* special elements */
+p
+  margin: 0.5em 0
+
+blockquote
+  color: #666
+  margin: 0
+  padding-left: 1em
+  border-left: 0.5em #eee solid
+
+code:not(pre code)
+  border: 1px solid #ddd
+  background-color: #f8f8f8
+  border-radius: 3px
+  padding-left: 2px
+  padding-right: 2px
+  font-size: 0.85em
+
+pre
+  white-space: pre
+  white-space: pre-wrap
+  word-wrap: break-word
+  border: 1px solid #ddd
+  background-color: #f8f8f8
+  border-radius: 3px
+  padding: 2px
+  padding-left: 8px
+  font-size: 0.9em
+
+hr
+  border: none
+  border-bottom: 1px solid #444
+
+/* links */
+a
+  color: #0645ad
+  text-decoration: none
+  white-space: nowrap
+
+  &:hover
+    color: #06e
+
+  &:active
+    color: #faa700
+
+  &:focus
+    outline: thin dotted
+
+a[href^='http://e-maxx.ru']:before
+    content: ""
+    display: inline-block
+    position: relative
+    top: 4px
+    width: 20px
+    height: 20px
+    background: url('http://e-maxx.ru/favicon.ico') no-repeat
+    background-size: 18px
+
+/* https://habrahabr.ru/favicon.ico */
+
+a[href^='https://neerc.ifmo.ru']:before
+    content: url('https://neerc.ifmo.ru/favicon.ico')
+    margin-right: 4px
+    position: relative
+    top: 4px
+
+a[href^='https://www.youtube.com']:before
+    content: url('https://www.youtube.com/favicon.ico')
+    margin-right: 4px
+
+a[href^='https://codeforces.com']:before
+    content: url('http://codeforces.com/favicon.ico')
+    margin-right: 4px
+
+a[href^='https://www.topcoder.com/']:before
+    content: url('https://s3.amazonaws.com/app.topcoder.com/favicon.ico')
+    margin-right: 4px
+
+a[href='']
+    color: black
+    cursor: default
+
+
+/* printing */
+@media print
+  body
+    font-size: 12pt
+    width: 190mm
+    margin: 0
+
+  @page
+    margin: 15mm
+
+  aside, footer
+    display: none
+  
+  pre, ul, ol
+    page-break-inside: avoid
+
+  h1::after, h2::after, h3::after
+    content: ""
+    display: block
+    height: 100px
+    margin-bottom: -100px
+
+  h1::before, h2::before, h3::before
+    content: ""
+    display: block
+    height: 100px
+    margin-top: 100px
+
+  a
+    text-decoration: underline

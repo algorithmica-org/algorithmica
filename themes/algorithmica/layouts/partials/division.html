@@ -1,0 +1,8 @@
+{{ if isset .Params "title" }}
+<h2>{{ .Title }}</h2>
+<div class='division'>
+  {{ range .Sections }}
+    {{ partial "section.html" . }}
+  {{ end }}
+</div>
+{{ end }}

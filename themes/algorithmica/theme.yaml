@@ -1,0 +1,11 @@
+name: "Algorithmica"
+license: "MIT"
+licenselink: "https://github.com/yourname/yourtheme/blob/master/LICENSE"
+description: "Custom theme used on *.algorithmica.org"
+homepage: "https://github.com/algorithmica-org/theme"
+tags: []
+features: []
+min_version: "0.41"
+author:
+  name: "Sergey Slotin"
+  homepage: "http://sereja.me/"

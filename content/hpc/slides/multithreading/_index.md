@@ -1,0 +1,5 @@
+---
+title: Slides
+outputs:
+- Reveal
+---

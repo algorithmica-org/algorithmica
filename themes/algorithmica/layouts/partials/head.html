@@ -1,0 +1,27 @@
+<head>
+  <meta charset="utf-8">
+
+  {{ $style := resources.Get "style.sass" | toCSS | minify | fingerprint }}
+  <link rel="stylesheet" href="{{ $style.Permalink }}" integrity="{{ $style.Data.Integrity }}">
+  <link rel="stylesheet" href="/syntax.css">
+
+  {{ $dark := resources.Get "dark.sass" | toCSS | minify | fingerprint }}
+  <link rel="stylesheet" id="theme">
+
+  <script>
+    function switchTheme(theme) {
+      console.log(theme)
+      document.getElementById('theme').href = (theme == 'dark' ? "{{ $dark.Permalink }}" : "")
+      localStorage.setItem('theme', theme)
+    }
+    if (localStorage.getItem('theme') == 'dark') {
+      switchTheme('dark')
+    }
+  </script>
+
+  {{- partial "katex.html" . -}}
+
+  {{ $title := print .Title " - " .Site.Title }}
+  {{ if .IsHome }}{{ $title = .Site.Title }}{{ end }}
+  <title>{{ $title }}</title>
+</head>

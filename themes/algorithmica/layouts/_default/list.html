@@ -1,0 +1,10 @@
+{{ define "main" }}
+  {{ if .IsHome }}
+    {{ range .Sections }}
+      {{ partial "division.html" . }}
+    {{ end }}
+  {{ else }}
+    {{ partial "division.html" . }}
+  {{ end }}
+  {{ .Content }}
+{{ end }}

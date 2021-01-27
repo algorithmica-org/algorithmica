@@ -1,0 +1,9 @@
+<header>
+  {{ if not .IsHome }}
+    <h1>{{ .Title }}</h1>
+    <div class='info'>
+      {{ if isset .Params "author" }}<span>Автор: {{ .Params.Author }}</span>{{ end }}
+      {{ if isset .Params "date" }}<span>Дата: {{ .Date.Format "2006" }}</span>{{ end }}
+    </div>
+  {{ end }}
+</header>

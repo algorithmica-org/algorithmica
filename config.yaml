@@ -1,0 +1,14 @@
+baseURL: "https://ru.algorithmica.org/"
+languageCode: "ru-ru"
+title: "Алгоритмика"
+theme:
+- algorithmica
+- reveal-hugo
+pygmentsUseClasses: true
+outputFormats:
+  Reveal:
+    baseName: index
+    mediaType: text/html
+    isHTML: true
+params:
+  repo: "https://github.com/algorithmica-org/algorithmica"
