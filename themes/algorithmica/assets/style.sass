@@ -81,12 +81,39 @@ header
 article
   font-size: 16px
   padding: 6px
-  margin-top: -40px
 
   img
     display: block
     margin: auto
     max-width: 90%
+
+.description
+  margin: 4px
+
+.info
+  display: flex
+  flex-wrap: wrap
+  width: 100%
+  margin: 20px 0
+  padding: 10px 0
+  border-top: $borders
+  border-bottom: $borders
+  font-size: 0.9em
+
+  &:empty
+    display: none
+
+  div
+    margin-right: 50px
+
+    span
+      display: block
+      padding: 4px
+
+    span:first-child
+      font-size: 0.75em
+      text-transform: uppercase
+      color: $dimmed
 
 .division
   display: flex
@@ -113,6 +140,11 @@ article
         font-size: 1.1em
         margin-left: -4px
 
+.nextprev
+  margin: 20px 20px 0
+  display: flex
+  justify-content: space-between
+
 footer
   flex-shrink: 0;
   text-align: center
@@ -134,7 +166,7 @@ h1
   font-size: 2.5em
   text-align: center
   margin-top: 0
-  margin-bottom: 25px
+  margin-bottom: 20px
 
 h2
   font-size: 2em
@@ -177,7 +209,8 @@ pre
 
 hr
   border: none
-  border-bottom: 1px solid #444
+  border-bottom: $borders
+  margin: 20px 0
 
 /* links */
 a

@@ -1,9 +1,37 @@
 <header>
   {{ if not .IsHome }}
     <h1>{{ .Title }}</h1>
+    {{ if isset .Params "description" }}
+      <div class='description'>
+        {{ .Params.Description | markdownify }}
+      </div>
+    {{ end }}
     <div class='info'>
-      {{ if isset .Params "author" }}<span>Автор: {{ .Params.Author }}</span>{{ end }}
-      {{ if isset .Params "date" }}<span>Дата: {{ .Date.Format "2006" }}</span>{{ end }}
+      {{- if isset .Params "authors" -}}
+        <div>
+          <span>Авторы</span>
+          {{ range .Params.Authors }}
+            <span>{{ . }}</span>
+          {{ end }}
+        </div>
+      {{ end }}
+      {{- if isset .Params "date" -}}
+        <div>
+          <span>Опубликовано</span>
+          <span>{{ dateFormat (default "Jan 2, 2006" .Params.DateFormat) .Date }}</span>
+        </div>
+      {{ end }}
+      {{- if isset .Params "prerequisites" -}}
+        <div>
+          <span>Пререквизиты</span>
+          {{ $this := . }}
+          {{ range .Params.Prerequisites }}
+            {{ with $this.GetPage . }}
+              <span><a href='{{.RelPermalink}}'>{{ .Title }}</a></span>
+            {{ end }}
+          {{ end }}
+        </div>
+      {{- end -}}
     </div>
   {{ end }}
 </header>
