@@ -1,10 +1,19 @@
 {{ define "main" }}
   {{ if .IsHome }}
     {{ range .Sections }}
+      <h2>{{ .Title }}</h2>
       {{ partial "division.html" . }}
     {{ end }}
-  {{ else }}
+  {{ else if .Parent.IsHome }}
     {{ partial "division.html" . }}
+  {{ else }}
+    <p>Статьи раздела:</p>
+    <ul>
+      {{ range .Pages }}
+        <li><a href='{{.RelPermalink}}'>{{ .Title }}</a></li>
+      {{ end }}
+    </ul>
   {{ end }}
+  <hr>
   {{ .Content }}
 {{ end }}
