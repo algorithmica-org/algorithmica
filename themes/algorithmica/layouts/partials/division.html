@@ -1,5 +1,9 @@
 <div class='division'>
-  {{ range .Sections }}
+  {{ $sections := .Sections }}
+  {{ range where .Translations "Lang" "en" }}
+    {{ $sections = $sections | lang.Merge .Sections }}
+  {{ end }}
+  {{ range $sections }}
     {{ partial "section.html" . }}
   {{ end }}
 </div>
