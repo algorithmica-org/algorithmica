@@ -2,11 +2,11 @@
   {{ template "breadcrumbnav" (dict "p1" . "p2" .) }}
 </nav>
 {{ define "breadcrumbnav" }}
-{{ if .p1.Parent }}
-{{ template "breadcrumbnav" (dict "p1" .p1.Parent "p2" .p2 )  }}
-{{ else if not .p1.IsHome }}
-{{ template "breadcrumbnav" (dict "p1" .p1.Site.Home "p2" .p2 )  }}
-{{ end }}
+  {{ if .p1.Parent }}
+    {{ template "breadcrumbnav" (dict "p1" .p1.Parent "p2" .p2 )  }}
+  {{ else if not .p1.IsHome }}
+    {{ template "breadcrumbnav" (dict "p1" .p1.Site.Home "p2" .p2 )  }}
+  {{ end }}
   <a href="{{ .p1.RelPermalink }}">
     {{ cond (isset .p1.Params "menutitle") .p1.Params.MenuTitle .p1.Title }}
   </a>

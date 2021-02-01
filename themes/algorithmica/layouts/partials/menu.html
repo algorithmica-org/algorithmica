@@ -1,19 +1,32 @@
 <menu>
   {{- partial "breadcrumb.html" . -}}
   <div class='actions'>
-    <img src='/icons/moon-solid.svg' onclick='switchTheme(localStorage.getItem("theme") == "dark" ? "light" : "dark")' title='dark theme'>
-    <a href='#' onClick='window.print()'>
+    <!--
+    <a>
+      <img src='/icons/moon-solid.svg' onclick='switchTheme(localStorage.getItem("theme") == "dark" ? "light" : "dark")' title='dark theme'>
+    </a>
+    -->
+    <a onClick='window.print()'>
       <img src='/icons/print-solid.svg' title='print'>
     </a>
-    |
-    <a href='{{.Site.Params.Repo}}/edit/master/content/{{.File.Path}}'>
-      <img src='/icons/edit-solid.svg' title='edit on github'>
+    <a href='{{.Site.Params.Repo}}/blob/master/{{.File.Path}}' class='github-main'>
+      <img src='/icons/github-brands.svg' title='view on github'>
     </a>
-    <a href='{{.Site.Params.Repo}}/issues/new'>
-      <img src='/icons/bug-solid.svg' title='create an issue'>
-    </a>
-    <a href='{{.Site.Params.Repo}}/commits/master/content/{{.File.Path}}'>
-      <img src='/icons/history-solid.svg' title='view history'>
-    </a>
+    <!--
+    <span class='github'>
+      <a href='{{.Site.Params.Repo}}/blob/master/{{.File.Path}}' class='github-main'>
+        <img src='/icons/github-brands.svg' title='view on github'>
+      </a>
+      <a href='{{.Site.Params.Repo}}/edit/master/content/{{.File.Path}}'>
+        <img src='/icons/edit-solid.svg' title='edit'>
+      </a>
+      <a href='{{.Site.Params.Repo}}/issues/new'>
+        <img src='/icons/bug-solid.svg' title='create an issue'>
+      </a>
+      <a href='{{.Site.Params.Repo}}/commits/master/content/{{.File.Path}}'>
+        <img src='/icons/history-solid.svg' title='view history'>
+      </a>  
+    </span>
+    -->
   </div>
 </menu>
