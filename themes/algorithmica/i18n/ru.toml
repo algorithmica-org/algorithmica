@@ -1,0 +1,25 @@
+[authors]
+one = "автор"
+other = "авторы"
+
+[editors]
+one = "редактор"
+other = "редакторы"
+
+[published]
+other = "опубликовано"
+
+[sections]
+other = "статьи раздела"
+
+[prerequisites]
+other = "пререквизиты"
+
+[translations]
+other = "переводы"
+
+[copyright1]
+other = "Copyleft 2017–{{.Count}} Tinkoff Generation"
+
+[copyright2]
+other = "Материалы распространяются под <a href='https://tldrlegal.com/license/creative-commons-attribution-noncommercial-4.0-international-(cc-by-nc-4.0)'>CC BY-NC</a>"

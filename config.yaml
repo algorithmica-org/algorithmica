@@ -1,6 +1,4 @@
 baseURL: "https://ru.algorithmica.org/"
-languageCode: "ru-ru"
-title: "Алгоритмика"
 theme:
 - algorithmica
 - reveal-hugo
@@ -10,5 +8,19 @@ outputFormats:
     baseName: index
     mediaType: text/html
     isHTML: true
+defaultContentLanguage: en
+languages:
+  en:
+    title: Algorithmica
+    baseURL: https://en.algorithmica.org
+    languageName: English
+    languageCode: "en-us"
+    weight: 1
+  ru:
+    title: Алгоритмика
+    baseURL: https://ru.algorithmica.org
+    languageName: Русский
+    languageCode: "ru-ru"
+    weight: 2
 params:
   repo: "https://github.com/algorithmica-org/algorithmica"

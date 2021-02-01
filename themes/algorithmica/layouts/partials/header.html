@@ -9,26 +9,54 @@
     <div class='info'>
       {{- if isset .Params "authors" -}}
         <div>
-          <span>Авторы</span>
+          <span>{{ T "authors" (len .Params.Authors) }}</span>
           {{ range .Params.Authors }}
+            <span>{{ . }}</span>
+          {{ end }}
+        </div>
+      {{ end }}
+      {{- if isset .Params "editors" -}}
+        <div>
+          <span>{{ T "editors" (len .Params.Editors) }}</span>
+          {{ range .Params.Editors }}
             <span>{{ . }}</span>
           {{ end }}
         </div>
       {{ end }}
       {{- if isset .Params "date" -}}
         <div>
-          <span>Опубликовано</span>
+          <span>{{ T "published" }}</span>
           <span>{{ dateFormat (default "Jan 2, 2006" .Params.DateFormat) .Date }}</span>
+        </div>
+      {{ end }}
+      {{- if and (.IsSection) (not .IsHome) (not .Parent.IsHome) -}}
+        <div>
+          <span>{{ T "sections" }}</span>
+          {{ $pages := .Pages }}
+          {{ range where .Translations "Lang" "en" }}
+            {{ $pages = $pages | lang.Merge .Pages }}
+          {{ end }}
+          {{ range $pages }}
+            <span><a href='{{.Permalink}}'>{{ .Title }} {{ if .IsSection }}↪{{ end }}</a></span>
+          {{ end }}
         </div>
       {{ end }}
       {{- if isset .Params "prerequisites" -}}
         <div>
-          <span>Пререквизиты</span>
+          <span>{{ T "prerequisites" }}</span>
           {{ $this := . }}
           {{ range .Params.Prerequisites }}
             {{ with $this.GetPage . }}
-              <span><a href='{{.RelPermalink}}'>{{ .Title }}</a></span>
+              <span><a href='{{.Permalink}}'>{{ .Title }}</a></span>
             {{ end }}
+          {{ end }}
+        </div>
+      {{ end }}
+      {{- if .IsTranslated -}}
+        <div>
+          <span>{{ T "translations" }}</span>
+          {{ range .Translations }}
+            <span><a href="{{ .Permalink }}">{{ .Lang }}: {{ .Title }}</a></span>
           {{ end }}
         </div>
       {{- end -}}
