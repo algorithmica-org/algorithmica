@@ -4,16 +4,10 @@
       <h2>{{ .Title }}</h2>
       {{ partial "division.html" . }}
     {{ end }}
+    <hr>
   {{ else if .Parent.IsHome }}
     {{ partial "division.html" . }}
-  {{ else }}
-    <p>Статьи раздела:</p>
-    <ul>
-      {{ range .Pages }}
-        <li><a href='{{.RelPermalink}}'>{{ .Title }}</a></li>
-      {{ end }}
-    </ul>
+    <hr>
   {{ end }}
-  <hr>
   {{ .Content }}
 {{ end }}
