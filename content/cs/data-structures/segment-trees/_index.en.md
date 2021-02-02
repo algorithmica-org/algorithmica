@@ -2,6 +2,5 @@
 title: Segment Trees
 authors:
 - Sergey Slotin
+draft: true
 ---
-
-What is i reference [segtree](segtree)
