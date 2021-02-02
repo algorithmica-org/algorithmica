@@ -1,4 +1,6 @@
 <head>
+  {{- partial "analytics.html" -}}
+
   <meta charset="utf-8">
 
   {{ $style := resources.Get "style.sass" | toCSS | minify | fingerprint }}
