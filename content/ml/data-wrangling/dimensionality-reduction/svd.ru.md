@@ -1,0 +1,3 @@
+---
+title: SVD и PCA
+---
