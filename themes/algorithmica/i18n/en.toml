@@ -9,6 +9,9 @@ other = "editors"
 [published]
 other = "published"
 
+[updated]
+other = "updated"
+
 [sections]
 other = "sections"
 

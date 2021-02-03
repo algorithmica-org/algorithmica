@@ -9,6 +9,9 @@ other = "редакторы"
 [published]
 other = "опубликовано"
 
+[updated]
+other = "обновлено"
+
 [sections]
 other = "статьи раздела"
 

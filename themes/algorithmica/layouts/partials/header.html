@@ -23,10 +23,16 @@
           {{ end }}
         </div>
       {{ end }}
-      {{- if isset .Params "date" -}}
+      {{- if isset .Params "publishdate" -}}
         <div>
           <span>{{ T "published" }}</span>
-          <span>{{ dateFormat (default "Jan 2, 2006" .Params.DateFormat) .Date }}</span>
+          <span>{{ dateFormat (default "Jan 2, 2006" .Params.DateFormat) .PublishDate }}</span>
+        </div>
+      {{ end }}
+      {{- if isset .Params "date" -}}
+        <div>
+          <span>{{ T "updated" }}</span>
+          <span>{{ dateFormat "Jan 2, 2006" .Date }}</span>
         </div>
       {{ end }}
       {{- if and (.IsSection) (not .IsHome) (not .Parent.IsHome) -}}
