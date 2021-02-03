@@ -2,12 +2,13 @@
 title: Декартово дерево
 authors:
 - Сергей Слотин
-date: 2018-01-01
+date: 2021-02-03
+publishdate: 2018-01-01
 dateformat: "2006"
 prerequisites:
-- ../algebra/fft
-- treap
-description: Рандомизированное бинарное дерево, работающее в среднем за $O(\log n)$ на все операции
+- .
+- math/probability/expectation
+description: Рандомизированное бинарное дерево, работающее в среднем за $O(\log n)$ на все операции.
 keywords:
 - treap
 - рандомизированное бинарное дерево

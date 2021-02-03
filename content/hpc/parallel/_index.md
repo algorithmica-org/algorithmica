@@ -1,3 +1,4 @@
 ---
-title: Paralell Algorithms
+title: Paralell Computing
+weight: 2
 ---

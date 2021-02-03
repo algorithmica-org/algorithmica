@@ -1,5 +1,6 @@
 ---
 title: GPU Programming
+weight: 5
 ---
 
 This is an html-rendered Jupyter notebook. If you want to do the exercises right here, open it in [Colab]() or [download]() and edit it locally. In former case, you need to complete a little quest and install CUDA and PyCuda, its Python binding. On a Debian-based machine, this will probably be enough: 
