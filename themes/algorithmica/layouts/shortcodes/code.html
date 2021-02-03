@@ -1,0 +1,3 @@
+{{ $file := (printf "%s/%s" .Page.Dir (.Get 0)) }}
+{{ $extension := index (split $file ".") 1 }}
+{{ highlight (readFile $file) $extension "" }}
