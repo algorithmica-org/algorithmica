@@ -1,6 +1,10 @@
 <head>
   {{- partial "analytics.html" -}}
 
+  {{ if .IsHome }}
+    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
+  {{ end }}
+
   <meta charset="utf-8">
 
   {{ $style := resources.Get "style.sass" | toCSS | minify | fingerprint }}
