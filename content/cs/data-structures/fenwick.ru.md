@@ -1,8 +1,7 @@
 ---
 title: Дерево Фенвика
 author: Сергей Слотин
-published: true
-publishdate: 2018-01-01T00:00:00.000Z
+publishdate: 2018-01-01
 dateformat: '2006'
 ---
 
