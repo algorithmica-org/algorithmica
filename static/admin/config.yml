@@ -4,3 +4,8 @@ backend:
 publish_mode: editorial_workflow
 media_folder: "static/img"
 public_folder: "/img"
+collections:
+- name: "content"
+  label: "Content"
+  folder: content
+  create: true
