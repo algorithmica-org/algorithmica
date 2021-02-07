@@ -21,10 +21,6 @@ collections:
   - {label: "Description", name: "description", widget: "text", required: false}
   - {label: "Date", name: "date", widget: "datetime"}
   - {label: "Content", name: "body", widget: "markdown"}
-  meta:
-  - {label: "Date", name: "date", widget: "datetime"}
-  editor:
-  - preview: false
 - name: "section"
   label: "Section"
   folder: "content"
@@ -38,7 +34,3 @@ collections:
   - {label: "Order", name: "weight", widget: "number", default: 1}
   - {label: "Title", name: "title", widget: "string", tagname: "h1"}
   - {label: "Description", name: "description", widget: "text", required: false}
-  meta:
-  - {label: "Date", name: "date", widget: "datetime"}
-  editor:
-  - preview: false
