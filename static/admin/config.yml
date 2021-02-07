@@ -5,18 +5,26 @@ publish_mode: editorial_workflow
 media_folder: "static/img"
 public_folder: "/img"
 collections:
-- name: "page"
-  label: "Page"
-  folder: content
+- name: "content"
+  label: "Content"
+  folder: "{{folder}}"
+  filter: {field: "contenttype", value: "content"}    
   create: true
-  slug: "{{slug}}"
+  slug: "{{urlkey}}.{{language}}"
   fields:
-  - label: "Title"
-    name: "title"
-    widget: "string"
-  - label: Body
-    name: body
-    widget: 'code'
+  - {label: "Draft", name: "draft", widget: "boolean", default: true, required: false}
+  - {label: "Content Type", name: "contenttype", widget: "hidden", default: "content"}
+  - {label: "Language", name: "language", widget: "select", options: ["ca", "es", "en"]}
+  - {label: "Key (for translations linking)", name: "urlkey", widget: "string", required: true}
+  - {label: "Sort", name: "weight", widget: "number", default: 1}
+  - {label: "Title", name: "title", widget: "string", tagname: "h1"}
+  - {label: "Description", name: "description", widget: "text", required: false}
+  - {label: "Date", name: "date", widget: "datetime"}
+  - {label: "Content", name: "body", widget: "markdown"}
+  meta:
+  - {label: "Date", name: "date", widget: "datetime"}
+  editor:
+  - preview: false
 - name: "section"
   label: "Section"
   folder: "content"
