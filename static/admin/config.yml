@@ -5,11 +5,13 @@ publish_mode: editorial_workflow
 media_folder: "static/img"
 public_folder: "/img"
 collections:
-- name: "content"
-  label: "Content"
+- name: "page"
+  label: "Page"
   folder: content
   create: true
-  slug: "{{year}}-{{month}}-{{day}}-{{slug}}"
+  slug: "{{slug}}"
   fields:
   - {label: "Title", name: "title", widget: "string"}
   - {label: "Publish Date", name: "date", widget: "datetime"}
+  - {label: "Description", name: "description", widget: "markdown"}
+  - {label: "Body", name: "body", widget: "markdown"}
