@@ -1,0 +1,3 @@
+---
+title: Механизм Attention
+---

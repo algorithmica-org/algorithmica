@@ -1,0 +1,3 @@
+---
+title: Generative Adversarial Networks
+---
