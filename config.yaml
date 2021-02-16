@@ -24,3 +24,9 @@ languages:
     weight: 2
 params:
   repo: "https://github.com/algorithmica-org/algorithmica"
+  reveal_hugo:
+    theme: white
+    slide_number: true
+    transition: none
+    #custom_theme: "slides.sass"
+    #custom_theme_compile: true

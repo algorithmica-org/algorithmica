@@ -4,6 +4,8 @@
     {{ $sections = $sections | lang.Merge .Sections }}
   {{ end }}
   {{ range $sections }}
-    {{ partial "section.html" . }}
+    {{ if (not (in .File.Dir "aux")) }}
+      {{ partial "section.html" . }}
+    {{ end }}
   {{ end }}
 </div>

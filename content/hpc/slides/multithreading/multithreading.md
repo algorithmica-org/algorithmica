@@ -1,5 +1,0 @@
-# Title here
-
----
-
-Another slide
