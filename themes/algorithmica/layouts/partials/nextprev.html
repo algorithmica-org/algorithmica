@@ -19,8 +19,9 @@
         <a href='{{.Permalink}}' style='float: right'>{{ .Title }} →</a><br>
       {{ end }}
     {{ end }}
+    {{ $self := . }}
     {{ with index $pages (add $selfIdx 1) }}
-      <a href='{{.Permalink}}' style='float: right'>{{ if .IsSection }}../{{ end }}{{ .Title }} →</a>
+      <a href='{{.Permalink}}' style='float: right'>{{ if $self.IsSection }}../{{ end }}{{ .Title }} →</a>
     {{ end }}
   {{ end }}
 </div>
