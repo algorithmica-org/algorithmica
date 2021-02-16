@@ -14,8 +14,13 @@
     {{ with index $pages (add $selfIdx -1) }}
       <a href='{{.Permalink}}' style='float: left'>← {{ .Title }}</a>
     {{ end }}
+    {{ if .IsSection }}
+      {{ with index .Pages 0 }}
+        <a href='{{.Permalink}}' style='float: right'>{{ .Title }} →</a><br>
+      {{ end }}
+    {{ end }}
     {{ with index $pages (add $selfIdx 1) }}
-      <a href='{{.Permalink}}' style='float: right'>{{ .Title }} →</a>
+      <a href='{{.Permalink}}' style='float: right'>{{ if .IsSection }}../{{ end }}{{ .Title }} →</a>
     {{ end }}
   {{ end }}
 </div>
