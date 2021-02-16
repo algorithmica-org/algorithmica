@@ -1,4 +1,4 @@
-$font-text: 'Georgia', serif
+$font-text: 'Merriweather', serif
 $font-code: 'Inconsolata', monospace
 $font-headings: 'Garamond', serif
 $dimmed: #666
@@ -11,8 +11,8 @@ $borders: 1px solid #eaecef
   src: url(fonts/cmu.woff2)
 
 @font-face
-  font-family: 'Georgia'
-  src: url(fonts/georgia.woff2)
+  font-family: 'Merriweather'
+  src: url(fonts/merriweather.woff2)
 
 @font-face
   font-family: 'Inconsolata'
@@ -42,7 +42,7 @@ main
   margin: auto
   width: 100%
   min-width: 500px
-  max-width: 900px
+  max-width: 850px
 
 menu
   display: flex
@@ -93,6 +93,8 @@ header
 
 article
   font-size: 16px
+  line-height: 1.7
+  text-align: justify
   padding: 6px
 
   img
@@ -132,30 +134,33 @@ article
   display: flex
   flex-wrap: wrap
   justify-content: center
+  text-align: left
   width: 100%
 
   section
     font-family: $font-headings
-    width: 295px
+    width: 275px
     margin-top: 8px
     margin-bottom: 16px
 
     a:not(ul a)
-      font-size: 1.5em
+      font-size: 1.45em
       
       &:not(:hover)
         color: #0b0080
 
     ul
-      margin: 6px 0
-      padding-left: 10px
+      margin: 2px 0
+      padding-left: 18px
       list-style: none
 
       li:before
         content: "\2022"
         font-size: 1em
-        padding-right: 0.5em
         vertical-align: middle
+        position: absolute
+        margin-left: -10px
+        margin-top: 3px
 
       a
         font-size: 18px
