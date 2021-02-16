@@ -3,8 +3,7 @@ title: Декартово дерево
 authors:
 - Сергей Слотин
 date: 2021-02-03
-publishdate: 2018-01-01
-dateformat: "2006"
+created: "2018"
 prerequisites:
 - .
 - math/probability/expectation

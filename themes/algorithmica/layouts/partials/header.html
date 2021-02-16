@@ -23,10 +23,10 @@
           {{ end }}
         </div>
       {{ end }}
-      {{- if isset .Params "publishdate" -}}
+      {{- if isset .Params "created" -}}
         <div>
           <span>{{ T "published" }}</span>
-          <span>{{ dateFormat (default "Jan 2, 2006" .Params.DateFormat) .PublishDate }}</span>
+          <span>{{ .Params.created }}</span>
         </div>
       {{ end }}
       {{- if isset .Params "date" -}}
