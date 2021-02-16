@@ -1,8 +1,22 @@
-$font-text: 'Merriweather', serif
-$font-code: 'Inconsolata', monospace
-$font-headings: 'Garamond', serif
-$dimmed: #666
-$borders: 1px solid #eaecef
+$font-text: 'Merriweather', serif !default
+$font-code: 'Inconsolata', monospace !default
+$font-headings: 'Garamond', serif !default
+$font-color: black !default
+
+$background: white !default
+$borders: 1px solid #eaecef !default
+
+$code-background: #f8f8f8 !default
+$code-border: 1px solid #ddd !default
+$quote-line-color: 0.25em #eee solid !default
+
+$dimmed: #666 !default
+$section-headers: #0b0080 !default
+$headers-color: #111 !default
+
+$link-color: #0645ad !default
+$link-hover-color: #06e !default
+$link-active-color: $link-hover-color//#faa700 !default
 
 
 /* fonts */
@@ -36,6 +50,8 @@ body
   font-family: $font-text
   display: flex
   flex-direction: column
+  background: $background
+  color: $font-color
 
 main
   flex: 1 0 auto
@@ -147,7 +163,7 @@ article
       font-size: 1.45em
       
       &:not(:hover)
-        color: #0b0080
+        color: $section-headers
 
     ul
       margin: 2px 0
@@ -181,7 +197,7 @@ footer
 /* headers */
 h1, h2, h3, h4, h5, h6
   font-family: $font-headings
-  color: #111
+  color: $headers-color
   font-weight: normal
   line-height: 125%
   margin-top: 1em
@@ -208,25 +224,24 @@ p
   margin: 0.5em 0
 
 blockquote
-  color: #666
+  color: $dimmed
   margin: 0
   padding-left: 1em
-  border-left: 0.5em #eee solid
+  border-left: $quote-line-color
 
 code:not(pre code)
-  border: 1px solid #ddd
-  background-color: #f8f8f8
+  border: $code-border
+  background-color: $code-background
   border-radius: 3px
-  padding-left: 2px
-  padding-right: 2px
+  padding: 3px
   font-size: 0.85em
 
 pre
   white-space: pre
   white-space: pre-wrap
   word-wrap: break-word
-  border: 1px solid #ddd
-  background-color: #f8f8f8
+  border: $code-border
+  background-color: $code-background
   border-radius: 3px
   padding: 2px
   padding-left: 8px
@@ -239,18 +254,15 @@ hr
 
 /* links */
 a
-  color: #0645ad
+  color: $link-color
   text-decoration: none
   //white-space: nowrap
 
   &:hover
-    color: #06e
+    color: $link-hover-color
 
   &:active
-    color: #faa700
-
-  &:focus
-    outline: thin dotted
+    color: $link-active-color
 
 a[href^='http://e-maxx.ru']:before
     content: ""
