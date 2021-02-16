@@ -1,8 +1,21 @@
 <div class='nextprev'>
-  {{ if .PrevInSection }}
-    <a href='{{.PrevInSection.RelPermalink}}'>← {{ .PrevInSection.Title }}</a>
-  {{ end }}
-  {{ if .NextInSection }}
-    <a href='{{.NextInSection.RelPermalink}}'>{{ .NextInSection.Title }} →</a>
+  {{ if not .IsHome }}
+    {{ $pages := .Parent.Pages }}
+    {{ range where .Parent.Translations "Lang" "en" }}
+      {{ $pages = $pages | lang.Merge .Pages }}
+    {{ end }}
+    {{ $self := .}}
+    {{ $selfIdx := -1 }}
+    {{ range $idx, $page := $pages }}
+      {{ if eq $page $self }}
+        {{ $selfIdx = $idx }}
+      {{ end }}
+    {{ end }}
+    {{ with index $pages (add $selfIdx -1) }}
+      <a href='{{.Permalink}}' style='float: left'>← {{ .Title }}</a>
+    {{ end }}
+    {{ with index $pages (add $selfIdx 1) }}
+      <a href='{{.Permalink}}' style='float: right'>{{ .Title }} →</a>
+    {{ end }}
   {{ end }}
 </div>
