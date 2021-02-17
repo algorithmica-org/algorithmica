@@ -1,4 +1,4 @@
 ---
-title: Paralell Computing
+title: Parallel Computing
 weight: 2
 ---

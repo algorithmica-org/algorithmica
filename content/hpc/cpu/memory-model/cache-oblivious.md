@@ -1,3 +1,0 @@
----
-title: Cache-Oblivious Algorithms
----

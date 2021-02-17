@@ -1,5 +1,5 @@
 ---
-title: SIMD Instructions
+title: Data Parallelism
 weight: 3
 ---
 

@@ -4,6 +4,517 @@ authors:
 - Sergey Slotin
 ---
 
+## Branchy Binary Search
+
+Contains an "if" that is impossible to predict better than a coin flip:
+
+```cpp
+int lower_bound(int x) {
+    int l = 0, r = n - 1;
+    while (l < r) {
+        int t = (l + r) / 2;
+        if (a[t] >= x)
+            r = t;
+        else
+            l = t + 1;
+    }
+    return a[l];
+}
+```
+
+Also both temporal and spacial locality are terrible, but we address that later
+
+----
+
+This is actually how `std::lower_bound` works
+
+```cpp
+template<typename _ForwardIterator, typename _Tp, typename _Compare> _ForwardIterator
+__lower_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __val, _Compare __comp) {
+    typedef typename iterator_traits<_ForwardIterator>::difference_type _DistanceType;
+    _DistanceType __len = std::distance(__first, __last);
+
+    while (__len > 0) {
+        _DistanceType __half = __len >> 1;
+        _ForwardIterator __middle = __first;
+        std::advance(__middle, __half);
+        if (__comp(__middle, __val)) {
+            __first = __middle;
+            ++__first;
+            __len = __len - __half - 1;
+        }
+        else
+            __len = __half;
+    }
+    return __first;
+}
+```
+
+[libstdc++ from GCC](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023)
+
+----
+
+### Branch-Free Binary Search
+
+It's not illegal: ternary operator is replaced with something like `CMOV` 
+
+```cpp
+int lower_bound(int x) {
+    int base = 0, len = n;
+    while (len > 1) {
+        int half = len / 2;
+        base = (a[base + half] >= x ? base : base + half);
+        len -= half;
+    }
+    return a[base];
+}
+```
+
+Hey, why not add prefetching? <!-- .element: class="fragment" data-fragment-index="1" -->
+
+----
+
+### Speculative Execution
+
+* CPU: "hey, I'm probably going to wait ~100 more cycles for that memory fetch"
+* "why don't I execute some of the later operations in the pipeline ahead of time?"
+* "even if they won't be needed, I just discard them"
+
+```cpp
+bool cond = some_long_memory_operation();
+
+if (cond)
+    do_this_fast_operation();
+else
+    do_that_fast_operation();
+```
+
+*Implicit prefetching*: memory reads can be speculative too
+$\implies$ reads will be pipelined anyway
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+(By the way, this is what Meltdown was all about)
+<!-- .element: class="fragment" data-fragment-index="2" -->
+
+---
+
+## Cache Locality Problems
+
+* First ~10 queries may be cached (frequently accessed: temporal locality)
+* Last 3-4 queries may be cached (may be in the same cache line: data locality)
+* But that's it. Maybe store elements in a more cache-friendly way?
+
+![](http://3.bp.blogspot.com/-g7a7m_42A5w/VYs05n5fWmI/AAAAAAAABNY/CSxDV5K5Ujc/s1600/flat_set.png)
+
+![](http://4.bp.blogspot.com/-eJgJ0Uconcg/VYsWBWJ2m0I/AAAAAAAABMs/2FoX_FIIjbQ/s1600/flat_set_heat.png)
+
+Access frequency heatmap if queries were random
+
+---
+
+## Eytzinger Layout
+
+<!-- .slide: id="eytzinger" -->
+<style>
+#eytzinger {
+  font-size: 20px;
+}
+</style>
+
+* **Michaël Eytzinger** is a 16th century Austrian nobleman known for his work on genealogy
+* Ancestry mattered a lot back then, but writing down and storing that data was expensive
+* He came up with *ahnentafel* (German for "ancestor table"), a system for displaying a person's direct ancestors compactly in a fixed sequence of ascent
+
+![](https://upload.wikimedia.org/wikipedia/commons/5/5c/Eytzinger_-_Thesaurus_principum.jpg =600x)
+
+*Thesaurus principum hac aetate in Europa viventium Cologne, 1590*
+
+----
+
+Ahnentafel works like this:
+* First, the person theirself is listed as number 1
+* Then, recursively, for each person numbered $k$:
+   * their father is listed as $2k$ 
+   * their mother is listed as $(2k+1)$
+
+----
+
+Here is the example for Paul I, the great-grandson of Peter I, the Great:
+
+1. Paul I
+2. Peter III (Paul’s father)
+3. Catherine II (Paul’s mother)
+4. Charles Frederick (Peter’s father, Paul’s paternal grandfather)
+5. Anna Petrovna (Peter’s mother, Paul’s paternal grandmother)
+6. Christian August (Catherine’s father, Paul’s maternal grandfather)
+7. Johanna Elisabeth (Catherine’s mother, Paul’s maternal grandmother)
+
+Apart from being compact, it has some nice properties, for example:
+<!-- .element: class="fragment" data-fragment-index="1" -->
+* Ancestors are sorted by "distance" from the first person <!-- .element: class="fragment" data-fragment-index="2" -->
+* All even-numbered persons $>1$ are male and all odd-numbered are female <!-- .element: class="fragment" data-fragment-index="3" -->
+* You can find the number of an ancestor knowing their descendants' genders <!-- .element: class="fragment" data-fragment-index="4" -->
+
+Example: Peter the Great's bloodline is:
+Paul I → Peter III → Anna Petrovna → Peter the Great,
+so his number should be $((1 \times 2) \times 2 + 1) \times 2 = 10$
+<!-- .element: class="fragment" data-fragment-index="5" -->
+
+---
+
+## Back to Computer Science
+
+This enumeration has been widely used for implicit ("pointer-free") implementations of heaps, segment trees, and other binary tree structures
+
+![](https://algorithmica.org/en/img/eytzinger.png)
+
+This is how this layout looks when applied to binary search
+
+Important note: *it begins with 1 and not 0*
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+----
+
+![](http://1.bp.blogspot.com/-1QQEaqsOvzA/VYsUZL084uI/AAAAAAAABMg/KYsITID56P4/s1600/preorder_vector_binary_search.png)
+
+![](http://3.bp.blogspot.com/-VWfoaB0Y5FU/VYsXNoJyg2I/AAAAAAAABM4/elr4n1IyQaY/s1600/preorder_vector_heat.png)
+
+Temporary locality is way better
+
+----
+
+## Construction
+
+You could build it by traversing and remapping the original search tree
+
+```cpp
+const int n = 1e5;
+int a[n], b[n+1];
+
+int eytzinger(int k = 1) {
+    static int i = 0; // <- carefull when invoking multiple times
+    if (k <= n) {
+        eytzinger(2 * k);
+        b[k] = a[i++];
+        eytzinger(2 * k + 1);
+    }
+}
+```
+
+Notice that the order in which we exit nodes is just array elements themself,
+so we can just copy elements on exit and not calculate $l$ and $r$
+
+---
+
+## Searching
+
+Same as in binary search, but instead of ranges start with $k=1$ and execute:
+* $k := 2k$ if we need to go left
+* $k := 2k + 1$ if we need to go right
+
+The only problem arises when we need to restore the index of the resulting element,
+as $k$ may end up not pointing to a leaf node
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+----
+
+<!-- .slide: id="searching" -->
+<style>
+#searching pre {
+    width: 410px;
+}
+</style>
+
+Example: querying array of of $[1, …, 8]$ for the lower bound of $x=4$
+(we end up with $k=11$ which is not even a valid index)
+
+```
+    array:  1 2 3 4 5 6 7 8
+eytzinger:  4 2 5 1 6 3 7 8
+1st range:  ---------------  k := 1
+2nd range:  -------          k := 2*k      (=2)
+3rd range:      ---          k := 2*k + 1  (=5)
+4th range:        -          k := 2*k + 1  (=11)
+```
+
+* Unless the answer is the last element, we compare $x$ against it at some point
+* After we learn that $ans \geq x$, we start comparing $x$ against elements to the left
+* All these comparisons will evaluate true ("leading to the right")
+* $\implies$ We need to "cancel" some number of riht turns
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+----
+
+* The right turns are recorded in the binary notation of $k$ as 1-bits
+* We just need to find the number of trailing ones in the binary notation
+  and right-shift $k$ by exactly that amount
+* To do it, invert the bits of $k$ and use "find first set" instruction on it
+
+```cpp
+int search(int x) {
+    int k = 1;
+    while (k <= n) {
+        if (b[k] >= x)
+            k = 2 * k;
+        else
+            k = 2 * k + 1;
+    }
+    k >>= __builtin_ffs(~k);
+    return b[k];
+}
+```
+
+Note that $k$ will be zero if binary search returned no result
+(all turns were right-turns and got canceled)
+
+---
+
+## Optimization: Branch-Free
+
+Inner "if-else":
+
+```cpp
+while (k <= n) {
+    if (b[k] >= x)
+        k = 2 * k;
+    else
+        k = 2 * k + 1;
+}
+```
+
+...can be easily rewritten to:
+
+```cpp
+while (k <= n)
+    k = 2 * k + (b[k] < x);
+```
+
+Apart from mitigating branch mispredictions,
+it also directly saves us a few arithmetic instructions
+
+---
+
+## Optimization: Prefetching
+
+Let me just dump this line of code and then explain why it works so well:
+
+```cpp
+const int block_size = 64 / 4; // the number of elements that fit into one cache line (16 for ints)
+while (k <= n) {
+    __builtin_prefetch(b + k * block_size);
+    k = 2 * k + (b[k] < x);
+}
+```
+
+What is happening? What is $k \cdot B$?
+
+It is $k$'s grand-grand-grandfather!
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+----
+
+* When we fetch $k * B$, *if it is on the beginnigng of a cache line*,
+  we also cache next $B$ elements, all of which happe to be our grand-grand-grandfathers too
+* As i/o is pipelined, we are always prefetching 4 levels in advance
+* We are trading off bandwidth for latency <!-- .element: class="fragment" data-fragment-index="1" -->
+
+![](https://algorithmica.org/en/img/eytzinger.png)
+
+*Latency-bandwith product* must be $\geq 4$ to do that (on most computers, it is)
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+----
+
+### Memory Alignment
+
+Minor detail: for all this to work we need to start at 2nd position of a cache line
+
+```cpp
+alignas(64) int b[n+1];
+```
+
+This way, we also fetch all 4 first levels (1+2+4+8=15 elements) on the first read
+
+---
+
+## Final Implementation
+
+```cpp
+const int n = (1<<20);
+const int block_size = 16; // = 64 / 4 = cache_line_size / sizeof(int)
+alignas(64) int a[n], b[n+1];
+
+int eytzinger(int k = 1) {
+    static int i = 0;
+    if (k <= n) {
+        eytzinger(2 * k);
+        b[k] = a[i++];
+        eytzinger(2 * k + 1);
+    }
+}
+
+int search(int x) {
+    int k = 1;
+    while (k <= n) {
+        __builtin_prefetch(b + k * block_size);
+        k = 2 * k + (b[k] < x);
+    }
+    k >>= __builtin_ffs(~k);
+    return k;
+}
+```
+
+(yes, it's just 15 lines of code)
+
+---
+
+## B-trees
+
+* Idea: store $B$ keys in each "node", where $B$ is exactly the block size
+* In external memory model, doing $B$ comparisons costs the same as doing one
+* This allows branching factor of $(B+1)$ instead of $2$
+
+![](https://open4tech.com/wp-content/uploads/2019/02/b-tree-binary-tree.png =500x)
+
+----
+
+### Layout
+
+Exact layout of blocks doesn't really matter, because we fetch the whole block anyway
+
+```cpp
+const int nblocks = (n + B - 1) / B;
+alignas(64) int btree[nblocks][B];
+
+// helper function to get i-th child of node k
+int go(int k, int i) {
+    return k * (B + 1) + i + 1;
+}
+```
+
+----
+
+### Building
+
+Very similar to `eytzinger`, just generalized over $B+1$ children:
+
+```cpp
+void build(int k = 0) {
+    static int t = 0;
+    if (k < nblocks) {
+        for (int i = 0; i < B; i++) {
+            build(go(k, i));
+            btree[k][i] = (t < n ? a[t++] : INF);
+        }
+        build(go(k, B));
+    }
+}
+```
+
+----
+
+### Searching 
+
+```cpp
+int search(int x) {
+    int k = 0, res = INF;
+    start: // the only justified usage of the goto statement
+           // as doing otherwise would add extra inefficiency and more code
+    while (k < nblocks) {
+        for (int i = 0; i < B; i++) {
+            if (btree[k][i] >= x) {
+                res = btree[k][i];
+                k = go(k, i);
+                goto start;
+            }
+        }
+        k = go(k, B);
+    }
+    return res;
+}
+```
+
+---
+
+## Single Instruciton, Multiple Data
+
+Remember talk about superscalar execution?
+SIMD is like if we had multiple ALUs:
+
+![](https://i.imgur.com/tg6OtuV.png =200x)
+
+As the name suggests, it allows performing the same operation on multiple data points
+(blocks of 128, 256 or 512 bits)
+
+*This is the sole topic of the next lecture, stay tuned*
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+----
+
+Let's rewrite comparison part in a data-parallel fashion:
+
+```cpp
+int mask = (1 << B);
+for (int i = 0; i < B; i++)
+    mask |= (btree[k][i] >= x) << i;
+int i = __builtin_ffs(mask) - 1;
+// now i is the number of the correct child node
+```
+
+Here is how it looks with SIMD:
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+```cpp
+// SIMD vector type names are weird and tedious to type, so we define an alias
+typedef __m256i reg;
+
+// somewhere in the beginning of search loop:
+reg x_vec = _mm256_set1_epi32(x);
+
+int cmp(reg x_vec, int* y_ptr) {
+    reg y_vec = _mm256_load_si256((reg*) y_ptr);
+    reg mask = _mm256_cmpgt_epi32(x_vec, y_vec);
+    return _mm256_movemask_ps((__m256) mask);
+}
+```
+<!-- .element: class="fragment" data-fragment-index="1" -->
+
+----
+
+## Final Version
+
+```cpp
+int search(int x) {
+    int k = 0, res = INF;
+    reg x_vec = _mm256_set1_epi32(x);
+    while (k < nblocks) {
+        int mask = ~(
+            cmp(x_vec, &btree[k][0]) +
+            (cmp(x_vec, &btree[k][8]) << 8)
+        );
+        int i = __builtin_ffs(mask) - 1;
+        if (i < B)
+            res = btree[k][i];
+        k = go(k, i);
+    }
+    return res;
+}
+```
+
+Cache line size is twice as large as SIMD registers on most CPUs (512 vs 256),
+so we call `cmp` twice and blend results 
+
+---
+
+## Analysis
+
+* Assume all arithmetic is free, only consider i/o
+* The Eytzinger binary search is supposed to be $4$ times faster if compute didn't matter, as it reads are ~4 times faster on average <!-- .element: class="fragment" data-fragment-index="1" -->
+* The B-tree makes $\frac{\log_{17} n}{\log_2 n} = \frac{\log n}{\log 17} \frac{\log 2}{\log n} = \frac{\log 2}{\log 17} \approx 0.245$ memory access per each request of binary search, i. e. it needs ~4 times less cache lines to fetch <!-- .element: class="fragment" data-fragment-index="2" -->
+* So when bandwidth is not a bottleneck, they are more or less equal <!-- .element: class="fragment" data-fragment-index="3" -->
+
+![](https://algorithmica.org/en/img/btree.png =500x)
+
 This tutorial is loosely based on a [46-page paper](https://arxiv.org/pdf/1509.05053.pdf) by Paul-Virak Khuong and Pat Morin "Array layouts for comparison-based searching" and describes one particular way of performing efficient binary search by rearranging elements of a sorted array in a cache-friendly way.
 
 We briefly review relevant concepts in processor architecture; if you want to get deeper, we recommend reading the original 2015 paper, as well as these articles:

@@ -11,7 +11,9 @@ This is a work-in-progress webbook about High Performance Computing, or Supercom
 
 Unlike the [Computer Science](/cs) section, you probably will not learn a single asymptotically faster algorithm here, but you will become proficient at squeezing performance from modern hardware.
 
-The book is split in 3 parts.
+Prerequisites: C++, Python, intermediate knowledge of classic algorithms
+
+The book is split in 3 parts. We advise you to read in this order.
 
 [Part 1](cpu) discusses optimization of single-threaded programs.
 
