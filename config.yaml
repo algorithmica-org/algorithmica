@@ -8,6 +8,10 @@ outputFormats:
     baseName: index
     mediaType: text/html
     isHTML: true
+markup:
+  goldmark:
+    renderer:
+      unsafe: true
 defaultContentLanguage: en
 languages:
   en:
