@@ -11,6 +11,8 @@ This is a work-in-progress webbook about High Performance Computing, or Supercom
 
 Unlike the [Computer Science](/cs) section, you probably will not learn a single asymptotically faster algorithm here, but you will become proficient at squeezing performance from modern hardware.
 
+You will see more practical ways to speed up a program than by going from $O(n \log n)$ to $O(n \log \log n)$.
+
 Prerequisites: C++, Python, intermediate knowledge of classic algorithms
 
 The book is split in 3 parts. We advise you to read in this order.
