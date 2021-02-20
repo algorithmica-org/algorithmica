@@ -1,5 +1,6 @@
 ---
 title: Бинарные деревья поиска
+menuTitle: BST
 weight: 2
 ---
 
