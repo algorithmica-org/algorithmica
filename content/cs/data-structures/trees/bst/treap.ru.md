@@ -6,6 +6,7 @@ date: 2021-02-03
 created: "2018"
 prerequisites:
 - .
+- ../heaps/binary-heap
 - math/probability/expectation
 description: Рандомизированное бинарное дерево, работающее в среднем за $O(\log n)$ на все операции.
 keywords:
