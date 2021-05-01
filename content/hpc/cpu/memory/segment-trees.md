@@ -1,12 +1,23 @@
 ---
-title: Segment Trees
+title: Implicit Data Structures
+weight: 2
 ---
+
+The lessons we learned from studying layouts for binary search can be applied to broader range of data structures.
+
+Most of examples in this section are about optimizing some algorithms that are either included in standard library or take under 10 lines of code to implement naively, but we will start off with a bit more obscure example.
+
+Segment tree is a data structure that stores information about array segments. It is a static tree of degree two, and here is what this means:
+
+Segment trees are used for windowing queries or range queries in general, either by themselves or as part of a larger algorithm. They are very rarely mentioned in scientific literature, because they are relatively novel (invented around 2000), and *asymptotically* they don't do anything that any other binary tree can't, but they are dominant structure in the world of competitive programming because of their performance and ease of implementation.
+
+Segment trees are built recursively: build a tree for left and right halves and merge results to get root.
 
 ## Segment Trees
 
 * Static tree data structure used for storing information about array segments
 * Popular in competitive programming, very rarely used in real life
-* Built recursively: build a tree for left and right halves and merge results to get root
+* 
 * Many different implementations possible
 
 ![](https://i.stack.imgur.com/xeIcl.png)

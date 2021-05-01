@@ -1,5 +1,6 @@
 ---
-title: Distance Product
+title: Matrix Multiplication
+weight: 4
 ---
 
 

@@ -3,6 +3,8 @@ title: External Memory Model
 weight: 1
 ---
 
+To reason about memory and not go crazy, we need a model that is more sensitive, yet not so rigorous.
+
 In RAM model, we ignored the fact that primitive operations take unequal time.
 
 But consider an algoritm that does something on the memory. Each access takes at least 10ms.

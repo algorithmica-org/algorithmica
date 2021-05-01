@@ -1,5 +1,6 @@
 ---
 title: Hash Tables
+weight: 3
 ---
 
 

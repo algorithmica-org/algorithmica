@@ -1,7 +1,6 @@
 ---
-title: Binary Search
-authors:
-- Sergey Slotin
+title: Layouts for Binary Search
+weight: 1
 ---
 
 ## Branchy Binary Search
