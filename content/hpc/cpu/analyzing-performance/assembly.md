@@ -231,6 +231,23 @@ Key differences can be summarized as follows:
 
 Most tools that produce or consume x86 assembly can do so in both syntaxes, so you can just pick the one you like more and don't worry.
 
+---
+
+AT&T immediate operands use a $ to denote them, whereas Intel immediate operands are undelimited. Thus, when referencing the decimal value 4 in AT&T syntax, you would use dollar 4, and in Intel syntax you would just use 4.
+AT&T prefaces register names with a %, while Intel does not. Thus, referencing the EAX register in AT&T syntax, you would use %eax.
+AT&T syntax uses the opposite order for source and destination operands. To move the decimal value 4 to the EAX register, AT&T syntax would be movl $4, %eax, whereas for Intel it would be mov eax, 4.
+AT&T syntax uses a separate character at the end of mnemonics to reference the data size used in the operation, whereas in Intel syntax the size is declared as a separate operand. The AT&T instruction movl $test, %eax is equivalent to mov eax, dword ptr test in Intel syntax.
+Long calls and jumps use a different syntax to define the segment and offset values. AT&T syn- tax uses ljmp 
+s
+e
+c
+t
+i
+o
+n
+,
+offset, whereas Intel syntax uses jmp section:offset.
+
 ## Assembly Idioms
 
 Lastly, there are a few "WTF is this" idioms in assembly language which felt wrong not to include in this chapter:
