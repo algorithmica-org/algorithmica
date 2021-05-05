@@ -51,6 +51,7 @@ Chapter 1:
 3.3. Bit Manipulation
 3.4. Hashing
 3.5. Random Number Generation
+3.6. Integer Factorization
 4. SIMD Parallelism
 4.1. Intrinsics
 4.2. Vector Extensions
