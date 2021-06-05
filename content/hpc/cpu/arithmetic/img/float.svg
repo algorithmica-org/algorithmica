@@ -1,0 +1,761 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   version="1.0"
+   width="590"
+   height="75"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="0.46"
+   sodipodi:docname="Float_example.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape">
+  <metadata
+     id="metadata2689">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <sodipodi:namedview
+     inkscape:window-height="713"
+     inkscape:window-width="640"
+     inkscape:pageshadow="2"
+     inkscape:pageopacity="0.0"
+     guidetolerance="10.0"
+     gridtolerance="10.0"
+     objecttolerance="10.0"
+     borderopacity="1.0"
+     bordercolor="#666666"
+     pagecolor="#ffffff"
+     id="base"
+     showgrid="false"
+     inkscape:zoom="0.92033898"
+     inkscape:cx="295"
+     inkscape:cy="37.5"
+     inkscape:window-x="0"
+     inkscape:window-y="0"
+     inkscape:current-layer="svg2" />
+  <defs
+     id="defs4">
+    <inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 37.5 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="590 : 37.5 : 1"
+       inkscape:persp3d-origin="295 : 25 : 1"
+       id="perspective2691" />
+    <marker
+       refX="0"
+       refY="0"
+       orient="auto"
+       style="overflow: visible;"
+       id="Arrow2Mend">
+      <path
+         d="M 8.7185878,4.0337352 L -2.2072895,0.016013256 L 8.7185884,-4.0017078 C 6.97309,-1.6296469 6.9831476,1.6157441 8.7185878,4.0337352 z "
+         transform="scale(-0.6, -0.6)"
+         style="font-size: 12px; fill-rule: evenodd; stroke-width: 0.625; stroke-linejoin: round;"
+         id="path3321" />
+    </marker>
+  </defs>
+  <rect
+     width="120.00082"
+     height="26.023895"
+     x="29.259886"
+     y="28.699614"
+     style="fill: none; fill-opacity: 0.394737; stroke: rgb(0, 0, 0); stroke-width: 2; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3147" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="134.26152"
+     y="28.699369"
+     style="fill: rgb(16, 255, 46); fill-opacity: 0.396078; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3522" />
+  <path
+     d="M 30.239243,25.223251 L 30.239243,15.797501 L 148.37786,15.797501 L 148.37786,25.223251"
+     style="fill: none; fill-rule: evenodd; stroke: rgb(0, 128, 0); stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1;"
+     id="path2170" />
+  <path
+     d="M 150.26069,25.223251 L 150.26069,15.797501 L 493.40792,15.797501 L 493.40792,25.223251"
+     style="fill: none; fill-rule: evenodd; stroke: rgb(128, 0, 0); stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1;"
+     id="path2172" />
+  <rect
+     width="345.97119"
+     height="26.023642"
+     x="149.25989"
+     y="28.66995"
+     style="fill: none; fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 2; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect2174" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="14.260694"
+     y="28.699369"
+     style="fill: rgb(10, 245, 255); fill-opacity: 0.236842; stroke: rgb(0, 0, 0); stroke-width: 2; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3149" />
+  <text
+     x="28.3131"
+     y="11.142"
+     style="font-size: 14.6412px; font-style: normal; text-anchor: end; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Gill Sans MT;"
+     id="text3151"
+     xml:space="preserve"><tspan
+       x="28.3131"
+       y="11.142"
+       style="font-weight: normal; text-anchor: end; font-family: Arial;"
+       id="tspan3153">sign</tspan></text>
+  <text
+     x="89.0905"
+     y="11.142"
+     style="font-size: 14.6412px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Gill Sans MT;"
+     id="text3369"
+     xml:space="preserve"><tspan
+       x="89.0905"
+       y="11.142"
+       style="font-weight: normal; font-family: Arial;"
+       id="tspan3371">exponent (8 bits)</tspan></text>
+  <text
+     x="322.274"
+     y="11.142"
+     style="font-size: 14.6412px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Gill Sans MT;"
+     id="text3377"
+     xml:space="preserve"><tspan
+       x="322.274"
+       y="11.142"
+       style="font-weight: normal; font-family: Arial;"
+       id="tspan3379">significand (23 bits)</tspan></text>
+  <path
+     d="M 489.73149,59.223243 C 489.73224,59.938278 489.35121,60.599322 488.7321,60.957058 C 488.11299,61.314795 487.34999,61.314795 486.73088,60.957058 C 486.11176,60.599322 485.73074,59.938278 485.73149,59.223243 C 485.73074,58.508207 486.11176,57.847163 486.73088,57.489428 C 487.34999,57.131691 488.11299,57.131691 488.7321,57.489428 C 489.35121,57.847163 489.73224,58.508207 489.73149,59.223243 L 489.73149,59.223243 z "
+     style="fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="path3381" />
+  <text
+     x="487.779"
+     y="74.339"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3383"
+     xml:space="preserve"><tspan
+       x="487.779"
+       y="74.339"
+       style="font-weight: normal;"
+       id="tspan3385">0</tspan></text>
+  <path
+     d="M 143.7611,59.223253 C 143.76185,59.938288 143.38082,60.599332 142.76171,60.957068 C 142.1426,61.314805 141.3796,61.314805 140.76049,60.957068 C 140.14137,60.599332 139.76035,59.938288 139.7611,59.223253 C 139.76035,58.508217 140.14137,57.847173 140.76049,57.489438 C 141.3796,57.131701 142.1426,57.131701 142.76171,57.489438 C 143.38082,57.847173 143.76185,58.508217 143.7611,59.223253 L 143.7611,59.223253 z "
+     style="fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="path3397" />
+  <text
+     x="139.878"
+     y="74.339"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3399"
+     xml:space="preserve"><tspan
+       x="139.878"
+       y="74.339"
+       style="font-weight: normal;"
+       id="tspan3401">23</tspan></text>
+  <path
+     d="M 23.760282,59.223253 C 23.761036,59.938288 23.380007,60.599332 22.760896,60.957068 C 22.141785,61.314805 21.37878,61.314805 20.759669,60.957068 C 20.140558,60.599332 19.75953,59.938288 19.760284,59.223253 C 19.75953,58.508217 20.140558,57.847173 20.759669,57.489438 C 21.37878,57.131701 22.141785,57.131701 22.760896,57.489438 C 23.380007,57.847173 23.761036,58.508217 23.760282,59.223253 L 23.760282,59.223253 z "
+     style="fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="path3413" />
+  <text
+     x="19.2564"
+     y="74.339"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3415"
+     xml:space="preserve"><tspan
+       x="19.2564"
+       y="74.339"
+       style="font-weight: normal;"
+       id="tspan3417">31</tspan></text>
+  <path
+     d="M 21.760283,25.223251 L 21.760283,15.797501"
+     style="fill: none; fill-rule: evenodd; stroke: rgb(0, 128, 128); stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1;"
+     id="path2232" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="119.26128"
+     y="28.699369"
+     style="fill: rgb(16, 255, 46); fill-opacity: 0.396078; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3508" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="104.26105"
+     y="28.699369"
+     style="fill: rgb(16, 255, 46); fill-opacity: 0.396078; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3510" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="89.260818"
+     y="28.699369"
+     style="fill: rgb(16, 255, 46); fill-opacity: 0.396078; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3512" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="74.260582"
+     y="28.699369"
+     style="fill: rgb(16, 255, 46); fill-opacity: 0.396078; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3514" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="59.260353"
+     y="28.699369"
+     style="fill: rgb(16, 255, 46); fill-opacity: 0.396078; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3516" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="44.260117"
+     y="28.699369"
+     style="fill: rgb(16, 255, 46); fill-opacity: 0.396078; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3518" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="29.259886"
+     y="28.699369"
+     style="fill: rgb(16, 255, 46); fill-opacity: 0.396078; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3520" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="149.25989"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3525" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="164.30408"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3533" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="179.34825"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3535" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="194.39244"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3537" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="209.43661"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3539" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="224.4808"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3541" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="239.52499"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3543" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="254.56917"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3545" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="269.61334"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3547" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="284.65753"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3549" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="299.70172"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3551" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="314.74591"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3553" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="329.7901"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3555" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="344.83429"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3557" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="359.87845"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3559" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="374.92264"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3561" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="389.96683"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3563" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="405.01102"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3565" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="420.05521"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3567" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="435.09937"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3569" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="450.14355"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3571" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="465.18774"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3573" />
+  <rect
+     width="14.999176"
+     height="26.023895"
+     x="480.2319"
+     y="28.699369"
+     style="fill: rgb(255, 30, 30); fill-opacity: 0.360784; stroke: rgb(0, 0, 0); stroke-width: 1; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="rect3575" />
+  <text
+     x="22.2882"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3581"
+     xml:space="preserve"><tspan
+       x="22.2882"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3583">0</tspan></text>
+  <text
+     x="37.3195"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3585"
+     xml:space="preserve"><tspan
+       x="37.3195"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3587">0</tspan></text>
+  <text
+     x="52.3508"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3589"
+     xml:space="preserve"><tspan
+       x="52.3508"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3591">1</tspan></text>
+  <text
+     x="67.3822"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3593"
+     xml:space="preserve"><tspan
+       x="67.3822"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3595">1</tspan></text>
+  <text
+     x="82.4135"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3597"
+     xml:space="preserve"><tspan
+       x="82.4135"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3599">1</tspan></text>
+  <text
+     x="97.4448"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3601"
+     xml:space="preserve"><tspan
+       x="97.4448"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3603">1</tspan></text>
+  <text
+     x="112.476"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3605"
+     xml:space="preserve"><tspan
+       x="112.476"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3607">1</tspan></text>
+  <text
+     x="127.507"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3609"
+     xml:space="preserve"><tspan
+       x="127.507"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3611">0</tspan></text>
+  <text
+     x="142.539"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3613"
+     xml:space="preserve"><tspan
+       x="142.539"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3615">0</tspan></text>
+  <text
+     x="157.57"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3617"
+     xml:space="preserve"><tspan
+       x="157.57"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3619">0</tspan></text>
+  <text
+     x="172.601"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3621"
+     xml:space="preserve"><tspan
+       x="172.601"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3623">1</tspan></text>
+  <text
+     x="187.633"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3625"
+     xml:space="preserve"><tspan
+       x="187.633"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3627">0</tspan></text>
+  <text
+     x="202.664"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3629"
+     xml:space="preserve"><tspan
+       x="202.664"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3631">0</tspan></text>
+  <text
+     x="217.695"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3633"
+     xml:space="preserve"><tspan
+       x="217.695"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3635">0</tspan></text>
+  <text
+     x="232.727"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3637"
+     xml:space="preserve"><tspan
+       x="232.727"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3639">0</tspan></text>
+  <text
+     x="247.758"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3641"
+     xml:space="preserve"><tspan
+       x="247.758"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3643">0</tspan></text>
+  <text
+     x="262.789"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3645"
+     xml:space="preserve"><tspan
+       x="262.789"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3647">0</tspan></text>
+  <text
+     x="277.821"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3649"
+     xml:space="preserve"><tspan
+       x="277.821"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3651">0</tspan></text>
+  <text
+     x="292.852"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3653"
+     xml:space="preserve"><tspan
+       x="292.852"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3655">0</tspan></text>
+  <text
+     x="307.883"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3657"
+     xml:space="preserve"><tspan
+       x="307.883"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3659">0</tspan></text>
+  <text
+     x="322.915"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3661"
+     xml:space="preserve"><tspan
+       x="322.915"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3663">0</tspan></text>
+  <text
+     x="337.946"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3665"
+     xml:space="preserve"><tspan
+       x="337.946"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3667">0</tspan></text>
+  <text
+     x="352.977"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3669"
+     xml:space="preserve"><tspan
+       x="352.977"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3671">0</tspan></text>
+  <text
+     x="368.009"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3673"
+     xml:space="preserve"><tspan
+       x="368.009"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3675">0</tspan></text>
+  <text
+     x="383.04"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3677"
+     xml:space="preserve"><tspan
+       x="383.04"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3679">0</tspan></text>
+  <text
+     x="398.071"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3681"
+     xml:space="preserve"><tspan
+       x="398.071"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3683">0</tspan></text>
+  <text
+     x="413.103"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3685"
+     xml:space="preserve"><tspan
+       x="413.103"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3687">0</tspan></text>
+  <text
+     x="428.134"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3689"
+     xml:space="preserve"><tspan
+       x="428.134"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3691">0</tspan></text>
+  <text
+     x="443.165"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3693"
+     xml:space="preserve"><tspan
+       x="443.165"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3695">0</tspan></text>
+  <text
+     x="458.197"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3697"
+     xml:space="preserve"><tspan
+       x="458.197"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3699">0</tspan></text>
+  <text
+     x="473.228"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3701"
+     xml:space="preserve"><tspan
+       x="473.228"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3703">0</tspan></text>
+  <text
+     x="488.259"
+     y="46.7572"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3705"
+     xml:space="preserve"><tspan
+       x="488.259"
+       y="46.7572"
+       style="font-weight: normal;"
+       id="tspan3707">0</tspan></text>
+  <text
+     x="504.264"
+     y="48.3991"
+     style="font-size: 18.6884px; font-style: normal; text-align: start; text-anchor: start; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3709"
+     xml:space="preserve"><tspan
+       x="504.264"
+       y="48.3991"
+       style="font-weight: normal; text-align: start; text-anchor: start;"
+       id="tspan3711">= 0.15625</tspan></text>
+  <path
+     d="M 38.759473,59.223253 C 38.760227,59.938288 38.379198,60.599332 37.760087,60.957068 C 37.140976,61.314805 36.377971,61.314805 35.75886,60.957068 C 35.139749,60.599332 34.758721,59.938288 34.759475,59.223253 C 34.758721,58.508217 35.139749,57.847173 35.75886,57.489438 C 36.377971,57.131701 37.140976,57.131701 37.760087,57.489438 C 38.379198,57.847173 38.760227,58.508217 38.759473,59.223253 L 38.759473,59.223253 z "
+     style="fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="path3959" />
+  <text
+     x="39.757"
+     y="74.339"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3961"
+     xml:space="preserve"><tspan
+       x="39.757"
+       y="74.339"
+       style="font-weight: normal;"
+       id="tspan3963">30</tspan></text>
+  <path
+     d="M 158.75948,59.223253 C 158.76023,59.938288 158.3792,60.599332 157.76009,60.957068 C 157.14098,61.314805 156.37798,61.314805 155.75887,60.957068 C 155.13975,60.599332 154.75873,59.938288 154.75948,59.223253 C 154.75873,58.508217 155.13975,57.847173 155.75887,57.489438 C 156.37798,57.131701 157.14098,57.131701 157.76009,57.489438 C 158.3792,57.847173 158.76023,58.508217 158.75948,59.223253 L 158.75948,59.223253 z "
+     style="fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 2; stroke-linecap: round; stroke-linejoin: miter; stroke-miterlimit: 4; stroke-dasharray: none; stroke-dashoffset: 0pt; stroke-opacity: 1;"
+     id="path3965" />
+  <text
+     x="158.876"
+     y="74.339"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3967"
+     xml:space="preserve"><tspan
+       x="158.876"
+       y="74.339"
+       style="font-weight: normal;"
+       id="tspan3969">22</tspan></text>
+  <text
+     x="255.876"
+     y="74.339"
+     style="font-size: 14.0407px; font-style: normal; text-align: center; text-anchor: middle; fill: rgb(0, 0, 0); fill-opacity: 1; stroke: none; stroke-width: 1px; stroke-linecap: butt; stroke-linejoin: miter; stroke-opacity: 1; font-family: Arial;"
+     id="text3971"
+     xml:space="preserve"><tspan
+       x="255.876"
+       y="74.339"
+       style="font-weight: normal;"
+       id="tspan3973">(bit index)</tspan></text>
+</svg>

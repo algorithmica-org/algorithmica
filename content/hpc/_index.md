@@ -26,45 +26,65 @@ The examples in this book use C++, GCC, x86-64, CUDA and Spark, although the und
 
 To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment, and thus more helpful for the reader. I would have respectively picked C / Rust, LLVM, arm, OpenCL and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
 
-### Table of Contents
+## Table of Contents
 
-Chapter 1:
+## Part 1: Performance engineering
 
 ```
-0. Modern Hardware
+0. Why Big O Is Not so Relevant Anymore
 1. Analyzing Performance
-1.1. Computer Archicecture & Assembly
-1.2. Compiler Optimizations
-1.3. Profiling
-1.4. Binary GCD                        <- 2x faster std::gcd
-2. Memory
-2.1. Memory Hierarchy
-2.2. External Memory Model
-2.3. RAM & CPU Caches
-2.4. Memory Management
-2.5. Layouts for Binary Search         <- 5x faster std::lower_bound
-2.6. Implicit Data Structures          <- 7x faster segment trees
-2.7. Hash Tables                       <- 5x faster std::unordered_map
-3. Bit Hacks and Arithmetic
-3.1. Floating-Point Arithmetic
-3.2. Integer and Modular Arithmetic
-3.3. Bit Manipulation
-3.4. Hashing
-3.5. Random Number Generation
-3.6. Integer Factorization
+ 1.1. Computer Architecture & Assembly
+ 1.2. Negotiating with Compilers
+ 1.3. Profiling
+ 1.4. Binary GCD                        <- 2x faster std::gcd
+2. Bit Hacks and Arithmetic
+ 2.1. Floating-Point Arithmetic
+ 2.2. Integer and Modular Arithmetic
+ 2.3. Bit Manipulation
+ 2.4. Cryptography, Hashing and PRNG
+ 2.5. Integer Factorization
+(2.6. Big Integers and FFT)
+3. Memory
+ 3.1. Memory Hierarchy
+ 3.2. External Memory Model
+(3.3. Sublinear Algorithms)
+ 3.4. RAM & CPU Caches
+(3.5. Memory Management)
+ 3.6. Layouts for Binary Search         <- 5x faster std::lower_bound
+ 3.7. Implicit Data Structures          <- 7x faster segment trees
+ 3.8. Hash Tables                       <- 5x faster std::unordered_map
 4. SIMD Parallelism
-4.1. Intrinsics
-4.2. Vector Extensions
-4.3. Moving Data
-4.4. Lookup Tables and Popcount        <- 2x faster popcnt
-4.5. Parsing                           <- 2x faster scanf("%d")
-4.6. Sorting                           <- 8x faster std::sort
+ 4.1. Intrinsics and Vector Extensions
+ 4.2. Moving Data
+ 4.3. String Searching                  <- ?x faster strstr
+ 4.4. Parsing                           <- 2x faster scanf("%d")
+(4.5. Sorting)                          <- 8x faster std::sort
+(4.6. AVX-512 and Arm Neon)
 5. Instruction-Level Parallelism
-5.1. Pipelining
-5.2. Hazards
-5.3. Throughput Computing              <- 2x faster std::accumulate
-5.4. µOps & Scheduling
-5.5. Theoretical Limits
-5.6. Matrix Multiplication             <- 100x faster gemm
+ 5.1. Pipelining and Hazards
+ 5.2. Throughput Computing              <- 2x faster std::accumulate
+(5.3. µOps & Scheduling)
+ 5.4. Theoretical Performance Limits
+ 5.5. Matrix Multiplication             <- 100x faster gemm
 6. Summary
 ```
+
+Release date: june 2021
+
+### Part 2: Parallel Algorithms
+
+Concurrency, models of parallelism, green threads and runtimes, cache coherence, syncronization primitives, OpenMP, reductions, scans, list ranking and graph algorithms, lock-free data structures, heterogenious computing, CUDA, kernels, warps, blocks, matrix multiplication and sorting.
+
+Release date: fall 2021
+
+### Part 3: Distributed Computing
+
+Communication-constrained algorithms, message passing, actor model, partitioning, MapReduce, consistency and reliability at scale, storage, compression, scheduling and cloud computing, distributed deep learning.
+
+Release date: 2022
+
+### Part 4: Compilers and Domain Specific Architectures
+
+LLVM IR, core optimization techniques from the dragon book, JIT-compilation, cython, jax, numba, julia, OpenCL, DPC++ and oneAPI, XLA, FPGAs and Verilog, ASICs, TPUs and other AI accelerators.
+
+Release date: ???

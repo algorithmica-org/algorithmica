@@ -1,6 +1,6 @@
 ---
 title: Memory
-weight: 2
+weight: 3
 ---
 
 In the beginning of the [previous chapter](../analyzing-performance), I used $5 \cdot 10^8$ as a rule of thumb for how many operations can be done in a second on average. Before going into how to go above that limit, first we need to learn how not to drop below it, and #1 reason for failing is memory.
