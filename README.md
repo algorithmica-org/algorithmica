@@ -1,21 +1,12 @@
-# Algorithmica new website
+# Algorithmica v3
 
-Technical changes:
+Key technical changes:
+
 * pandoc -> Hugo
 * CSS -> Sass
 * Github Pages -> Netlify
-* algorithmica.org/{lang}/* -> {lang}.algorithmica.org/*
 * Yandex.Metrica -> Google Analytics
+* algorithmica.org/{lang}/* -> {lang}.algorithmica.org/*
+* Rich metadata support (language, sections, TOCs, authors...)
 
-New features:
-* multilingual support
-* responsive design
-* sections
-* auto-generated menu
-* browser-side search
-* dark theme
-* jupyter notebooks
-* slides via reveal.js
-* merge with wiki.algocode.ru and e-maxx.ru/algo
-
-Work in progress. Trello board: https://trello.com/b/0aLj7zla/algorithmicaorg
+Work in progress.
