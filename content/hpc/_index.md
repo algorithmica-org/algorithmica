@@ -5,20 +5,14 @@ weight: 5
 authors:
 - Sergey Slotin
 created: "Feb 2021"
-date: 2021-04-18
+date: 2021-05-06
 ---
 
-This is a work-in-progress Computer Science book titled "Supercomputing for Mere Mortals".
+This is a work-in-progress Computer Science book titled "Algorithms for Modern Hardware".
 
-It is split in 3 parts:
+Unlike a traditional book, this one will change over time, evolving in parallel with new improvements in hardware as well as software and my understanding of them.
 
-1. [Performance Engineering](cpu), which is getting close to completion.
-2. [Parallel Computing](parallel), which is still in the research stage.
-3. [Distributed Computing](distributed), which doesn't even have a general curriculum yet.
-
-Unlike a traditional book, this one will change over time, evolving in parallel with new improvements in hardware and software and my understanding of them.
-
-All materials are hosted on GitHub, with code in a separate repository. This isn't a collaborative project, but any contributions and feedback are welcome.
+All materials are hosted on GitHub, with code in a [separate repository](https://github.com/sslotin/scmm-code). This isn't a collaborative project, but any contributions and feedback are welcome.
 
 ### Disclaimer: Technology Choices
 
@@ -44,22 +38,22 @@ To clear my conscience, I'm not happy with any of these choices: these technolog
  2.4. Cryptography, Hashing and PRNG
  2.5. Integer Factorization
 (2.6. Big Integers and FFT)
-3. Memory
- 3.1. Memory Hierarchy
- 3.2. External Memory Model
-(3.3. Sublinear Algorithms)
- 3.4. RAM & CPU Caches
-(3.5. Memory Management)
- 3.6. Layouts for Binary Search         <- 5x faster std::lower_bound
- 3.7. Implicit Data Structures          <- 7x faster segment trees
- 3.8. Hash Tables                       <- 5x faster std::unordered_map
-4. SIMD Parallelism
- 4.1. Intrinsics and Vector Extensions
- 4.2. Moving Data
- 4.3. String Searching                  <- ?x faster strstr
- 4.4. Parsing                           <- 2x faster scanf("%d")
-(4.5. Sorting)                          <- 8x faster std::sort
-(4.6. AVX-512 and Arm Neon)
+3. SIMD Parallelism
+ 3.1. Intrinsics and Vector Extensions
+ 3.2. Moving Data
+ 3.3. String Searching                  <- ?x faster strstr
+ 3.4. Parsing                           <- 2x faster scanf("%d")
+(3.5. Sorting)                          <- 8x faster std::sort
+(3.6. AVX-512 and Arm Neon)
+4. Memory
+ 4.1. Memory Hierarchy
+ 4.2. External Memory Model
+(4.3. Sublinear Algorithms)
+ 4.4. RAM & CPU Caches
+(4.5. Memory Management)
+ 4.6. Layouts for Binary Search         <- 5x faster std::lower_bound
+ 4.7. Implicit Data Structures          <- 7x faster segment trees
+ 4.8. Hash Tables                       <- 5x faster std::unordered_map
 5. Instruction-Level Parallelism
  5.1. Pipelining and Hazards
  5.2. Throughput Computing              <- 2x faster std::accumulate
