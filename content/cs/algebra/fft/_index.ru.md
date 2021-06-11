@@ -222,19 +222,19 @@ $$
 x_j = \frac{1}{n} \sum_{k=0}^{n-1} y_n e^{-i\tau \frac{kj}{n}} = \frac{1}{n} \sum_{k=0}^{n-1} y_n w_{n-1}^{kj}
 $$
 
-Почему эта формула верна? При вычислении ПФ мы практически применяем матрицу к вектору:
+Почему эта формула верна? При вычислении ПФ мы фактически применяем матрицу к вектору:
 
 $$
 \begin{pmatrix}
-w^0 & w^0 & w^0 & w^0 & \dots & w^0 \\
-w^0 & w^1 & w^2 & w^3 & \dots & w^{-1} \\
-w^0 & w^2 & w^4 & w^6 & \dots & w^{-2} \\
-w^0 & w^3 & w^6 & w^9 & \dots & w^{-3} \\
-\vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
-w^0 & w^{-1} & w^{-2} & w^{-3} & \dots & w^1
-\end{pmatrix}\begin{pmatrix} a_0 \\ a_1 \\ a_2 \\ a_3 \\ \vdots \\ a_{n-1}
-\end{pmatrix} = \begin{pmatrix} y_0 \\ y_1 \\ y_2 \\ y_3 \\ \vdots \\ y_{n-1}
+    w^0 & w^0 & w^0 & w^0 & \dots & w^0
+\\\ w^0 & w^1 & w^2 & w^3 & \dots & w^{-1}
+\\\ w^0 & w^2 & w^4 & w^6 & \dots & w^{-2}
+\\\ w^0 & w^3 & w^6 & w^9 & \dots & w^{-3}
+\\\ \vdots & \vdots & \vdots & \vdots & \ddots & \vdots
+\\\ w^0 & w^{-1} & w^{-2} & w^{-3} & \dots & w^1
 \end{pmatrix}
+\begin{pmatrix} a_0 \\\ a_1 \\\ a_2 \\\ a_3 \\\ \vdots \\\ a_{n-1} \end{pmatrix}
+= \begin{pmatrix} y_0 \\\ y_1 \\\ y_2 \\\ y_3 \\\ \vdots \\\ y_{n-1}\end{pmatrix}
 $$
 
 То есть преобразование Фурье — это просто линейная операция над вектором: $W a = y$. Значит, обратное преобразование можно записать так: $a = W^{-1}y$. 
@@ -243,13 +243,13 @@ $$
 
 $$
 W^{-1} =
-\dfrac 1 n\begin{pmatrix}
-w^0 & w^0 & w^0 & w^0 & \dots & w^0 \\
-w^0 & w^{-1} & w^{-2} & w^{-3} & \dots & w^{1} \\
-w^0 & w^{-2} & w^{-4} & w^{-6} & \dots & w^{2} \\
-w^0 & w^{-3} & w^{-6} & w^{-9} & \dots & w^{3} \\
-\vdots & \vdots & \vdots & \vdots & \ddots & \vdots \\
-w^0 & w^{1} & w^{2} & w^{3} & \dots & w^{-1}
+\dfrac 1 n \begin{pmatrix}
+    w^0 & w^0 & w^0 & w^0 & \dots & w^0
+\\\ w^0 & w^{-1} & w^{-2} & w^{-3} & \dots & w^{1}
+\\\ w^0 & w^{-2} & w^{-4} & w^{-6} & \dots & w^{2}
+\\\ w^0 & w^{-3} & w^{-6} & w^{-9} & \dots & w^{3}
+\\\ \vdots & \vdots & \vdots & \vdots & \ddots & \vdots
+\\\ w^0 & w^{1} & w^{2} & w^{3} & \dots & w^{-1}
 \end{pmatrix}
 $$
 
