@@ -1,6 +1,6 @@
 ---
 title: Binary GCD
-weight: 4
+weight: 5
 ---
 
 The main purpose of this book is not to learn computer architecture for the sake of learning it, but to acquire real-world skills in software optimization.

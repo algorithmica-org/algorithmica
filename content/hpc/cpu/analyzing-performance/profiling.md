@@ -1,6 +1,6 @@
 ---
-title: Profiling
-weight: 3
+title: Profiling and Benchmarking
+weight: 4
 ---
 
 There are two general ways of finding performance issues: starting at the code and profiling. Just as there are 3 levels of depth in the first approach — you can inspect source code, immediate representation and assembly — there are 3 main approaches when it comes to profiling.

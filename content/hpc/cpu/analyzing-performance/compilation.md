@@ -55,7 +55,7 @@ These options can also specified for a compilation unit with pragmas instead of 
 
 ```c++
 #pragma GCC optimize("O3")
-#pragma GCC target("skylake")
+#pragma GCC target("skylake") // <- doesn't work
 ```
 
 This is useful when you need to optimize a single high-performance procedure without increasing build time for the entire project.
