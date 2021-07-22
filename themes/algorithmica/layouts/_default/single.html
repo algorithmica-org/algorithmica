@@ -1,3 +1,13 @@
 {{ define "main" }}
-  {{ .Content }}
+  {{ $blocks := split .RawContent "$$" }}
+  {{ $page := . }}
+  {{ range $idx, $text := $blocks }}
+    {{ if (modBool $idx 2) }}
+      {{ $page.RenderString $text }}
+    {{ else }}
+      $$
+      {{ $text }}
+      $$
+    {{ end }}
+  {{ end }}
 {{ end }}
