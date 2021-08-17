@@ -1,12 +1,12 @@
 <section>
   <a href='{{.Permalink}}'>{{ .Title }}</a>
   <ul>
-  {{ $pages := .Pages }}
-  {{ range where .Translations "Lang" "en" }}
-    {{ $pages = $pages | lang.Merge .Pages }}
-  {{ end }}
-  {{ range $pages }}
-    <li><a href='{{.Permalink}}'>{{ .Title }} {{ if .IsSection }}↪{{ end }}</a></li>
-  {{ end }}
+    {{ $pages := .Pages }}
+    {{ range where .Translations "Lang" "en" }}
+      {{ $pages = $pages | lang.Merge .Pages }}
+    {{ end }}
+    {{ range $pages }}
+      <li><a href='{{.Permalink}}'>{{ .Title }} {{ if .IsSection }}↪{{ end }}</a></li>
+    {{ end }}
 </ul>
 </section>

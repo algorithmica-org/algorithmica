@@ -28,7 +28,7 @@ other = "пререквизиты"
 other = "переводы"
 
 [copyright1]
-other = "Copyleft 2017–{{.}} Tinkoff"
+other = "Copyleft 2017–{{.}} Тинькофф Образование"
 
 [copyright2]
 other = "Материалы распространяются под <a href='https://tldrlegal.com/license/creative-commons-attribution-noncommercial-4.0-international-(cc-by-nc-4.0)'>CC BY-NC</a>"

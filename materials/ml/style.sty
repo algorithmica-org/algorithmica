@@ -1,0 +1,453 @@
+\pagestyle{myheadings}
+
+\RequirePackage{graphicx}
+\setlength\fboxsep{3pt}
+\setlength\fboxrule{1pt}
+%\usepackage{wrapfiq}
+
+%отступ слева; по умолчанию один дюйм
+\oddsidemargin=-1.54cm
+%ширина текста
+\textwidth=19cm
+
+%отступ сверху; по умолчанию один дюйм
+\topmargin=-1.54cm
+%высота текста, плюс всякие колонтитулы и отступы
+\textheight=267mm
+
+%для псевдорисунков
+\RequirePackage{wrapfig}
+%размеры псевдорисунков в миллиметрах
+%\unitlength=1mm
+%увеличить количество точек в линиях (по умолчанию 500)
+%\renewcommand{\qbeziermax}{1000}
+
+%сдвиг всей страницы целиком, если принтер кривоват
+%\hoffset=-5mm
+%\voffset=4.2mm
+
+\frenchspacing
+%подключаем доп. мат. символы и шрифты
+\RequirePackage{amssymb, amsmath, amscd, euscript}
+%чтобы дословно цитировать документы
+\RequirePackage{verbatim}
+%типографические символы + улучшенное тире
+\RequirePackage{textcomp}
+%задаем кодировку иностранных символов
+\RequirePackage[utf8]{inputenc}
+%зачем?
+\RequirePackage[T2A]{fontenc}
+%добавляем русский язык
+\RequirePackage[russian]{babel}
+%дополнительные пробелы к формулам
+%актуально с текстом на латинице
+%\mathsurround=2pt
+
+%разрешить страницам иметь разную высоту
+\raggedbottom
+
+%увеличить интервалы между строками
+%\renewcommand{\baselinestretch}{1.01}
+
+%доп. отступ между абзацами
+%\parskip=3mm
+
+%----------
+
+%выключить переносы совсем
+\binoppenalty=10000
+\relpenalty=10000
+
+%нежелательность разрыва после первой строки абзаца
+\clubpenalty=500
+%нежелательность разрыва перед последней строкой абзаца
+\widowpenalty=500
+
+%перенос с дублированием знаков, вставить \hm перед оным
+\newcommand*{\hm}[1]{#1\nobreak\discretionary{}%
+            {\hbox{$\mathsurround=0pt #1$}}{}}
+
+%----------
+%\DeclareMathOperator{\tg}{tg}
+\DeclareMathOperator{\Nod}{\text{НОД}}
+\DeclareMathOperator{\Nok}{\text{НОК}}
+
+\def\dev{\smash{\lower.3ex\hbox{$\:\vdots\;$}}}
+\newcommand{\ra}{\rightarrow}
+%----------
+
+\renewcommand{\Im}{\mathop{\mathrm{Im}}\nolimits}
+\renewcommand{\Re}{\mathop{\mathrm{Re}}\nolimits}
+%обратить внимание на \pmod
+%\empth вместо \textit
+%обратить внимание на переключение шрифта после завершения абзаца
+
+%----------
+%борьба со шрифтами
+
+%более русское тире
+\def\d{\textthreequartersemdash { }}
+%жирный шрифт поадекватнее
+\renewcommand{\bfdefault}{b}
+%разрешаем переносить две буквы (выключить перед english)
+%\righthyphenmin=3
+
+%чтобы научить тех переносить раз и навсегда
+%\hyphenation{об-ласть}
+
+%не считать overfull'ом вылез на
+\hfuzz=0.5pt
+%разрешить разреженные строки до
+\tolerance=300
+
+%для уменьшения количества строчек, занимаемых абзацем,
+%\looseness=-1
+%устанавливается отдельно для каждого абзаца
+
+%для уменьшения количества переносов подряд (по умолчанию 10^4)
+\doublehyphendemerits=1000000
+
+%запретить делать переносы в словах с прописной буквы
+%\uchyph=0
+%вернуть --- поменять на \uchyph=1
+
+%отступ для абзаца кроме первой строки
+%\hangindent=1cm
+%без абзацного отступа
+%\noindent
+%также есть
+%\hangafter
+%все это нужно для приклеивания картинок, к примеру
+
+%увеличить размер данной страницы
+%\enlargethispage{2\baselineskip}
+%сейчас --- на две строки, можно отрицательно; можно в аргумент и 5mm
+
+%----------
+
+%для буквального воспроизведения
+%\begin{verbatim}
+%
+%\end{verbatim}
+%короткие последовательности набираются с помощью
+%\verb"smth"
+%здесь вместо {} можно поставить любую пару символов, встречающуюся редко
+
+%----------
+
+
+%для создания книжки
+%\author{Д. А. Белов}
+%\title{Материалы занятий}
+%\date{27 августа 2015 года}
+
+\renewcommand{\@oddhead}%
+{\raisebox{0pt}[\headheight][0pt]{\vbox{\hbox to\textwidth{\strut \slshape
+ \hfil Коллоквиум ML \hfil 
+ }\hrule}}% конец блока
+}% конец макроопределения
+
+%---------
+
+%листочек в середине страницы
+
+\def\ans{\textbf{Ответ.} }
+\def\sol{\textbf{Решение.} }
+
+\newcommand{\header}{\vbox{\hbox to\textwidth{\strut \slshape \normalsize \hfil Коллоквиум ML \hfil }\hrule}}
+
+\newcommand{\headd}[2]{\large\setcounter{zadacha}{0} \vspace*{1.5mm} \centerline{\textbf{\Large #1}} {\large \vspace{-2.7mm}} \centerline{\textbf{\small #2}} \smallskip}
+
+%---------
+
+\newcounter{zadacha}[section]
+\setcounter{zadacha}{0}
+\renewcommand{\i}{\par\refstepcounter{zadacha}\smallskip \textbf{\arabic{zadacha}.} }
+\newcounter{pun}[zadacha]
+\setcounter{pun}{0}
+\def\pu{\refstepcounter{pun}{\bf(\alph{pun})}\ }
+\def\Pu{\par \smallskip \mbox{}\refstepcounter{pun}{\phantom{\textbf{\arabic{zadacha}.}}\hspace{2mm}\bf(\alph{pun})}\ }
+
+\newcounter{exer}[section]
+\newcommand{\ex}{\par\refstepcounter{exer}%
+\textbf{Упр. \arabic{exer}.} }
+
+\newcommand{\head}[2]{\newpage\par\setcounter{zadacha}{0} \vspace*{-11mm} \centerline{\textbf{\Large #1}} \vspace{-1mm} \centerline{\textbf{\small #2}} \smallskip}
+
+\newcommand{\bx}[1]{\smallskip %
+\noindent %
+\fbox{%
+\parbox{0.98\textwidth}{\strut \vspace*{#1}}%
+} \smallskip}
+
+\def\divs{\,\lower.4ex\vdots\,}
+
+\def\R{{\mathbb R}}
+\def\Q{{\mathbb Q}}
+\def\Z{{\mathbb Z}}
+\def\C{{\mathbb C}}
+\def\N{{\mathbb N}}
+\def\F{{\mathbb F}}
+
+\newcommand{\abs}[1]{\ensuremath{#1}}
+
+\renewcommand{\geq}{\geqslant}
+\renewcommand{\leq}{\leqslant}
+\DeclareMathOperator{\ord}{\text{ord}}
+\def\Leg#1#2{\displaystyle{\left(\frac{#1}{#2}\right)}}
+\def\sgn{\mathrm{sign}\,}
+
+\def\De{\textbf{\underline{Определение.} }}
+\def\exam{\textbf{Пример. }}
+\def\rem{\textbf{Замечание. }}
+\def\exer{\textbf{Упражнение. }}
+\def\thm{\textbf{\underline{Теорема.} }}
+\def\pr{\textbf{\underline{Утверждение.} }}
+\def\proof{\textbf{Доказательство. }}
+\def\con{\textbf{Следствие. }}
+\def\des{\textbf{Обозначение. }}
+
+\newcounter{de}[section]
+\newcommand{\de}{\par\refstepcounter{de}%
+\textbf{Определение \arabic{de}.} }
+
+\newcounter{par}[section]
+\newcommand{\paradox}{\par\refstepcounter{par}%
+\textbf{Парадокс \arabic{par}.} }
+
+\newcommand{\romb}{$\blacklozenge$ }
+
+%----------
+%\DeclareMathOperator{\tg}{tg}
+%\DeclareMathOperator{\Nod}{\text{НОД}}
+%\DeclareMathOperator{\Nok}{\text{НОК}}
+\DeclareMathOperator{\cont}{\text{cont}}
+\def\dev{\smash{\lower.3ex\hbox{$\:\vdots\;$}}}
+%\newcommand{\ra}{\rightarrow}
+%----------
+
+%\begin{titlepage}
+%
+%Титульный лист
+%
+%\end{titlepage}
+%
+%\thispagestyle{empty}
+%
+%\mbox{}
+%
+%\newpage
+
+
+%----------
+%для матбоя
+
+\newcommand{\headBoi}{\vspace*{-8mm}\centerline{\textbf{\Large ПРОТОКОЛ МАТЕМАТИЧЕСКОГО БОЯ}}\vspace*{5mm}}
+
+%\newcommand{\team}[7]{
+%\parbox[t]{8.5cm}{\underline{\textit{Команда: #1}} \par 1. #2 \par 2. #3 \\ 3. #4 \\ 4. #5 \\ 5. #6 \\ 6. #7} %
+%%\underline{\textit{Команда: #1}} \hspace{6.5cm} & \underline{\textit{Команда: #2}} \\[5pt]
+%%1. #1 & 1. \\
+%%2. #2 & 2. \\
+%%3. #3 & 3. \\
+%%4. #4 & 4. \\
+%%5. #5 & 5. \\
+%%6. #6 & 6. \\
+%}
+
+\newenvironment{team}[2]{
+\begin{tabular}{ll}
+
+\hbox to 8cm{\underline{\textit{Команда: #1}}} & \underline{\textit{Команда: #2}} \vspace{1mm} \\
+
+
+}{\end{tabular} \vspace{4mm}}
+
+\newcommand{\concap}{\textit{Конкурс капитанов (текст задачи):} \par \vspace{1.5cm} Победил капитан \underline{\phantom{Команда Без Уебков}}}
+
+\def\lt{& & & & & & \\
+& & & & & & \\
+\hline}
+
+\newcommand{\Table}{
+\begin{center}
+\textbf{Ход боя}
+\begin{tabular}{|c|c|c|c|c|c|c|}
+\hline
+Время & Докладчик/оппонент & Баллы & Вызов & Баллы & Докладчик/оппонент & Жюри \\
+\hline
+\lt
+\lt
+\lt
+\lt
+\lt
+\lt
+\lt
+\lt
+\lt
+\lt
+
+\end{tabular}
+\end{center}
+}
+
+\newenvironment{jury}[2]{
+
+\begin{center} %
+
+\begin{tabular}{l l l l c c}
+Жюри: & \hbox to 6.5cm{#1 \hrulefill} & \hspace{0.23cm} & Капитаны: & \underline{\phantom{Чья-то подпись}} \slash &\hspace{-3mm}\underline{\phantom{подписььь}} \vspace{-1.2mm} \\
+& & & & \scriptsize{Фамилия Имя} \phantom{\normalsize \slash} & \hspace{-3mm}\scriptsize{подпись} \vspace{1mm}\\
+      & #2 \hrulefill & & & \underline{\phantom{Чья-то подпись}} \slash &\hspace{-3mm}\underline{\phantom{подписььь}} \vspace{-1.2mm} \\
+& & & & \scriptsize{Фамилия Имя} \phantom{\normalsize \slash} & \hspace{-3mm}\scriptsize{подпись} \\
+\end{tabular}
+\end{center}
+}
+{}
+
+\usepackage{graphicx}
+\setlength\fboxsep{3pt}
+\setlength\fboxrule{1pt}
+%\usepackage{wrapfiq}
+
+\newcommand{\card}{
+\begin{center}
+\textit{Карточка участника олимпиады. 7 класс}
+
+\;
+\;
+
+
+Фамилия, Имя \hrulefill
+\vspace{3mm}
+
+\Large
+
+\begin{tabular}{|c|c|c|c|c|c|c|c|c|}
+\hline
+
+\;1\; & \;2\; & \;3\; & \;4\; & \;5\; & \;6\; & \;7\; & \;8\; & $\sum$ \\
+
+\hline
+& & & & & & & & \\
+& & & & & & & & \\
+
+\hline 
+\end{tabular}
+\end{center}
+}
+
+%----------
+
+%От Храброва
+
+\renewcommand{\proof}{\medbreak{\bf Доказательство. }}
+\newcommand{\prooff}[1]{\medbreak{\bf Доказательство {#1}. }}
+\newcommand{\iproof}{{\bf Доказательство. }}
+\newcommand{\lemma}{\medbreak{\bf Лемма. }}
+\newcommand{\llemma}[1]{{\bf Лемма #1. }}
+\newcommand{\ilemma}{{\bf Лемма. }}
+\newcommand{\blemma}{\enskip{\bf Лемма. }}
+\newcommand{\theorema}{\medbreak{\bf Теорема. }}
+\newcommand{\defin}{\medbreak{\bf Определение. }}
+\newcommand{\idefin}{{\bf Определение. }}
+\newcommand{\hint}{\medbreak{\bf Подсказка. }}
+\newcommand{\remark}[1]{\medbreak{\bf Замечание {#1}. }}
+\renewcommand{\rem}{\medbreak{\bf Замечание. }}
+\newcommand{\corollary}{\medbreak{\bf Следствие. }}
+\newcommand{\example}[1]{\medbreak{\bf Пример {#1}.}}
+\newcommand{\exampl}{\medbreak{\bf Пример. }}
+\newcommand{\prf}{$\blacklozenge$ \smallbreak}
+\newcommand{\prff}{\enskip\blacklozenge}
+%\newcommand{\prf}{$\bigstar$ \smallbreak}
+%\newcommand{\prff}{\enskip\bigstar}
+
+\newcommand{\eps}{\varepsilon}
+\newcommand{\semi}[1]{\frac {{#1}_1 + {#1}_2}{2}}
+\newcommand{\sign}{\mathop {\rm sign} \nolimits}
+\newcommand{\Summa}{\sum \limits_{k=1}^{n}}
+\newcommand{\Summam}{\sum \limits_{k=1}^{m}}
+\newcommand{\Prod}{\prod \limits_{k=1}^{n}}
+\newcommand{\conj}[2]{\frac{1}{#1}+\frac{1}{#2}=1}
+
+\def\АиХ{\copyright А\kern-.14em\lower.5ex\hbox{И}\kern-.11emХ}
+
+\renewcommand{\theequation}{\arabic{equation}}
+\newcommand{\bibname}{Литература}
+\renewcommand{\contentsname}{Оглавление}
+
+\newcommand{\nomultlinegap}{\setlength{\multlinegap}{0pt}}
+\newcommand{\Indent}{\hspace\parindent}
+\newcommand{\lquad}{\hspace{0.7em}}
+\newcommand{\neskip}{\hspace{-0.7em}}
+\newcommand{\lls}{\mskip-2mu}
+\newcommand{\sls}{\mskip-1mu}
+\newcommand{\up}{\vspace{-3ex}}
+\newcommand{\upp}{\vspace{-1ex}}
+\newcommand{\shift}{\hspace{-0.5em}}
+
+%\newcommand{\текстик}{[нечто] }
+\newcommand{\headskip}{\bigskip}
+
+%%%%%%%%%%%%%%%%%%%  только в LaTeX2e
+%\newcommand{\R}{\mathbb{R}}
+\newcommand{\Cal}{\mathcal}
+\renewcommand{\dots}{\ldots}
+\renewcommand{\leq}{\leqslant}
+\renewcommand{\geq}{\geqslant}
+
+\def\lov#1{Меня зовут #1, и я очень хочу рассказать своим любимым преподавателям}
+
+\def\za#1{\smallskip \hspace*{0mm}{\bf #1} }
+
+\def\sam{\medskip \centerline{\textbf{Домашнее задание}}}
+
+\newcounter{command}
+\newcounter{question}[command]
+
+\newcommand{\que}{\refstepcounter{question}\smallskip \textbf{\fbox{\arabic{question}} }}
+
+\newcommand{\com}{\smallskip \textbf{\fbox{\arabic{command}} }}
+
+\newcommand{\crd}{
+\textbf{Команда \com} \hfill \textbf{Вопрос \que}
+
+\smallskip
+
+\vfil
+
+\hrule
+
+\smallskip
+
+}
+
+\newcommand{\blank}{
+\refstepcounter{command}
+\crd
+\crd
+\crd
+\crd
+\crd
+\crd
+\crd
+\crd
+\newpage
+\crd
+\crd
+\crd
+\crd
+\crd
+\crd
+\crd
+\crd
+}
+
+
+\usepackage{color}   %May be necessary if you want to color links
+\usepackage{hyperref}
+\hypersetup{
+    colorlinks=true, %set true if you want colored links
+    linktoc=all,     %set to all if you want both sections and subsections linked
+    linkcolor=blue,  %choose some color if you want links to stand out
+}

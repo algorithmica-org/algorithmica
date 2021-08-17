@@ -10,19 +10,23 @@ outputFormats:
     isHTML: true
 markup:
   goldmark:
+    footnote: false  # katex conflict
     renderer:
       unsafe: true
 defaultContentLanguage: en
+sectionPagesMenu: main
 languages:
   en:
     title: Algorithmica
     baseURL: https://en.algorithmica.org
+    contentDir: content/english
     languageName: English
     languageCode: "en-us"
     weight: 1
   ru:
     title: Алгоритмика
     baseURL: https://ru.algorithmica.org
+    contentDir: content/russian
     languageName: Русский
     languageCode: "ru-ru"
     weight: 2

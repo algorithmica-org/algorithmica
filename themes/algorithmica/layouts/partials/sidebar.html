@@ -1,0 +1,42 @@
+<nav id='sidebar' {{ if .Params.HideSidebar }}class='sidebar-hidden sidebar-toggled'{{end}}>
+  {{ $currentPage := . }}
+  {{ $currentDivision := . }}
+  <div class='title'>
+    <a href='/'>{{ .Site.Title }}</a>
+    {{ range .Site.Menus.main }}
+      {{ if $currentPage.HasMenuCurrent "main" . }}
+        {{ $currentDivision = . }}
+        <span class='slash'>/</span>
+        <a href='{{.Page.RelPermalink}}' class='divisionAbbr'
+           {{ if eq $currentPage .Page }}id='active-element'{{ end }}>
+          {{ .Page.Params.MenuTitle }}
+        </a>
+      {{ end }}
+    {{ end }}
+  </div>
+  <ul>
+    {{ if .IsHome }}
+      {{ range .Pages }}
+        <li><a href='{{ .RelPermalink }}'>{{ .Title }}</a></li>
+      {{ end }}
+    {{ else }}
+      {{ range $currentDivision.Page.Pages }}
+        {{ if isset .Params "part" }}
+          <li class='part'>{{.Params.Part}}</li>
+        {{ end }}
+        <li {{ if .Params.IgnoreIndexing }}class='ignore-indexing'{{end}}><a href='{{ .RelPermalink }}'
+          {{ if eq $currentPage . }}id='active-element'{{ end }}
+          >{{ .Title }}</a></li>
+        {{ if .IsSection }}
+          <ol>
+            {{ range .Pages }}
+              <li><a href='{{ .RelPermalink }}'
+                {{ if eq $currentPage . }}id='active-element'{{ end }}
+                >{{ .Title }}</a></li>
+            {{ end }}
+          </ol>
+        {{ end }}
+      {{ end }}
+    {{ end }}
+  </ul>
+</nav>

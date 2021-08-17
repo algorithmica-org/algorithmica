@@ -1,11 +1,6 @@
 <header>
+  <h1>{{ .Title }}</h1>
   {{ if not .IsHome }}
-    <h1>{{ .Title }}</h1>
-    {{ if isset .Params "description" }}
-      <div class='description'>
-        {{ .Params.Description | markdownify }}
-      </div>
-    {{ end }}
     <div class='info'>
       {{- if isset .Params "authors" -}}
         <div>
@@ -33,18 +28,6 @@
         <div>
           <span>{{ T "updated" }}</span>
           <span>{{ dateFormat "Jan 2, 2006" .Date }}</span>
-        </div>
-      {{ end }}
-      {{- if and (.IsSection) (not .IsHome) (not .Parent.IsHome) -}}
-        <div>
-          <span>{{ T "sections" }}</span>
-          {{ $pages := .Pages }}
-          {{ range where .Translations "Lang" "en" }}
-            {{ $pages = $pages | lang.Merge .Pages }}
-          {{ end }}
-          {{ range $pages }}
-            <span><a href='{{.Permalink}}'>{{ .Title }} {{ if .IsSection }}↪{{ end }}</a></span>
-          {{ end }}
         </div>
       {{ end }}
       {{- if isset .Params "prerequisites" -}}

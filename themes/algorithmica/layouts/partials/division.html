@@ -1,9 +1,12 @@
+{{ $sections := .Sections }}
+{{ range where .Translations "Lang" "en" }}
+  {{ $sections = $sections | lang.Merge .Sections }}
+{{ end }}
 <div class='division'>
-  {{ $sections := .Sections }}
-  {{ range where .Translations "Lang" "en" }}
-    {{ $sections = $sections | lang.Merge .Sections }}
-  {{ end }}
   {{ range $sections }}
+    {{ if isset .Params "part" }}
+      <h3>{{.Params.Part}}</h3>
+    {{ end }}
     {{ if (not (in .File.Dir "aux")) }}
       {{ partial "section.html" . }}
     {{ end }}

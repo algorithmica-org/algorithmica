@@ -2,27 +2,17 @@
 <html lang='{{ .Site.LanguageCode }}'>
   {{- partial "head.html" . -}}
   <body>
-    <main>
-      {{- partial "menu.html" . -}}
-      {{- partial "header.html" . -}}
-      <article>
-        {{- block "main" . }}{{- end }}
-      </article>
-      {{ partial "nextprev.html" . }}
-    </main>
-    {{- partial "footer.html" . -}}
-    {{ if .IsHome }}
-      <script>
-        if (window.netlifyIdentity) {
-          window.netlifyIdentity.on("init", user => {
-            if (!user) {
-              window.netlifyIdentity.on("login", () => {
-                document.location.href = "/admin/";
-              });
-            }
-          });
-        }
-      </script>
-    {{ end }}
+    {{- partial "sidebar.html" . -}}
+    <div id='wrapper' {{ if .Params.HideSidebar }}class='sidebar-hidden sidebar-toggled'{{end}}>
+      {{- partial "buttons.html" . -}}
+      <main>
+        {{- partial "header.html" . -}}
+        <article>
+          {{- block "main" . }}{{- end }}
+        </article>
+        {{ partial "nextprev.html" . }}
+        {{ partial "footer.html" . }}
+      </main>
+    </div>
   </body>
 </html>

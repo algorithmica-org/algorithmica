@@ -1,5 +1,6 @@
-$font-text: 'Merriweather', serif !default
+$font-text: 'Crimson', serif !default
 $font-code: 'Inconsolata', monospace !default
+$font-interface: 'Source Sans', sans, !default
 $font-headings: 'Garamond', serif !default
 $font-color: black !default
 
@@ -9,9 +10,13 @@ $borders: 1px solid #eaecef !default
 $code-background: #f8f8f8 !default
 $code-border: 1px solid #ddd !default
 $quote-line-color: 0.25em #eee solid !default
+$scrollbar1: #bbb !default
+$scrollbar2: #999 !default
+$scrollbar3: #666 !default
 
 $dimmed: #666 !default
 $section-headers: #0b0080 !default
+$division-headers: inherit !default
 $headers-color: #111 !default
 
 $link-color: #0645ad !default
@@ -40,6 +45,13 @@ $link-active-color: $link-hover-color//#faa700 !default
   font-family: "Open Sans"
   src: url(fonts/opensans.woff2)
 
+@font-face
+  font-family: "Source Sans"
+  src: url(fonts/sourcesans.ttf)
+
+@font-face
+  font-family: "Crimson"
+  src: url(fonts/crimson.ttf)
 
 /* layout */
 html, body
@@ -49,45 +61,160 @@ html, body
 body
   font-family: $font-text
   display: flex
-  flex-direction: column
+  flex-direction: row
   background: $background
   color: $font-color
 
-main
-  flex: 1 0 auto
-  margin: auto
-  width: 100%
-  min-width: 500px
-  max-width: 850px
+#sidebar
+  font-family: $font-interface
+  overflow-y: scroll
+  height: 100%
+  position: fixed
+  width: 250px
+  background: $code-background
 
-menu
-  display: flex
-  justify-content: space-between
-  padding: 2px 8px
+  &::-webkit-scrollbar  
+    background-color: $background
+    width: 12px
+    //display: none
 
-  nav
-    text-overflow: ellipsis
-    overflow: hidden
-    white-space: nowrap
+  &::-webkit-scrollbar-thumb
+    background-color: $scrollbar1
 
-    a
-      color: inherit
+    &:hover
+      background-color: $scrollbar2
 
-  .slash
-    margin: 0 4px
+    &:active
+      background-color: $scrollbar3
+  
+  &.sidebar-hidden
+    display: none
+    //transition: display 0.3s ease, transform 0.3s ease
+
+  .title
+    font-size: 1.2em
+    font-family: $font-headings
+    text-align: center
+    margin: 20px
     color: $dimmed
 
-  .actions
-    margin-left: 8px
+    .divisionAbbr
+      color: $font-color
+      
+      &:hover
+        color: $link-active-color
 
-    img
-      width: 16px
-      opacity: 0.4
-      margin: 4px
+  ul, ol
+    font-size: 0.9em
+    margin: 0px 0px 0px 10px 
+    padding: 0
+    list-style: none
+
+    li
+      margin: 6px
+
+    a
+      color: $font-color
 
       &:hover
-        opacity: 1
-        cursor: pointer
+        color: $link-active-color
+
+  #active-element
+    //font-weight: bold
+    color: $link-color
+
+    &:hover
+      color: $link-active-color
+
+  // outer list
+  ul
+    > li
+      &:not(.part):not(.ignore-indexing)
+        counter-increment: chapter-counter
+        
+        &::before
+          content: counter(chapter-counter) ". "
+          font-weight: bold
+        
+      &.part
+        color: $dimmed
+        counter-increment: part-counter
+        margin-top: 16px
+        font-size: 18px
+
+        &::before
+          content: counter(part-counter, upper-roman) ". "
+          font-weight: bold
+          color: $headers-color
+    
+    // inner lsit
+    ol li
+      counter-increment: section-counter
+
+      &::before
+        content: counter(chapter-counter) "." counter(section-counter) ". "
+        font-weight: bold
+
+#wrapper
+  width: 100%
+  margin-left: 250px
+  //padding: 6px
+  
+  &.sidebar-hidden
+    margin-left: 0
+    //transition: margin-left 0.3s ease, transform 0.3s ease
+
+@media only screen and (max-width: 1200px)
+  #sidebar:not(.sidebar-toggled)
+    display: none
+  
+  #wrapper:not(.sidebar-toggled)
+    margin-left: 0
+
+menu
+  position: sticky
+  z-index: 100
+  top: 0
+
+  display: flex
+  font-family: $font-headings
+  
+  height: 30px
+  background-color: $background
+  justify-content: space-between
+  padding: 12px
+  margin: 0
+  text-align: center
+
+  //.left
+    //position: fixed
+
+  //.right
+    //position: fixed
+    //right: 10px
+
+  img
+    width: 16px
+    opacity: 0.4
+    margin: 4px
+
+    &:hover
+      opacity: 1
+      cursor: pointer
+  
+  .title
+    font-size: 24px
+    margin-top: -4px
+    opacity: 0
+    transition: opacity 0.1s
+
+  &.scrolled
+    border-bottom: $borders
+    
+    .title
+      opacity: 1
+      transition: opacity 0.1s
+    
 
 /*
   .github
@@ -104,12 +231,41 @@ menu
       a
         opacity: 0.4*/
 
+#TableOfContents
+  display: none // temporary disabled
+  position: fixed
+  left: calc(620px + 50%)
+  top: 170px
+  font-size: 0.9em
+  line-height: 1.25em
+  text-align: left
+  width: 300px
+  border-left: $borders
+  padding: 10px 10px
+
+  &.sidebar-hidden
+    display: none
+    //transition: display 0.3s ease, transform 0.3s ease
+
+  ul
+    margin: 0
+    padding: 0
+    list-style: none
+    li
+      margin: 8px
+
+main
+  min-width: 500px
+  max-width: 850px
+  margin: auto
+  padding: 6px 12px
+
 header
-  margin-top: 50px
+  margin-top: 20px
 
 article
-  font-size: 16px
-  line-height: 1.7
+  font-size: 18px
+  line-height: 1.5
   text-align: justify
   padding: 6px
 
@@ -136,11 +292,12 @@ article
   display: flex
   flex-wrap: wrap
   width: 100%
-  margin: 20px 0
+  margin: 25px 0 10px
   padding: 10px
   border-top: $borders
   border-bottom: $borders
-  font-size: 0.9em
+  font-size: 1em
+  font-family: $font-interface
 
   &:empty
     display: none
@@ -157,18 +314,34 @@ article
       text-transform: uppercase
       color: $dimmed
 
+h2 a
+  color: $division-headers
+
 .division
   display: flex
   flex-wrap: wrap
-  justify-content: center
+  justify-content: left
+  margin: 0
   text-align: left
   width: 100%
+  counter-reset: part-counter
+
+  h3
+    width: 100%
+    margin-top: 20px
+    counter-increment: part-counter
+
+    &::before
+      //content: counter(part-counter, upper-roman) ". "
 
   section
     font-family: $font-headings
-    width: 275px
-    margin-top: 8px
-    margin-bottom: 16px
+    width: 279px
+    margin-top: 6px
+    margin-bottom: 8px
+
+    > a
+      font-size: 20px !important
 
     a:not(ul a)
       font-size: 1.45em
@@ -190,7 +363,7 @@ article
         margin-top: 3px
 
       a
-        font-size: 18px
+        font-size: 16px
         margin-left: 0
         margin-top: 4px
 
@@ -201,10 +374,12 @@ article
 footer
   flex-shrink: 0;
   text-align: center
-  color: $dimmed
+  opacity: 0.4
   font-size: 0.75em
-  margin: 50px 0 5px
+  margin: 50px 0px 0px
   padding: 4px
+  line-height: 1.5em
+  font-family: $font-interface
 
 /* headers */
 h1, h2, h3, h4, h5, h6
@@ -228,7 +403,7 @@ h3
   font-size: 1.5em
 
 h2, h3
-  padding-bottom: 5px;
+  padding-bottom: 5px
   border-bottom: $borders
 
 /* special elements */

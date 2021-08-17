@@ -1,12 +1,13 @@
 {{ define "main" }}
-  {{ if .IsHome }}
-    {{ range .Sections }}
-      <h2>{{ .Title }}</h2>
-      {{ partial "division.html" . }}
+  {{ if not .Params.NoTOC }}
+    {{ if .IsHome }}
+        {{ range .Sections }}
+        <h2><a href='{{.Permalink}}'>{{ .Title }}</a></h2>
+        {{ partial "division.html" . }}
+        {{ end }}
+    {{ else if .Parent.IsHome }}
+        {{ partial "division.html" . }}
     {{ end }}
-    <hr>
-  {{ else if .Parent.IsHome }}
-    {{ partial "division.html" . }}
     <hr>
   {{ end }}
   {{ .Content }}

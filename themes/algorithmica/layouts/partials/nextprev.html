@@ -4,6 +4,7 @@
     {{ range where .Parent.Translations "Lang" "en" }}
       {{ $pages = $pages | lang.Merge .Pages }}
     {{ end }}
+
     {{ $self := .}}
     {{ $selfIdx := -1 }}
     {{ range $idx, $page := $pages }}
@@ -11,17 +12,43 @@
         {{ $selfIdx = $idx }}
       {{ end }}
     {{ end }}
-    {{ with index $pages (add $selfIdx -1) }}
-      <a href='{{.Permalink}}' style='float: left'>← {{ .Title }}</a>
-    {{ end }}
+
     {{ if .IsSection }}
-      {{ with index .Pages 0 }}
-        <a href='{{.Permalink}}' style='float: right'>{{ .Title }} →</a><br>
+      {{ with index $pages (add $selfIdx -1) }}
+        {{ with index (last 1 .Pages) 0 }}
+          <a href='{{.Permalink}}' style='float: left' id='prev-article'>← {{ .Title }}</a><br>
+        {{ end }}
+        <a href='{{.Permalink}}' style='float: left'>← ../{{ .Title }}</a>
       {{ end }}
-    {{ end }}
-    {{ $self := . }}
-    {{ with index $pages (add $selfIdx 1) }}
-      <a href='{{.Permalink}}' style='float: right'>{{ if $self.IsSection }}../{{ end }}{{ .Title }} →</a>
+      {{ with index .Pages 0 }}
+        <a href='{{.Permalink}}' style='float: right' id='next-article'>{{ .Title }} →</a><br>
+      {{ end }}
+      {{ with index $pages (add $selfIdx 1) }}
+        <a href='{{.Permalink}}' style='float: right'>../{{ .Title }} →</a>
+      {{ end }}
+    {{ else }}
+      {{ with index $pages (add $selfIdx -1) }}
+        <a href='{{.Permalink}}' style='float: left' id='prev-article'>← {{ .Title }}</a>
+      {{ else }}
+        <a href='{{.Parent.Permalink}}' style='float: left' id='prev-article'>← ../{{ .Parent.Title }}</a>
+      {{ end }}
+      {{ with index $pages (add $selfIdx 1) }}
+        <a href='{{.Permalink}}' style='float: right' id='next-article'>{{ .Title }} →</a>
+      {{ else }}
+        {{ $parent := .Parent }}
+        {{ $parentIdx := -1 }}
+        {{ $pages = .Parent.Parent.Pages }}
+
+        {{ range $idx, $page := $pages }}
+          {{ if eq $page $parent }}
+            {{ $parentIdx = $idx }}
+          {{ end }}
+        {{ end }}
+      
+        {{ with index $pages (add $parentIdx 1) }}
+          <a href='{{.Permalink}}' style='float: right' id='next-article'>../{{ .Title }} →</a>
+        {{ end }}
+      {{ end }}
     {{ end }}
   {{ end }}
 </div>
