@@ -17,7 +17,7 @@
   <ul>
     {{ if .IsHome }}
       {{ range .Pages }}
-        <li><a href='{{ .RelPermalink }}'>{{ .Title }}</a></li>
+        <li class='ignore-indexing'><a href='{{ .RelPermalink }}'>{{ .Title }}</a></li>
       {{ end }}
     {{ else }}
       {{ range $currentDivision.Page.Pages }}
