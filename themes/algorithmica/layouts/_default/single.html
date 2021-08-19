@@ -1,14 +1,3 @@
 {{ define "main" }}
-  {{ partial "toc.html" . }}
-  {{ $blocks := split .RawContent "$$" }}
-  {{ $page := . }}
-  {{ range $idx, $text := $blocks }}
-    {{ if (modBool $idx 2) }}
-      {{ $page.RenderString $text }}
-    {{ else }}
-      $$
-      {{ $text }}
-      $$
-    {{ end }}
-  {{ end }}
+  {{ partial "content.html" . }}
 {{ end }}

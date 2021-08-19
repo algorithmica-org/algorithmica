@@ -1,15 +1,14 @@
 <head>
   {{- partial "analytics.html" -}}
 
-  {{ if .IsHome }}
-    <script src="https://identity.netlify.com/v1/netlify-identity-widget.js"></script>
-  {{ end }}
-
   <meta charset="utf-8">
 
   {{ $style := resources.Get "style.sass" | toCSS | minify | fingerprint }}
   <link rel="stylesheet" href="{{ $style.RelPermalink }}" integrity="{{ $style.Data.Integrity }}">
   <link rel="stylesheet" href="/syntax.css" id="syntax-theme">
+
+  <link rel="stylesheet" type="text/css" href="https://tikzjax.com/v1/fonts.css">
+  <script src="https://tikzjax.com/v1/tikzjax.js"></script>
 
   {{ $dark := resources.Get "dark.sass" | toCSS | minify | fingerprint }}
   <link rel="stylesheet" id="theme">
@@ -35,7 +34,7 @@
     if (localStorage.getItem('theme') == 'dark') {
       switchTheme('dark')
     }
-    window.onload = function() {
+    window.addEventListener('load', function() {
       var el = document.getElementById("active-element")
       //console.log(el)
       if (el) {
@@ -46,8 +45,8 @@
         console.log("Hiding sidebar because window is too small")
         toggleSidebar()
       }*/
-    }
-    window.onscroll = function() {
+    })
+    window.addEventListener('scroll', function() {
       var menu = document.getElementById('menu')
       if (window.scrollY < 120) {
         //console.log("Hiding title")
@@ -56,15 +55,15 @@
         //console.log("Showing title")
         menu.classList.add('scrolled')
       }
-    }
+    })
     // onkeypress didn't work with arrows for some reasons
-    window.onkeydown = function(e) {
+    window.addEventListener('keydown', function(e) {
       if (e.key == 'ArrowLeft') {
         document.getElementById('prev-article').click()
       } else if (e.key == 'ArrowRight') {
         document.getElementById('next-article').click()
       }
-    }
+    })
   </script>
 
   {{- partial "katex.html" . -}}

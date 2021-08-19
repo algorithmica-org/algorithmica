@@ -1,0 +1,22 @@
+{{ $blocks := split .RawContent "$$" }}
+{{ $page := . }}
+{{ range $idx, $text := $blocks }}
+  {{ if (modBool $idx 2) }}
+    {{ $miniBlocks := split $text "@@" }}
+    {{ range $miniIdx, $miniText := $miniBlocks }}
+      {{ if (modBool $miniIdx 2) }}
+        {{ $page.RenderString $miniText }}
+      {{ else }}
+        <script type="text/tikz">
+        \begin{tikzpicture}
+        {{ $miniText }}
+        \end{tikzpicture}
+        </script>
+      {{ end }}
+    {{ end }}
+  {{ else }}
+    $$
+    {{ $text }}
+    $$
+  {{ end }}
+{{ end }}
