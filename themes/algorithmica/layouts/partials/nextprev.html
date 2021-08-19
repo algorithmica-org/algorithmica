@@ -1,52 +1,54 @@
 <div class='nextprev'>
   {{ if not .IsHome }}
-    {{ $pages := .Parent.Pages }}
-    {{ range where .Parent.Translations "Lang" "en" }}
-      {{ $pages = $pages | lang.Merge .Pages }}
-    {{ end }}
-
-    {{ $self := .}}
-    {{ $selfIdx := -1 }}
-    {{ range $idx, $page := $pages }}
-      {{ if eq $page $self }}
-        {{ $selfIdx = $idx }}
+    {{ if not .Parent.IsHome }}
+      {{ $pages := .Parent.Pages }}
+      {{ range where .Parent.Translations "Lang" "en" }}
+        {{ $pages = $pages | lang.Merge .Pages }}
       {{ end }}
-    {{ end }}
 
-    {{ if .IsSection }}
-      {{ with index $pages (add $selfIdx -1) }}
-        {{ with index (last 1 .Pages) 0 }}
-          <a href='{{.Permalink}}' style='float: left' id='prev-article'>← {{ .Title }}</a><br>
+      {{ $self := .}}
+      {{ $selfIdx := -1 }}
+      {{ range $idx, $page := $pages }}
+        {{ if eq $page $self }}
+          {{ $selfIdx = $idx }}
         {{ end }}
-        <a href='{{.Permalink}}' style='float: left'>← ../{{ .Title }}</a>
       {{ end }}
-      {{ with index .Pages 0 }}
-        <a href='{{.Permalink}}' style='float: right' id='next-article'>{{ .Title }} →</a><br>
-      {{ end }}
-      {{ with index $pages (add $selfIdx 1) }}
-        <a href='{{.Permalink}}' style='float: right'>../{{ .Title }} →</a>
-      {{ end }}
-    {{ else }}
-      {{ with index $pages (add $selfIdx -1) }}
-        <a href='{{.Permalink}}' style='float: left' id='prev-article'>← {{ .Title }}</a>
-      {{ else }}
-        <a href='{{.Parent.Permalink}}' style='float: left' id='prev-article'>← ../{{ .Parent.Title }}</a>
-      {{ end }}
-      {{ with index $pages (add $selfIdx 1) }}
-        <a href='{{.Permalink}}' style='float: right' id='next-article'>{{ .Title }} →</a>
-      {{ else }}
-        {{ $parent := .Parent }}
-        {{ $parentIdx := -1 }}
-        {{ $pages = .Parent.Parent.Pages }}
 
-        {{ range $idx, $page := $pages }}
-          {{ if eq $page $parent }}
-            {{ $parentIdx = $idx }}
+      {{ if .IsSection }}
+        {{ with index $pages (add $selfIdx -1) }}
+          {{ with index (last 1 .Pages) 0 }}
+            <a href='{{.Permalink}}' style='float: left' id='prev-article'>← {{ .Title }}</a><br>
           {{ end }}
+          <a href='{{.Permalink}}' style='float: left'>← ../{{ .Title }}</a>
         {{ end }}
-      
-        {{ with index $pages (add $parentIdx 1) }}
-          <a href='{{.Permalink}}' style='float: right' id='next-article'>../{{ .Title }} →</a>
+        {{ with index .Pages 0 }}
+          <a href='{{.Permalink}}' style='float: right' id='next-article'>{{ .Title }} →</a><br>
+        {{ end }}
+        {{ with index $pages (add $selfIdx 1) }}
+          <a href='{{.Permalink}}' style='float: right'>../{{ .Title }} →</a>
+        {{ end }}
+      {{ else }}
+        {{ with index $pages (add $selfIdx -1) }}
+          <a href='{{.Permalink}}' style='float: left' id='prev-article'>← {{ .Title }}</a>
+        {{ else }}
+          <a href='{{.Parent.Permalink}}' style='float: left' id='prev-article'>← ../{{ .Parent.Title }}</a>
+        {{ end }}
+        {{ with index $pages (add $selfIdx 1) }}
+          <a href='{{.Permalink}}' style='float: right' id='next-article'>{{ .Title }} →</a>
+        {{ else }}
+          {{ $parent := .Parent }}
+          {{ $parentIdx := -1 }}
+          {{ $pages = .Parent.Parent.Pages }}
+
+          {{ range $idx, $page := $pages }}
+            {{ if eq $page $parent }}
+              {{ $parentIdx = $idx }}
+            {{ end }}
+          {{ end }}
+        
+          {{ with index $pages (add $parentIdx 1) }}
+            <a href='{{.Permalink}}' style='float: right' id='next-article'>../{{ .Title }} →</a>
+          {{ end }}
         {{ end }}
       {{ end }}
     {{ end }}
