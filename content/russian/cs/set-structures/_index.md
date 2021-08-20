@@ -1,4 +1,4 @@
 ---
 title: Множества
-weight: 7
+weight: 8
 ---
