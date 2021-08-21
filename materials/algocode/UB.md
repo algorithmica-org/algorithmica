@@ -1,1 +1,0 @@
-<https://habr.com/ru/post/229963/>

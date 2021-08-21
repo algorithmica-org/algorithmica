@@ -1,1 +1,0 @@
-  - [indexed_tree](indexed_tree "wikilink")
