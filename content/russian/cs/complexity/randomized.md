@@ -1,6 +1,6 @@
 ---
-title: Амортизация
-weight: 4
+title: Рандомизированные алгоритмы
+weight: 5
 draft: true
 ---
 
