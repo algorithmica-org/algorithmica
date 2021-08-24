@@ -9,7 +9,7 @@ title: T-SNE
 причем чем дальше они друг от друга, тем сильнее они друг друга
 оттакливают.
 
-![](../img/tsne-sample.png)
+![](img/tsne-sample.png)
 
 ### Плюсы t-SNE {#плюсы-t-sne .unnumbered}
 

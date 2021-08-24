@@ -77,9 +77,9 @@ sklearn.decomposition.TruncatedSVD.
 В каком-то смысле PCA - это лучший линейный способ уменьшить размерность
 пространства.
 
-![](../img/pca.png)
+![](img/pca.png)
 
-![](../img/pca-sample.png)
+![](img/pca-sample.png)
 
 ### Плюсы PCA {#плюсы-pca .unnumbered}
 
