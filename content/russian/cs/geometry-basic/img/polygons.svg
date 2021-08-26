@@ -1,0 +1,91 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!--
+
+ Created with Inkscape  http://www.inkscape.org/
+ Then improved with a text editor
+
+ Aspect ratio  17/4 = 510/120
+
+
+ Four paths.
+ No z for the triangle because its outline is not drawn.
+ Three d attributes have values that end with z,
+ because each outline is closed:
+ each polygonal chain comes back to its start point.
+
+* three vertices   triangle       fill="#d77"
+* four vertices    quadrilateral  fill="none"
+* twelve vertices  dodecagon      fill="#0f0"
+* six vertices     hexagon        fill="#dbab3f"
+
+  See notably  http://en.wikipedia.org/wiki/Point_in_polygon
+  to understand  fill-rule='evenodd'
+
+
+-->
+
+<svg
+   xmlns:dc="http://purl.org/dc/elements/1.1/"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   viewBox="0 0 510 120"
+   width="1190"
+   height="280"
+   preserveAspectRatio="xMinYMin meet"
+   xml:space="preserve"
+   id="svg2"
+   version="1.1"
+   inkscape:version="0.47 r22583"
+   sodipodi:docname="Assorted_polygons.svg"><metadata
+     id="metadata18"><rdf:RDF><cc:Work
+         rdf:about=""><dc:format>image/svg+xml</dc:format><dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" /></cc:Work></rdf:RDF></metadata><defs
+     id="defs16"><inkscape:perspective
+       sodipodi:type="inkscape:persp3d"
+       inkscape:vp_x="0 : 140 : 1"
+       inkscape:vp_y="0 : 1000 : 0"
+       inkscape:vp_z="1190 : 140 : 1"
+       inkscape:persp3d-origin="595 : 93.333333 : 1"
+       id="perspective20" /></defs><sodipodi:namedview
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1"
+     objecttolerance="10"
+     gridtolerance="10"
+     guidetolerance="10"
+     inkscape:pageopacity="0"
+     inkscape:pageshadow="2"
+     inkscape:window-width="1280"
+     inkscape:window-height="948"
+     id="namedview14"
+     showgrid="false"
+     inkscape:zoom="0.63817873"
+     inkscape:cx="578.15279"
+     inkscape:cy="134.32506"
+     inkscape:window-x="0"
+     inkscape:window-y="51"
+     inkscape:window-maximized="1"
+     inkscape:current-layer="svg2" /><g
+     id="g3606"><path
+       sodipodi:nodetypes="ccccc"
+       inkscape:transform-center-y="1.3710893"
+       inkscape:transform-center-x="6.6595764"
+       id="path2826"
+       d="m 404.22716,54.978906 10.66995,-7.786021 17.33835,12.702514 -17.72926,8.42877 -10.27904,-13.345263 z"
+       style="fill:#947300;fill-opacity:1;stroke:none" /><path
+       style="fill:#dd7777"
+       id="path4"
+       d="M 10.114787,10 27.078676,104.38709 109.07079,84.858729" /><path
+       d="m 145.42856,11 -18,87 58,12 18,-87 z"
+       id="path8"
+       style="fill:none;stroke:#000000;stroke-width:1.875;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" /><path
+       d="m 234,91 63,18 26,-44 -9,-43 -73,-13 -16,46 28,-18 47,13 -16,33 -20,-6 6,-16 h -26 z"
+       id="path10"
+       style="fill:#00ff00;stroke:#0000ff;stroke-width:1.875;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" /><path
+       d="M 467.16363,8.9826508 444.96255,108.01735 378.35932,20.986857 499.01735,108.01735 477.78154,37.992815 332.02664,108.01735 z"
+       id="path12"
+       style="fill:#dbab3f;fill-rule:evenodd;stroke:#000000;stroke-width:1.875;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none" /></g></svg>

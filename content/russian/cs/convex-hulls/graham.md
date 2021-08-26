@@ -55,3 +55,5 @@ vector<r> graham_convex_hull(vector<r> points) {
     return hull;
 }
 ```
+
+https://visualgo.net/en/convexhull
