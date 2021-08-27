@@ -1,5 +1,6 @@
 ---
 title: Динамическая связность
+draft: true
 ---
 
 *Dynamic Connectivity Problem:*
