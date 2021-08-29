@@ -1,3 +1,8 @@
+---
+title: Матрицы
+weight: 1
+---
+
 ## Определение
 
 $A^{x} = A^{x - 1}\\cdot A = A \\cdot A \\cdot \\dots \\cdot A$

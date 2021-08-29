@@ -1,4 +1,5 @@
 ---
 title: Многочлены
-weight: 18
+weight: 3
 ---
+
