@@ -1,3 +1,9 @@
+---
+title: Disjoint Sparse Table
+authors:
+- Константин Амеличев
+---
+
 Disjoint Sparse Table является сильно более продвинутой версией обычного
 [Sparse Table](Sparse_Table "wikilink"). Как известно, обычный Sparse
 Table не мог быть построен для тех функций от подотрезка массива, для
