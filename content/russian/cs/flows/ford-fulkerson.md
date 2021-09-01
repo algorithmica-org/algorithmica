@@ -119,3 +119,108 @@ int main()
 	... вывод результата ...
 
 }
+
+---
+
+### Немного теории
+
+В качестве упражнения предложите сведение поиска минимального разреза к
+поиску максимального потока.
+
+### Алгоритм Форда-Фалкерсона
+
+Идея алгоритма в том, что изначально $\\forall{v, u}: f(v, u) = 0$ и мы
+будем итеративно увеличивать его вдоль увеличивающего пути:
+
+1.  $f(v, u) = 0$, для всех ребер
+2.  Если сток недостижим из истока в остаточной сети(по ребрам с
+    $c_f(v, u) \> 0$) алгоритм завершается
+3.  Найти увеличивающий путь в $G_f$ и пустить вдоль него
+    $\\underset{(v, u) \\in P}{min} c_f(v, u)$ потока
+4.  Перейти к шагу 2
+
+Если алгоритм завершился, то в остаточной сети нет увеличивающего пути,
+а значит он нашел максимальный поток. В большинстве задач пропускные
+способности целые, а значит после каждой итерации алгоритма поток
+увеличивается хотя бы на 1, увеличивающий путь можно искать с
+помощью $dfs$, следовательно время работы $O(|F|\*(V + E))$.
+
+### Пример реализации на C++
+
+``` c++ numberLines
+struct Edge {
+    int v; // вершина, куда ведёт ребро
+    int flow; // поток, текущий по ребру
+    int capacity; // пропускная способность ребра
+
+    Edge(int v, int capacity)
+        : v(v), flow(0), capacity(capacity) {}
+
+    int get_capacity() { // пропускная способность ребра в остаточной сети
+        return capacity - flow;
+    }
+};
+
+const int INF = (int)(1e9) + 666;
+const int N = 666;
+int S, T; // сток и исток
+
+vector<Edge> edges;
+vector<int> graph[N]; // в списке смежности храним не рёбра, и индексы в списке рёбер
+int used[N];
+int timer = 1; // для быстрого зануления used-а
+
+// Будем поддерживать список рёбер в таком состоянии, что для i ребра, (i ^ 1) будет обратным
+void add_edge(int v, int u, int capacity) {
+    graph[v].emplace_back(edges.size()); // номер ребра в списке
+    edges.emplace_back(u, capacity); // прямое ребро
+    graph[u].emplace_back(edges.size()); // номер ребра
+    edges.emplace_back(v, 0); // обратное ребро
+}
+int dfs(int v, int min_capacity) {
+    if (v == T) {
+        // нашли увеличивающий путь, вдоль которого можно пустить min_capacity потока
+        return min_capacity;
+    }
+    used[v] = timer;
+    for (int index : graph[v]) {
+        if (edges[index].get_capacity() == 0) {
+            continue; // ребро отсутсвует в остаточной сети
+        }
+        if (used[edges[index].v] == timer) {
+            continue;
+        }
+        int x = dfs(edges[index].v, min(min_capacity, edges[index].get_capacity()));
+        if (x) { // нашли путь по которому можно пустить x потока
+            edges[index].flow += x;
+            edges[index ^ 1].flow -= x;
+            return x;
+        }
+    }
+    // не существует пути из v в T
+    return 0;
+}
+
+int main() {
+    int n, m;
+    cin >> n >> m >> S >> T;
+    for (int i = 0; i < m; ++i) {
+        int v, u, capacity;
+        cin >> v >> u >> capacity;
+        add_edge(v, u, capacity);
+    }
+    while (dfs(S, INF)) {  // ищем увеличивающий путь
+        ++timer
+    }
+    // увеличивающего пути нет, следовательно максимальный потока найден
+    int result = 0;
+    for (int index : graph[S]) {
+        result += edges[index].flow;
+    }
+    cout << result << endl;
+    return 0;
+}
+```
+
+[Категория:Конспект](Категория:Конспект "wikilink") [Категория:Потоки в
+сети](Категория:Потоки_в_сети "wikilink")
