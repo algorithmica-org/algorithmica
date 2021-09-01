@@ -1,7 +1,6 @@
 ---
 title: Эвристические алгоритмы
-part: Разное
-weight: 38
+weight: 40
 draft: true
 ---
 
