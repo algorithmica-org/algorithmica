@@ -2,6 +2,7 @@
 title: Disjoint Sparse Table
 authors:
 - Константин Амеличев
+weight: 4
 ---
 
 Disjoint Sparse Table является сильно более продвинутой версией обычного
