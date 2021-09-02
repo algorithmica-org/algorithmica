@@ -21,7 +21,7 @@ struct Edge {
 
 vector<Edge> edges;
 
-sort(edges.begin(), edges.end(), [](edge a, edge b) {
+sort(edges.begin(), edges.end(), [](Edge a, Edge b) {
     return a.weight < b.weight;
 });
 
