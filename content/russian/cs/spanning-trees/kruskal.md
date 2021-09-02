@@ -15,13 +15,17 @@ weight: 3
 За исключением реализации СНМ, код получается очень коротким:
 
 ```c++
-// (w, (a, b))
-vector< pair< int, pair<int, int> > > edges;
+struct Edge {
+    int from, to, weight;
+};
 
-sort(edges.begin(), edges.end());
+vector<Edge> edges;
 
-for (auto e : edges) {
-    int a = e.first.first, b = e.first.second;
+sort(edges.begin(), edges.end(), [](edge a, edge b) {
+    return a.weight < b.weight;
+});
+
+for (auto [a, b, w] : edges) {
     // компоненты разные, если лидеры разные
     if (p(a) != p(b)) {
         // добавим ребро (a, b)
