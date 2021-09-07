@@ -1,5 +1,7 @@
 ---
 title: Ленивая динамика
+weight: 4
+draft: true
 ---
 
 Если сложно придумать порядок обхода таким образом, чтобы все предыдущие
@@ -99,3 +101,48 @@ long long calc(int m, int n) {
 случаях. Например, существует **хвостовая рекурсия** - из программы
 происходит только один рекурсивный вызов. Такой тип рекурсии сразу
 разворачивается компилятором в цикл **while**.
+
+### «Игра Финансистов»
+
+Рассмотрим следующую [задачу](https://codeforces.com/contest/729/problem/F): имеется массив из $n$ чисел.
+
+```cpp
+#include <bits/stdc++.h>
+using namespace std;
+ 
+const int maxn = 4000, maxk = 80;
+ 
+int n;
+int s[maxn+1];
+ 
+unordered_map<unsigned int, long> dp;
+ 
+long f(int l, int r, int k, bool igor){
+	if((r-l+1)/k == 0) return 0;
+	if((r-l+1) == k) return s[r+1]-s[l];
+	unsigned int key = 2u*l*maxn*maxk + r*maxk*2 + k*2 + igor;
+	if(dp.count(key)) return dp[key];
+	long ans;
+	if(igor) ans = max(s[l+k]-s[l]-f(l+k, r, k, false), s[l+k+1]-s[l]-f(l+k+1, r, k+1, false));
+	else ans = max(s[r+1]-s[r-k+1]-f(l, r-k, k, true), s[r+1]-s[r-k]-f(l, r-k-1, k+1, true));
+	return dp[key] = ans;
+}
+ 
+int main(){
+	ios::sync_with_stdio(false);
+ 
+	dp.rehash(6.2e7);
+ 
+	cin >> n;
+ 
+	for(int i = 0; i < n; i++){
+		int t;
+		cin >> t;
+		s[i+1] = s[i] + t;
+	}
+ 
+	cout << f(0, n-1, 1, true); 
+ 
+	return 0;
+}
+```
