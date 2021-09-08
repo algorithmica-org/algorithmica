@@ -214,10 +214,6 @@ Node* merge(Node *l, Node *r) {
         // ...
     }
 }
-```
-
-```c++
-typedef pair<Node*, Node*> Pair;
 
 pair<Node*, Node*> split(Node *p, int x) {
     // ...
@@ -251,30 +247,19 @@ int sum(int l, int r) {
 Дублирующийся код — это плохо. Давайте воспользуемся всей мощью C++ и определим функцию, которая принимает другую функцию, которая в свою очередь уже будет делать полезные вещи на нужном отрезке:
 
 ```c++
-void apply(int l, int r, auto f) {
+int apply(int l, int r, auto f) {
     auto [T, R] = split(root, r);
     auto [L, M] = split(T, l);
-    M = f(M);
+    int res = f(M);
     root = merge(L, merge(M, R));
-}
-
-void reverse(Node *v) {
-    if (v)
-        v->rev ^= 1;
+    return res;
 }
 ```
 
 Применять её нужно так:
 
 ```c++
-apply(l, r, reverse);
+apply(l, r, sum);
 ```
 
-Для простых операций можно даже написать лямбду:
-
-```c++
-apply(l, r, [](Node *v){
-    if (v)
-        v->rev ^= 1;
-});
-```
+Для большинства операций удобно туда передать лямбду, если она ещё не была реализована для `upd`.
