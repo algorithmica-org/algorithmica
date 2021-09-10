@@ -1,5 +1,6 @@
 ---
 title: Mergesort Tree
+draft: true
 ---
 
 #### Задача
