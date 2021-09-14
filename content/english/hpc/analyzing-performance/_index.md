@@ -2,6 +2,7 @@
 title: Analyzing Performance
 part: Performance Engineering
 weight: 1
+draft: true
 ---
 
 When I was in high school, during one of the summer breaks, I pushed myself to convert from being a JavaScript kiddie to becoming a competitive programmer. I realized that making websites won't get you into a university, but doing well in olympiads will. So I started learning C++ on my own and took the habit of solving (or at least trying to) a few problems from one of the online archives every day.

@@ -4,7 +4,7 @@ menuTitle: HPC
 weight: 5
 authors:
 - Sergey Slotin
-created: "Feb 2021"
+#created: "Feb 2021"
 date: 2021-08-31
 noToc: true
 ---
@@ -14,12 +14,6 @@ This is a work-in-progress Computer Science book titled "Algorithms for Modern H
 Unlike a traditional book, this one will change over time, evolving in parallel with new improvements in hardware and software as well as my understanding of them.
 
 All materials are hosted on GitHub, with code in a [separate repository](https://github.com/sslotin/scmm-code). This isn't a collaborative project, but any contributions and feedback are welcome.
-
-### Disclaimer: Technology Choices
-
-The examples in this book use C++, GCC, x86-64, CUDA and Spark, although the underlying principles we aim to convey are not specific to them.
-
-To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment, and thus more helpful for the reader. I would have respectively picked C / Rust, LLVM, arm, OpenCL and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
 
 ### Part I: Performance Engineering
 
@@ -112,3 +106,9 @@ Release date: ???
 LLVM IR, core optimization techniques from the dragon book, JIT-compilation, cython, jax, numba, julia, OpenCL, DPC++ and oneAPI, XLA, FPGAs and Verilog, ASICs, TPUs and other AI accelerators.
 
 Release date: ???
+
+### Disclaimer: Technology Choices
+
+The examples in this book use C++, GCC, x86-64, CUDA and Spark, although the underlying principles we aim to convey are not specific to them.
+
+To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment, and thus more helpful for the reader. I would have respectively picked C / Rust, LLVM, arm, OpenCL and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.

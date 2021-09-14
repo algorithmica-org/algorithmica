@@ -2,6 +2,7 @@
 title: Summary
 weight: 10
 ignoreIndexing: true
+draft: true
 ---
 
 Now we have enough information to summarize what we've learned.

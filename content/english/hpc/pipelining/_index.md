@@ -2,6 +2,7 @@
 title: Instruction-Level Parallelism
 menuTitle: ILP
 weight: 5
+draft: true
 ---
 
 When I said that `add` instruction only takes one cycle, I lied a little bit. Every instruction needs a bit more than that. The whole thing takes around 5-6 clock cycles. But still, when you use it, it appears and feels like a single instruction. How does CPU achieve that?

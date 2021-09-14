@@ -2,6 +2,7 @@
 title: SIMD Parallelism
 menuTitle: SIMD
 weight: 4
+draft: true
 ---
 
 Consider the following program, in which we calculate the sum of an integer array:
