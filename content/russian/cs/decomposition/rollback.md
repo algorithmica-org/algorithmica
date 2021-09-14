@@ -2,6 +2,7 @@
 title: Откатывание состояний
 prerequisites:
 - /cs/persistent/persistent-array
+weight: 2
 ---
 
 
