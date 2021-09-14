@@ -373,7 +373,8 @@ h2 a
 footer
   flex-shrink: 0;
   text-align: center
-  opacity: 0.4
+  opacity: 0.5
+  color: $dimmed
   font-size: 0.75em
   margin: 50px 0px 0px
   padding: 4px
@@ -526,10 +527,16 @@ a[href='']
     margin: 0
 
   @page
-    margin: 20mm
+    margin: 15mm
 
-  menu, .info, footer, .nextprev
+  menu, .info, footer, .nextprev, #sidebar
     display: none
+
+  pre
+    font-size: 0.7em
+
+  #wrapper
+    margin-left: 0
   
   header
     margin-top: 0
