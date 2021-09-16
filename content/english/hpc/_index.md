@@ -5,13 +5,13 @@ weight: 5
 authors:
 - Sergey Slotin
 #created: "Feb 2021"
-date: 2021-08-31
+date: 2021-09-16
 noToc: true
 ---
 
-This is a work-in-progress Computer Science book titled "Algorithms for Modern Hardware".
+This is a work-in-progress High Performance Computing book titled "Algorithms for Modern Hardware".
 
-Unlike a traditional book, this one will change over time, evolving in parallel with new improvements in hardware and software as well as my understanding of them.
+It is intended for performance engineers as well as CS students who have just finished an advanced algorithms course and want to learn more practical ways to speed up a program than by going from $O(n \log n)$ to $O(n \log \log n)$.
 
 All materials are hosted on GitHub, with code in a [separate repository](https://github.com/sslotin/scmm-code). This isn't a collaborative project, but any contributions and feedback are welcome.
 
