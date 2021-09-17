@@ -1,12 +1,11 @@
 ---
 title: Сканирующая прямая
 authors:
-  - Сергей Слотин
+- Сергей Слотин
 prerequisites:
-  - /cs/range-queries
-  - /cs/segment-tree
+- /cs/range-queries
+- /cs/segment-tree
 weight: 1
-published: true
 ---
 
 Метод сканирующей прямой (англ. *scanline*) заключается в сортировке точек или каких-то абстрактных *событий* (англ. *event*) и последующему проходу по ним.
