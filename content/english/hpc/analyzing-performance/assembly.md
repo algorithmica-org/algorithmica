@@ -240,7 +240,7 @@ Branchless computing tricks like this one are especially important in all sorts 
 
 To call a "function" in assembly, you need to jump to its beginning and then jump back. But then two important problems arise:
 
-1. What if the caller stores data in the same registers that the callee does?
+1. What if the caller stores data in the same registers as the callee?
 2. Where is "back"?
 
 Both of these concerns can be solved by having a dedicated location in memory where we write all the information we need to return from the function before calling it. This location is called *the stack*.
