@@ -89,7 +89,7 @@ For example, `mov` is "copy a word", `inc` is "increment by 1" and `idiv` is "si
 
 Most instructions write their result into the first operand, which can also be involved in the computation like in the `add eax, [rdi]` example we saw before. Operands can be either constant values, registers or memory locations.
 
-**Constants** are just integer or floating point values: `42`, `0x2a`, `3.14`, `6.02e23`. They are embedded right into the machine code. There are also string constants such as `hello` or `world\n` with their own little subset of operations, but that is a somewhat obscure corner of assembly language so we are not going to consider them.
+**Constants** are just integer or floating point values: `42`, `0x2a`, `3.14`, `6.02e23`. They are embedded right into the machine code. There are also string constants such as `hello` or `world\n` with their own little subset of operations, but that is a somewhat obscure corner of the assembly language that we are not going to explore.
 
 **Registers** are named `rax`, `rbx`, `rcx`, `rdx`, `rdi`, `rsi`, `rbp`, `rsp`, and `r8`-`r15` for a total of 16 of them. The "letter" ones are named like that for historical reasons: `rax` is "accumulator", `rcx` is "counter", `rdx` is "data" and so on, but, of course, they don't have to be used only for that.
 
