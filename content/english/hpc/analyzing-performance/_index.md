@@ -2,54 +2,39 @@
 title: Analyzing Performance
 part: Performance Engineering
 weight: 1
-draft: true
 ---
 
-When I was in high school, during one of the summer breaks, I pushed myself to convert from being a JavaScript kiddie to becoming a competitive programmer. I realized that making websites won't get you into a university, but doing well in olympiads will. So I started learning C++ on my own and took the habit of solving (or at least trying to) a few problems from one of the online archives every day.
+If you are reading this book, then somewhere on your computer science journey you had a moment when you first started to care about efficiency of your code.
 
-I was an okay programmer before, especially for a high school kid, but coming from a high-level langauge and only being involved in small web projects, I never really wondered how much time it took for my code to execute. But suddenly it started to matter: each problem has a strict time limit. I started counting my operations. How many can you do in one second?
+Mine was in high school, when I entered the world of competitive programming and started learning C++. I was happily coding small projects in JavaScript and PHP before that, but I realized that making websites won't get you into a university, but doing well in olympiads will.
 
-You may have went through this in high school just as I did, or you might have learned that at a CS101 course in college, or maybe you even got through a decent chunk of your career without ever needing algorithms and then got asked to invert a binary tree on an interview. But regardless of background, if you are reading this book, you have asked that question too.
+I was an okay programmer, especially for a high schooler, but coming from high-level langauges, I had never really wondered how much time it took for my code to execute. But suddenly it started to matter: each problem now has a strict time limit. I started counting my operations. How many can you do in one second?
 
-I didn't know much about computer architecture to answer this question. But I also didn't need the right answer; I needed a rule of thumb. So I thought "2-3GHz means that 2 to 3 billion instructions are executed every second, and in a simple loop that does something with array elements, I also need to do array indexing, increment loop counter, check end-of-loop condition and stuff like that, so let's add room for 3-5 more instructions for every useful one" and ended up with using $5 \cdot 10^8$ as an estimate. None of these statements are true, but counting how many operations my algorithm needed and dividing it by this number was a good rule of thumb in my use case.
+I didn't know much about computer architecture to answer this question. But I also didn't need the right answer — I needed a rule of thumb. My thought process was: "2-3GHz means 2 to 3 billion instructions executed every second, and in a simple loop that does something with array elements, I also need to increment loop counter, check end-of-loop condition, do array indexing and stuff like that, so let's add room for 3-5 more instructions for every useful one" and ended up with using $5 \cdot 10^8$ as an estimate. None of these statements are true, but counting how many operations my algorithm needed and dividing it by this number was a good rule of thumb for my use case.
 
-The real answer, of course, is more complicated and highly dependent on the operation. It can be as low as $10^7$ if we are talking about chasing pointers in a random permutation or as high as $10^{11}$ if we are lighting up all the transistors we have to do some math-dense computation.
-
----
-
-Processors have a concept of a *clock rate*, which refers to the frequency at which an electronic oscillator sends pulses through the curcuit, which change its state. Every *cycle*, something happens.
-
-The clock rate is a variable. It may be adjusted during execution. For example, it frequently changes on mobile CPUs to consume lower energy most of the time and "burst" for a short period when it needs to do something compute-intensive.
-
-The next two sections are about assembly and profiling. These don't seem fun or sexy. You may want to close the page, bookmark it in the browser and never come back. I'm trying to convince you, my reader.
-
-One mistake I made when learning how to write faster programs is to use empirical approach. I actually wish I learned computer architecture before doing high-level programming. This would have saved me a few hundred hours.
-
-"But I'm here to learn how to write faster algorithms, not to learn assembly"—you may say. Let me convince you otherwise.
+The real answer is, of course, much more complicated and highly dependent on what kind of "operation" you have in mind. It can be as low as $10^7$ for pointer chasing and as high as $10^{11}$ for dense linear algebra. To demonstrate these striking differences, we will use the case study of matrix multiplication implemented in different languages.
 
 ## How Code Gets Executed
 
-Processors can be thought of as state machines. They keep their state in multiple registers that store fixed-length data, one of which, instruction pointer, points to a location in memory in which these encoded instructions are stored.
+Processors can be thought of as state machines. They keep their state in several fixed-length registers, one of which, the instruction pointer, indicates a memory location of the next instruction to be read and executed. This instruction somehow modifies the registers and moves the instruction pointer to the next instruction to be executed, and so on.
 
-There are multiple ways how code in a programming language can get executed. This depends on the type of a language.
+These instructions — called *machine code* — are binary encoded, quirky and very difficult to work with, so no sane person writes them directly nowadays. Instead, we use higher-level programming languages and employ alternative means to feed instructions to the processor.
 
-From programmer's perspective, there are two types of languages: *compiled* and *interpreted*.
+From programmer's perspective, there are two types of languages: *compiled* and *interpreted*. The former you have to pre-process before executing, while the latter are executed during runtime using an *interpreter*.
 
-From computer's perspective, there are also two types of languages: *native* and *managed*.
+From computer's perspective, there are also two types of languages: *native* and *managed*. The former directly execute machine code, while the latter use some sort a *runtime* to do so. 
 
-The difference is that the first classification is about having to pre-process a program before execution, and the second is about directly executing machine code or having some sort of a runtime.
-
-Since running machine code in an interpreter doesn't make sense, there are 3 types of languages in total:
+Since running machine code in an interpreter doesn't make sense, there are in total three types of languages:
 
 - Interpreted languages, such as Python, JavaScript or Ruby.
-- Compiled languages with a runtime, such as Java, C# or Erlang (and languages that work on their VMs, like Scala, F# and Elixir).
-- Compiled native languages, such as C, Go and Rust.
+- Compiled languages with a runtime, such as Java, C# or Erlang (and languages that work on their VMs, such as Scala, F# or Elixir).
+- Compiled native languages, such as C, Go or Rust.
 
-How compilation happens.
+Interpreters and virtual machines provide flexibility and enable some nice high-level programming features such as dynamic code alteration. Unfortunately, there are also unavoidable trade-offs between performance and the benefits that dynamic languages can provide.
 
-Interpreters and virtual machines are more flexible and can support nice high-level programming features — such as dynamic code alteration — at the cost of performance.
+### Interpreted languages
 
-Euclid's algorithm for calculating GCD[^gcd]:
+Here is an example of a by-definition $1024 \times 1024$ matrix multiplication in pure Python:
 
 ```python
 import time
@@ -80,7 +65,23 @@ duration = time.time() - start
 print(duration)
 ```
 
-630 seconds — more than 10 minutes! I had to go pour myself some tea.
+This code runs in 630 seconds. That's more than 10 minutes!
+
+Let's try to put this number in perspective. The CPU that ran it has a clock frequency of 1.4GHz, meaning that it does $1.4 \cdot 10^9$ cycles per second, almost $10^{15}$ for the entire computation, and 880 cycles per each multiplication in the innermost loop.
+
+This is not surprising if you consider the things that Python needs to do to figure out what the programmer meant:
+
+- it parses the expression `c[i][j] += a[i][k] * b[k][j]`;
+- tries to figure out what `a`, `b`, and `c` are and looks up their names in a special hash table with type informations;
+- understands that `a` is a list, fetches its `[]` operator, retrieves the pointer for `a[i]`, figures out it's also a list, fetches its `[]` operator again, gets the pointer for `a[i][k]`, and then the element itself;
+- looks up its type, figures out that it's a `float`, and fetches the method implementing `*` operator;
+- does the same things for `b` and `c` and finally add-assignes the result to `c[i][j]`.
+
+If we get rid of all this type checking and pointer chasing, perhaps we can get cycles per multiplication ratio to 1, or whatever the cost of native multiplication is?
+
+### Managed Languages
+
+Here is the same matrix multiplication, but implemented in Java:
 
 ```java
 import java.util.Random;
@@ -115,9 +116,17 @@ public class Matmul {
 }
 ```
 
-10 seconds. `pypy` it takes about 12 seconds.
+It now runs in 10 seconds, or roughly 13 cycles per multiplication. Considering that we need to read elements of `b` non-sequentially form memory, the running time is roughly what it is supposed to be.
 
-```c
+Note that Java is a compiled, but not native language. The code compiles to bytecode, which is then interpreted by a virtual machine (JVM). To achieve higher performance, frequently executed parts of the code, such as the innermost for loop, are compiled into machine code during runtime and executed with almost no overhead. This technique is called *just-in-time compilation*.
+
+JIT compilation is not a feature of the language itself, of its implementation. There is also a JIT-compiled version of Python called [PyPy](https://www.pypy.org/), which needs about 12 seconds to execude the code above without any changes.
+
+### Compiled Languages
+
+Now it's turn for C:
+
+```cpp
 #include <stdlib.h>
 #include <stdio.h>
 #include <time.h>
@@ -147,9 +156,13 @@ int main() {
 }
 ```
 
-9 seconds when you compile with `gcc -O3`, but when you add `-march=native` and `-ffast=math` flags, it goes down to 0.6 seconds
+It takes 9 seconds when you compile it with `gcc -O3`. The 1-3 second advantage over Java and PyPy can be explained as the additional time of JIT-compilation. It doesn't seem like a lot, but we haven't yet taken advantage of a far better C compiler ecosystem. If we add `-march=native` and `-ffast=math` flags, time suddenly goes down to 0.6 seconds!
 
-Let's go back to Python. The easiest way to use BLAS is to call it from `numpy`:
+What happened here is we communicated the compiler the exact model of CPU we are running (`-march=native`) and gave it freedom to rearrange floating-point computations (`-ffast=math`), and so it took advantage of it, most importantly using vectorization — an architecture-specific technique we will study in detail later in chapter 3.
+
+### BLAS
+
+Finally, let's look what an expert-optimized implementation is capable of. We will test an optimized linera algebra library called [OpenBLAS](https://www.openblas.net/). The easiest way to use it is to go back to Python and call it from `numpy`:
 
 ```python
 import time
@@ -168,12 +181,8 @@ duration = time.time() - start
 print(duration)
 ```
 
-It now takes ~0.12 seconds — that's 5x speedup over C++ version and 5000x speedup over Python.
+Now it takes ~0.12 seconds: a ~5x speedup over C++ and ~5250x speedup over our initial Python implementation!
 
-You don't typically see such dramatic improvements.
+You don't typically see such dramatic improvements. For now, we are not ready to tell you exactly how this is achieved. Implementations of dense matrix multiplication in OpenBLAS are typically [5000 lines of handwritten assembly](https://github.com/xianyi/OpenBLAS/blob/develop/kernel/x86_64/dgemm_kernel_16x2_haswell.S) for *each* architecture. In later chapters, we will explain all the relevant techniques one by one, and in chapter 6, we will return to this example and develop our own BLAS-level implementation with just under 40 lines of C.
 
-Theoretical peak for a single core is ~22.4 GFLOPS. We are doing about 18.
-
-They aren't always sacrificing control because of a trick called just-in-time compilation. If you tune the runtime right, then for frequent procedures a native code is compiled, which is.
-
-My point here is that using a native language doesn't give you performance; it gives you *control* over performance. And to make use of that control, having an intuition about performance isn't enough; it is instrumental to understand CPU microarchitecture.
+The point here is that using a native language doesn't give you performance; it gives you *control* over performance. And to make use of it, having just a general intuition about performance isn't enough. It is instrumental to understand CPU microarchitecture, which is what we will focus on in this chapter.
