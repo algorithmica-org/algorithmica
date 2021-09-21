@@ -447,11 +447,11 @@ These syntaxes are also sometimes called *GAS* and *NASM* respectively, by the n
 We used Intel syntax in this chapter. Here is how the summation loop looks like in AT&T asm:
 
 ```asm
-LOOP:
+loop:
     addl (%rax), %edx
     addq $4, %rax
     cmpq %rcx, %rax
-    jne  LOOP
+    jne  loop
 ```
 
 Key differences can be summarized as follows:
