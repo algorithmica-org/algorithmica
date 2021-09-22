@@ -130,7 +130,9 @@ You can get a list of all supported events with `perf list`, and then specify a 
 44,991,746      cache-misses:u      # 49.440 % of all cache refs
 ```
 
-By itself, `perf stat` just sets up performance counters for the whole program. To try the stop-the-world approach we talked about initially, we need to use `perf record <cmd>`, which records profiling data and dumps it as a `perf.data` file, and then `perf report` to inspect it. I highly advise you to go and try it yourselves, because the last command is interactive and colorfull, but for those that can't do it right now I'll try to describe it the best I can.
+By itself, `perf stat` tells you the total number of branch mispredicts, but it won't tell you *where* they are happening, let alone *why* they are happening. It simply sets up performance counters for the whole program.
+
+To try the stop-the-world approach we talked about initially, we need to use `perf record <cmd>`, which records profiling data and dumps it as a `perf.data` file, and then `perf report` to inspect it. I highly advise you to go and try it yourselves, because the last command is interactive and colorfull, but for those that can't do it right now I'll try to describe it the best I can.
 
 When you call `perf report`, it first displays a `top`-like interactive report which will tells you which functions are taking how much time:
 
@@ -247,66 +249,47 @@ A CPU is a very complicated thing, so it outputs a lot of information. We are no
 
 ## Algorithm Design as an Empirical Field
 
-I like to think about these three profiling methods by an analogy of how natural scientists study small things:
+(This section is a draft.)
 
-- When objects are on a micrometer scale, they use optical microscopes.
-- When objects are on a nanometer scale and light no longer interacts with them, they use electron microscopes.
-- When objects are smaller than that (i. e. peek inside of an atom), they resort to theories and assumptions about how things work.
+I like to think about these three profiling methods by an analogy of how natural scientists study small things, picking the right tool based on the required level of precision:
 
-The same thing applies to designing algorithms: pick the tool based on what level of precision you need.
+- When objects are on a micrometer scale, they use optical microscopes. (`time`, `perf stat`, instrumentation)
+- When objects are on a nanometer scale and light no longer interacts with them, they use electron microscopes. (`perf record` / `perf report`, heatmaps)
+- When objects are smaller than that (i. e. to peek inside of an atom), they resort to theories and assumptions about how things work. (`llvm-mca`, `cachegrind`, staring at assembly)
 
-`perf stat` tells you the total number of branch mispredicts, but it won't tell you *where* they are happening, let alone *why* they are happening.
+For practical algorithm design, we use the same empirical methods, although this is not because we don't know some of the secrets of nature, but mostly because modern computers are too complex to analyze — although this is also true that we, regular software engineers, can't know some of the details because of IP protection from hardware companies. In fact, considering that most accurate x86 instruction tables are [reverse-engineered](https://arxiv.org/pdf/1810.04610.pdf), there is a reason to believe that Intel doesn't know these details themselves.
 
-### Experiment Setup
+### Managing Experiments
 
-Here are some common examples:
+If you do it correctly, working on improving performance should resemble a loop:
 
-- If you just need time, use `time` command.
-- If you need to put it in context, use `perf stat`.
-- It also helps to calculate statistics like ns / query or cycle / byte.
-- If you need to see function time breakdown, use `perf report`.
-- If you need to peek inside assembly, create a minimal snippet and feed it into `llvm-mca`.
+1. run the program and collect metrics,
+2. figure out where the bottleneck is,
+3. remove the bottleneck and go to step 1.
 
-I usually have a Makefile and a Jupyter notebook where I draw plots and do other analytics.
+The shorter this loop is, the faster you will iterate. Here are some hints on how to set up your environment to achieve this (you can find many examples in the [code repo](https://github.com/sslotin/ahm-code) for this book):
 
----
+- Separate all testing and analytics code from the implementation of the algorithm itself, and also different implementations from each other. In C/C++, you can do this by creating a single header file (e. g. `matmul.hh`) with a function interface and the code for its benchmarking in `main`, and many implementation files for each algorithm version (`v1.cc`, `v2.cc`, etc.) that all include that single header file.
+- To speed up builds and reruns, create a Makefile or just a bunch of small scripts that also calculate the statistics you may need.
+- To speed up high-level analytics, create a Jupyter notebook where you put small scripts and do all the plots. You can also put build scripts there if you feel like it.
+- To put numbers in perspective, use statistics like "ns per query" or "cycles per byte" instead of wall clock. When you start to approach very high levels of performance, it makes sense to calculate what the theoretically maximal performance is and start thinking about your algorithm performance as a fraction of it.
 
-Leaving aside that some details in Intel documentations are actually reverse-engineered and have comparable complexity with quantuum mechanics, algorithm design is an empirical field too.
+Make the dataset as representing of your real use case as possible, and reach an agreement with people upon the procedure of benchmarking. This is especially important for data structures. Most sorting algorithms perform differently depending on the input. Hash tables perform differently with different distributions of keys.
 
-I came to machine learning because it took the empirical approach from physics and other natural sciences and methods from computer science.
+### Removing Noise
 
-Modern algorithm design is an empirical field too. But it is limited not by unknowns, but by our lack of understanding computers.
+Since we are guiding our optimization by experiments, it is important to account for side effects and external noise on them, especially when reporting results to someone else:
 
-Maybe there is someone who knows all the rules, but it doesn't change the reality for us. We still have partial information, and it doesn't really matter why.
+- Unless you are expecting a 2x kind of improvement, treat microbenchmarking the same way as A/B testing. When you run a program on a laptop for under a second, a ±5% fluctiation in performance is normal, so if you want to revert or keep a potential +1% improvement, run it until you reach a statistical significance, by calculating variances and p-values.
+- Make sure there are no cold start effects due to cache. I usually solve this by making one cold test run where I check correctness of the algorithm, and then run it many times over for benchmarking.
+- If you benchmark a CPU-intensive algorithm, measure its performance in cycles using `perf stat`: this way it will be independent of clock frequency, which is usually the main source of noise.
+- Otherwise, set core frequency to the level you expect it to be and make sure nothing interferes with it. On linux you can do it with `cpupower` (e. g. `sudo cpupower frequency-set -g powersave` to put it to minimum or `sudo cpupower frequency-set -g ondemand` to enable turbo boost).
 
+It is very easy to get skewed results without doing anything obviously wrong. It is also important to quiesce the system:
 
-For people who don't use tools and are learning towards skipping this section. I don't generally use a debugger myself.
-
-There are three groups of people: those who use debuggers, those who don't but feel that they are bad programmers for that, and those that don't use it consciously.
-
-When I'm just learning the language or a library. Or resort to printing, whichever seems less work-intensive.
-
-There are numerous people who don't use a debugger. Guido van Rossum never had and at this point probably never will stop using prints. You can find quite a few obscene Linus Torvalds emails with his thoughts on kernel debugger. The only motivation for that is that you have limited time, and sometimes it is better spent on trying to understand program better rather than watching it crash in slow motion. It is a bug, so there must be a line responsible for it. If you can't find it in a reasonable time (which is very small if you have tests), then you can do debugging, but this should be really rare in properly written software.
-
-Profiling is very different. You don't simply have a single-line *bug* that affects your performance. It involves a much higher level of interaction, on the algorithm level.
-
-Debugging is useful in cases where you don't know the language.
-
-But profiling is different. It is always for cases when you don't know what's happening.
-
-### Quiescing the System
-
-It is very easy to get skewed results without doing anything obviously wrong.
-
-In this book, we will neglect this, as we are mostly dealing with 2x kind of improvements, and not a few percent. Remember AP statistics and treat it as an AB test.
-
-Quiescing the system
-
-Here is a (non-extensive) checklist of what to do before measuring performance:
-
-- Make sure no other jobs are running.
-- Turn turbo boost and hyperthreading off.
-- Turn off network and don't fiddle with the mouse.
-- Attach jobs to specific cores.
+- make sure no other jobs are running,
+- turn turbo boost and hyperthreading off,
+- turn off network and don't fiddle with the mouse,
+- tttach jobs to specific cores.
 
 Even a program's name can affect its speed: the executable's name ends up in an environment variable, environment variables end up on the call stack, and the length of the name will affect stack allignment, and data access can slow down when crossing cache line of page boundaries.
