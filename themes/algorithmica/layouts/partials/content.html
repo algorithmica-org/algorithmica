@@ -9,14 +9,14 @@
       {{ else }}
         <script type="text/tikz">
         \begin{tikzpicture}
-        {{ $miniText }}
+        {{ safeHTML $miniText }}
         \end{tikzpicture}
         </script>
       {{ end }}
     {{ end }}
   {{ else }}
     $$
-    {{ $text }}
+    {{ safeHTML $text }}
     $$
   {{ end }}
 {{ end }}
