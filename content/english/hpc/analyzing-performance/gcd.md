@@ -7,7 +7,7 @@ When you try to explain some complex concept, it is generally a good idea to giv
 
 But the main purpose of this book is not to learn computer architecture for the sake of learning it, but to acquire real-world skills in software optimization. To achieve this goal, it is filled with — and, in fact, mostly comprised of — examples of algorithms that are harder to optimize than a sum of an array. This one is the first of many.
 
-In this section, we will design a variant of `gcd` that is ~2x faster than what the standard library has to offer.
+In this section, we will derive a variant of `gcd` that is ~2x faster than the one in the C++ standard library.
 
 ## Euclid's Algorithm
 
@@ -173,7 +173,7 @@ int gcd(int a, int b) {
 
 It runs in 116ns, while `std::gcd` takes 198ns. Almost twice as fast — maybe we can even optimize it below 100ns?
 
-Now we need to stare at [its assembly](https://godbolt.org/z/nKKMe48cW) again, in particular at this block:
+For that we need to stare at [its assembly](https://godbolt.org/z/nKKMe48cW) again, in particular at this block:
 
 ```nasm
 ; a = edx, b = eax
@@ -190,8 +190,6 @@ loop:
     test  edx, edx       ; a != 0?
     jne   loop
 ```
-
-Note that there is no separate `abs` instruction in assembly: it is calculated as a maximum of a value and its negative with a conditional move.
 
 Let's draw the dependency graph of this loop:
 
@@ -212,7 +210,9 @@ Let's draw the dependency graph of this loop:
 \path [->, dashed] (shift) edge [bend left=25] (min);
 @@
 
-Modern processors can execute many instructions in parallel, essentially meaning that the true "cost" of this computation is the sum of latencies on its critical path: in this case it is the total latency of diff, abs, ctz and shift. We can decrease this latency using the fact that we can actually calculate `ctz` using just `diff = a - b`, because a negative number divisible by $2^k$ still has $k$ zeros at the end. This lets us not wait for `max(diff, -diff)` to be completed, resulting in a shorter graph like this:
+Modern processors can execute many instructions in parallel, essentially meaning that the true "cost" of this computation is roughly the sum of latencies on its critical path: in this case it is the total latency of diff, abs, ctz and shift.
+
+We can decrease this latency using the fact that we can actually calculate `ctz` using just `diff = a - b`, because a negative number divisible by $2^k$ still has $k$ zeros at the end. This lets us not wait for `max(diff, -diff)` to be computed first, resulting in a shorter graph like this:
 
 @@
 \node [draw, circle] (diff)  at (3, 10) {diff};
@@ -255,7 +255,7 @@ int gcd(int a, int b) {
 }
 ```
 
-It runs in 91ns — good enough to leave it there.
+It runs in 91ns — which is good enough to leave it there.
 
 If somebody wants to try to shove off a few more nanoseconds by re-writing assembly by hand or trying a lookup table to save a few last iterations, please [let me know](http://sereja.me/).
 
