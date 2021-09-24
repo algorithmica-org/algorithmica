@@ -4,12 +4,6 @@ weight: 3
 draft: true
 ---
 
----
-title: Реализация операций «снизу»
-weight: 3
-draft: true
----
-
 Эта статья --- перевод [поста с codeforces](https://codeforces.com/blog/entry/18051).
 
 ## ДО для изменения одного элемента
