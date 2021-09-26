@@ -3,19 +3,31 @@ title: Floating-Point Arithmetic
 weight: 1
 ---
 
-Floating-point arithmetic is treated as a bit of an esoteric subject in computer science curricula. Given the widespread use of numerical algorithms, this is rather surprising that there are still so many prevalent misconceptions about it. Most programmers think that it is slower than integer arithmetic, fundamentally imprecise and unstable, and that a random error term is added to the result every computation involving floating-point types, and therefore just tend to avoid it altogether.
+The users of floating-point arithmetic deserve one of these IQ bell curve memes — because this is how the relationship between it and most people typically proceeds:
 
-But these are all just myths. Floating-point arithmetic is often even faster than integer one due to the availability of specialized instructions, and floating-point representations are thoroughly standartized and follow simple and well-defined rules for rounding, so that you *can* reliably manage errors and even perform some computations exactly.
+- Beginner programmers use it everywhere as if it was some magic unlimited-precision data type.
+- Then they discover that `0.1 + 0.2 != 0.3` or some other quirk like that, freak out, start thinking that some random error term is added to every computation, and for many years aviod any real data types completely.
+- Then they finally man up, read the specification of how IEEE-754 floats work and start using them appropriately.
+
+Most people are unfortunately still at stage 2, breeding various misconceptions about floating-point arithmetic — thinking that it is fundamentally imprecise and unstable, and slower than integer arithmetic.
+
+![](../img/iq.svg)
+
+But these are all just myths. Floating-point arithmetic is often *faster* than integer arithmetic because of specialized instructions, and real number representations are thoroughly standartized and follow simple and deterministic rules in terms of rounding, allowing you to manage computational errors reliably.
+
+In fact, it is so reliable that some high-level programming languages, most notably JavaScript, don't have integers at all. In JavaScript, there is only one `number` type, which is internally stored as a 64-bit `double`, and due to the way floating-point arithmetic works, all integer numbers between $-2^{53}$ and $2^{53}$ and results of computations involving them can be stored exactly, so from a programmer's perspective, there is little practical need for a separate integer type.
+
+One notable exception is when you need to perform bitwise operations with numbers, which *floating-point units* (the coprocessors responsible for operations on floating-point numbers) typically don't support. In this case, they need to be converted to integers, which is so frequently used in JavaScript-enabled browsers that arm [added a special "FJCVTZS" instruction](https://community.arm.com/developer/ip-products/processors/b/processors-ip-blog/posts/armv8-a-architecture-2016-additions) that stands for "Floating-point Javascript Convert to Signed fixed-point, rounding toward Zero" and does what it says it does — converts real to integer the exact same way as JavaScript — which is an interesting example of the software-hardware feedback loop in action.
+
+But unless you are a JavaScript developer who uses real types exclusively to emulate integer arithmetic, you probably need a more in-depth guide about floating-point arithmetic, so we are going to start with a broader subject.
 
 ## Real Number Representations
 
-If you need to deal with real (non-integer) numbers, you have several options with varying applicability. Before jumping straight to floating-point numbers, which is what most of this section is about, we want first to discuss the available alternatives and the motivation behind them.
-
-The people who avoid floating-point number do have a point, so let's discuss first what we can do without them when we deal with non-integer data.
+If you need to deal with real (non-integer) numbers, you have several options with varying applicability. Before jumping straight to floating-point numbers, which is what most of this article is about, we want to discuss the available alternatives and the motivation behind them — after all, people who avoid floating-point arithmetic do have a point.
 
 ### Symbolic Expressions
 
-The first and the most cumbersome approach is to store not the resulting values themselves, but the algebraic expressions that produce them.
+The first and the most cumbersome approach is to store not the resulting values themselves but the algebraic expressions that produce them.
 
 Here is a simple example. In some applications, such as computational geometry, apart from addding, subtracting and multiplying numbers, you also need to divide without rounding, producing a rational number, which can be exactly represented with a ratio of two integers:
 
@@ -24,19 +36,21 @@ struct r {
     int x, y;
 };
 
-r operator+(r a, r b) { return r{a.x * b.y + a.y * b.x, a.y * b.y}; }
-r operator*(r a, r b) { return r{a.x * b.x, a.y * b.y}; }
-r operator/(r a, r b) { return r{a.x * b.x, a.y * b.y}; }
+r operator+(r a, r b) { return {a.x * b.y + a.y * b.x, a.y * b.y}; }
+r operator*(r a, r b) { return {a.x * b.x, a.y * b.y}; }
+r operator/(r a, r b) { return {a.x * b.x, a.y * b.y}; }
 bool operator<(r a, r b) { return a.x * b.y < b.x * a.y; }
 // ...and so on, you get the idea
 ```
 
-This ratio can also be made irreducible, which would also make this representation unique:
+This ratio can be made irreducible, which would even make this representation unique:
 
 ```c++
 struct r {
     int x, y;
     r(int x, int y) : x(x), y(y) {
+        if (y < 0)
+            x = -x, y = -y;
         int g = gcd(x, y);
         x /= g;
         y /= g;
@@ -44,17 +58,17 @@ struct r {
 };
 ```
 
-This is how computer algebra systems such as WolframAlpha and SageMath work: they operate solely on symbolic expressions and avoid evaluating anything as real values.
+This is how *computer algebra* systems such as WolframAlpha and SageMath work: they operate solely on symbolic expressions and avoid evaluating anything as real values.
 
-You get absolute precision with this method, and it works well when you have a limited scope such as only supporting rational numbers. But this comes at a large computational cost because in general you would need to somehow store the whole history of operations that led to the result and take them into account when every time you perform new operations.
+With this method, you get absolute precision, and it works well when you have a limited scope such as only supporting rational numbers. But this comes at a large computational cost because in general, you would need to somehow store the whole history of operations that led to the result and take it into account each time you perform a new operation — which quickly becomes unfeasible as the history grows.
 
 ### Fixed-Point Numbers
 
-Another approach is to stick to integers, but pretend like they are multiplied by a certain constant. This is the same as changing units of measurement.
+Another approach is to stick to integers, but treat them as if they were multiplied by a fixed constant. This is essentially the same as changing units of measurement for more up-to-scale ones.
 
-Due to inability to represent some values exactly, this makes computations imprecise: when this happens, you need to round it the to nearest representable value.
+Because some values can't be represented exactly, this makes computations imprecise: you need to round the results to nearest representable value.
 
-This approach is also commonly used in financial software, where you really need a straightforward way to round errors so that final numbers add up. For example, NASDAQ uses $\frac{1}{10000}$-th of a dollar as its base unit in its stock listings, meaning that you get precision of exactly 4 digits after comma in all transactions.
+This approach is commonly used in financial software, where you *really* need a straightforward way to manage rounding errors so that the final numbers add up. For example, NASDAQ uses $\frac{1}{10000}$-th of a dollar as its base unit in its stock listings, meaning that you get the precision of exactly 4 digits after comma in all transactions.
 
 ```c++
 struct money {
@@ -62,38 +76,38 @@ struct money {
 };
 
 std::string to_string(money) {
-	return std::format("${0}.{1:04d}", v / 10000, v % 10000);
+    return std::format("${0}.{1:04d}", v / 10000, v % 10000);
 }
 
 money operator*(money x, money y) { return {x.v * y.v / 10000}; }
 ```
 
-Apart from introducing rounding errors, a bigger problem is that they become useless when the scaling constant is misplaced: if the numbers you are really working with are too large, then the internal store will overflow, and if the numbers are too small, they will be just rounded down to zero. Interestingly, the former once [became an issue](https://www.wsj.com/articles/berkshire-hathaways-stock-price-is-too-much-for-computers-11620168548) on NASDAQ when the price of a stock came close to $\frac{2^{32} - 1}{10000}$ = $429,496.7295 and could no longer fit in an unsigned 32-bit integer.
+Apart from introducing rounding errors, a bigger problem is that they become useless when the scaling constant is misplaced. If the numbers you are working with are too large, then the internal integer value will overflow, and if the numbers are too small, they will be just rounded down to zero. Interestingly, the former case once [became an issue](https://www.wsj.com/articles/berkshire-hathaways-stock-price-is-too-much-for-computers-11620168548) on NASDAQ when the Berkshire Hathaway stock price approached $\frac{2^{32} - 1}{10000}$ = $429,496.7295 and could no longer fit in an unsigned 32-bit integer.
 
-This problem makes them fundamentally unsuitable for applications where you need to use both small and large numbers, like evaluating some physics equations:
+This problem makes fixed-point arithmetic fundamentally unsuitable for applications where you need to use both small and large numbers, for example, evaluating certain physics equations:
 
 $$
 E = m c^2
 $$
 
-Here, $m$ is of the same order of magnitude as the mass of a proton ($1.67 \cdot 10^{-27}$ kg) and $c$ is the speed of light ($3 \cdot 10^9$ m/s).
+In this particular one, $m$ is typically of the same order of magnitude as the mass of a proton ($1.67 \cdot 10^{-27}$ kg) and $c$ is the speed of light ($3 \cdot 10^9$ m/s).
 
 ### Floating-Point Numbers
 
 In most numerical applications, we are mainly concerned with the relative error. We want the result of our computations to differ from the truth by no more than, say, $0.01\\%$, and we don't really care what that $0.01\\%$ equates to in absolute units.
 
-Floating-point numbers solve this by storing a fixed number of the most significant digits and the order of magnitude of the number. More precisely, they are represented with an integer (called *significand* or *mantissa*) and scaled using an exponent of some fixed base (most commonly, 2 or 10). For example:
+Floating-point numbers solve this by storing a certain number of the most significant digits and the order of magnitude of the number. More precisely, they are represented with an integer (called *significand* or *mantissa*) and scaled using an exponent of some fixed base — most commonly, 2 or 10. For example:
 
 $$
 1.2345 =
-\underbrace{12345}\_\text{mantissa}
-\times {\underbrace{10}\_\text{base}\\!\\!\\!\\!}
+\underbrace{12345}_\text{mantissa}
+\times {\underbrace{10}_\text{base}\!\!\!\!}
       ^{\overbrace{-4}^\text{exponent}}
 $$
 
-Computers work with binary words, so you want a fixed length binary format where some bits are dedicated for the mantissa (for more precision) and some for the exponent (for more range). You also need to spend two extra bits to support negative numbers (with "negative mantissa") and small numbers (with "negative exponent").
+Computers operate on fixed-length binary words, so when designing a floating-point format for hardware, you'd want a fixed-length binary format where some bits are dedicated for the mantissa (for more precision) and some for the exponent (for more range).
 
-The following handmade float implementation conveys the idea:
+This handmade float implementation hopefully conveys the idea:
 
 ```c++
 // DIY floating-point number
@@ -103,17 +117,29 @@ struct fp {
 };
 ```
 
-This way we can represent numbers in the form $\pm \\; m \times 2^e$ where both $m$ and $e$ are bounded integers, but it has an issue that these representations are not unique for some numbers. For example, number $1$ can be represented as $1 \times 2^0$, $2 \times 2^{-1}$, $256 \times 2^{-8}$ and in 28 other ways that don't overflow the mantissa. This can be problematic for some applications, such as comparisons or hashing.
+This way we can represent numbers in the form $\pm \\; m \times 2^e$ where both $m$ and $e$ are bounded *and possibly negative* integers — which would correspond to negative or small numbers respectively. The distribution of these numbers is very much non-uniform: there are as many numbers in the $[0, 1]$ range as in the $[0, +\infty)$ range.
 
-To fix this, we can *normalize* these representations using a certain convention. In decimal, the [standard form](https://en.wikipedia.org/wiki/Scientific_notation) is to always put the comma after the first digit (`6.022e23`) and in binary we can do the same:
+Note that these representations are not unique for some numbers. For example, number $1$ can be represented as
+
+$$
+1 \times 2^0 = 2 \times 2^{-1} = 256 \times 2^{-8}
+$$
+
+and in 28 other ways that don't overflow the mantissa.
+
+This can be problematic for some applications, such as comparisons or hashing. To fix this, we can *normalize* these representations using a certain convention. In decimal, the [standard form](https://en.wikipedia.org/wiki/Scientific_notation) is to always put the comma after the first digit (`6.022e23`), and for binary we can do the same:
 
 $$
 42 = 10101_2 = 1.0101_2 \times 2^5
 $$
 
-Notice that, following this rule, the first bit is always 1. It is redundant to store it explicitly, so we will just pretend that it's there and only store the other bits, which correspond to some number in the $[0, 1)$ range. The set of representable numbers now is roughly $\\{ \pm \\; (1 + m) \cdot 2^e \\; | \\; m \in [0, 1) \\}$.
+Notice that, following this rule, the first bit is always 1. It is redundant to store it explicitly, so we will just pretend that it's there and only store the other bits, which correspond to some rational number in the $[0, 1)$ range. The set of representable numbers is now roughly
 
-Since $m$ is now a nonnegative number, we will now make it unsigned integer, and instead add a separate boolean field for the sign:
+$$
+\{ \pm \; (1 + m) \cdot 2^e \; | \; m = \frac{x}{2^{32}}, \; x \in [0, 2^{32}) \}
+$$
+
+Since $m$ is now a nonnegative value, we will now make it unsigned integer, and instead add a separate boolean field for the sign of the number:
 
 ```c++
 struct fp {
@@ -123,22 +149,21 @@ struct fp {
 };
 ```
 
-The distribution of these numbers is not even. There are as many numbers in $[0, 1]$ range as in $[0, +\infty)$ range.
-
-Now, let's try to implement some arithmetic operation — for example, multiplication — using our handmade floats. Using the new formula, the result will be:
+Now, let's try to implement some arithmetic operation — for example, multiplication — using our handmade floats. Using the new formula, the result should be:
 
 $$
 \begin{aligned}
-c = a \cdot b &= (s_a \cdot (1 + m_a) \cdot 2^{e_a}) \cdot (s_b \cdot (1 + m_b) \cdot 2^{e_b})
-\\\           &= s_a \cdot s_b \cdot (1 + m_a) \cdot (1 + m_b) \cdot 2^{e_a} \cdot 2^{e_b} 
-\\\           &= \underbrace{s_a \cdot s_b}_{s_c} \cdot (1 + \underbrace{m_a + m_b + m_a \cdot m_b}\_{m_c}) \cdot 2^{\overbrace{e_a + e_b}^{e_c}}
+c  &= a \cdot b
+\\ &= (s_a \cdot (1 + m_a) \cdot 2^{e_a}) \cdot (s_b \cdot (1 + m_b) \cdot 2^{e_b})
+\\ &= s_a \cdot s_b \cdot (1 + m_a) \cdot (1 + m_b) \cdot 2^{e_a} \cdot 2^{e_b} 
+\\ &= \underbrace{s_a \cdot s_b}_{s_c} \cdot (1 + \underbrace{m_a + m_b + m_a \cdot m_b}_{m_c}) \cdot 2^{\overbrace{e_a + e_b}^{e_c}}
 \end{aligned}
 $$
 
-The groupings now seem straightforward to calculate, but there are two caveats:
+The groupings now seem straightforward to calculate, but there are two nuances:
 
-1. The new mantissa is now in the $[0, 3)$ range. We need to check if it is larger than $1$ and normalize the representation, applying the following formula: $1 + m = (1 + 1) + (m - 1) = (1 + \frac{m - 1}{2}) \cdot 2$.
-2. The resulting number can be (and very likely is) not representable exactly due to the lack of precision. We need twice as many bits to account for the $m_a \cdot m_b$ term, and the best we can do here is to round it to the nearest representable number.
+- The new mantissa is now in the $[0, 3)$ range. We need to check if it is larger than $1$ and normalize the representation, applying the following formula: $1 + m = (1 + 1) + (m - 1) = (1 + \frac{m - 1}{2}) \cdot 2$.
+- The resulting number can be (and very likely is) not representable exactly due to the lack of precision. We need twice as many bits to account for the $m_a \cdot m_b$ term, and the best we can do here is to round it to the nearest representable number.
 
 Since we need some extra bits to properly handle the mantissa overflow issue, we will reserve one bit from $m$ thus limiting it to $[0,2^{31})$ range. 
 
@@ -162,44 +187,46 @@ fp operator*(fp a, fp b) {
 }
 ```
 
-Many applications that require higher precision use software floating-point arithmetic in a similar fashion. Buf of course, you don't want to execute a sequence 10 or so instructions that this code compiles to each time you want to multiply two real numbers, so floating-point arithmetic is implemented in hardware — often in separate coprocessors called floating-point units (FPU) due to its complexity. In x86, the FPU (often referred to as x87) has separate registers and its own tiny instruction set that supports memory operations, basic arithmetic, trigonometry and some common operations such logarithm, exponent and square root.
+Many applications that require higher levels of precision use software floating-point arithmetic in a similar fashion. Buf of course, you don't want to execute a sequence 10 or so instructions that this code compiles to each time you want to multiply two real numbers, so floating-point arithmetic is implemented in hardware — often in separate coprocessors due to its complexity.
+
+The FPU of x86 (often referred to as x87) has separate registers and its own tiny instruction set that supports memory operations, basic arithmetic, trigonometry and some common operations such logarithm, exponent and square root.
 
 ## IEEE 754 Floats
 
-When we designed our DIY floating-point type, we disregarded quite a lot of corner cases and details:
+When we designed our DIY floating-point type, we omitted quite a lot of important little details:
 
 - How many bits do we dedicate for the mantissa and the exponent?
-- Does "0" sign bit means "+" or is it the other way around?
+- Does a "0" sign bit means "+" or is it the other way around?
 - How are these bits stored in memory?
 - How do we represent 0?
 - How exactly does rounding happen?
 - What happens if we divide by zero?
 - What happens if we take a square root of a negative number?
 - What happens if increment the largest representable number?
-- Can we somehow detect if one of the above 3 happened?
+- Can we somehow detect if one of the above three happened?
 
-Most of the early computers didn't have floating-point arithmetic, and when vendors started adding floating-point coprocessors, they had slightly different vision for what answers to those questions should be. Diverse implementations made it difficult to use floating-point arithmetic reliably and portably — particularily for people develiping compilers for high-level langauges.
+Most of the early computers didn't have floating-point arithmetic, and when vendors started adding floating-point coprocessors, they had slightly different vision for what answers to those questions should be. Diverse implementations made it difficult to use floating-point arithmetic reliably and portably — particularily for people developing compilers.
 
-In 1985, Institute of Electrical and Electronics Engineers published a standard (called [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)) that provided a formal specification of how floating-point numbers should work, which was then quickly adopted by the vendors and is now used by virtually all general-purpose computers.
+In 1985, the Institute of Electrical and Electronics Engineers published a standard (called [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)) that provided a formal specification of how floating-point numbers should work, which was quickly adopted by the vendors and is now used in virtually all general-purpose computers.
 
-IEEE 754 and further standards that build upon it define several floating-point representations. They all work roughly the same way as our handmade floats, but they differ in sizes. For example, the standard 32-bit `float` uses the first (highest) bit for sign, the next 8 bits for the exponent, and the 23 remaining bits for the mantissa:
+IEEE 754 and a few consequent standards define not one, but *several* floating-point representations. They all work roughly the same way as our handmade floats, but, most importantly, differ in sizes. For example, the standard 32-bit `float` uses the first (highest) bit for sign, the next 8 bits for exponent, and the 23 remaining bits for mantissa.
 
 ![](../img/float.svg)
 
-Apparently, they are stored in this exact order so that you can compare and sort them more quickly (in fact, if you flip the sign bit, you can use the same circuit as for integers).
+One of the reasons why they are stored in this exact order is so that you could compare and sort them faster: if you flip the sign bit, you can just use the same comparator circuit as for integers.
 
 You can go to this [online converter](https://www.h-schmidt.net/FloatConverter/IEEE754.html) if you want to play with it.
 
-### Other Floats
+### Other Float Formats
 
 There are other standard formats, depending on your use case:
 
-* single: 1 sign, 8 exponent, 23 mantisssa
-* double: 1 sign, 11 exponent, 52 mantissa
-* half: 1 sign, 5 exponent, 10 mantissa
-* extended: 15 exponent, 64 mantissa
-* quad: 15 exponent, 112 mantissa
-* bfloat16: 8 exponent, 7 mantissa
+* single: 8 exponent + 23 mantisssa.
+* double: 11 exponent + 52 mantissa.
+* half: 5 exponent + 10 mantissa.
+* extended: 15 exponent + 64 mantissa.
+* quad: 15 exponent + 112 mantissa.
+* bfloat16: 8 exponent + 7 mantissa.
 
 For some applications, it is so critical that manufacturers create a separate hardware or at least an instruction that supports these types.
 
@@ -353,6 +380,4 @@ How many decimal digits do we need to print a `float`?
 
 ## Further Reading
 
-"[What Every Computer Scientist Should Know About Floating-Point Arithmetic](https://www.itu.dk/~sestoft/bachelor/IEEE754_article.pdf)" by David Goldberg (1991).
-
-[Grisu3](https://www.cs.tufts.edu/~nr/cs257/archive/florian-loitsch/printf.pdf)
+If you are so inclined, you can read the classic "[What Every Computer Scientist Should Know About Floating-Point Arithmetic](https://www.itu.dk/~sestoft/bachelor/IEEE754_article.pdf)" (1991) and [the paper introducing Grisu3](https://www.cs.tufts.edu/~nr/cs257/archive/florian-loitsch/printf.pdf), the current state-of-the art for printing floating-point numbers.
