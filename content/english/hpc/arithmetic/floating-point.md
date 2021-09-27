@@ -109,7 +109,7 @@ Computers operate on fixed-length binary words, so when designing a floating-poi
 
 This handmade float implementation hopefully conveys the idea:
 
-```c++
+```cpp
 // DIY floating-point number
 struct fp {
     int m; // mantissa
@@ -141,7 +141,7 @@ $$
 
 Since $m$ is now a nonnegative value, we will now make it unsigned integer, and instead add a separate boolean field for the sign of the number:
 
-```c++
+```cpp
 struct fp {
     bool s;     // sign: "0" for "+", "1" for "-" 
     unsigned m; // mantissa
@@ -209,107 +209,188 @@ Most of the early computers didn't have floating-point arithmetic, and when vend
 
 In 1985, the Institute of Electrical and Electronics Engineers published a standard (called [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)) that provided a formal specification of how floating-point numbers should work, which was quickly adopted by the vendors and is now used in virtually all general-purpose computers.
 
-IEEE 754 and a few consequent standards define not one, but *several* floating-point representations. They all work roughly the same way as our handmade floats, but, most importantly, differ in sizes. For example, the standard 32-bit `float` uses the first (highest) bit for sign, the next 8 bits for exponent, and the 23 remaining bits for mantissa.
+### Float Formats
+
+Similar to our handmade float implementation, hardware floats use one bit for sign and a variable number of bits for exponent and mantissa. For example, the standard 32-bit `float` encoding uses the first (highest) bit for sign, the next 8 bits for exponent, and the 23 remaining bits for mantissa. 
 
 ![](../img/float.svg)
 
-One of the reasons why they are stored in this exact order is so that you could compare and sort them faster: if you flip the sign bit, you can just use the same comparator circuit as for integers.
+One of the reasons why they are stored in this exact order is so that it would be easier to compare and sort them: if you flip the sign bit, you can simply use the same comparator circuit as for unsigned integers.
 
-You can go to this [online converter](https://www.h-schmidt.net/FloatConverter/IEEE754.html) if you want to play with it.
+IEEE 754 and a few consequent standards define not one, but *several* representations that differ in sizes, most notably:
 
-### Other Float Formats
+|      Type | Sign | Exponent | Mantissa | Total bits | Approx. decimal digits |
+|----------:|------|----------|----------|------------|------------------------|
+|    single | 1    | 8        | 23       | 32         | ~7.2                   |
+|    double | 1    | 11       | 52       | 64         | ~15.9                  |
+|      half | 1    | 5        | 10       | 16         | ~3.3                   |
+|  extended | 1    | 15       | 64       | 80         | ~19.2                  |
+| quadruple | 1    | 15       | 112      | 128        | ~34.0                  |
+|  bfloat16 | 1    | 8        | 7        | 16         | ~2.3                   |
 
-There are other standard formats, depending on your use case:
+Their availability ranges from chip to chip:
 
-* single: 8 exponent + 23 mantisssa.
-* double: 11 exponent + 52 mantissa.
-* half: 5 exponent + 10 mantissa.
-* extended: 15 exponent + 64 mantissa.
-* quad: 15 exponent + 112 mantissa.
-* bfloat16: 8 exponent + 7 mantissa.
+- Most CPUs support single- and double-precision — which is what `float` and `double` types refer to in C.
+- Extended formats are exclusive to x86, and are available in C as the `long double` type, which falls back to double precision on arm. The choice of 64 bits for mantissa is so that every `long long` integer can be represented exactly. There is also a 40-bit format that similarly allocates 32 mantissa bits.
+- Quaruple as well as the 256-bit "octuple" formats are only used for specific scientific computations and are not supported by general-purpose hardware.
+- Half-precision arithmetic only supports a small subset of operations, and is generally used for machine learning applications, especially neural networks, because they tend to do a large amount of calculation, but don't require a high level of precision.
+- Half-precision is being gradually replaced by bfloat, which trades off 3 mantissa bits to have the same range as single-precision, enabling interoperability with it. It is mostly being adopted by specialized hardware: TPUs, FGPAs and GPUs. The name stands for "[Brain](https://en.wikipedia.org/wiki/Google_Brain) float".
 
-For some applications, it is so critical that manufacturers create a separate hardware or at least an instruction that supports these types.
+Lower precision types need less memory bandwidth to move them around and usually take less cycles to operate on (e. g. the division instruction may take $x$, $y$, or $z$ cycles depending on the type), which is why they are preferred when error tolerance allows it.
 
-For example, you don't need a lot of precision for machine learning (since input is noisy, why wouldn't computations be noisy too?), and most of it consists of matrix multiplications. Google has created a custom chip called TPU (tensor processing unit) that works with bfloat, and NVIDIA added "tensor cores" capable of doing 4x4 matrix multiplication in one go, but only for a specific data type.
+Deep learning, emerging as a very popular and computationally-intensive field, created a huge demand for low-precision matrix multiplication, which led to manufacturers developing separate hardware or at least adding specialized instructions that support these types of computations — most notably, Google developing a custom chip called TPU (*tensor processing unit*) that specializes on multiplying 128-by-128 bfloat matrices, and NVIDIA adding "tensor cores", capable of performing 4-by-4 matrix multiplication in one go, to all their newer GPUs.
 
-There are also 40- and 80-bit types. `long double`
+Apart from their sizes, most of behavior is exactly the same between all floating-point types, which we will now clarify.
 
-Higher precision types need more memory bandwidth and usually take more cycles to finish (e. g. division takes x, y, and z cycles depending on type).
+## Handling Corner Cases
 
-### Special Values
+The default way integer arithmetic deals with corner cases such as division by zero is to crash.
 
-* overflow or divide by zero: $\pm \infty$
+Sometimes a software carsh in turn causes a real, physical one. In 1996, the maiden flight of the [Ariane 5](https://en.wikipedia.org/wiki/Ariane_5) (the space launch vehicle that ESA uses to lift stuff into low Earth orbit) ended in [a catastrophic explosion](https://www.youtube.com/watch?v=gp_D8r-2hwk) due to the policty of aborting computation on arithmetic error, which in this case was a floating-point to integer conversion overflow, that led to the navigation system thinking that it was off course and making a large correction, eventually causing the disintegration of a $1B rocket.
 
-invalid operations produce NaN
+There is a way to gracefully handle corner cases such like these: hardware interrupts. When an exception occurs, CPU:
 
-Overflow, underflow, division by zero, invalid, inexact
+- interrupts the execution of a program;
+- packs every all relevant information into a data structure called "interrupt vector";
+- passes it to the operating system, which in turn either calls the handling code if it exists (the "try-except" block) or terminates the program otherwise.
 
-+-INF, +-NAN, +-zero
+This is a complex mechanism that deserves an article of its own, but since this is a book about performance, the only thing you need to know is that they are quite slow and not desirable in a real-time systems such as navigating rockets.
 
-NAN propagates and raises flags and exceptions
+### NaNs and Infinities
 
-In floating-point numbers, `-0` is not the same as `+0`.
+Floating-point arithmetic often deals with noisy, real-world data, and exceptions there are much more common than in the integer case. For this reason, the default behavior is different. Instead of crashing, the result is substituted with a special value without interrupting the executing, unless the programmer explicitly wants to.
 
-This leaves an awkward exception for 0 and -0.
+The first type of such values are the two infinities: a positive and a negative one. They are generated if the result of an operation can't fit within in the representable range, and they are treated as such in arithmetic.
+
+$$
+\begin{aligned}
+   -∞ < x &< ∞
+\\  ∞ + x &= ∞
+\\  x ÷ ∞ &= 0
+\end{aligned}
+$$
+
+What happens if we, say, divide a value by zero? Should it be a negative or a positive infinity? This case in actually unambigious because, somewhat less intuitively, there are also two zeros: a positive and a negative one.
+
+$$
+    \frac{1}{+0} = +∞
+\;\;\;\;  \frac{1}{-0} = -∞
+$$
+
+Zeros are encoded by setting all bits to zero, except for the sign bit in the negative case. Infinities are encoded by setting all their exponent bits to one and all mantissa bits to zero, but the sign bit distinguishing between a positive and a negative infinity.
+
+The other type is the "not-a-mumber” (NaN), which is generated as the result of mathematically incorrect operations:
+
+$$
+\log(-1),\; \arccos(1.01),\; ∞ − ∞,\; −∞ + ∞,\; 0 × ∞,\; 0 ÷ 0,\; ∞ ÷ ∞
+$$
+
+There are two types of NaNs: a signalling NaN and a quiet NaN. A signalling NaN raises an exception flag, which may or may not cause an immediate hardware interrupt becased on FPU configuration, while a quiet NaN just propagates through almost every arithmetic operation, resulting in more NaNs.
+
+Both NaNs are encoded as all their exponent set to ones and the mantissa part being everything other than all zeroes (to distinguish them from infinities).
 
 ### Rounding
 
-The way rounding works in hardware floats is actually remarkably simple: it occurs if (and *only* if) the result of the operation is not exact, and in this case it by default gets rounded to the nearest representable number (and to the nearest even digit in case of a tie).
+The way rounding works in hardware floats is remarkably simple: it occurs if and only if the result of the operation is not representable exactly, and by default gets rounded to the nearest representable number (and to the nearest zero-ending number in case of a tie).
 
 Apart from the default mode (also known as Banker's rounding), you can [set](https://www.cplusplus.com/reference/cfenv/fesetround/) other rounding logic with 4 more modes:
 
-* round to nearest, where ties round away from zero
-* round up (toward $+\infty$; negative results thus round toward zero)
-* round down (toward $-\infty$; negative results thus round away from zero)
-* round toward zero (truncation)
+* round to nearest, with ties always rounding "away" from zero;
+* round up (toward $+∞$; negative results thus round toward zero);
+* round down (toward $-∞$; negative results thus round away from zero);
+* round toward zero (truncation of the binary result).
 
-The alternative rounding modes are also useful in diagnosing numerical instability: if the results of a subroutine vary substantially between rounding to + and − infinity then it is likely numerically unstable and affected by round-off error.
+The alternative rounding modes are also useful in diagnosing numerical instability. If the results of a subroutine vary substantially between rounding to the positive and negative infinities, then it indicates susceptibility to round-off errors. Is a better test than switching all computations to a lower precision and checking whether the result changed by too much, because the default rounding to nearest results in the right "expected" value given enough averaging: statistically, half of the time they are rounding up and the other are rounding down, so they cancel each other.
 
-One could argue that rounding to nearest gives "expected" value the same given enough averaging, so changing rounding modes to estimate bounds is a better test than switching to a lower precision and checking whether the result changed by too much.
+Note that while most operations with real numbers are commutative and assotiative, their rounding errors are not: even the result of $(x+y+z)$ depends on the order of summation. Compilers are not allowed to produce non-spec-compliant results, so this disables some potential optimizations that involve rearranging operands. You can disable this strict compliance with the `-ffast-math` flag in GCC and Clang, although you need to be aware that this lets compilers sometimes choose less precise computation paths.
 
-Statistically, half of the time they are rounding up and the other are rounding down, so they cancel each other.
-
-It seems surprising to expect it from a hardware that calculates natural logarithms and square roots, but that's it: you get the highest precision possible from all operations. This makes it easy to analyze the errors, as we will see in a bit.
+It seems surprising to expect this guarantee from hardware that performs complex calculations such as natural logarithms and square roots, but this is it: you guaranteed to get the highest precision possible from all operations. This makes it remarkably easy to analyze round-off errors, as we will see in a bit.
 
 ## Measuring and Mitigating Errors
 
-It is worth to note that JavaScript uses the property that all operations are exact as long as the result is representable, and only uses floating-point numbers. There are not integers in JavaScript: only `double`, which have 53 bits of precision. The only exception is when you need to do bitwise operations with these numbers, which floating-point units don't support. In this case, they are converted to integers. The operation is so frequently used in browsers so arm [added](https://community.arm.com/developer/ip-products/processors/b/processors-ip-blog/posts/armv8-a-architecture-2016-additions) a special instruction for it: FJCVTZS, which decyphers as "Floating-point Javascript Convert to Signed fixed-point, rounding toward Zero". This is an interesting example of software-hardware feedback loop in action.
+There are two natural ways to measure computational errors:
 
-But unless you use floating-point arithmetic to emulate integer arithmetic with lower range like JavaScript does, you are going to face occasional rounding errors. There are two natural ways to measure them:
+* The engineers who create hardware or spec-compliant exact software are concerned with *units in the last place* (ulps), which is the distance between two numbers in terms of how many representable numbers can fit between the precise real value and the actual result of computation.
+* People that are working on numerical algorithms care about *relative precision*, which is the absolute value of the approximation error divided by the real answer: $|\frac{v-v'}{v}|$.
 
-* If you are working on hardware or spec-compliant exact software, you are concerned with *units in the last place* (ulps), which is the distance between two numbers in terms of how many representable numbers can fit between the real value and the result.
-* If you are working on numerical algorithms, you care about relative precision, which is the absolute value of the approximation error divided by the real answer: $|\frac{v-v'}{v}|$.
+In either case, the usual tactic to analyze errors is to assume the worst case and simply bound them.
 
-In either case, what you usually do is you bound the errors. For exampole, if you perform a single basic arithmetic operation then the worst thing that can happen is the result rounding to the nearest representable number, implying that the error does not exceed 0.5 ulps. To convert this to relative error, it is useful to define a number called *machine epsilon* which equals to the difference between $1$ and the next representable value (that is, 2 to the negative power of however many bits are dedicated to mantissa). If we get result $x$ after a single arithmetic operation, this means that the real value lies in the $[x \cdot (1-\epsilon), x \cdot (1 + \epsilon)]$ range.
+If you perform a single basic arithmetic operation, then the worst thing that can happen is the result rounding to the nearest representable number, meaning that the error in this case does not exceed 0.5 ulps. To reason about relative errors the same way, we can define a number $\epsilon$ called *machine epsilon*, equal to the difference between $1$ and the next representable value (which should be equal to 2 to the negative power of however many bits are dedicated to mantissa).
 
-This is important to remember when making discrete "yes or no" decisions based on floating-point calculations. For example, to do comparisons you usually pick an epsilon depending on your application and proceed like this:
+This means that if after a single arithmetic operation you get result $x$, then the real value is somewhere in the range
+
+$$
+[x \cdot (1-\epsilon),\; x \cdot (1 + \epsilon)]
+$$
+
+The omnipresence of errors is especially important to remember when making discrete "yes or no" decisions based on the results of floating-point calculations. For example, here is how you should check for equality:
 
 ```c++
 const float eps = std::numeric_limits<float>::epsilon; // ~2^(-23)
 bool eq(float a, float b) {
-    return abs(a - b) < eps;
+    return abs(a - b) <= eps;
 }
 ```
 
-While most operations with real numbers are commutative and assotiative, their rounding errors are not. You can tell compiler to ignore it with `-ffast-math`.
-
-Note that, even though algebraically some operations are associative and commutative, enabling a large number of compiler optimizations, the their errors are not. Compilers are not allowed to produce incorrect results. You can disable this behavior with `-ffast-math`, although in many cases they will still need some help rearranging the expressions. Being aware of floating-point errors is especially important, because compilers don't always do a good job at estimating the errors.
+The value of epsilon should depend on the application: the one above — the machine epsilon for `float` — is only good for no more than one floating-point operation.
 
 ### Interval Arithmetic
 
-When analyzing numerical algorithms, it is useful to adopt the same method that is used in physics. Instead of working with values, we will work with intervals where the real value may be in.
+An algorithm is called *numerically stable* if its error, whatever its cause, does not grow to be much larger during the calculation. This happens if the problem is *well-conditioned*, meaning that the solution changes by only a small amount if the problem data are changed by a small amount.
 
-Numerical stability is a notion in numerical analysis. An algorithm is called 'numerically stable' if an error, whatever its cause, does not grow to be much larger during the calculation
+When analyzing numerical algorithms, it is often useful to adopt the same method that is used in experimental physics: instead of working with unknown real values, we will work with the intervals where they may be in.
 
-This happens if the problem is 'well-conditioned', meaning that the solution changes by only a small amount if the problem data are changed by a small amount.
+For example, consider a chain of operations where we consecutively multiply a variable by arbitrary real numbers:
 
-A chain of arithmetic operations performed on some value are usually not a problem. Say, you are multiplying by various values. After the first multiplication, the relative error is bounded by machine epsilon. After the $n$ multiplications, the error is bound by $(1 + \epsilon)^n = 1 + n \epsilon + o(\epsilon^2)$. Same goes for the lower bound. You usually want to avoid long chains of operations over the same value because these errors add up.
+```cpp
+float x = 1;
+for (int i = 0; i < n; i++)
+    x *= a[i];
+```
 
-So executing long chains of operations is not really a problem, but some other issues are. They are usually related to subtraction of numbers that are different in magnitude and relying on the difference to be exact. The general idea is to keep big numbers with big numbers and low numbers with low numbers.
+After the first multiplication, the value of $x$ relative to the value of the real product is bounded by $(1 + \epsilon)$, and after each additional multiplication this upper bound is multiplied by another $(1 + \epsilon)$. By induction, after $n$ multiplications, the computed value is bound by $(1 + \epsilon)^n = 1 + n \epsilon + O(\epsilon^2)$ and a similar lower bound.
 
-As an example, consider function $f(x, y) = x^2 - y^2$. If $x$ and $y$ are close in magnitude, and if computed directly, the substraction will magnify errors of the squaring. The relative error can be $\epsilon \cdot |x|$, assuming $x$ is larger than $y$. Instead one can use the following formula: $(x + y) \cdot (x - y)$. The error will be bound by $\epsilon |x - y|$ and also be faster because it needs 2 additions and 1 multiplication while the original formula worked otherwise.
+This implies that the relative error is $O(n \epsilon)$, which is sort of okay, because usually $n \ll \frac{1}{\epsilon}$.
 
-Next, consider the summation algorithm:
+For example of a numerically *unstable* computation, consider the function
+
+$$
+f(x, y) = x^2 - y^2
+$$
+
+Assuming $x > y$, the maximum value this function can return is roughly
+
+$$
+x^2 \cdot (1 + \epsilon) - y^2 \cdot (1 - \epsilon)
+$$
+
+corresponding to the absolute arror of
+
+$$
+x^2 \cdot (1 + \epsilon) - y^2 \cdot (1 - \epsilon) - (x^2 - y^2) = (x^2 + y^2) \cdot \epsilon
+$$
+
+and hence the relative error of
+
+$$
+\frac{x^2 + y^2}{x^2 - y^2} \cdot \epsilon
+$$
+
+If $x$ and $y$ are close in magnitude, the error will be $O(\epsilon \cdot |x|)$.
+
+Under direct computation, the substraction "magnifies" the errors of the squaring. But this can be fixed by instead using the following formula:
+
+$$
+f(x, y) = x^2 - y^2 = (x + y) \cdot (x - y)
+$$
+
+In this one, it is easy to show that the error is be bound by $\epsilon \cdot |x - y|$. It is also faster because it needs 2 additions and 1 multiplication: one fast addition more and one slow multiplication less compared to the original.
+
+### Kahan Summation
+
+From previous example, we can see that long chains of operations are not a problem, but adding and substracting numbers of different magnitude is. The general approach to dealing with such problems is to try to keep big numbers with big numbers and low numbers with low numbers.
+
+Consider the standard summation algorithm:
 
 ```c++
 float s = 0;
@@ -317,9 +398,24 @@ for (int i = 0; i < n; i++)
     s += a[i];
 ```
 
-The error is bound by $\epsilon \cdot n$, because we do $n$ summations. It can be large if $n$ is large. If the first value is $2^{23}$ and the other are ones, you are going to get $2^23$ as the result.
+Since we are performing summations and not multiplications, its relative error is no longer just bounded by $O(\epsilon \cdot n)$, but heavily depends on the input.
 
-The obvious solution is to switch to a larger type such as `double`, but this isn't really a scalable method. A more general solution is Kahan summation. The idea is to store the parts that weren't added in a separate variable, which is then added to the next variable:
+In the most ridiculous case, if the first value is $2^{23}$ and the others are ones, the sum is going to be $2^{23}$ regardless of $n$, which can be verified by executing the following code and observing that it simply prints $16777216 = 2^{23}$ twice:
+
+```cpp
+const int n = (1<<24);
+printf("%d\n", n);
+
+float s = n;
+for (int i = 0; i < n; i++)
+    s += 1.0;
+
+printf("%f\n", s);
+```
+
+This happens because `float` has only 23 mantissa bits, and so $2^{23} + 1$ is the first integer number that can't be represented exactly and has to be rounded down, which happens every time we try to add $1$ to $s = 2^{23}$. The error is indeed $O(n \cdot \epsilon)$ but in terms of the absolute error, not the relative one: in the example above, it is $2$, and it would go up to infinity if the last number happened to be $-2^{23}$.
+
+The obvious solution is to switch to a larger type such as `double`, but this isn't really a scalable method. An elegant solution is to store the parts that weren't added in a separate variable, which is then added to the next variable:
 
 ```c++
 float s = 0, c = 0;
@@ -331,15 +427,11 @@ for (int i = 0; i < n; i++) {
 }
 ```
 
-The relative error is bounded by $2 \epsilon + O(n \epsilon^2)$. The first term goes from the last summation, and the last term is due to the fact that we work with less-than-epsilon errors on each step.
+This trick is known as *Kahan summation*. Its relative error is bounded by $2 \epsilon + O(n \epsilon^2)$: the first term comes from the very last summation, and the second term is due to the fact that we work with less-than-epsilon errors on each step.
 
-### Double-double arithmetic
+Of course, a more general approach would be to switch to a more precise data type, like `double`, either way effectively squaring the machine epsilon. It can sort of be scaled by budling two `double` variable together ne for storing the value, and another for its non-representable errors, so that they actually represent $a+b$. This approach is known as *double-double* arithmetic, and can be similarly generalized to define quad-double and higher precision arithmetic.
 
-A more practical approach is to switch to a more precise data type, like `double`, 
-
-Hardware has limits. One common software technique is to just bundle together two `double` variable: one for storing the value, and another for its errors, so that they actually represent $a+b$.
-
-Similarly, you can define quad-double and higher precision arithmetic.
+<!--
 
 ## Conversion to Decimal
 
@@ -377,6 +469,8 @@ Multiplying or dividing by 10 is the same as incrementing the exponent (the resu
 The tricky part is the "shortest possible". It can be solved by printing digits one by one and trying to parse it back, but this would be too slow.
 
 How many decimal digits do we need to print a `float`?
+
+-->
 
 ## Further Reading
 
