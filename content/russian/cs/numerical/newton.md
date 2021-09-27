@@ -50,7 +50,7 @@ $$
 Если нам нужно посчитать корень с некоторой заданной точносью $\epsilon$, можно на каждой итерации делать соответствующую проверку:
 
 ```cpp
-const double EPS = 1e-9;
+const double eps = 1e-9;
 
 double sqrt(double n) {
     double x = 1;
