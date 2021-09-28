@@ -1,5 +1,5 @@
 ---
-title: Moving Data
+title: Moving and Shuffling Data
 weight: 3
 ---
 

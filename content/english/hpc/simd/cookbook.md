@@ -1,5 +1,6 @@
 ---
-title: Lookup Tables and Popcount
+title: SSE & AVX Cookbook
+weight: 4
 ---
 
 ## Constexpr

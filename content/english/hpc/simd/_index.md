@@ -1,7 +1,7 @@
 ---
 title: SIMD Parallelism
 menuTitle: SIMD
-weight: 4
+weight: 3
 draft: true
 ---
 
