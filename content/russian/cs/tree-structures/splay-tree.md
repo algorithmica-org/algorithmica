@@ -5,8 +5,6 @@ authors:
 draft: true
 ---
 
-!!! Сделать картинки !!!
-
 Splay-дерево --- это самобалансирующееся двоичное дерево поиска, которое ускоряет доступ к недавно использовавшимся вершинам. Оно было придумано в 80-х годах Робертом Тарьяном и Даниелем Слейтером.
 
 Все операции splay-дерева выражаются через одну функцию $splay(v)$, которая делает вершину $v$ корнем.
@@ -119,7 +117,7 @@ $$
 
 $r(x) + r'(g) - 2r'(x) = (r(x) - r'(x)) + (r'(g) - r'(x)) = \log_2 \displaystyle\frac{s(x)}{s'(x)} + \log_2\displaystyle\frac{s'(g)}{s'(x)} = \log_2\left( \displaystyle\frac{s(x)}{s'(x)} \cdot \displaystyle\frac{s'(g)}{s'(x)} \right)$
 
-Из рисунка выше видно, что $s'(g) + s(x) \le s'(x)$ ($(1 + a + b) + (1 + c + d) \le (3 + a + b + c + d)$), значит $\displaystyle\frac{s(x)}{s'(x)}+\displaystyle\frac{s'(g)}{s'(x)} \le 1$. По неравенству о средних, если $p + q \le 1$, то $pq \le \df{1}{4}$.
+Из рисунка выше видно, что $s'(g) + s(x) \le s'(x)$ ($(1 + s(a) + s(b)) + (1 + s(c) + s(d)) \le (3 + s(a) + s(b) + s(c) + s(d))$), значит $\displaystyle\frac{s(x)}{s'(x)}+\displaystyle\frac{s'(g)}{s'(x)} \le 1$. По неравенству о средних, если $p + q \le 1$, то $pq \le \df{1}{4}$.
 
 Так как $\displaystyle\frac{s(x)}{s'(x)} \cdot \displaystyle\frac{s'(g)}{s'(x)} \le \df14$, то $\log_2 \left( \displaystyle\frac{s(x)}{s'(x)} \cdot \displaystyle\frac{s'(g)}{s'(x)} \right) \le -2$, что и является проверяемым неравенством.
 
