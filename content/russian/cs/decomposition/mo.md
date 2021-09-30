@@ -150,7 +150,7 @@ for (int i = 0; i < c; i++) {
 Снова отсортируем все get-запросы, но на этот раз в порядке
 
 $$
-(\lfloor \frac{t}{n^{\frac 2 3}} \rfloor, \lfloor \frac{l}{n ^{\frac{2}{3}}} \rfloor, r)
+\left(\lfloor \frac{t}{n^{\frac 2 3}} \rfloor, \lfloor \frac{l}{n ^{\frac{2}{3}}} \rfloor, r\right)
 $$
 
 и обработаем их таким же алгоритмом, только в трёх измерениях.
