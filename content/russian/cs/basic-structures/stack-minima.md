@@ -36,7 +36,7 @@ minima = st.top().second;
 
 Рассмотрим реализацию вышеописанных операций:
 
-deque<int> q;
+dequeue<int> q;
 Нахождение минимума:
 current_minimum = q.front();
 Добавление элемента:

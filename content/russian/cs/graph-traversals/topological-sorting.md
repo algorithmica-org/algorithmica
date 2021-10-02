@@ -33,7 +33,7 @@ void dfs(int v) {
     t.push_back(v);
 }
 
-void topologial_sort() {
+void topological_sort() {
     for (int v = 0; v < n; v++)
         if (!used[v])
             dfs(v);
