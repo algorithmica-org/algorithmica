@@ -180,8 +180,7 @@ void pull(int x) {
 }
 
 
-// Функции для работы со splay-деревом как с BST
-
+// Функции для работы со splay-деревом как с BST. БАГИ НАДО ИСПРАВЛЯТЬ
 int find(int key, int root) {
     if (root == -1)
         return -1;
