@@ -28,6 +28,8 @@ Apart from assembly, the other most helpful level of abstraction is the *immedia
 
 ### Libraries and Interprocedural Optimization
 
+<!-- static linking flag -->
+
 We have the last stage, linking, because it is is both easier and faster — due to parallelism and caching of intermediate results — to compile programs on a file-by-file basis and then link those files together.
 
 It also gives the ability to distribute code as *libraries*, which can be either *static* or *shared*:

@@ -1,6 +1,7 @@
 ---
 title: SSE & AVX Cookbook
 weight: 4
+draft: true
 ---
 
 ## Constexpr

@@ -1,6 +1,7 @@
 ---
 title: Moving and Shuffling Data
 weight: 3
+draft: true
 ---
 
 If you took some time to study the reference, you may have noticed that there are essentially two major groups of vector operations:
