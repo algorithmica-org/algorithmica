@@ -225,7 +225,7 @@ int add(int key, int root) {
     return i;
 }
 
-int delete(int key, int root) {
+int del(int key, int root) {
     int v = find(key, root);
     if (-1 == v)
         return root;
