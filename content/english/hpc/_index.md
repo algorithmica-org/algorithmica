@@ -20,7 +20,7 @@ All materials are hosted on GitHub, with code in a [separate repository](https:/
 The first part covers the basics of computer architecture and optimization of single-threaded algorithms.
 
 ```
-0. Why Big O Is Not so Relevant Anymore
+0. Why Go Beyond Big O
 1. Analyzing Performance
  1.1. Computer Architecture & Assembly
  1.2. Negotiating with Compilers
@@ -28,31 +28,37 @@ The first part covers the basics of computer architecture and optimization of si
  1.4. Binary GCD                        <- 2x faster std::gcd
 2. Bit Hacks and Arithmetic
  2.1. Floating-Point Arithmetic
- 2.2. Integer and Modular Arithmetic
- 2.3. Bit Manipulation
- 2.4. Cryptography, Hashing and PRNG
- 2.5. Integer Factorization
-(2.6. Big Integers and FFT)
+ 2.2. Numerical Methods
+ 2.3. Integer Arithmetic
+ 2.4. Bit Manipulation
+ 2.5. Modular Arithmetic
+ 2.6. Finite Fields
+ 2.7. Cryptography, Hashing and PRNG
+ 2.8. Integer Factorization
+ 2.9. Bignum Arithmetic and the Karatsuba Algorithm
+ 2.10. Fast Fourier Transform
 3. SIMD Parallelism
  3.1. Intrinsics and Vector Extensions
- 3.2. Moving Data
- 3.3. String Searching                  <- ?x faster strstr
- 3.4. Parsing                           <- 2x faster scanf("%d")
-(3.5. Sorting)                          <- 8x faster std::sort
-(3.6. AVX-512 and Arm Neon)
+ 3.2. (Auto-)Vectorization
+ 3.3. SSE & AVX Cookbook
+ 3.4. Argmin with SIMD
+ 3.5. Logistic Regression
+ 3.6. String Searching                  <- ?x faster strstr
+ 3.7. Parsing Integers                  <- 2x faster scanf("%d")
+ 3.8. Sorting                           <- 8x faster std::sort
 4. Memory
  4.1. Memory Hierarchy
  4.2. External Memory Model
-(4.3. Sublinear Algorithms)
+ 4.3. Sublinear Algorithms
  4.4. RAM & CPU Caches
-(4.5. Memory Management)
+ 4.5. Memory Management
  4.6. Layouts for Binary Search         <- 5x faster std::lower_bound
  4.7. Implicit Data Structures          <- 7x faster segment trees
  4.8. Hash Tables                       <- 5x faster std::unordered_map
 5. Instruction-Level Parallelism
  5.1. Pipelining and Hazards
  5.2. Throughput Computing              <- 2x faster std::accumulate
-(5.3. µOps & Scheduling)
+ 5.3. µOps & Scheduling
  5.4. Theoretical Performance Limits
  5.5. Matrix Multiplication             <- 100x faster gemm
 6. Summary
@@ -72,7 +78,7 @@ Among cool things that we will speed up, in chronological order:
 - 2x faster sum (compared to `std::accumulate`)
 - 100x faster matrix multiplication (compared to "for-for-for")
 
-This is largely based on blogposts, research papers, conference talks and other work authored by a lot of people:
+This is largely based on blog posts, research papers, conference talks and other work authored by a lot of people:
 
 - Agner Fog
 - Daniel Lemire
