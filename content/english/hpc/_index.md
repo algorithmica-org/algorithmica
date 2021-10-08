@@ -97,7 +97,7 @@ Release date: fall 2021
 
 ### Part II: Parallel Algorithms
 
-Concurrency, models of parallelism, green threads and runtimes, cache coherence, syncronization primitives, OpenMP, reductions, scans, list ranking and graph algorithms, lock-free data structures, heterogenious computing, CUDA, kernels, warps, blocks, matrix multiplication and sorting.
+Concurrency, models of parallelism, green threads and runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking and graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication and sorting.
 
 Release date: early 2022
 
@@ -109,7 +109,7 @@ Release date: ???
 
 ### Part IV: Compilers and Domain-Specific Architectures
 
-LLVM IR, core optimization techniques from the dragon book, JIT-compilation, cython, jax, numba, julia, OpenCL, DPC++ and oneAPI, XLA, FPGAs and Verilog, ASICs, TPUs and other AI accelerators.
+LLVM IR, main optimization techniques from the dragon book, JIT-compilation, Cython, JAX, Numba, Julia, OpenCL, DPC++ and oneAPI, XLA, FPGAs and Verilog, ASICs, TPUs and other AI accelerators.
 
 Release date: ???
 
