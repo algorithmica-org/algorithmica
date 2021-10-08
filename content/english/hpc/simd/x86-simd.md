@@ -5,6 +5,8 @@ weight: 1
 
 The most direct and low-level way to use SIMD is to use the vector instructions in assembly — they aren't different from their scalar equivalents at all — but we are not going to do that. Instead, we will use *intrinsic* functions mapping to these instructions that are available in all modern C/C++ compilers.
 
+In this section, we will go through the basic of their syntax, and in the following ones we will discuss using them to do something actually interesting.
+
 ## Setup
 
 To use them, we need to do a little groundwork.
@@ -85,7 +87,7 @@ Humans prefer #1, because it is simpler and results in less code. Compilers pref
 
 ### Instruction References
 
-Most SIMD intrinsics follow a naming convention similar to `_mm<size>_<action>_<type>`, and are relatively self-explanatory once you get used to assembly naming conventions.
+Most SIMD intrinsics follow a naming convention similar to `_mm<size>_<action>_<type>`, and are relatively self-explanatory once you get used to the assembly naming conventions.
 
 Here are a few more examples, just so that you get the gist of it:
 
@@ -96,11 +98,13 @@ Here are a few more examples, just so that you get the gist of it:
 - `_mm256_cmpeq_epi32`: compare 8+8 packed `int`s and return a mask that contains ones for equal element pairs.
 - `_mm256_blendv_ps`: pick elements from one of two vectors according to a mask.
 
-As you may have guessed, there is a combinatorially very large number of intrinsics. A very helpful reference for x86 intrinsics is the [Intel Intrinsics Guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/), which has groupings by categories and extensions, descriptions, pseudocode, associated assembly instructions, and their latency and throughput on Intel microarchitectures. You may want to bookmark that page.
+As you may have guessed, there is a combinatorially very large number of intrinsics. A very helpful reference for x86 SIMD intrinsics is the [Intel Intrinsics Guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/), which has groupings by categories and extensions, descriptions, pseudocode, associated assembly instructions, and their latency and throughput on Intel microarchitectures. You may want to bookmark that page.
 
 The Intel reference is useful when you know that a specific instruction exists and just want to look up its name or performance info. When you don't know whether it exists, this [cheat sheet](https://db.in.tum.de/~finis/x86%20intrinsics%20cheat%20sheet%20v1.0.pdf) may do a better job.
 
-Also note that compilers do not necessarily pick the exact instruction that you specify. Similar to the scalar `c = a + b` we [discussed before](/hpc/analyzing-performance/assembly), there is a fused vector addition instruction too, so instead of using 2+1+1=4 instructions per loop cycle, compiler [rewrites the code above](https://godbolt.org/z/dMz8E5Ye8) with blocks of 3 instructions like this:
+### Instruction Selection
+
+Note that compilers do not necessarily pick the exact instruction that you specify. Similar to the scalar `c = a + b` we [discussed before](/hpc/analyzing-performance/assembly), there is a fused vector addition instruction too, so instead of using 2+1+1=4 instructions per loop cycle, compiler [rewrites the code above](https://godbolt.org/z/dMz8E5Ye8) with blocks of 3 instructions like this:
 
 ```nasm
 vmovapd ymm1, YMMWORD PTR a[rax]
@@ -129,8 +133,6 @@ Unfortunately, this is not a part of the C or C++ standard, so different compile
 
 There is somewhat of a naming convention, which is to include size and type of elements into the name of the type: in the example above, we defined a "vector of 8 signed integers". But you may choose any name you want, like `vec`, `reg` or whatever. The only thing you don't want to do is to name it `vector` because of how much confusion there would be because of `std::vector`.
 
-### Examples
-
 The main advantage of using these types is that for many operations you can use normal C++ operators instead of looking up the relevant intrinsic.
 
 ```c++
@@ -158,57 +160,24 @@ for (int i = 0; i < 100/4; i++)
     c[i] = a[i] + b[i];
 ```
 
-Now, armed with a nicer syntax, consider a slightly more complex example: calculating the sum an array.
-
-```c++
-int sum_naive(int *a, int n) {
-    int s = 0;
-    for (int i = 0; i < n; i++)
-        s += a[i];
-    return s;
-}
-```
-
-The naive approach is not so straightforward to vectorize, because the state of the loop (sum $s$ on the current prefix) depends on the previous iteration.
-
-The way to overcome this is to split a single scalar accumulator $s$ into 8 separate ones, so that $s_i$ would contain the sum $\sum_{j=0}^{n / 8} a_{8 \cdot j + i }$, that is, the sum of every 8th element of the original array, shifted by $i$. If we store these 8 accumulators in a single 256-bit vector, we can update them all at once by adding consecutive 8-elements segments of the array:
-
-```c++
-int sum_simd(v8si *a, int n) {
-    //       ^ you can just cast a pointer normally, like with any other pointer type
-    v8si s = {0};
-
-    for (int i = 0; i < n / 8; i++)
-        s += a[i];
-    
-    int res = 0;
-    
-    // sum 8 accumulators into one 
-    for (int i = 0; i < 8; i++)
-        res += s[i];
-
-    // add the remainder of a
-    for (int i = n / 8 * 8; i < n; i++)
-        res += a[i];
-        
-    return res;
-}
-```
-
-The last part, where we sum up the 8 accumulators into a single scalar to get the total sum, can be done a bit faster by what's called "horizontal summation", which is the repeated use of [special instructions](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#techs=AVX,AVX2&text=_mm256_hadd_epi32&expand=2941) that add together pairs of adjacent elements:
-
-```c++
-int hsum(__m256i x) {
-    __m128i l = _mm256_extracti128_si256(x, 0);
-    __m128i h = _mm256_extracti128_si256(x, 1);
-    l = _mm_add_epi32(l, h);
-    l = _mm_hadd_epi32(l, l);
-    return _mm_extract_epi32(l, 0) + _mm_extract_epi32(l, 1);
-}
-```
-
-Although this is roughly how compilers vectorize it, this is not the fastest way to sums and other array reductions. We will come back to this problem in the last chapter.
-
----
-
 As you can see, vector extensions are much cleaner compared to the nightmare we have with intrinsic functions. But some things that we may want to do are just not expressible with native C++ constructs, so we will still need intrinsics. Luckily, this is not an exclusive choice, because vector types support zero-cost conversion to the `_mm` types and back. We will, however, try to avoid doing so as much as possible and stick to vector extensions when we can.
+
+## Tips
+
+First of all, it is very useful to check if vectorization happened the way you intended by [compiling it to assembly](/hpc/analyzing-performance/compilation) and taking a close look at the emitted instructions that start with "v".
+
+Also, if you specify the `-fopt-info-vec-optimized` flag, then compiler will directly indicate where autovectorization is happening and what SIMD width is being used. If you swap `optimized` for `missed` or `all`, you may also get reasons why it is not happening in other places.
+
+When using SIMD manually, it helps to print out contents of vector registers for debug purposes. You can do so by converting a vector variable into an array and then into a bitset:
+
+```c++
+template<typename T>
+void print(T var) {
+    unsigned *val = (unsigned*) &var;
+    for (int i = 0; i < 4; i++)
+        cout << bitset<32>(val[i]) << " ";
+    cout << endl;
+}
+```
+
+In this particular case, it outputs 4 groups of 32 bits of a 128-bit wide vector.
