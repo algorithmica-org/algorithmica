@@ -2,22 +2,24 @@
 title: Algorithms for Modern Hardware
 menuTitle: HPC
 weight: 5
-authors:
-- Sergey Slotin
+#authors:
+#- Sergey Slotin
 #created: "Feb 2021"
-date: 2021-09-16
+#date: 2021-09-16
 noToc: true
 ---
 
-This is a work-in-progress High Performance Computing book titled "Algorithms for Modern Hardware".
+This is an upcoming high performance computing book titled "Algorithms for Modern Hardware" by [Sergey Slotin](http://sereja.me/).
 
-It is intended for performance engineers as well as CS students who have just finished an advanced algorithms course and want to learn more practical ways to speed up a program than by going from $O(n \log n)$ to $O(n \log \log n)$.
+Its intended audience is everyone from performance engineers and practical algorithm researchers to undergraduate computer science students who have just finished an advanced algorithms course and want to learn more practical ways to speed up a program than by going from $O(n \log n)$ to $O(n \log \log n)$.
 
-All materials are hosted on GitHub, with code in a [separate repository](https://github.com/sslotin/scmm-code). This isn't a collaborative project, but any contributions and feedback are welcome.
+All materials are hosted on GitHub, with code in a [separate repository](https://github.com/sslotin/scmm-code). This isn't a collaborative project, but any contributions and feedback are very much welcome.
 
 ### Part I: Performance Engineering
 
 The first part covers the basics of computer architecture and optimization of single-threaded algorithms.
+
+It walks through the main CPU optimization techniques topics such as caching, SIMD and pipelining, and provides brief examples in C++ followed by large case studies where we usually achieve a significant speedup over some STL algorithm or data structure.
 
 ```
 0. Why Go Beyond Big O
@@ -64,21 +66,23 @@ The first part covers the basics of computer architecture and optimization of si
 6. Summary
 ```
 
-It walks through the main CPU optimization techniques topics such as caching, SIMD and pipelining, and provides brief examples in C++ followed by large case studies where we usually achieve a significant speedup over some STL algorithm or data structure.
-
-Among cool things that we will speed up, in chronological order:
+Among cool things that we will speed up:
 
 - 2x faster GCD (compared to `std::gcd`)
-- 4x faster binary search (compared to `std::lower_bound`)
+- 5x faster binary search (compared to `std::lower_bound`)
 - 7x faster segment trees
-- 3x faster hash tables (compared to `std::unordered_map`)
-- ?x faster popcount
-- 1.7x faster parsing series of integers (compared to `scanf`)
+- 5x faster hash tables (compared to `std::unordered_map`)
+- ~~?x faster popcount~~
+- 2x faster parsing series of integers (compared to `scanf`)
 - ?x faster sorting (compared to `std::sort`)
 - 2x faster sum (compared to `std::accumulate`)
 - 100x faster matrix multiplication (compared to "for-for-for")
+- optimal word-size integer factorization (~0.4ms per 60-bit integer)
+- optimal Karatsuba Algorithm
+- optimal FFT
+- argmin at the speed of memory
 
-This is largely based on blog posts, research papers, conference talks and other work authored by a lot of people:
+This work is largely based on blog posts, research papers, conference talks and other work authored by a lot of people:
 
 - Agner Fog
 - Daniel Lemire
