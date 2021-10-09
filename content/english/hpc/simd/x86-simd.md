@@ -3,17 +3,17 @@ title: Intrinsics and Vector Extensions
 weight: 1
 ---
 
-The most direct and low-level way to use SIMD is to use the vector instructions in assembly — they aren't different from their scalar equivalents at all — but we are not going to do that. Instead, we will use *intrinsic* functions mapping to these instructions that are available in all modern C/C++ compilers.
+The most low-level way to use SIMD is to use the assembly vector instructions directly — they aren't different from their scalar equivalents at all — but we are not going to do that. Instead, we will use *intrinsic* functions mapping to these instructions that are available in modern C/C++ compilers.
 
-In this section, we will go through the basic of their syntax, and in the following ones we will discuss using them to do something actually interesting.
+In this section, we will go through the basics of their syntax, and in the rest of this chapter we will use them extensively to do things that are actually interesting.
 
 ## Setup
 
-To use them, we need to do a little groundwork.
+To use x86 intrinsics, we need to do a little groundwork.
 
 First, we need to determine which extensions are supported by the hardware. On Linux, you can call `cat /proc/cpuinfo`, and on other platforms you'd better go to [WikiChip](https://en.wikichip.org/wiki/WikiChip) and look it up there using the name of the CPU. In either case, there should be a `flags` section that lists the codes of all supported vector extensions.
 
-There is also a special [CPUID](https://en.wikipedia.org/wiki/CPUID) assembly instruction that lets you query various information about the CPU, including the support of particular extensions. It is primarily used to get such information in runtime in order to avoid distributing a separate binary for each microarchitecture. Its output information is returned very densely in the form of feature masks, so compilers provide built-in methods to make sense of it. Here is an example:
+There is also a special [CPUID](https://en.wikipedia.org/wiki/CPUID) assembly instruction that lets you query various information about the CPU, including the support of particular vector extensions. It is primarily used to get such information in runtime in order to avoid distributing a separate binary for each microarchitecture. Its output information is returned very densely in the form of feature masks, so compilers provide built-in methods to make sense of it. Here is an example:
 
 ```c++
 #include <iostream>
@@ -34,13 +34,27 @@ Second, we need to include a header file that contains the subset of intrinsics 
 
 And last, we need to tell the compiler that the target CPU actually supports these extensions. This can be done either with `#pragma GCC target(...)` [as we did before](../), or with `-march=...` flag in the compiler options. If you are compiling and running the code on the same machine, you can set `-march=native` to auto-detect the microarchitecture.
 
+In all further code examples, assume that they begin with these lines:
+
+```c++
+#pragma GCC target("avx2")
+#pragma GCC optimize("O3")
+
+#include <x86intrin.h>
+#include <bits/stdc++.h>
+
+using namespace std;
+```
+
+We will focus on AVX2 and the previous SIMD extensions in this chapter, which should be available on 95% of all desktop and server computers, although the general principles transfer on AVX512, Arm Neon and other SIMD architectures just as well.
+
 ## SIMD Registers
 
 The most notable distinction between SIMD extensions is the support for wider registers:
 
-- SSE added 16 128-bit registers called `xmm0` through `xmm15`.
-- AVX added 16 256-bit registers called `ymm0` through `ymm15`.
-- AVX512[^mask] added 16 512-bit registers called `zmm0` through `zmm15`.
+- SSE (1999) added 16 128-bit registers called `xmm0` through `xmm15`.
+- AVX (2011) added 16 256-bit registers called `ymm0` through `ymm15`.
+- AVX512 (2017) added[^mask] 16 512-bit registers called `zmm0` through `zmm15`.
 
 [^mask]: AVX512 also added 8 so-called *mask registers* named `k0` through `k7`, which are used for masking and blending data. We are not going to cover them and will mostly use AVX2 and previous standards.
 
@@ -56,7 +70,7 @@ Registers themselves can hold data of any kind: these types are only used for ty
 
 ## SIMD Intrinsics
 
-*Intrinsics* are C-style functions that do something with vector data types, usually by just calling the associated assembly instruction.
+*Intrinsics* are just C-style functions that do something with these vector data types, usually by simply calling the associated assembly instruction.
 
 For example, here is a cycle that adds together two arrays of 64-bit floating-point numbers using AVX intrinsics:
 
@@ -78,7 +92,7 @@ for (int i = 0; i < 100; i += 4) {
 }
 ```
 
-Note that, in general, we may have a problem here if the length of the array is not divisible by the block size. There are two common solutions to this:
+The main challenge of using SIMD is getting the data into contiguous fixed-sized blocks suitable for loading into registers. In the code above, we may in general have a problem if the length of the array is not divisible by the block size. There are two common solutions to this:
 
 1. We can "overshoot" by iterating over the last incomplete segment either way. To make sure sure we don't segfault by trying to read from or write to a memory region we don't own, we need to pad the arrays to the nearest block size (typically with some "neutral" element, e. g. zero).
 2. Make one iteration less and write a little loop in the end that calculates the remainder normally (with scalar operations).
@@ -114,7 +128,7 @@ vmovapd YMMWORD PTR c[rax], ymm0
 
 Also, some of the intrinsics are not direct instructions, but short sequences of instructions. One example is the `extract` group of instructions, which are used to get individual elements out of vectors (e. g. `_mm256_extract_epi32(x, 0)` returns the first element out of 8-integer vector); it is quite slow (~5 cycles) to move data between "normal" and SIMD registers in general.
 
-## Vector Extensions
+## GCC Vector Extensions
 
 If you feel like the design of C intrinsics is terrible, you are not alone. I've spent hundreds of hours writing SIMD code and reading the Intel Intrinsics Guide, and I still can't remember whether I need to type `_mm256` or `__m256`.
 
