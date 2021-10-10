@@ -1,6 +1,7 @@
 ---
 title: External Memory Model
 weight: 1
+draft: true
 ---
 
 To reason about memory and not go crazy, we need a model that is more sensitive, yet not so rigorous.

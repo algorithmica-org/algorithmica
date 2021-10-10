@@ -1,6 +1,7 @@
 ---
 title: Cache Locality
 weight: 5
+draft: true
 ---
 
 Temporal locality is an access pattern where if at one point a particular item is requested, it is likely that this same location will be requested again in the near future. This is like fetching the same type of beer over and over again.

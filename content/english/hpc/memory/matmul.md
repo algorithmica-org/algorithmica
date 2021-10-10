@@ -1,6 +1,7 @@
 ---
 title: Matrix Multiplication
 weight: 6
+draft: true
 ---
 
 ## Transposing matrices

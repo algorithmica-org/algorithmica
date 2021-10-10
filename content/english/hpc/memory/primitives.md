@@ -1,6 +1,7 @@
 ---
 title: External Memory Primitives
 weight: 2
+draft: true
 ---
 
 In this article, we will discuss sorting in external memory and its one very important application: joining (like in "SQL Join" used in databases).

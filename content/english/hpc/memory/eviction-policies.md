@@ -1,6 +1,7 @@
 ---
 title: Eviction Policies
 weight: 4
+draft: true
 ---
 
 *Eviction policy* is how we determine which blocks to keep in memory if we run out of it
