@@ -5,7 +5,7 @@ weight: 2
 
 Most often, SIMD is used for "embarrassingly parallel" computations: the ones where all you do is apply some elementwise function to all elements of an array and write it back somewhere else. In this setting, you don't even need to know how SIMD works: the compiler is perfectly capable of optimizing such loops by itself. All you need to know is that such optimization exists and yields a 5-10x speedup.
 
-But most computations are not like that, and even the loops that seem straightforward to vectorize are often not optimized because of tricky technical nuances. In this section, we will discuss how to assist the compiler in vectorization and also walk through some more complicated patterns of using SIMD.
+But most computations are not like that, and even the loops that seem straightforward to vectorize are often not optimized because of some tricky technical nuances. In this section, we will discuss how to assist the compiler in vectorization and walk through some more complicated patterns of using SIMD.
 
 ## Reductions
 
@@ -20,15 +20,13 @@ int sum_naive(int *a, int n) {
 }
 ```
 
-The naive approach is not so straightforward to vectorize, because the state of the loop (sum $s$ on the current prefix) depends on the previous iteration.
-
-The way to overcome this is to split a single scalar accumulator $s$ into 8 separate ones, so that $s_i$ would contain the sum of every 8th element of the original array, shifted by $i$:
+The naive approach is not so straightforward to vectorize, because the state of the loop (sum $s$ on the current prefix) depends on the previous iteration. The way to overcome this is to split a single scalar accumulator $s$ into 8 separate ones, so that $s_i$ would contain the sum of every 8th element of the original array, shifted by $i$:
 
 $$
 s_i = \sum_{j=0}^{n / 8} a_{8 \cdot j + i }
 $$
 
-If we store these 8 accumulators in a single 256-bit vector, we can update them all at once by adding consecutive 8-elements segments of the array:
+If we store these 8 accumulators in a single 256-bit vector, we can update them all at once by adding consecutive 8-element segments of the array. Armed with [the GCC vector extension](../x86-simd) syntax, this is straightforward:
 
 ```c++
 int sum_simd(v8si *a, int n) {
@@ -56,7 +54,7 @@ This is how compilers actually vectorize array sums and other reduction. Surpris
 
 ### Horizontal Summation
 
-The last part, where we sum up the 8 accumulators stored in a register into a single scalar to get the total sum, is called "horizontal summation". Although it only takes a constant number of cycles, there is a way to compute it a bit faster than by extracting every scalar one by one: using a [special instruction](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#techs=AVX,AVX2&text=_mm256_hadd_epi32&expand=2941) that add together pairs of adjacent elements in a register.
+The last part, where we sum up the 8 accumulators stored in a vector register into a single scalar to get the total sum, is called "horizontal summation". Although extracting and adding every scalar one by one only takes a constant number of cycles, it can be computed slightly faster using a [special instruction](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#techs=AVX,AVX2&text=_mm256_hadd_epi32&expand=2941) that adds together pairs of adjacent elements in a register.
 
 ![](../img/hsum.png)
 
@@ -78,7 +76,7 @@ There are similar techniques for computing "horizontal minimum" and some other r
 
 Operations of reading and writing the contents of a SIMD register into memory have two versions each: `load` / `loadu` and `store` / `storeu`. The letter "u" here stands for "unaligned". The difference is that the former ones only work correctly when the read / written block fits inside a single cache line (and crash otherwise), while the latter work either way, but with a slight performance penalty if the block crosses a cache line.
 
-Sometimes, especially when the inner operation is very lightweight, the performance difference becomes significant (at least because you need to fetch two cache lines instead of one). As an extreme example, this way of adding two arrays together:
+Sometimes, especially when the "inner" operation is very lightweight, the performance difference becomes significant (at least because you need to fetch two cache lines instead of one). As an extreme example, this way of adding two arrays together:
 
 ```c++
 for (int i = 3; i + 7 < n; i += 8) {
@@ -89,7 +87,7 @@ for (int i = 3; i + 7 < n; i += 8) {
 }
 ```
 
-...is be ~30% slower than its aligned version:
+…is ~30% slower than its aligned version:
 
 ```c++
 for (int i = 0; i < n; i += 8) {
@@ -119,7 +117,7 @@ for (int i = 0; i < n; i += 8) {
 
 For allocating an array dynamically, we can use `std::aligned_alloc` which takes the alignment value and the size of array in bytes, and returns a pointer to the allocated memory (just like `new` does), which should be explicitly deleted when no longer used.
 
-On most modern architectures, the `loadu` and `storeu` intrinsics are equally as fast as `load` and `store` — the advantage of the latter is that they can act as free assertions that all reads and writes are aligned. It is worth noting that the GCC vector extensions always assume aligned memory reads and writes. Memory alignment issues is also one of the reasons why compilers can't always autovectorize efficiently.
+On most modern architectures, the `loadu` / `storeu` intrinsics should be equally as fast as `load` / `store` given that in both cases the blocks only intersect one cache line. The advantage of the latter is that they can act as free assertions that all reads and writes are aligned. It is worth noting that the GCC vector extensions always assume aligned memory reads and writes. Memory alignment issues is also one of the reasons why compilers can't always autovectorize efficiently.
 
 ## Data Manipulation
 
@@ -143,7 +141,7 @@ alignas(32) unsigned bases[n], results[n], powers[n];
 
 In SSE/AVX, [doing modular reduction](/hpc/arithmetic/integer) is even more complicated than in the scalar case (e. g. SSE has no integer division in the first place), so we will perform all operations modulo $2^{32}$ by naturally overflowing an `unsigned int`.
 
-Here is how we'd normally do it:
+We'd normally do it by exponentiation by squaring:
 
 ```c++
 void binpow_simple() {
@@ -165,7 +163,7 @@ void binpow_simple() {
 
 This code runs in 9.47 seconds.
 
-Now let's try the vectorized version:
+To vectorize it, we can first split the arrays `a` and `p` into groups of 8 elements, and then run exponentiation by squaring on them for 32 iterations (the maximum for any 32-bit power), masking the elements that need to be squared:
 
 ```c++
 typedef __m256i reg;
@@ -200,23 +198,23 @@ void binpow_simd() {
 }
 ```
 
-This implementation now works in 0.7 seconds, or 13.5 times faster, and there is still room for improvement.
+This implementation now works in 0.7 seconds, or 13.5 times faster, and there is still ample room for improvement.
 
 ### Advanced Data Twiddling
 
-Masking is the most widely used technique for data manipulation, but there are many other tricks that we will use later in this chapter:
+Masking is the most widely used technique for data manipulation, but there are many other handy SIMD features that we will later use in this chapter:
 
 - You can [broadcast](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#expand=6331,5160,588&techs=AVX,AVX2&text=broadcast) a single value to a vector from a register or a memory location.
-- You can [permute](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=permute&techs=AVX,AVX2&expand=6331,5160) data almost arbitrarily.
-- We can create tiny lookup tables with [pshufb](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=pshuf&techs=AVX,AVX2&expand=6331) instruction. This is useful when you have some logic that isn't implemented in SSE, but is small. This instruction is so handy that Wojciech Muła — the guy who came up with half of the algorithms described in this chapter — took it as his [Twitter handle](https://twitter.com/pshufb)
+- You can [permute](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=permute&techs=AVX,AVX2&expand=6331,5160) data inside a register almost arbitrarily.
+- We can create tiny lookup tables with [pshufb](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=pshuf&techs=AVX,AVX2&expand=6331) instruction. This is useful when you have some logic that isn't implemented in SSE, and this operation is so instrumental in some algorithms that [Wojciech Muła](http://0x80.pl/) — the guy who came up with a half of the algorithms described in this chapter — took it as his [Twitter handle](https://twitter.com/pshufb)
 - Since AVX2, you can use "gather" instructions that load data non-sequentially using arbitrary array indices. These don't work 8 times faster though and are usually limited by memory rather than CPU, but they are still helpful for stuff like sparse linear algebra.
-- AVX512 has similar "scatter" instructions that write data non-sequentially, using either indices or a mask. You can easily "filter" an array this way.
+- AVX512 has similar "scatter" instructions that write data non-sequentially, using either indices or [a mask](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=compress&expand=4754,4479&techs=AVX_512). You can very efficiently "filter" an array this way using a predicate.
 
-Gather and scatter instructions turn SIMD into a proper parallel programming model, where operations can be executed almost independently. This is a huge deal. Keep in mind that algorithms specifically for AVX-512 are frequently published in blogs and research papers, so they typically rely on one of specific features not transferrable to AVX2 and earlier extensions.
+The last two, gather and scatter, turn SIMD into proper parallel programming model, where most operations can be executed independently in terms of their memory locations. This is a huge deal: many AVX512-specific algorithms have been developed recently owning to these new instructions, and not just having twice as many SIMD lanes.
 
 ## Assisting Autovectorization
 
-Of course, the preferred way of using SIMD is via autovectorization. Whenever you can, you should always stick with the scalar code for its simplicity and maintainability. But [as in many other cases](/hpc/analyzing-performance/compilation) compiler often need some additional input from the programmer, who may know a little bit more about the problem.
+Of course, the preferred way of using SIMD is by the means of autovectorization. Whenever you can, you should always stick with the scalar code for its simplicity and maintainability. But, [as in many other cases](/hpc/analyzing-performance/compilation), compiler often needs some additional input from the programmer, who may know a little bit more about the problem.
 
 Consider the "a+b" example:
 
@@ -229,11 +227,11 @@ void sum(int a[], int b[], int c[], int n) {
 
 This function can't be replaced with the vectorized variant automatically. Why?
 
-First, it is not always correct. Assuming that `a[]` and `c[]` intersect in a way that their beginning differ by a single position (who knows, maybe the programmer wanted to use this as a weird way to calculate the Fibonacci sequence with a convolution). Then the data in the SIMD blocks will intersect, and the observed behavior will differ from the one in the scalar case.
+First, vectorization here is not always technically correct. Assuming that `a[]` and `c[]` intersect in a way that their beginnings differ by a single position — because who knows, maybe the programmer wanted to calculate the Fibonacci sequence through a convolution this way. In this case, the data in the SIMD blocks will intersect, and the observed behavior will differ from the one in the scalar case.
 
-Second, we don't know anything about the alignment of these arrays, and we can lose some performance here.
+Second, we don't know anything about the alignment of these arrays, and we can lose some performance here by using unaligned instructions.
 
-When the compiler suspects that the function will be used for large cycles, then on high levels of optimization it will insert runtime checks for these cases and generate two implementation variants: SIMDized and a "safe" one.
+On high (`-O3`) levels of optimization, when the compiler suspects that the function may be used for large cycles, it generates two implementation variants — a SIMDized and a "safe" one — and inserts runtime checks to choose between the two.
 
 To avoid these runtime checks, we can tell compiler that we are sure that nothing will break. One way to do this is using the `__restrict__` keyword:
 
