@@ -1,6 +1,6 @@
 ---
 title: Implicit Data Structures
-weight: 2
+weight: 7
 draft: true
 ---
 

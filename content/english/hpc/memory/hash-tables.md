@@ -1,6 +1,6 @@
 ---
 title: Hash Tables
-weight: 3
+weight: 8
 draft: true
 ---
 
