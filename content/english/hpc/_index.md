@@ -19,7 +19,7 @@ All materials are hosted on GitHub, with code in a [separate repository](https:/
 
 The first part covers the basics of computer architecture and optimization of single-threaded algorithms.
 
-It walks through the main CPU optimization techniques topics such as caching, SIMD and pipelining, and provides brief examples in C++ followed by large case studies where we usually achieve a significant speedup over some STL algorithm or data structure.
+It walks through the main CPU optimization topics such as caching, SIMD and pipelining, and provides brief examples in C++, followed by large case studies where we usually achieve a significant speedup over some STL algorithm or data structure.
 
 ```
 0. Why Go Beyond Big O
