@@ -8,7 +8,7 @@ If you are reading this book, then somewhere on your computer science journey yo
 
 Mine was in high school, when I entered the world of competitive programming and started learning C++. I was happily coding small projects in JavaScript and PHP before that, but I realized that making websites won't get you into a university, but doing well in olympiads will.
 
-I was an okay programmer, especially for a high schooler, but coming from high-level langauges, I had never really wondered how much time it took for my code to execute. But suddenly it started to matter: each problem now has a strict time limit. I started counting my operations. How many can you do in one second?
+I was an okay programmer, especially for a highschooler, but coming from high-level languages, I had never really wondered how much time it took for my code to execute. But suddenly it started to matter: each problem now has a strict time limit. I started counting my operations. How many can you do in one second?
 
 I didn't know much about computer architecture to answer this question. But I also didn't need the right answer — I needed a rule of thumb. My thought process was: "2-3GHz means 2 to 3 billion instructions executed every second, and in a simple loop that does something with array elements, I also need to increment loop counter, check end-of-loop condition, do array indexing and stuff like that, so let's add room for 3-5 more instructions for every useful one" and ended up with using $5 \cdot 10^8$ as an estimate. None of these statements are true, but counting how many operations my algorithm needed and dividing it by this number was a good rule of thumb for my use case.
 
@@ -72,10 +72,10 @@ Let's try to put this number in perspective. The CPU that ran it has a clock fre
 This is not surprising if you consider the things that Python needs to do to figure out what the programmer meant:
 
 - it parses the expression `c[i][j] += a[i][k] * b[k][j]`;
-- tries to figure out what `a`, `b`, and `c` are and looks up their names in a special hash table with type informations;
+- tries to figure out what `a`, `b`, and `c` are and looks up their names in a special hash table with type information;
 - understands that `a` is a list, fetches its `[]` operator, retrieves the pointer for `a[i]`, figures out it's also a list, fetches its `[]` operator again, gets the pointer for `a[i][k]`, and then the element itself;
 - looks up its type, figures out that it's a `float`, and fetches the method implementing `*` operator;
-- does the same things for `b` and `c` and finally add-assignes the result to `c[i][j]`.
+- does the same things for `b` and `c` and finally add-assigns the result to `c[i][j]`.
 
 If we get rid of all this type checking and pointer chasing, perhaps we can get cycles per multiplication ratio to 1, or whatever the cost of native multiplication is?
 
@@ -120,7 +120,7 @@ It now runs in 10 seconds, or roughly 13 cycles per multiplication. Considering 
 
 Note that Java is a compiled, but not native language. The code compiles to bytecode, which is then interpreted by a virtual machine (JVM). To achieve higher performance, frequently executed parts of the code, such as the innermost for loop, are compiled into machine code during runtime and executed with almost no overhead. This technique is called *just-in-time compilation*.
 
-JIT compilation is not a feature of the language itself, of its implementation. There is also a JIT-compiled version of Python called [PyPy](https://www.pypy.org/), which needs about 12 seconds to execude the code above without any changes.
+JIT compilation is not a feature of the language itself, of its implementation. There is also a JIT-compiled version of Python called [PyPy](https://www.pypy.org/), which needs about 12 seconds to execute the code above without any changes.
 
 ### Compiled Languages
 
@@ -162,7 +162,7 @@ What happened here is we communicated the compiler the exact model of CPU we are
 
 ### BLAS
 
-Finally, let's look what an expert-optimized implementation is capable of. We will test an optimized linera algebra library called [OpenBLAS](https://www.openblas.net/). The easiest way to use it is to go back to Python and call it from `numpy`:
+Finally, let's look what an expert-optimized implementation is capable of. We will test an optimized linear algebra library called [OpenBLAS](https://www.openblas.net/). The easiest way to use it is to go back to Python and call it from `numpy`:
 
 ```python
 import time

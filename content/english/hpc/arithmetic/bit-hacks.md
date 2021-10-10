@@ -14,7 +14,7 @@ This also serves as an exercise.
 
 `>>`
 
-Note that arithmetic shift shifts in `1` for negative numbers and in `0` for positive ones. (algthough it can be implementation-defined?)
+Note that arithmetic shift shifts in `1` for negative numbers and in `0` for positive ones. (although it can be implementation-defined?)
 
 Left or right-shifting negative numbers invokes undefined behavior in C/C++.
 
@@ -52,7 +52,7 @@ This is presumably for [error detection](https://en.wikipedia.org/wiki/Parity_bi
 
 Extract the sign bit: `int mask = x >> 31`. This will be `1` for negative numbers and `0` for positive.
 
-XOR it with the initial number: `x ^ mask` (which equates to either adding or substracting 1 depending on the sign).
+XOR it with the initial number: `x ^ mask` (which equates to either adding or subtracting 1 depending on the sign).
 
 Subtract mask from the result of step 2: `(x ^ mask) - mask`
 
@@ -108,7 +108,7 @@ If `m = (1 << k)`, then `x % m` is the same as `x & (m - 1)`.
 
 ## Masks
 
-Masking operatoins.
+Masking operations.
 
 ### Brute forcing
 

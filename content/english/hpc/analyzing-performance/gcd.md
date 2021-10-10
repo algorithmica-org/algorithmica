@@ -53,7 +53,7 @@ int gcd(int a, int b) {
 }
 ```
 
-You can rewrite it as a loop, which will be closer to how it is actually executed by the hardware. It won't be faster though, because compilers can easily optimize tail recurion.
+You can rewrite it as a loop, which will be closer to how it is actually executed by the hardware. It won't be faster though, because compilers can easily optimize tail recursion.
 
 ```c++
 int gcd(int a, int b) {
@@ -113,7 +113,7 @@ Likewise, the algorithm itself is just repeated application of these identities.
 
 Its running time is still logarithmic, which is even easier to show because in each of these identities one of the arguments is divided by 2 — except for the last case, in which the new first argument, an absolute difference of two odd numbers, will be even and thus will be divided by 2 on the next iteration.
 
-What makes this algorithm especially interesting to us is that the only arithmetic operations it uses are binary shifts, comparisons and substractions, all of which typically take just one cycle.
+What makes this algorithm especially interesting to us is that the only arithmetic operations it uses are binary shifts, comparisons and subtractions, all of which typically take just one cycle.
 
 ### Implementation
 
@@ -142,7 +142,7 @@ int gcd(int a, int b) {
 
 Let's run it, and… it sucks. The difference in speed compared to `std::gcd` is indeed 2x, but on the other side of equation. This is mainly because of all the branching needed to differentiate between the cases. Let's start optimizing.
 
-First, let's replace all divisions by 2 with divisions by whichever highest power of 2 we can. We can do it efficiaently with `__builtin_ctz`, the "count trailing zeros" instruction available on modern CPUs. Whenever we are supposed to divide by 2 in the original algorithm, we will call this function instead, which will give us the exact amount to right-shift the number by. Assuming that the we are dealing with large random numbers, this is expected to decrease the number of iterations by almost a factor 2, because $1 + \frac{1}{2} + \frac{1}{4} + \frac{1}{8} + \ldots \to 2$.
+First, let's replace all divisions by 2 with divisions by whichever highest power of 2 we can. We can do it efficiently with `__builtin_ctz`, the "count trailing zeros" instruction available on modern CPUs. Whenever we are supposed to divide by 2 in the original algorithm, we will call this function instead, which will give us the exact amount to right-shift the number by. Assuming that the we are dealing with large random numbers, this is expected to decrease the number of iterations by almost a factor 2, because $1 + \frac{1}{2} + \frac{1}{4} + \frac{1}{8} + \ldots \to 2$.
 
 Second, we can notice that condition 2 can now only be true once — in the very beginning — because every other identity leaves at least one of the numbers odd. Therefore we can handle this case just once in the beginning and not consider it in the main loop.
 

@@ -9,7 +9,7 @@ In this section, we will go through some classic numerical methods, just to get 
 
 ## Newton's Method
 
-Newton's method is a simple yet very powerfull algorithm for finding approximate roots of real-valued functions, that is, the solutions to the following generic equation:
+Newton's method is a simple yet very powerful algorithm for finding approximate roots of real-valued functions, that is, the solutions to the following generic equation:
 
 $$
 f(x) = 0
@@ -114,7 +114,7 @@ which results in at least quadratic convergence under a few additional assumptio
 
 ## Fast Inverse Square Root
 
-The inverse square root of a floating-point number $\frac{1}{\sqrt x}$ is used in calculating normalized vectors, which are in turn extensively used in various simulation scenarious such as computer graphics, e. g. to determine angles of incidence and reflection to simulate lighting.
+The inverse square root of a floating-point number $\frac{1}{\sqrt x}$ is used in calculating normalized vectors, which are in turn extensively used in various simulation scenarios such as computer graphics, e. g. to determine angles of incidence and reflection to simulate lighting.
 
 $$
 \hat{v} = \frac{\vec v}{\sqrt {v_x^2 + v_y^2 + v_z^2}}
@@ -226,14 +226,14 @@ $$
 I_y \approx \frac{3}{2} L (B - \sigma) - \frac{1}{2} I_x
 $$
 
-It turns out, we don't even need to calculate logarithm in the first place: the formula above is just a constant minus the half of integer reinterpretation of $x$. It is switten in the code as:
+It turns out, we don't even need to calculate logarithm in the first place: the formula above is just a constant minus the half of integer reinterpretation of $x$. It is written in the code as:
 
 ```cpp
 i = * ( long * ) &y;
 i = 0x5f3759df - ( i >> 1 );
 ```
 
-We reinterpred `y` as an intger on the first line, and then plug into in to the formula, the first term of which is the magic number $\frac{3}{2} L (B - \sigma) = \mathtt{0x5F3759DF}$, while the second is calculated with a binary shift instead of division.
+We reinterpret `y` as an integer on the first line, and then plug into in to the formula, the first term of which is the magic number $\frac{3}{2} L (B - \sigma) = \mathtt{0x5F3759DF}$, while the second is calculated with a binary shift instead of division.
 
 ### Iterating with Newton's Method
 
@@ -250,7 +250,7 @@ x2 = number * 0.5F;
 y  = y * ( threehalfs - ( x2 * y * y ) );
 ```
 
-The initial approximation is so good that just one iteration was enough for game development purposes. It falls within 99.8% of the correct answer after just the first iteration, and can be reiterated further to improve accuracy — which is what is done in the hardware: the x86 does a few of them and guarantes a relative error of no more than $1.5 \times 2^{-12}$.
+The initial approximation is so good that just one iteration was enough for game development purposes. It falls within 99.8% of the correct answer after just the first iteration, and can be reiterated further to improve accuracy — which is what is done in the hardware: the x86 does a few of them and guarantees a relative error of no more than $1.5 \times 2^{-12}$.
 
 ## Further Reading
 

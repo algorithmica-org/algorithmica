@@ -15,7 +15,7 @@ Before jumping straight to compiler optimizations, let's recall the "big picture
 
 Skipping the boring parts, there are 4 stages of turning C programs into executables:
 
-1. **Preprocessing** expands macros, pulls included source from header files, and stripps off comments from source code: `gcc -E souce.c` (outputs preprocessed source to stdout)
+1. **Preprocessing** expands macros, pulls included source from header files, and strips off comments from source code: `gcc -E source.c` (outputs preprocessed source to stdout)
 2. **Compiling** parses the source, checks for syntax errors, converts it into an immediate representation, performs optimizations, and finally translates it into assembly language: `gcc -S file.c` (emits an `.s` file)
 3. **Assembly** turns it into machine code, except that external function calls like `printf` are substituted with placeholders: `gcc -c file.c` (emits an `.o` file, called *object file*)
 4. **Linking** finally resolves the function calls by plugging in their actual addresses, and produces an executable binary: `gcc -o binary file.c`
@@ -37,7 +37,7 @@ It also gives the ability to distribute code as *libraries*, which can be either
 - *Static* libraries are simply collections of precompiled object files that are merged with other sources by the compiler to produce a single executable, just as it normally would.
 - *Dynamic* or *shared* libraries are precompiled executables that have additional meta-information about where its callables are, references to which are resolved during runtime. As the name suggests, this allows *sharing* the compiled binaries between multiple users.
 
-To enable optimizations that involve more than one source file (function inlining, dead code elimination, etc.), modern compilers store immediate representation in object files as well, which allows them to perform *link-time optimization* by running certain lightweight optimizations that can benefit from having a larger context. This also allows using different compiled langauges in the same program, which can even be optimized accross language barriers if their compilers use the same intermediate representation.
+To enable optimizations that involve more than one source file (function inlining, dead code elimination, etc.), modern compilers store immediate representation in object files as well, which allows them to perform *link-time optimization* by running certain lightweight optimizations that can benefit from having a larger context. This also allows using different compiled languages in the same program, which can even be optimized across language barriers if their compilers use the same intermediate representation.
 
 LTO is a relatively recent feature (it appeared in GCC only around 2014), and it is still far from perfect. In C and C++, the way to make sure no performance is lost is to create a *header-only library*. As the name suggests, they are just header files that contain full definitions of all functions, and so by simply including them compiler gets access to all optimizations possible. Although you do have to recompile them completely each time, this approach makes sure no performance is lost.
 
@@ -51,7 +51,7 @@ There are 4 *and a half* main levels of optimization for speed in GCC:
 - `-O1` (also aliased as `-O`) does a few "low-hanging fruit" optimizations almost not affecting the compilation time.
 - `-O2` enables all optimizations that are known to have little to no negative side effects and take reasonable time to complete (this is what most projects use for production builds).
 - `-O3` does very aggressive optimization enabling almost all *correct* optimizations implemented in GCC.
-- `-Ofast` does everything in `-O3` as well as adds a few more optimizations flags that may break strict standard compliance (e. g. floating-point operations may be rearranged so that the result is off by a fews bits of the mantissa).
+- `-Ofast` does everything in `-O3` as well as adds a few more optimizations flags that may break strict standard compliance (e. g. floating-point operations may be rearranged so that the result is off by a few bits of the mantissa).
 
 The next thing you want to do is to tell the compiler more about the computer(s) this code is supposed to be run on: the smaller the set of platforms is, the better. By default it will generate binaries that can run on any relatively new (>2000) x86 CPU. The simplest way to narrow it down is to pass `-march` flag to specify the exact microarchitecture: `-march=haswell`. If you are compiling on the same computer that will run the binary, you can use `-march=native` for auto-detection.
 
@@ -143,7 +143,7 @@ The whole process is automated by modern compilers. For example, the `-fprofile-
 g++ -fprofile-generate [other flags] source.cc -o binary
 ```
 
-After we run the program — preferrably on input that is as representive of real use case as possible — it will create a bunch of `*.gcda` files that contain log data for the test run, after which we can rebuild the program, but now adding the `-fprofile-use` flag:
+After we run the program — preferably on input that is as representative of real use case as possible — it will create a bunch of `*.gcda` files that contain log data for the test run, after which we can rebuild the program, but now adding the `-fprofile-use` flag:
 
 ```
 g++ -fprofile-use [other flags] source.cc -o binary
@@ -170,7 +170,7 @@ In general, when an optimization doesn't happen, it is usually because one of th
 
 - The compiler doesn't have enough information to know it will be beneficial.
 - The optimization is actually not always correct: there is an input on which the result doesn't comply with the spec, even if it is correct on every input that the programmer expects.
-- It isn't implemented in the compiler yet, either because it is too hard to implemenet in general, too costly to compute or too rare to be worth the troube (e. g. writing a tiny library for some specific algorithm is usually better than hardcoding it into compiler).
+- It isn't implemented in the compiler yet, either because it is too hard to implement in general, too costly to compute or too rare to be worth the trouble (e. g. writing a tiny library for some specific algorithm is usually better than hardcoding it into compiler).
 
 In addition, optimization sometimes fails just due to the source code being overly complicated.
 
@@ -226,7 +226,7 @@ These keywords are also a good idea to use by themselves for the purpose of self
 
 ### Undefined Behavior
 
-In safe langauges like Java and Rust, you normally have a well-defined behavior for every possible operation and every possible input. There are some things that are *underdefined*, like the order of keys in a hash table, but these are usually some minor details left to implementation for potential performance gains in the future.
+In safe languages like Java and Rust, you normally have a well-defined behavior for every possible operation and every possible input. There are some things that are *underdefined*, like the order of keys in a hash table, but these are usually some minor details left to implementation for potential performance gains in the future.
 
 In contrast, C and C++ take the concept of undefined behavior to another level. Certain operations don't cause an error during compilation or runtime but are just not *allowed* — in the sense of there being a contract between a programmer and a compiler, that in case of undefined behavior the compiler can do literally anything, including formatting your hard drive.
 
@@ -234,7 +234,7 @@ But compiler authors are not interested in formatting your hard drive of blowing
 
 For example, consider the case of signed overflow. On almost all architectures, signed integers overflow the same way as unsigned ones, with `INT_MAX + 1 == INT_MIN`, but yet this behavior is not a part of the C/C++ standard. This was very much intentional: if you disallow signed integer overflow, then `(x + 1) > x` is guaranteed to be always true for `int`, but not for `unsigned int`. For signed types, this allows compilers to optimize such checks away.
 
-As a more naturally occuring example, consider the case of a loop with an integer control variable. C++ and Rust are advocating for using an unsigned integer (`size_t` / `usize`), while C programmers stubbornly keep using `int`. For a reason why, consider the following `for` loop:
+As a more naturally occurring example, consider the case of a loop with an integer control variable. C++ and Rust are advocating for using an unsigned integer (`size_t` / `usize`), while C programmers stubbornly keep using `int`. For a reason why, consider the following `for` loop:
 
 ```cpp
 for (unsigned int i = 0; i < n; i++) {
@@ -258,7 +258,7 @@ T at(size_t k) {
 
 An interesting fact is that these checks are quite rarely actually executed during runtime, because compiler can often prove during compilation time that everything is fine — for example, when iterating in a `for` loop from 1 to the array size and indexing $i$-th element on each step.
 
-When compiler can't prove inexistence of corner cases, but you can, you can use the machanism of undefined behavior to provide it with additional information. Clang has a helpful `__builtin_assume` function where you can put a statement that is guaranteed to be true, and compiler will use this assumption. In GCC you can do the same with `__builtin_unreachable`:
+When compiler can't prove inexistence of corner cases, but you can, you can use the mechanism of undefined behavior to provide it with additional information. Clang has a helpful `__builtin_assume` function where you can put a statement that is guaranteed to be true, and compiler will use this assumption. In GCC you can do the same with `__builtin_unreachable`:
 
 ```cpp
 void assume(bool pred) {
@@ -273,7 +273,7 @@ Then you can put `assume(k < vector.size())` before `at` and the bounds check sh
 
 Corner cases and tiny details are also something you should keep in mind when doing arithmetic. 
 
-One example we've already mentioned before is the fact that floating-point arithmetic is not technically commutative, even though nobody cares about results being correct to the last bit. Compiler needs to comply with the C langauge spec regarding the order of operations, which blocks some potential optimizations. Strict compliance can be disabled with the `-ffast-math` flag, which is also included in `-Ofast`.
+One example we've already mentioned before is the fact that floating-point arithmetic is not technically commutative, even though nobody cares about results being correct to the last bit. Compiler needs to comply with the C language spec regarding the order of operations, which blocks some potential optimizations. Strict compliance can be disabled with the `-ffast-math` flag, which is also included in `-Ofast`.
 
 In integer arithmetic, corner cases are also often hurting performance. Consider the case of division by 2:
 

@@ -73,7 +73,7 @@ mov DWORD PTR [rdx], eax  ; write contents of eax to wherever rdx points
 Assembly is very simple in the sense that it doesn't have a lot of syntactical constructions compared to high-level programming languages. From what you can observe from the examples above:
 
 - A program is a sequence of instructions, each written as its name followed by a variable amount of operands.
-- The `[reg]` syntaxis is used for "dereferencing" a pointer stored in a register, and on x86 you need to prefix it with size information (`DWORD` here means 32 bit).
+- The `[reg]` syntax is used for "dereferencing" a pointer stored in a register, and on x86 you need to prefix it with size information (`DWORD` here means 32 bit).
 - The `;` sign is used for line comments, like `#` and `//` in other languages.
 
 Assembly a very minimal language because it needs to be. It reflects the machine language as closely as possible, up to the point where there is almost 1:1 correspondence between machine code and assembly. In fact, you can turn any compiled program back into its assembly form by a process called *disassembly* — although everything non essential like comments will not be preserved.
@@ -94,11 +94,11 @@ Most instructions write their result into the first operand, which can also be i
 
 **Registers** are named `rax`, `rbx`, `rcx`, `rdx`, `rdi`, `rsi`, `rbp`, `rsp`, and `r8`-`r15` for a total of 16 of them. The "letter" ones are named like that for historical reasons: `rax` is "accumulator", `rcx` is "counter", `rdx` is "data" and so on, but, of course, they don't have to be used only for that.
 
-There are also 32-, 16-bit and 8-bit registers that have similar names (`rax` → `eax` → `ax` → `al`). They are not fully separate, but *aliased*: the first 32 bits of `rax` are `eax`, the first 16 bits of `eax` are `ax` and so on. This is made to save die space while maintaining compatibility, and it is also the reason why basic type casts in compiled programming languages are ususally free. 
+There are also 32-, 16-bit and 8-bit registers that have similar names (`rax` → `eax` → `ax` → `al`). They are not fully separate, but *aliased*: the first 32 bits of `rax` are `eax`, the first 16 bits of `eax` are `ax` and so on. This is made to save die space while maintaining compatibility, and it is also the reason why basic type casts in compiled programming languages are usually free. 
 
 These are just the registers that you use directly in operations. There are also a few special ones that are needed for control flow, as well as a bunch of very wide registers used in vector extensions, but we'll get there in time.
 
-**Memory** addressing is done with `[]` operator, but it can do more than just reinterpret a value stored in a register as a memory location. Address operand takes up to 4 paramenters presented in the syntax:
+**Memory** addressing is done with `[]` operator, but it can do more than just reinterpret a value stored in a register as a memory location. Address operand takes up to 4 parameters presented in the syntax:
 
 ```
 SIZE PTR [base + index * scale + displacement]
@@ -108,7 +108,7 @@ where scale can be 2, 4, or 8, and it calculates the pointer `base + index * sca
 
 This can be useful when you have, say, an array of structures and want to load a specific field of its $i$-th element.
 
-Addressing operator neds to be prefixed with the size:
+Addressing operator needs to be prefixed with the size:
 
 - `BYTE` for 8 bits
 - `WORD` for 16 bits
@@ -181,7 +181,7 @@ Now we only need 3 loop control instructions for 4 useful ones (improvement from
 
 In practice though, unrolling loops isn't always necessary for performance because of a mechanism called *out-of-order execution*. Modern processors don't actually execute instructions one-by-one, but maintain a "pool" of pending instructions so that two independent operations can be executed concurrently without waiting for each other to finish.
 
-This is our case too: the real speedup from unrolling won't be fourfold, because incrementing the counter and checking for end of loop are independent from the loop body and can be sheduled to run concurrently with it.
+This is our case too: the real speedup from unrolling won't be fourfold, because incrementing the counter and checking for end of loop are independent from the loop body and can be scheduled to run concurrently with it.
 
 ### Branch Prediction
 
@@ -288,13 +288,13 @@ nonzero:
     ret
 ```
 
-Over time, people who develop compilers and operating systens came up with [conventions](https://en.wikipedia.org/wiki/X86_calling_conventions) on how to call functions. These conventions allow software engineering marvels such as splitting compilation into separate units, re-using already compiled libraries and even writing them in different programming langauges. Of course, you don't have to follow these conventions in local functions.
+Over time, people who develop compilers and operating systems came up with [conventions](https://en.wikipedia.org/wiki/X86_calling_conventions) on how to call functions. These conventions allow software engineering marvels such as splitting compilation into separate units, re-using already compiled libraries and even writing them in different programming languages. Of course, you don't have to follow these conventions in local functions.
 
 There are a lot more nuances, but we won't go in detail here, because this book is about performance, and the best way to deal with functions calls is actually to avoid making them in the first place.
 
 ### Overhead of Recursion
 
-Moving data to and from the stack creates a huge overhead for smaller functions. When possible, optimizing compilers will *inline* function calls by stitching callee's code into the caller and resolving conflicts over registers. This is straighforward to do when callee doesn't make any other function calls, or at least if these calls are not recursive.
+Moving data to and from the stack creates a huge overhead for smaller functions. When possible, optimizing compilers will *inline* function calls by stitching callee's code into the caller and resolving conflicts over registers. This is straightforward to do when callee doesn't make any other function calls, or at least if these calls are not recursive.
 
 If the function is recursive, it is still often possible to make it "call-less" by restructuring it. This is the case when the function is *tail recursive*, that is, it returns right after making a recursive call. Since no actions are required after the call, there is also no need for storing anything on the stack, and a recursive call can be safely replaced with a jump to the beginning, effectively turning the function into a loop.
 
@@ -323,7 +323,7 @@ loop:
 
 To summarize: the primary reason why recursion can be slow is because it needs to read and write data to the stack, while iterative and "tail recursive" algorithms do not.
 
-## Inderect Branch
+## Indirect Branch
 
 Before execution, all labels get converted to addresses (absolute or relative) and then encoded into jump instructions.
 
@@ -362,7 +362,7 @@ switch (grade) {
 }
 ```
 
-I personally don't remember the last time I used them in a non-educational context. In general, switch statements are equivalent to a sequence of "if, else if, else if, else if…" and so on, and for this reason many languages don't even have them in the first place. But nontheless, such control flow structures are important for implementing parsers, interpreters and other state machines, which are often comprised of a single `while (true)` loop and a `switch (state)` statement inside.
+I personally don't remember the last time I used them in a non-educational context. In general, switch statements are equivalent to a sequence of "if, else if, else if, else if…" and so on, and for this reason many languages don't even have them in the first place. But nonetheless, such control flow structures are important for implementing parsers, interpreters and other state machines, which are often comprised of a single `while (true)` loop and a `switch (state)` statement inside.
 
 When we have control over the range of values that the variable can take, we can use the following trick utilizing computed jumps. Instead of making $n$ conditional branches, we can create a *branch table* that contains pointers / offsets to possible jump locations, and then just index it with the `state` variable taking values in the $[0, n)$ range.
 

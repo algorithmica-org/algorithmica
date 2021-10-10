@@ -9,7 +9,7 @@ There are two general ways of finding performance issues: starting at the code a
 
 Instrumentation is an overcomplicated term that means inserting timers and other tracking code into programs. The simplest example is using the `time` utility in Unix-like systems to measure the duration of execution for the whole program.
 
-More generally, you want to know *which parts* of the program actually need optimizaiton. There are tools shipped with compilers and IDEs that can time designated functions automatically, but it is more robust to do it by hand using any methods of interacting with time the language provides:
+More generally, you want to know *which parts* of the program actually need optimization. There are tools shipped with compilers and IDEs that can time designated functions automatically, but it is more robust to do it by hand using any methods of interacting with time the language provides:
 
 ```cpp
 clock_t start = clock();
@@ -185,7 +185,7 @@ The last approach (or rather a group of them) is not to gather the data by actua
 
 The first one is memory profilers. A particular example is `cachegrind`, which is a part of `valgrind`. It simulates all memory operations to assess memory performance, although usually significantly slowing down the program in the process. They can provide a bit more information than just `perf` cache events.
 
-The second category is machine code analyzers. These are programs that take assembly code and simulate its execution on a particular microarchitecture using information available to compilers, and output the latency and throughput of the whole snippet, as well as cycle-perfect utilizaiton of various resources in a CPU.
+The second category is machine code analyzers. These are programs that take assembly code and simulate its execution on a particular microarchitecture using information available to compilers, and output the latency and throughput of the whole snippet, as well as cycle-perfect utilization of various resources in a CPU.
 
 There are many of them, but I personally prefer `llvm-mca`, which you can probably install via a package manager together with `clang`. You can also access it through a new web-based tool called [UICA](https://uica.uops.info).
 

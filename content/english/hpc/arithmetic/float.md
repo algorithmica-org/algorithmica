@@ -6,14 +6,14 @@ weight: 1
 The users of floating-point arithmetic deserve one of these IQ bell curve memes — because this is how the relationship between it and most people typically proceeds:
 
 - Beginner programmers use it everywhere as if it was some magic unlimited-precision data type.
-- Then they discover that `0.1 + 0.2 != 0.3` or some other quirk like that, freak out, start thinking that some random error term is added to every computation, and for many years aviod any real data types completely.
+- Then they discover that `0.1 + 0.2 != 0.3` or some other quirk like that, freak out, start thinking that some random error term is added to every computation, and for many years avoid any real data types completely.
 - Then they finally man up, read the specification of how IEEE-754 floats work and start using them appropriately.
 
 Most people are unfortunately still at stage 2, breeding various misconceptions about floating-point arithmetic — thinking that it is fundamentally imprecise and unstable, and slower than integer arithmetic.
 
 ![](../img/iq.svg)
 
-But these are all just myths. Floating-point arithmetic is often *faster* than integer arithmetic because of specialized instructions, and real number representations are thoroughly standartized and follow simple and deterministic rules in terms of rounding, allowing you to manage computational errors reliably.
+But these are all just myths. Floating-point arithmetic is often *faster* than integer arithmetic because of specialized instructions, and real number representations are thoroughly standardized and follow simple and deterministic rules in terms of rounding, allowing you to manage computational errors reliably.
 
 In fact, it is so reliable that some high-level programming languages, most notably JavaScript, don't have integers at all. In JavaScript, there is only one `number` type, which is internally stored as a 64-bit `double`, and due to the way floating-point arithmetic works, all integer numbers between $-2^{53}$ and $2^{53}$ and results of computations involving them can be stored exactly, so from a programmer's perspective, there is little practical need for a separate integer type.
 
@@ -29,7 +29,7 @@ If you need to deal with real (non-integer) numbers, you have several options wi
 
 The first and the most cumbersome approach is to store not the resulting values themselves but the algebraic expressions that produce them.
 
-Here is a simple example. In some applications, such as computational geometry, apart from addding, subtracting and multiplying numbers, you also need to divide without rounding, producing a rational number, which can be exactly represented with a ratio of two integers:
+Here is a simple example. In some applications, such as computational geometry, apart from adding, subtracting and multiplying numbers, you also need to divide without rounding, producing a rational number, which can be exactly represented with a ratio of two integers:
 
 ```c++
 struct r {
@@ -205,7 +205,7 @@ When we designed our DIY floating-point type, we omitted quite a lot of importan
 - What happens if increment the largest representable number?
 - Can we somehow detect if one of the above three happened?
 
-Most of the early computers didn't have floating-point arithmetic, and when vendors started adding floating-point coprocessors, they had slightly different vision for what answers to those questions should be. Diverse implementations made it difficult to use floating-point arithmetic reliably and portably — particularily for people developing compilers.
+Most of the early computers didn't have floating-point arithmetic, and when vendors started adding floating-point coprocessors, they had slightly different vision for what answers to those questions should be. Diverse implementations made it difficult to use floating-point arithmetic reliably and portably — particularly for people developing compilers.
 
 In 1985, the Institute of Electrical and Electronics Engineers published a standard (called [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)) that provided a formal specification of how floating-point numbers should work, which was quickly adopted by the vendors and is now used in virtually all general-purpose computers.
 
@@ -232,7 +232,7 @@ Their availability ranges from chip to chip:
 
 - Most CPUs support single- and double-precision — which is what `float` and `double` types refer to in C.
 - Extended formats are exclusive to x86, and are available in C as the `long double` type, which falls back to double precision on arm. The choice of 64 bits for mantissa is so that every `long long` integer can be represented exactly. There is also a 40-bit format that similarly allocates 32 mantissa bits.
-- Quaruple as well as the 256-bit "octuple" formats are only used for specific scientific computations and are not supported by general-purpose hardware.
+- Quadruple as well as the 256-bit "octuple" formats are only used for specific scientific computations and are not supported by general-purpose hardware.
 - Half-precision arithmetic only supports a small subset of operations, and is generally used for machine learning applications, especially neural networks, because they tend to do a large amount of calculation, but don't require a high level of precision.
 - Half-precision is being gradually replaced by bfloat, which trades off 3 mantissa bits to have the same range as single-precision, enabling interoperability with it. It is mostly being adopted by specialized hardware: TPUs, FGPAs and GPUs. The name stands for "[Brain](https://en.wikipedia.org/wiki/Google_Brain) float".
 
@@ -246,7 +246,7 @@ Apart from their sizes, most of behavior is exactly the same between all floatin
 
 The default way integer arithmetic deals with corner cases such as division by zero is to crash.
 
-Sometimes a software carsh in turn causes a real, physical one. In 1996, the maiden flight of the [Ariane 5](https://en.wikipedia.org/wiki/Ariane_5) (the space launch vehicle that ESA uses to lift stuff into low Earth orbit) ended in [a catastrophic explosion](https://www.youtube.com/watch?v=gp_D8r-2hwk) due to the policty of aborting computation on arithmetic error, which in this case was a floating-point to integer conversion overflow, that led to the navigation system thinking that it was off course and making a large correction, eventually causing the disintegration of a $1B rocket.
+Sometimes a software crash in turn causes a real, physical one. In 1996, the maiden flight of the [Ariane 5](https://en.wikipedia.org/wiki/Ariane_5) (the space launch vehicle that ESA uses to lift stuff into low Earth orbit) ended in [a catastrophic explosion](https://www.youtube.com/watch?v=gp_D8r-2hwk) due to the policy of aborting computation on arithmetic error, which in this case was a floating-point to integer conversion overflow, that led to the navigation system thinking that it was off course and making a large correction, eventually causing the disintegration of a $1B rocket.
 
 There is a way to gracefully handle corner cases such like these: hardware interrupts. When an exception occurs, CPU:
 
@@ -270,7 +270,7 @@ $$
 \end{aligned}
 $$
 
-What happens if we, say, divide a value by zero? Should it be a negative or a positive infinity? This case in actually unambigious because, somewhat less intuitively, there are also two zeros: a positive and a negative one.
+What happens if we, say, divide a value by zero? Should it be a negative or a positive infinity? This case in actually unambiguous because, somewhat less intuitively, there are also two zeros: a positive and a negative one.
 
 $$
     \frac{1}{+0} = +∞
@@ -279,13 +279,13 @@ $$
 
 Zeros are encoded by setting all bits to zero, except for the sign bit in the negative case. Infinities are encoded by setting all their exponent bits to one and all mantissa bits to zero, but the sign bit distinguishing between a positive and a negative infinity.
 
-The other type is the "not-a-mumber” (NaN), which is generated as the result of mathematically incorrect operations:
+The other type is the "not-a-number” (NaN), which is generated as the result of mathematically incorrect operations:
 
 $$
 \log(-1),\; \arccos(1.01),\; ∞ − ∞,\; −∞ + ∞,\; 0 × ∞,\; 0 ÷ 0,\; ∞ ÷ ∞
 $$
 
-There are two types of NaNs: a signalling NaN and a quiet NaN. A signalling NaN raises an exception flag, which may or may not cause an immediate hardware interrupt becased on FPU configuration, while a quiet NaN just propagates through almost every arithmetic operation, resulting in more NaNs.
+There are two types of NaNs: a signalling NaN and a quiet NaN. A signalling NaN raises an exception flag, which may or may not cause an immediate hardware interrupt because on FPU configuration, while a quiet NaN just propagates through almost every arithmetic operation, resulting in more NaNs.
 
 Both NaNs are encoded as all their exponent set to ones and the mantissa part being everything other than all zeroes (to distinguish them from infinities).
 
@@ -302,7 +302,7 @@ Apart from the default mode (also known as Banker's rounding), you can [set](htt
 
 The alternative rounding modes are also useful in diagnosing numerical instability. If the results of a subroutine vary substantially between rounding to the positive and negative infinities, then it indicates susceptibility to round-off errors. Is a better test than switching all computations to a lower precision and checking whether the result changed by too much, because the default rounding to nearest results in the right "expected" value given enough averaging: statistically, half of the time they are rounding up and the other are rounding down, so they cancel each other.
 
-Note that while most operations with real numbers are commutative and assotiative, their rounding errors are not: even the result of $(x+y+z)$ depends on the order of summation. Compilers are not allowed to produce non-spec-compliant results, so this disables some potential optimizations that involve rearranging operands. You can disable this strict compliance with the `-ffast-math` flag in GCC and Clang, although you need to be aware that this lets compilers sometimes choose less precise computation paths.
+Note that while most operations with real numbers are commutative and associative, their rounding errors are not: even the result of $(x+y+z)$ depends on the order of summation. Compilers are not allowed to produce non-spec-compliant results, so this disables some potential optimizations that involve rearranging operands. You can disable this strict compliance with the `-ffast-math` flag in GCC and Clang, although you need to be aware that this lets compilers sometimes choose less precise computation paths.
 
 It seems surprising to expect this guarantee from hardware that performs complex calculations such as natural logarithms and square roots, but this is it: you guaranteed to get the highest precision possible from all operations. This makes it remarkably easy to analyze round-off errors, as we will see in a bit.
 
@@ -364,7 +364,7 @@ $$
 x^2 \cdot (1 + \epsilon) - y^2 \cdot (1 - \epsilon)
 $$
 
-corresponding to the absolute arror of
+corresponding to the absolute error of
 
 $$
 x^2 \cdot (1 + \epsilon) - y^2 \cdot (1 - \epsilon) - (x^2 - y^2) = (x^2 + y^2) \cdot \epsilon
@@ -378,7 +378,7 @@ $$
 
 If $x$ and $y$ are close in magnitude, the error will be $O(\epsilon \cdot |x|)$.
 
-Under direct computation, the substraction "magnifies" the errors of the squaring. But this can be fixed by instead using the following formula:
+Under direct computation, the subtraction "magnifies" the errors of the squaring. But this can be fixed by instead using the following formula:
 
 $$
 f(x, y) = x^2 - y^2 = (x + y) \cdot (x - y)
@@ -388,7 +388,7 @@ In this one, it is easy to show that the error is be bound by $\epsilon \cdot |x
 
 ### Kahan Summation
 
-From previous example, we can see that long chains of operations are not a problem, but adding and substracting numbers of different magnitude is. The general approach to dealing with such problems is to try to keep big numbers with big numbers and low numbers with low numbers.
+From previous example, we can see that long chains of operations are not a problem, but adding and subtracting numbers of different magnitude is. The general approach to dealing with such problems is to try to keep big numbers with big numbers and low numbers with low numbers.
 
 Consider the standard summation algorithm:
 
@@ -429,19 +429,19 @@ for (int i = 0; i < n; i++) {
 
 This trick is known as *Kahan summation*. Its relative error is bounded by $2 \epsilon + O(n \epsilon^2)$: the first term comes from the very last summation, and the second term is due to the fact that we work with less-than-epsilon errors on each step.
 
-Of course, a more general approach would be to switch to a more precise data type, like `double`, either way effectively squaring the machine epsilon. It can sort of be scaled by budling two `double` variable together ne for storing the value, and another for its non-representable errors, so that they actually represent $a+b$. This approach is known as *double-double* arithmetic, and can be similarly generalized to define quad-double and higher precision arithmetic.
+Of course, a more general approach would be to switch to a more precise data type, like `double`, either way effectively squaring the machine epsilon. It can sort of be scaled by bundling two `double` variable together ne for storing the value, and another for its non-representable errors, so that they actually represent $a+b$. This approach is known as *double-double* arithmetic, and can be similarly generalized to define quad-double and higher precision arithmetic.
 
 <!--
 
 ## Conversion to Decimal
 
-It is unfortunate that humans evolved to have 10 fingers, because owing to this fact we ended up with a very clumsy numer system.
+It is unfortunate that humans evolved to have 10 fingers, because owing to this fact we ended up with a very clumsy number system.
 
-Digit is actually also a anatomical term meaning eiter a finger or a toe
+Digit is actually also a anatomical term meaning either a finger or a toe
 
 Six fingers on each hand would be more convenient, because it would be straightforward to divide numbers by 2, 3, 4 and 6. This numbering system was used by ancient Babylonians, and it is still the reason why we have 60 seconds in a minute, 24 hours in a day, 12 months and 6 cans of beer in a pack: you can perfectly divide items by low divisors.
 
-Four fingers on each hand (like in The Simpsons) would give us a very convenient octal system where you can divide by powers of 2, although most people would not start appreciating it untill invention of computers.
+Four fingers on each hand (like in The Simpsons) would give us a very convenient octal system where you can divide by powers of 2, although most people would not start appreciating it until invention of computers.
 
 But here we are, and we have a problem of converting binary floating-point numbers to decimal numbers in scientific notation. But what does that even mean, exactly?
 
@@ -464,7 +464,7 @@ Then, we can notice that some numbers are easy to print. If we have 23-bit manti
 
 But what to do in general case, if the exponent value is either too large or too small? We can reduce the problem to the previous case by multiplying it by $\frac{10^a}{2^b}$ for some integers $a$ and $b$ with precise enough arithmetic so that the exponent is small.
 
-Multiplying or dividing by 10 is the same as incrementing the exponent (the resulting one after the "e" in scientific notation, not the binary). The idea is to find a proper power of 10 so that the resulting number will have . We need to precalculate numbers of the form $\frac{10^a}{2^b}$ (since exponent is limited, there won't be many of them). To get the precalculated number, we need to look at the exponent (or possibly its neighbours).
+Multiplying or dividing by 10 is the same as incrementing the exponent (the resulting one after the "e" in scientific notation, not the binary). The idea is to find a proper power of 10 so that the resulting number will have . We need to precalculate numbers of the form $\frac{10^a}{2^b}$ (since exponent is limited, there won't be many of them). To get the precalculated number, we need to look at the exponent (or possibly its neighbors).
 
 The tricky part is the "shortest possible". It can be solved by printing digits one by one and trying to parse it back, but this would be too slow.
 

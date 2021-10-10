@@ -19,7 +19,7 @@ To estimate the real running time of a program, you need to sum all latencies fo
 
 ![](../img/cpu.png)
 
-The clock frequency is a volatile and often unknown variable that depends on the CPU model, operating system settings, microchip temperature, power usage of other components and quite a few other things. In contrast, instruction latencies are static and even somewhat consistent accross different CPUs when expressed in clock cycles, and so counting them instead is much more useful for analytical purposes.
+The clock frequency is a volatile and often unknown variable that depends on the CPU model, operating system settings, microchip temperature, power usage of other components and quite a few other things. In contrast, instruction latencies are static and even somewhat consistent across different CPUs when expressed in clock cycles, and so counting them instead is much more useful for analytical purposes.
 
 For example, matrix multiplication requires the total of $n^2 \cdot (n + n - 1)$ arithmetic operations: specifically, $n^3$ multiplications and $n^2 \cdot (n - 1)$ additions. If we look up the latencies for these instructions (in special documents called *instruction tables*, like [this one](https://www.agner.org/optimize/instruction_tables.pdf)), we can find that multiplication takes e. g. 3 cycles, while addition takes 1, so we need a total of $3 \cdot n^3 + n^2 \cdot (n - 1) = 4 \cdot n^3 - n^2$ clock cycles for the entire computation (bluntly ignoring everything else that needs to be done in order to feed these instructions with the right data).
 
@@ -41,9 +41,9 @@ But this promise turned out to be not true, at least not in terms of clock speed
 
 The main disadvantage of the supercomputers of 1960s wasn't that they were slow — relatively speaking, they weren't — but that they were giant, complex to use, and so expensive that only the governments of world superpowers could afford them. Their size was in fact the reason they were so expensive: they required a lot of custom components that had to be very carefully assembled in the macro-world by people holding advanced degrees in electrical engineering, in a process that couldn't be up-scaled for mass production.
 
-The tipping point was the development of *microchips* — single, tiny, complete circuits — which revolutionized the industry and turned out to be probably the most important invention of the 20th century. What was a multimillion-dollar cupboard of computing machinery in 1965 could in 1975 fit on a [4×4 mm slice of silicon](https://en.wikipedia.org/wiki/MOS_Technology_6502)[^size] that you can buy for $25. This drammatic improvement in affordability started the home computer revolution during the following decade, with computers like Apple II, Atari 2600, Commodore 64 and IBM PC becoming available to the masses.
+The tipping point was the development of *microchips* — single, tiny, complete circuits — which revolutionized the industry and turned out to be probably the most important invention of the 20th century. What was a multimillion-dollar cupboard of computing machinery in 1965 could in 1975 fit on a [4×4 mm slice of silicon](https://en.wikipedia.org/wiki/MOS_Technology_6502)[^size] that you can buy for $25. This dramatic improvement in affordability started the home computer revolution during the following decade, with computers like Apple II, Atari 2600, Commodore 64 and IBM PC becoming available to the masses.
 
-[^size]: Actual sizes of CPUs are about centimiter-scale because of power management, heat dissipation, and the need to plug it into the motherboard without excessive swearing.
+[^size]: Actual sizes of CPUs are about centimeter-scale because of power management, heat dissipation, and the need to plug it into the motherboard without excessive swearing.
 
 ### Fabrication Process
 
@@ -84,7 +84,7 @@ Since the per-unit manufacturing cost is a function of area, and the exploitatio
 Due to the trade-offs between energy and performance you can make during the design, the fidelity of the fabrication process itself, such as "180nm" or "65nm", directly translating to the density of transistors, became the trademark for CPU efficiency.
 
 <!--
-[^fidelity]: To avoid upsetting and confusing consumers with this new reality, chip makers agreed to stop delineating their chips by the size of their components. A special comittee had a meeting every two years where they took the previous node name, divided by the square root of two, rounded to the nearest integer, declared that result to be the new node name, and then drank lots of wine. Chip makers now group components into generations by the time that they where made, and so "nm" doesn't mean nanometer anymore.
+[^fidelity]: To avoid upsetting and confusing consumers with this new reality, chip makers agreed to stop delineating their chips by the size of their components. A special committee had a meeting every two years where they took the previous node name, divided by the square root of two, rounded to the nearest integer, declared that result to be the new node name, and then drank lots of wine. Chip makers now group components into generations by the time that they where made, and so "nm" doesn't mean nanometer anymore.
 -->
 
 Throughout most of the computing history, optical shrinking was the main driving force behind performance improvements. Gordon Moore, the former CEO of Intel, made a prediction in 1975 that the transistor count in microprocessors will double every two years. His prediction held to this day and became known as *Moore's law*.

@@ -3,7 +3,7 @@ title: Integer Arithmetic
 weight: 3
 ---
 
-If you are reading this chapter squentially from the beginning, you might be wondering: why would I introduce integer arithmetic after floating-point one? Isn't it supposed to be simpler?
+If you are reading this chapter sequentially from the beginning, you might be wondering: why would I introduce integer arithmetic after floating-point one? Isn't it supposed to be simpler?
 
 This is true: plain integer representations are simpler. But, counterintuitively, their simplicity allows for more possibilities for operations to be expressed in terms of others. And if floating-point representations are so unwieldy that most of their operations are implemented in hardware, efficiently manipulating integers requires much more creative use of the instruction set.
 
@@ -40,9 +40,9 @@ In either case, it raises a special flag which you can check, but typically when
 Computer engineers are even lazier than programmers — and this is not only motivated by the instinctive desire of simplification, but also by saving transistor space. This can achieved by reusing circuitry that you already have for other operations, which is what they aimed for when designing the signed integer format:
 
 - For a $n$-bit signed integer type, the encodings of all numbers in the $[0, 2^{n-1})$ range remains the same as their unsigned binary representation.
-- All numbers in the $[-2^{n-1}, 0)$ range are encoded squentially right after the "positive" range — that is, starting with $(-2^{n - 1})$ that has code $(2^{n-1})$ and ending with $(-1)$ that has code $(2^n - 1)$.
+- All numbers in the $[-2^{n-1}, 0)$ range are encoded sequentially right after the "positive" range — that is, starting with $(-2^{n - 1})$ that has code $(2^{n-1})$ and ending with $(-1)$ that has code $(2^n - 1)$.
 
-Essentially, all negative numbers are just encoded as if they were substracted from $2^n$ — an operation known as *two's complement*:
+Essentially, all negative numbers are just encoded as if they were subtracted from $2^n$ — an operation known as *two's complement*:
 
 $$
 \begin{aligned}
@@ -51,13 +51,13 @@ $$
 \end{aligned}
 $$
 
-Here $\bar{x}$ represents bitwise negation, which can be also though of as substracting $x$ from $(2^n - 1)$.
+Here $\bar{x}$ represents bitwise negation, which can be also though of as subtracting $x$ from $(2^n - 1)$.
 
 As an exercise, here are some facts about signed integers:
 
 - All positive numbers and zero remain the same as their binary notation.
 - All negative numbers have the highest bit set to zero.
-- There are more negative numbers than positive numbers (exactly by one — becase of zero).
+- There are more negative numbers than positive numbers (exactly by one — because of zero).
 - For `int`, if you add $1$ to $(2^{31}-1)$, the result will be $-2^{31}$, represented as `10000000` (for exposition purposes, we will only write 8 bits instead of 32).
 - Knowing a binary notation of a positive number `x`, you can get the binary notation of `-x` as `~x + 1`.
 - `-1` is represented as `~1 + 1 = 11111110 + 00000001 = 11111111`.
@@ -82,7 +82,7 @@ Integers come in different sizes that all function roughly the same.
 The bits of an integer are simply stored sequentially, and the only ambiguity here is the order in which to store them — left to right or right to left — called *endianness*. Depending on the architecture, the format can be either:
 
 - *Little-endian*, which lists *lower* bits first. For example, $42_{10}$ will be stored as $010101$.
-- *Big-endian*, which lists *higher* bits first. All previous examples in this arcticle follow it.
+- *Big-endian*, which lists *higher* bits first. All previous examples in this article follow it.
 
 This seems like an important architecture aspect, but actually in most cases it doesn't make a difference: just pick one style and stick with it. But in some cases it does:
 
@@ -95,7 +95,7 @@ Big-endian is also more "natural" — this is how we write binary numbers on pap
 
 Sometimes we need to multiply two 64-bit integers to get a 128-bit integer — that usually serves as a temporary value and e. g. reduced by modulo right away.
 
-There are no 128-bit registers to hold the result of such multiplication, but `mul` instruction can operate in a maner [similar to division](/hpc/analyzing-performance/gcd/), by multiplying whatever is stored in `rax` by its operand and [writing the result](https://gcc.godbolt.org/z/4Gfxhs84Y) into two registers — the lower 64 bits of the result will go into `rdx`, and `rax` will have the higher 64 bits. Some langauges have a special type to support such an operation:
+There are no 128-bit registers to hold the result of such multiplication, but `mul` instruction can operate in a manner [similar to division](/hpc/analyzing-performance/gcd/), by multiplying whatever is stored in `rax` by its operand and [writing the result](https://gcc.godbolt.org/z/4Gfxhs84Y) into two registers — the lower 64 bits of the result will go into `rdx`, and `rax` will have the higher 64 bits. Some languages have a special type to support such an operation:
 
 ```cpp
 void prod(int64_t a, int64_t b, __int128 *c) {
@@ -152,7 +152,7 @@ $$
 = \lfloor x \cdot \frac{m}{2^s} \rfloor
 $$
 
-It can be shown that such a pair always exists, and compilers actually perform an optimization like that by themselves. Every time they encouncer a division by a constant, they replace it with a multiplication and a binary shift. Here is the generated assembly for dividing an `unsigned long long` by $(10^9 + 7)$:
+It can be shown that such a pair always exists, and compilers actually perform an optimization like that by themselves. Every time they encounter a division by a constant, they replace it with a multiplication and a binary shift. Here is the generated assembly for dividing an `unsigned long long` by $(10^9 + 7)$:
 
 ```nasm
 ;  input (rdi): x
@@ -164,7 +164,7 @@ mov    rax, rdx
 shr    rax, 29                    ; binary shift of the result
 ```
 
-This trick is called *Barrett reduction*, and it's called "reduction" because it is mostly used for modulo operations, which can be replaced with a single division, multiplication and substraction by the virtue of this formula:
+This trick is called *Barrett reduction*, and it's called "reduction" because it is mostly used for modulo operations, which can be replaced with a single division, multiplication and subtraction by the virtue of this formula:
 
 $$
 r = x - \lfloor x / y \rfloor \cdot y
@@ -235,7 +235,7 @@ How can we "dissect" it to get the parts we need?
 
 - To get the integer part (29), we can just floor or truncate it before the dot.
 - To get the fractional part (⅚), we can just take what is after the dots.
-- To get the remaider (5), we can multiply the fractional part by the divisor.
+- To get the remainder (5), we can multiply the fractional part by the divisor.
 
 Now, for 32-bit integers, we can set $s = 64$ and look at the computation that we do in the multiply-and-shift scheme:
 
