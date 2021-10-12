@@ -1,6 +1,7 @@
 ---
 title: Layouts for Binary Search
 weight: 6
+draft: true
 ---
 
 ## Branchy Binary Search
