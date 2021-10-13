@@ -4,13 +4,50 @@ weight: 1
 draft: true
 ---
 
-In this article, we will discuss sorting in external memory and its one very important application: joining (like in "SQL Join" used in databases).
+Uncustomary to the rest of the book, in this section, we will mostly do theory. To reason about performance of memory-bound algorithms, we need to develop a cost model that is more sensitive to expensive block IO operations, but is not too rigorous to still be useful.
+
+In the standard RAM model, we ignored the fact that primitive operations take unequal time. Similar in spirit, in *external memory model*, we will simply ignore every operation that is not an I/O operation.
+
+Consider just one level of the cache hierarchy. To formalize our model, we use the following assumptions:
+
+- The size of the dataset is $N$, and it is all stored in *external* memory, which we can read and write in blocks of $B$ elements in a unit time (reading a whole block and just one element takes the same time).
+- We can store $M$ elements in *internal* memory, meaning that we can store up to $\left \lfloor \frac{M}{B} \right \rfloor$ blocks.
+- We only care about I/O: any computation done in-between reads and writes is free.
+- We assume $N \gg M \gg B$.
+
+What this cost model does is it essentially measures performance of the program in terms of its high-level *I/O operations*, or *IOPS*.
+
+Consider the case when the internal memory is RAM, and the external memory is HDD. RAM accesses will cost about ~50ns, while HDD operations will cost ~5ms, or about a $10^5$ times as much, and have a "block" nature due to how HDDs work. The model in this case is much more accurate than the standard "count all operations one" one.
+
+## Array Scan
+
+The external memory model can be used very efficiently without sacrificing simplicity.
+
+For example, when we calculate $\sum_i a_i$ by iterating through array, it takes $SCAN(N) \stackrel{\text{def}}{=} O(\left \lceil \frac{N}{B} \right \rceil)$ IOPS.
+
+$$
+\underbrace{a_1, a_2, a_3,} _ {B_1}
+\underbrace{a_4, a_5, a_6,} _ {B_2}
+\ldots
+\underbrace{a_{n-3}, a_{n-2}, a_{n-1}} _ {B_{m-1}}
+$$
+
+One thing you need to consider is buffering. By the way, this is what happens with console input and output.
+
+```cpp
+int scan() {
+    // some explicit implementation
+}
+```
+
+When you are just working on the RAM level, it happens by default. Same thing with mmap-ed files.
+
 
 The main algorithm will be based on standard merge sort, so we need to derive a few of its primitives first.
 
 ## Merge
 
-**Probem:** given two sorted arrays $a$ and $b$ of lengths $N$ and $M$, produce a single sorted array $c$ that contains all of their elements.
+**Problem:** given two sorted arrays $a$ and $b$ of lengths $N$ and $M$, produce a single sorted array $c$ that contains all of their elements.
 
 The standard technique is to use two pointers like this:
 
@@ -26,7 +63,7 @@ void merge(int a[], int b[], int c[], int n, int m) {
 }
 ```
 
-Since reads and writes can be bufferized, it works in $SCAN(N+M)$ I/O operations.
+Since reads and writes can be buffered, it works in $SCAN(N+M)$ I/O operations.
 
 **K-way merging**. One important difference is that merging $k$ arrays works in linear time too as long as we can fit $(k+1)$ full blocks in memory, that is, if $k = O(\frac{M}{B})$.
 
@@ -51,6 +88,8 @@ We learned that, unlike in the RAM model, we can merge $k$ arrays at the cost of
 How many can we merge? Exactly $k = \frac{M}{B}$, the upper bound on our memory. This will reduce the required amount of steps to $\log_{\frac{M}{B}} \frac{N}{B}$ and the whole complexity to $SORT(N) \stackrel{\text{def}}{=} O(\frac{N}{B} \log_{\frac{M}{B}} \frac{N}{B})$, since each layer still takes $O(\frac{M}{B})$ time to merge.
 
 ## Join
+
+In this article, we will discuss sorting in external memory and its one very important application: joining (like in "SQL Join" used in databases).
 
 Real-world application of sorting is joining. Consider the following problem: 
 
@@ -120,7 +159,7 @@ The problem is easily solvable in RAM model, but an optimal solution in external
 
 ![](../img/list-ranking.png)
 
-A list ranking algorithm may seem like something useless, but bear with me. In fact, this is a very important primitive that can be used particularily for many graph algorithms, as well as in parallel algorithms later.
+A list ranking algorithm may seem like something useless, but bear with me. In fact, this is a very important primitive that can be used particularly for many graph algorithms, as well as in parallel algorithms later.
 
 ### Algorithm
 
@@ -128,7 +167,7 @@ We can convert the initial problem to a slightly more general one. Assume that e
 
 The key idea is to remove some part of elements, recursively solve the problem, and then use it to reconstruct the answer for initial problem.
 
-Consider three consecutive elements: $x$, $y$ and $z$. Assume we deleted $y$ and solved the problem for the remainig list, which included $x$ and $z$. Then we need to modify weights this way:
+Consider three consecutive elements: $x$, $y$ and $z$. Assume we deleted $y$ and solved the problem for the remaining list, which included $x$ and $z$. Then we need to modify weights this way:
 - $w_y' = w_y + w_x$
 - $w_z' = w_z + w_y$
 
@@ -153,7 +192,7 @@ Asymptotic will be the same as joining, namely $SORT(N)$.
 
 ### Applications
 
-List ranking is very usefull in graph algorithms.
+List ranking is very useful in graph algorithms.
 
 For example, one can construct an euler tour of a tree by constructing a linked list where for each edge we add two copies of it, one for each direction. Then you can apply list ranking and get each node position.
 
@@ -162,46 +201,3 @@ Exactly same thing may be applied to parallel algorithms, but we will cover that
 ---
 
 As you can see, joining—and, more fundamentally, sorting—is a very useful primitive for external memory algorithms.
-
----
-
-
-
-To reason about memory and not go crazy, we need a model that is more sensitive, yet not so rigorous.
-
-In RAM model, we ignored the fact that primitive operations take unequal time.
-
-But consider an algoritm that does something on the memory. Each access takes at least 10ms.
-
-In these cases, we can use a different cost model without sacrificing simplicity: we ignore all computation except for I/O operations.
-
-A bit informal description:
-
-Consider one level in cache hierarchy. 
-- Data size is $N$, it is stored in *external* memory, which we can read and write in blocks of $B$ elements in one unit time (reading a whole block and just one element takes the same time).
-- We can store $M$ elements *internal* memory, meaning that we can store $\left \lfloor \frac{M}{B} \right \rfloor$ blocks.
-- We only care about I/O: any computation done in-between reads and writes is free.
-- We assume $N \gg M \gg B$
-
-It is measured in *I/O operations* or *IOPS*.
-
-## Array Scan
-
-For example, when we calculate $\sum_i a_i$ by iterating through array, it takes $SCAN(N) \stackrel{\text{def}}{=} O(\left \lceil \frac{N}{B} \right \rceil)$ IOPS.
-
-$$
-\underbrace{a_1, a_2, a_3,} _ {B_1}
-\underbrace{a_4, a_5, a_6,} _ {B_2}
-\ldots
-\underbrace{a_{n-3}, a_{n-2}, a_{n-1}} _ {B_{m-1}}
-$$
-
-One thing you need to consider is buffering. By the way, this is what happens with console input and output.
-
-```cpp
-int scan() {
-    // some explicit implementation
-}
-```
-
-When you are just working on the RAM level, it happens by default. Same thing with mmap-ed files.
