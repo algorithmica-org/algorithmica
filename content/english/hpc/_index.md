@@ -94,7 +94,9 @@ This work is largely based on blog posts, research papers, conference talks and 
 - Steven Pigeon
 - Denis Bakhvalov
 - Kazushige Goto
+- Victor Eijkhout
 - Robert van de Geijn
+- Edmond Chow
 - Oleksandr Bacherikov
 
 Release date: fall 2021
