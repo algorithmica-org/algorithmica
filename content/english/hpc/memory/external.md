@@ -4,26 +4,26 @@ weight: 1
 draft: true
 ---
 
-Uncustomary to the rest of the book, in this section, we will mostly do theory. To reason about performance of memory-bound algorithms, we need to develop a cost model that is more sensitive to expensive block IO operations, but is not too rigorous to still be useful.
+To reason about performance of memory-bound algorithms, we need to develop a cost model that is more sensitive to expensive block IO operations, but is not too rigorous to still be useful.
 
-In the standard RAM model, we ignored the fact that primitive operations take unequal time. Similar in spirit, in *external memory model*, we will simply ignore every operation that is not an I/O operation.
+In the standard RAM model, we ignore the fact that primitive operations take unequal time to complete. Most importantly, it does not differentiate between operations on different types of memory, equating a read from RAM taking ~50ns in real-time with a read from HDD taking ~5ms, or about a $10^5$ times as much.
 
-Consider just one level of the cache hierarchy. To formalize our model, we use the following assumptions:
+Similar in spirit, in *external memory model*, we simply ignore every operation that is not an I/O operation. More specifically, we consider one level of cache hierarchy and assume the following about the hardware and the problem:
 
 - The size of the dataset is $N$, and it is all stored in *external* memory, which we can read and write in blocks of $B$ elements in a unit time (reading a whole block and just one element takes the same time).
 - We can store $M$ elements in *internal* memory, meaning that we can store up to $\left \lfloor \frac{M}{B} \right \rfloor$ blocks.
-- We only care about I/O: any computation done in-between reads and writes is free.
-- We assume $N \gg M \gg B$.
+- We only care about I/O operations: any computations done in-between reads and writes are free.
+- We additionally assume $N \gg M \gg B$.
 
-What this cost model does is it essentially measures performance of the program in terms of its high-level *I/O operations*, or *IOPS*.
+In this model, we measure performance of the algorithm in terms of its high-level *I/O operations*, or *IOPS* — that is, the total number of blocks read or written to external memory during execution.
 
-Consider the case when the internal memory is RAM, and the external memory is HDD. RAM accesses will cost about ~50ns, while HDD operations will cost ~5ms, or about a $10^5$ times as much, and have a "block" nature due to how HDDs work. The model in this case is much more accurate than the standard "count all operations one" one.
+We will mostly focus on the case where the internal memory is RAM and external memory is SSD or HDD, although the underlying analysis techniques that we will develop are applicable to any layer in the cache hierarchy. Under these settings, reasonable block size $B$ is about 1MB, internal memory size $M$ is usually a few gigabytes, and $N$ is up to a few terabytes.
 
 ## Array Scan
 
-The external memory model can be used very efficiently without sacrificing simplicity.
+<!-- The external memory model can be used very efficiently without sacrificing simplicity. -->
 
-For example, when we calculate $\sum_i a_i$ by iterating through array, it takes $SCAN(N) \stackrel{\text{def}}{=} O(\left \lceil \frac{N}{B} \right \rceil)$ IOPS.
+As a simple example, when we calculate the sum of array by iterating through it one element at a time, we implicitly load it by chunks of $O(B)$ elements and, in terms of external memory model, process these chunks one by one:
 
 $$
 \underbrace{a_1, a_2, a_3,} _ {B_1}
@@ -32,27 +32,24 @@ $$
 \underbrace{a_{n-3}, a_{n-2}, a_{n-1}} _ {B_{m-1}}
 $$
 
-One thing you need to consider is buffering. By the way, this is what happens with console input and output.
+Thus, in external memory model, the complexity of summation and other linear array scans is
 
-```cpp
-int scan() {
-    // some explicit implementation
-}
-```
+$$
+SCAN(N) \stackrel{\text{def}}{=} O\left(\left \lceil \frac{N}{B} \right \rceil \right) \; \text{IOPS}
+$$
 
-When you are just working on the RAM level, it happens by default. Same thing with mmap-ed files.
+Note that, in most cases, operating systems do this automatically. Even when the data is just redirected to the standard input from a normal file, the operating system buffers its stream and reads it in blocks of ~4KB (by default).
 
-
-The main algorithm will be based on standard merge sort, so we need to derive a few of its primitives first.
+Now, let's slowly build up more complex things. The goal of this article is to eventually get to *external sorting* and its interesting applications. It will be based on the standard merge sort, so we need to derive a few of its primitives first.
 
 ## Merge
 
-**Problem:** given two sorted arrays $a$ and $b$ of lengths $N$ and $M$, produce a single sorted array $c$ that contains all of their elements.
+**Problem:** given two sorted arrays $a$ and $b$ of lengths $N$ and $M$, produce a single sorted array $c$ of length $N + M$ containing all of their elements.
 
-The standard technique is to use two pointers like this:
+The standard technique using two pointers looks like this:
 
 ```cpp
-void merge(int a[], int b[], int c[], int n, int m) {
+void merge(int *a, int *b, int *c, int n, int m) {
     int i = 0, j = 0;
     for (int k = 0; k < n + m; k++) {
         if (i < n && (j == m || a[i] < b[j]))
@@ -63,29 +60,132 @@ void merge(int a[], int b[], int c[], int n, int m) {
 }
 ```
 
-Since reads and writes can be buffered, it works in $SCAN(N+M)$ I/O operations.
+In terms of memory operations, we just linearly read all elements of $a$ and $b$ and linearly write all elements of $c$. Since these reads and writes can be buffered, it works in $SCAN(N+M)$ I/O operations.
 
-**K-way merging**. One important difference is that merging $k$ arrays works in linear time too as long as we can fit $(k+1)$ full blocks in memory, that is, if $k = O(\frac{M}{B})$.
+So far the examples have been simple, and their analysis doesn't differ too much from the RAM model, except that we divide the final answer by the block size $B$. But here is a case where this is not so.
 
-Remember the $M \gg B$ assumption? If we have $M \geq B^{1+ε}$ for $\epsilon > 0$, then we can fit any sub-polynomial amount of blocks in memory. This is also called *tall cache assumption* and is required in many external memory algorithms.
+**K-way merging.** Consider the modification of this algorithm where we need to merge not just two arrays, but $k$ arrays of total size $N$ — by likewise looking at $k$ values, choosing the minimum between them, writing it into $c$ and incrementing one of the iterators.
+
+In the standard RAM model, the asymptotic complexity would be multiplied $k$, since we would need to do $O(k)$ comparisons to fill each next element. But in external memory model, since everything we do in-memory doesn't cost us anything, its asymptotic complexity would not change as long as we can fit $(k+1)$ full blocks in memory, that is, if $k = O(\frac{M}{B})$.
+
+Remember the $M \gg B$ assumption? If we have $M \geq B^{1+ε}$ for $\epsilon > 0$, then we can fit any sub-polynomial amount of blocks in memory, certainly including $O(\frac{M}{B})$. This condition is called *tall cache assumption*, and it is usually required in many other external memory algorithms.
 
 ## Merge Sorting
 
-"Normal" complexity of a standard merge sort is $O(N \log_2 N)$: on each of $O(\log_2 N)$ "layers" it would in total need to go through all of $N$ elements. How well would it do in terms of I/O operations?
+The "normal" complexity the standard mergesort algorithm is $O(N \log_2 N)$: on each of its $O(\log_2 N)$ "layers", the algorithms need to go through all $N$ elements in total and merge them in linear time.
 
-In external memory model, we can sort elements inside $N \over B$ consecutive blocks "for free" in-memory after reading them. This reduces the amount of real "layers" from $O(\log_2 N)$ to $O(\log_2 \frac{N}{B})$.
-
-After that, each merge step is performed at the cost of scanning the whole layer. This brings total I/O complexity to $O(\frac{N}{B} \log_2 \frac{N}{B})$.
-
-Can we do better?
+In external memory model, when we read a block of size $M$, we can sort its elements "for free", since they are already in memory. This way we can split the arrays into $O(\frac{N}{M})$ blocks of consecutive elements and sort them separately as the base step, and only then merge them.
 
 ![](../img/k-way.png)
 
-## K-way Mergesort
+This effectively means that, in terms of IO operations, the first $O(\log M)$ layers of mergesort are free, and there are only $O(\log_2 \frac{N}{B})$ non-zero-cost layers, each mergeable in $O(\frac{N}{B})$ IOPS in total. This brings total I/O complexity to
 
-We learned that, unlike in the RAM model, we can merge $k$ arrays at the cost of reading them. Let's use this fact to merge as many arrays as possible at each step instead of just $2$. This would make the number of steps as low as possible.
+$$
+O(\frac{N}{B} \log_2 \frac{N}{M})
+$$
+
+Interestingly enough, we can do better.
+
+### K-way Mergesort
+
+Half of a page ago we have learned that in external memory model, we can merge $k$ arrays just as easily as two arrays — at the cost of reading them. Why don't we apply this fact here?
+
+Let's, and then on each stage, we will not merge just two of them, but as many as we can fit in our memory — each layer would still work at the cost of reading the whole dataset
+
+Instead of merging two arrays on 
+
+
+Let's use this fact to merge as many arrays as possible at each step instead of just $2$. This would make the number of steps as low as possible.
 
 How many can we merge? Exactly $k = \frac{M}{B}$, the upper bound on our memory. This will reduce the required amount of steps to $\log_{\frac{M}{B}} \frac{N}{B}$ and the whole complexity to $SORT(N) \stackrel{\text{def}}{=} O(\frac{N}{B} \log_{\frac{M}{B}} \frac{N}{B})$, since each layer still takes $O(\frac{M}{B})$ time to merge.
+
+```cpp
+#include <bits/stdc++.h>
+
+const int B = (1<<20) / 4; // 1 MB blocks of integers
+const int M = (1<<28) / 4; // available memory
+
+const char* finput = "input.bin";
+const char* foutput = "output.bin";
+
+int main() {
+    FILE *input = fopen(finput, "rb");
+
+    std::vector<FILE*> parts;
+
+    while (true) {
+        static int part[M]; // better delete it right after
+        int n = fread(part, 4, M, input);
+
+        if (n == 0)
+            break;
+        
+        std::sort(part, part + n);
+        
+        char fpart[sizeof "part-999.bin"];
+        sprintf(fpart, "part-%03d.bin", parts.size());
+
+        printf("Writing %d elements into %s...\n", n, fpart);
+
+        FILE *file = fopen(fpart, "wb");
+        fwrite(part, 4, n, file);
+        fclose(file);
+        
+        file = fopen(fpart, "rb");
+        parts.push_back(file);
+    }
+
+    fclose(input);
+
+    std::priority_queue< std::pair<int, int> > q;
+
+    const int nparts = parts.size();
+    auto buffers = new int[nparts][B];
+    int outbuffer[B];
+    std::vector<int> l(nparts), r(nparts);
+
+    for (int part = 0; part < nparts; part++) {
+        r[part] = fread(buffers[part], 4, B, parts[part]);
+        q.push({buffers[part][0], part});
+        l[part] = 1;
+    }
+
+    FILE *output = fopen(foutput, "w");
+    
+    int buffered = 0;
+
+    while (!q.empty()) {
+        auto [key, part] = q.top();
+        q.pop();
+
+        outbuffer[buffered++] = key;
+        if (buffered == B) {
+            fwrite(outbuffer, 4, B, output);
+            buffered = 0;
+        }
+
+        if (l[part] == r[part]) {
+            r[part] = fread(buffers[part], 4, B, parts[part]);
+            l[part] = 0;
+        }
+
+        if (l[part] < r[part]) {
+            q.push({buffers[part][l[part]], part});
+            l[part]++;
+        }
+    }
+
+    fwrite(outbuffer, 4, buffered, output);
+
+    delete[] buffers;
+    for (FILE *file : parts)
+        fclose(file);
+    
+    fclose(output);
+
+    return 0;
+}
+```
 
 ## Join
 
