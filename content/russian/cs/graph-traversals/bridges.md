@@ -46,7 +46,7 @@ bool used[maxn];
 int h[maxn], d[maxn];
 
 void dfs(int v, int p = -1) {
-    used[u] = true;
+    used[v] = true;
     d[v] = h[v] = (p == -1 ? 0 : h[p] + 1);
     for (int u : g[v]) {
         if (u != p) {
@@ -77,9 +77,9 @@ void dfs(int v, int p = -1) {
 
 ```cpp
 void dfs(int v, int p = -1) {
-    used[u] = 1;
+    used[v] = 1;
     d[v] = h[v] = (p == -1 ? 0 : h[p] + 1);
-    for (int u : g[u]) {
+    for (int u : g[v]) {
         if (u != p) {
             if (used[u])
                 d[v] = min(d[v], h[u]);
