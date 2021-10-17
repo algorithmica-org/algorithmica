@@ -1,7 +1,7 @@
 ---
 title: SIMD Parallelism
 menuTitle: SIMD
-weight: 3
+weight: 4
 ---
 
 Consider the following little program, in which we calculate the sum of an integer array:

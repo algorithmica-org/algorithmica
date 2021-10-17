@@ -39,24 +39,24 @@ It walks through the main CPU optimization topics such as caching, SIMD and pipe
  2.8. Integer Factorization
  2.9. Bignum Arithmetic and the Karatsuba Algorithm
  2.10. Fast Fourier Transform
-3. SIMD Parallelism
- 3.1. Intrinsics and Vector Extensions
- 3.2. (Auto-)Vectorization
- 3.3. SSE & AVX Cookbook
- 3.4. Argmin with SIMD
- 3.5. Logistic Regression
- 3.6. String Searching                  <- ?x faster strstr
- 3.7. Parsing Integers                  <- 2x faster scanf("%d")
- 3.8. Sorting                           <- 8x faster std::sort
-4. Memory
- 4.1. Memory Hierarchy
- 4.2. External Memory Model
- 4.3. Sublinear Algorithms
- 4.4. RAM & CPU Caches
- 4.5. Memory Management
- 4.6. Layouts for Binary Search         <- 5x faster std::lower_bound
- 4.7. Implicit Data Structures          <- 7x faster segment trees
- 4.8. Hash Tables                       <- 5x faster std::unordered_map
+3. Memory
+ 3.1. External Memory Model
+ 3.2. Cache Locality
+ 3.3. Sublinear Algorithms
+ 3.4. RAM & CPU Caches
+ 3.5. Memory Management
+ 3.6. Layouts for Binary Search         <- 5x faster std::lower_bound
+ 3.7. Implicit Data Structures          <- 7x faster segment trees
+ 3.8. Hash Tables                       <- 5x faster std::unordered_map
+4. SIMD Parallelism
+ 4.1. Intrinsics and Vector Extensions
+ 4.2. (Auto-)Vectorization
+ 4.3. SSE & AVX Cookbook
+ 4.4. Argmin with SIMD
+ 4.5. Logistic Regression
+ 4.6. String Searching                  <- ?x faster strstr
+ 4.7. Parsing Integers                  <- 2x faster scanf("%d")
+ 4.8. Sorting                           <- 8x faster std::sort
 5. Instruction-Level Parallelism
  5.1. Pipelining and Hazards
  5.2. Throughput Computing              <- 2x faster std::accumulate

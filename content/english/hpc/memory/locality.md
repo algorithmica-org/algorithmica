@@ -4,7 +4,6 @@ weight: 2
 draft: true
 ---
 
-
 *Eviction policy* is how we determine which blocks to keep in memory if we run out of it
 
 * $FIFO$: first in, first out

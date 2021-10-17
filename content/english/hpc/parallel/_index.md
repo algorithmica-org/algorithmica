@@ -1,6 +1,7 @@
 ---
 title: Parallel Computing
-weight: 2
+weight: 7
+part: Parallel Computing
 draft: true
 ---
 
