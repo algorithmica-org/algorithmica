@@ -166,3 +166,7 @@ void add(int k, int x) {
 ```
 
 Can't be more optimal because of pipelining and implicit prefetching
+
+## Further Reading
+
+This article is loosely based on "[Practical Trade-Offs for the Prefix-Sum Problem](https://arxiv.org/pdf/2006.14552.pdf)" by Giulio Ermanno Pibiri and Rossano Venturini.
