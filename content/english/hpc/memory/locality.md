@@ -360,3 +360,6 @@ We use only 7 multiplications instead of 8, so arithmetic complexity is $O(n^{\l
 
 As of 2020, current world record is $O(n^{2.3728596})$
 
+## Further Reading
+
+[Cache-Oblivious Algorithms and Data Structures](https://erikdemaine.org/papers/BRICS2002/paper.pdf) by Erik Demaine.

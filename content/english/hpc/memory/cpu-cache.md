@@ -4,6 +4,26 @@ weight: 4
 draft: true
 ---
 
+Here is a famous quote about caching:
+
+![](img/cache_and_beer.png)
+
+The reality is much more complicated, e. g. main memory has pagination and HDD is actually a rotating physical thing with weird access patterns, but we stick to this analogy and introduce some important entities to it:
+
+* **Cache hierarchy** is a memory architecture which uses a hierarchy of memory stores based on varying access speeds to cache data. Adjacent cache layers usually differ in size by a factor of 8 to 10 and in latency by a factor of 3 to 5. Most modern CPUs have 3 layers of cache (called L1, L2 and L3 from fastest / smallest to slowest / largest) with largest being a few megabytes large.
+
+* **Cache line** is the unit of data transfer between CPU and main memory. The cache line of your PC is most likely 64 bytes, meaning that the main memory is divided into blocks of 64 bytes, and whenever you request a byte, you are also fetching its cache line neighbours regardless whether your want it or not. *Fetching a cache line is like grabbing a 6-pack.*
+
+* **Eviction policy** is the method for deciding which data to retain in the cache. In CPUs, it is controlled by hardware, not software. For simplicity, programmer can assume that **least recently used (LRU)** policy is used, which just evicts the item that hasn't been used for the longest amount of time. *This is like preferring beer with later expiration dates.*
+
+* **Bandwidth** is the rate at which data can be read or stored. For the purpose of designing algorithms, a more important characteristic is the **bandwidth-latency product** which basically tells how many cache lines you can request while waiting for the first one without queueing up. It is around 5 or more on most systems. *This is like having friends whom you can send for beers asynchronously.*
+
+* **Temporal locality** is an access pattern where if at one point a particular item is requested, it is likely that this same location will be requested again in the near future. *This is like fetching the same type of beer over and over again.*
+
+* **Spacial locality** is an access pattern where if a memory location is requested, it is likely that a nearby memory locations will be requested again in the near future. *This is like storing the kinds of beer that you like on the same shelf.*
+
+---
+
 In previous sections of this chapter, we mostly studied the theoretical side and did a lot of hand waving when it came to real implementations. In this section, we will study the RAM and CPU cache system in higher detail.
 
 We will do so while doing actual measurements.
@@ -31,7 +51,28 @@ Burst memory.
 
 ## Memory Bandwidth
 
+### Speculative Execution
+
+* CPU: "hey, I'm probably going to wait ~100 more cycles for that memory fetch"
+* "why don't I execute some of the later operations in the pipeline ahead of time?"
+* "even if they won't be needed, I just discard them"
+
+```cpp
+bool cond = some_long_memory_operation();
+
+if (cond)
+    do_this_fast_operation();
+else
+    do_that_fast_operation();
+```
+
+*Implicit prefetching*: memory reads can be speculative too, and reads will be pipelined anyway
+
+(By the way, this is what Meltdown was all about)
+
 ### Prefetching
+
+Sometimes the CPU can't figure it out by itself.
 
 Let's try to measure.
 
