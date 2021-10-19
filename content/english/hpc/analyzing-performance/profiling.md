@@ -175,7 +175,7 @@ Next, you can "zoom in" on of these functions, and, among others things, it will
        │    ↑ jne    20
 ```
 
-On the left you can see the fraction of times the instruction pointer stopped on a specific line. Because of pipelining and out-of-order execution, "now" is not a well defined concept, so the data is slightly inaccurate as the instruction pointer drifts a little bit forward. But it is still useful: here we spend ~65% of the time on the jump instruction because if has a comparison operator before it, indicating that he control flow waits there for this comparison to be decided.
+On the left you can see the fraction of times the instruction pointer stopped on a specific line. Because of pipelining and out-of-order execution, "now" is not a well defined concept, so the data is slightly inaccurate as the instruction pointer drifts a little bit forward. But it is still useful: here we spend ~65% of the time on the jump instruction because it has a comparison operator before it, indicating that the control flow waits there for this comparison to be decided.
 
 At the individual cycle level we need something more precise.
 
