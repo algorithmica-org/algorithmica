@@ -7,9 +7,9 @@ There are two general ways of finding performance issues: starting at the code a
 
 ## Instrumentation
 
-Instrumentation is an overcomplicated term that means inserting timers and other tracking code into programs. The simplest example is using the `time` utility in Unix-like systems to measure the duration of execution for the whole program.
+*Instrumentation* is an overcomplicated term that means inserting timers and other tracking code into programs. The simplest example is using the `time` utility in Unix-like systems to measure the duration of execution for the whole program.
 
-More generally, you want to know *which parts* of the program actually need optimization. There are tools shipped with compilers and IDEs that can time designated functions automatically, but it is more robust to do it by hand using any methods of interacting with time the language provides:
+More generally, you want to know *which parts* of the program actually need optimization. There are tools shipped with compilers and IDEs that can time designated functions automatically — but it is more robust to do it by hand using any methods of interacting with time that the language provides:
 
 ```cpp
 clock_t start = clock();
@@ -18,13 +18,13 @@ float seconds = float(clock() - start) / CLOCKS_PER_SEC;
 printf("do_something() took %.4f", seconds);
 ```
 
-One nuance here is that you can't measure the execution time of particularly quick functions this way. The `clock` function returns time in microseconds ($10^{-6}$), and it does so by waiting to the nearest ceiled microsecond, so it basically takes up to 1000ns to complete, which is an eternity in the world of low-level optimization.
+One nuance here is that you can't measure the execution time of particularly quick functions this way. The `clock` function returns the current timestamp in microseconds ($10^{-6}$), and it does so by waiting to the nearest ceiled microsecond — so it basically takes up to 1000ns to complete, which is an eternity in the world of low-level optimization.
 
-As a workaround, you can invoke the function repeatedly in a loop, time the whole thing once and divide the total time by the number of iterations. You also need to ensure nothing gets cached and there are no similar side effects. That's a quite tedious in my opinion, especially if you are interested in multiple small sections of the program.
+As a workaround, you can invoke the function repeatedly in a loop, time the whole thing once, and then divide the total time by the number of iterations. You also need to ensure nothing gets cached or affected by similar side effects. This a rather tedious way of doing profiling, especially if you are interested in multiple small sections of the program.
 
 ### Sampling
 
-Instrumentation can also be used to collect other types of info that can give us useful insights about a particular algorithm. For example:
+Instrumentation can also be used for collecting other types of info that can give useful insights about the performance of a particular algorithm. For example:
 
 - for a hash function, we are interested in the average length of its input;
 - for a binary tree, we care about its size and height;
@@ -45,7 +45,7 @@ void query() {
 
 If the sample rate is small enough, the only remaining overhead per invocation will be random number generation and a condition check. Interestingly, we can optimize it a bit more with some stats magic.
 
-Mathematically, what we are doing here is repeatedly sampling from [Bernoulli distribution](https://en.wikipedia.org/wiki/Bernoulli_distribution) (with $p$ equal to sample rate) until we get a success. There is another distribution that tells us how many iterations of Bernoulli sampling we need to get a positive, called [geometric distribution](https://en.wikipedia.org/wiki/Geometric_distribution). What we can do is to sample from it instead and use that value as a decrementing counter:
+Mathematically, what we are doing here is repeatedly sampling from [Bernoulli distribution](https://en.wikipedia.org/wiki/Bernoulli_distribution) (with $p$ equal to sample rate) until we get a success. There is another distribution that tells us how many iterations of Bernoulli sampling we need until the first positive, called [geometric distribution](https://en.wikipedia.org/wiki/Geometric_distribution). What we can do is to sample from it instead and use that value as a decrementing counter:
 
 ```c++
 void query() {
@@ -60,21 +60,23 @@ void query() {
 
 This way we can remove the need to sample a new random number on each invocation, only resetting the counter when we choose to calculate statistics.
 
+Techniques like that are frequently by library algorithm developers inside large projects to collect profiling data without affecting the performance of the end program too much.
+
 ## Statistical Profiling
 
-Another, less invasive approach to profiling is to interrupt the execution of a program at random intervals and look where the instruction pointer is: the number of times the pointer stopped in each function's block is roughly proportional to the total time spent executing these functions. You can also get some other useful information this way, like finding out which functions are called by which functions by inspecting the call stack.
+Another, less invasive approach to profiling is to interrupt the execution of a program at random intervals and look where the instruction pointer is. The number of times the pointer stopped in each function's block would be roughly proportional to the total time spent executing these functions. You can also get some other useful information this way, like finding out which functions are called by which functions by inspecting the call stack.
 
-This could in principle be done by just running a program with `gdb` and `ctrl+c`'ing it at random intervals, but operating systems and modern CPUs provide special utilities for this type of profiling. Hardware *performance counters* are special registers built into microprocessors that can store the counts of certain hardware-related activities. They are cheap to add to CPUs, as they are basically just binary counters with an activation wire connected to them.
+This could in principle be done by just running a program with `gdb` and `ctrl+c`'ing it at random intervals, but modern CPUs and operating systems provide special utilities for this type of profiling. Hardware *performance counters* are special registers built into microprocessors that can store the counts of certain hardware-related activities. They are cheap to add on a microchip, as they are basically just binary counters with an activation wire connected to them.
 
-Each performance counter is connected to a large subset of circuitry and can be configured to be incremented on a particular hardware event, like a branch mispredict or a cache miss. You can simply reset a counter at the start of a program and output its stored value at the end, and it will be equal to the exact number of times a certain event has been triggered.
+Each performance counter is connected to a large subset of circuitry and can be configured to be incremented on a particular hardware event, such as a branch mispredict or a cache miss. You can reset a counter at the start of a program, run it, and output its stored value at the end, and it will be equal to the exact number of times a certain event has been triggered throughout the execution.
 
-You can also keep track of multiple events by *multiplexing* between them, that is, stopping the program and reconfiguring counters in even intervals. The result in this case will not be exact, but a statistical approximation. One nuance here is that its accuracy can't be improved by simply increasing the frequency of sampling, because it would affect the performance too much and thus skew the distribution.
+You can also keep track of multiple events by multiplexing between them, that is, stopping the program in even intervals and reconfiguring the counters. The result in this case will not be exact, but a statistical approximation. One nuance here is that its accuracy can’t be improved by simply increasing the sampling frequency because it would affect the performance too much and thus skew the distribution, so to collect multiple statistics, you would need to run the program for longer periods of time.
 
 Overall, event-driven statistical profiling is usually the most effective and easy way to diagnose performance issues.
 
 ### Profiling with perf
 
-There are many profilers and other performance analysis tools. The tool we will mostly rely on in this book is [perf](https://perf.wiki.kernel.org/), which is a statistical profiler available in the Linux kernel. On non-Linux systems, you can use [VTune](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/vtune-profiler.html#gs.cuc0ks) from Intel, which provides roughly the same functionality for our purposes. It is available for free, although it is a proprietary software for which you need to refresh a community license every 90 days, while perf is free as in freedom.
+There are many profilers and other performance analysis tools. The one we will mostly rely on in this book is [perf](https://perf.wiki.kernel.org/), which is a statistical profiler available in the Linux kernel. On non-Linux systems, you can use [VTune](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/vtune-profiler.html#gs.cuc0ks) from Intel, which provides roughly the same functionality for our purposes. It is available for free, although it is a proprietary software for which you need to refresh a community license every 90 days, while perf is free as in freedom.
 
 Perf is a command-line application that generates reports based on live execution of programs. It does not need the source and can profile a very wide range of applications, even those that involve multiple processes and interaction with the operating system.
 
@@ -132,9 +134,9 @@ You can get a list of all supported events with `perf list`, and then specify a 
 
 By itself, `perf stat` simply sets up performance counters for the whole program. It can tell you the total number of branch mispredictions, but it won't tell you *where* they are happening, let alone *why* they are happening.
 
-To try the stop-the-world approach we talked about initially, we need to use `perf record <cmd>`, which records profiling data and dumps it as a `perf.data` file, and then call `perf report` to inspect it. I highly advise you to go and try it yourselves, because the last command is interactive and colorful, but for those that can't do it right now I'll try to describe it the best I can.
+To try the stop-the-world approach we talked about initially, we need to use `perf record <cmd>`, which records profiling data and dumps it as a `perf.data` file, and then call `perf report` to inspect it. I highly advise you to go and try it yourselves because the last command is interactive and colorful, but for those that can't do it right now, I'll try to describe it the best I can.
 
-When you call `perf report`, it first displays a `top`-like interactive report which tells you which functions are taking how much time:
+When you call `perf report`, it first displays a `top`-like interactive report that tells you which functions are taking how much time:
 
 ```
 Overhead  Command  Shared Object        Symbol
@@ -148,7 +150,7 @@ Overhead  Command  Shared Object        Symbol
 
 Note that, for each function, just its *overhead* is listed and not the total running time (e. g. `setup` includes `std::__introsort_loop` but only its own overhead is accounted as 3.43%). You also need to account for possible inlining, which is apparently what happened with `std::lower_bound` here. Perf also tracks shared libraries (like `libc`) and, in general, any other spawned processes: if you want, you can launch a web browser with perf and see what's happening inside.
 
-Next, you can "zoom in" on of these functions, and, among others things, it will offer to show you its disassembly with an associated heatmap. Here is the (AT&T-style) assembly for `query`:
+Next, you can "zoom in" on any of these functions, and, among others things, it will offer to show you its disassembly with an associated heatmap. For example, here is the assembly for `query`:
 
 ```asm
        │20: → call   rand@plt
@@ -175,25 +177,35 @@ Next, you can "zoom in" on of these functions, and, among others things, it will
        │    ↑ jne    20
 ```
 
-On the left you can see the fraction of times the instruction pointer stopped on a specific line. Because of pipelining and out-of-order execution, "now" is not a well defined concept, so the data is slightly inaccurate as the instruction pointer drifts a little bit forward. But it is still useful: here we spend ~65% of the time on the jump instruction because it has a comparison operator before it, indicating that the control flow waits there for this comparison to be decided.
+On the left column, you can see the fraction of times the instruction pointer stopped on a specific line. Because of intricacies such as pipelining and out-of-order execution, "now" is not a well-defined concept in modern CPUs, so the data is slightly inaccurate as the instruction pointer drifts a little bit forward. But it is still useful: here we spend ~65% of the time on the jump instruction because it has a comparison operator before it, indicating that the control flow waits there for this comparison to be decided.
 
-At the individual cycle level we need something more precise.
+At the individual cycle level, we need something more precise.
 
 ## Simulation
 
-The last approach (or rather a group of them) is not to gather the data by actually running the program, but to analyze what should happen by simulating it with specialized tools, which roughly fall in two categories.
+The last approach (or rather a group of them) is not to gather the data by actually running the program, but to analyze what should happen by *simulating* it with specialized tools, which roughly fall into two categories.
 
-The first one is memory profilers. A particular example is `cachegrind`, which is a part of `valgrind`. It simulates all memory operations to assess memory performance, although usually significantly slowing down the program in the process. They can provide a bit more information than just `perf` cache events.
+The first one is *memory profilers*. A particular example is `cachegrind`, which is a part of `valgrind`. It simulates all memory operations to assess memory performance down to the individual cache line level. Although they usually significantly slow down the program in the process, they can provide more information than just `perf` cache events.
 
-The second category is machine code analyzers. These are programs that take assembly code and simulate its execution on a particular microarchitecture using information available to compilers, and output the latency and throughput of the whole snippet, as well as cycle-perfect utilization of various resources in a CPU.
+The second category is *machine code analyzers*. These are programs that take assembly code and simulate its execution on a particular microarchitecture using information available to compilers, and output the latency and throughput of the whole snippet, as well as cycle-perfect utilization of various resources in a CPU.
 
 There are many of them, but I personally prefer `llvm-mca`, which you can probably install via a package manager together with `clang`. You can also access it through a new web-based tool called [UICA](https://uica.uops.info).
 
 ### Machine Code Analyzers
 
-What machine code analyzers do is they run a set number of iterations of a given snippet and compute statistics about resource usage of each instruction, which is useful for finding out where the bottleneck is. 
+What machine code analyzers do is they run a set number of iterations of a given assembly snippet and compute statistics about the resource usage of each instruction, which is useful for finding out where the bottleneck is.
 
-Here is its example analysis of an array sum on Skylake. You are not going to understand much, but that's fine for now.
+We will consider the array sum as our simple example:
+
+```asm
+loop:
+    addl (%rax), %edx
+    addq $4, %rax
+    cmpq %rcx, %rax
+    jne	 loop
+````
+
+Here is its analysis with `llvm-mca` on Skylake. You are not going to understand much, but that's fine for now.
 
 ```yaml
 Iterations:        100
