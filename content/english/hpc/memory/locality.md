@@ -125,6 +125,8 @@ for (int i = n - 1; i >= 0; i++)
         f[i][k] = (w[i] > k ? f[i+1][k] : max(f[i+1][k], c[i] + f[i+1][k-w[i]]));
 ```
 
+Todo: mention bitset
+
 Note that each layer is computed and then accessed exactly once right after (you actually need $O(W)$ memory which could all fit into L1 cache).
 
 ### Iteration Order Matters

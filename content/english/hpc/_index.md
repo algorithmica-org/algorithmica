@@ -54,9 +54,10 @@ It walks through the main CPU optimization topics such as caching, SIMD and pipe
  4.3. SSE & AVX Cookbook
  4.4. Argmin with SIMD
  4.5. Logistic Regression
- 4.6. String Searching                  <- ?x faster strstr
- 4.7. Parsing Integers                  <- 2x faster scanf("%d")
- 4.8. Sorting                           <- 8x faster std::sort
+ 4.6. Bitmaps
+ 4.7. String Searching                  <- ?x faster strstr
+ 4.8. Parsing Integers                  <- 2x faster scanf("%d")
+ 4.9. Sorting                           <- 8x faster std::sort
 5. Instruction-Level Parallelism
  5.1. Pipelining and Hazards
  5.2. Throughput Computing              <- 2x faster std::accumulate
