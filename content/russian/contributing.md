@@ -69,7 +69,7 @@ hideSidebar: true
 - `created`: когда статья была изначально опубликована (в любом формате)
 - `prerequisites`: список ссылок (лучше относительных) на статьи-пререквизиты; лучше не указывать слишком много и избегать циклов (это не техническое ограничение, а здравый смысл)
 
-[Пример заполненной метаинформации](https://raw.githubusercontent.com/algorithmica-org/algorithmica/master/content/russian/cs/bst/treap.md).
+[Пример заполненной метаинформации](https://raw.githubusercontent.com/algorithmica-org/algorithmica/master/content/russian/cs/tree-structures/treap.md).
 
 ## Правила русского языка
 
