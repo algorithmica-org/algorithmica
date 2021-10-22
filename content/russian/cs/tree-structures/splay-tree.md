@@ -14,7 +14,7 @@ Splay-дерево — это сбалансированное двоичное 
 
 ## Применения
 
-<!-- Сравнение скорости работы с декартовым деревом -->
+<!-- Сравнение скорости работы с декартовым деревом и std::set (где применимо) -->
 
 Splay-деревом можно заменять декартово дерево, почти всегда будет прирост скорости, так как в splay-дереве нижняя амортизированная оценка на время операции $\Theta(1)$, а в декартовом — $\Theta(h) \approx \Theta(\log n)$.
 
@@ -81,170 +81,217 @@ Splay-дерево можно применять не только как сам
 Этот подход удобен там, что код получается напрямую из описания splay-дерева и выглядит хорошо. Если неизвестен индекс целевой вершины, то надо сначала её найти, а потом запустить от неё splay.
 
 ```cpp
-struct Node {
-    int left = -1, right = -1;  // Индексы левого и правого сына
-    int par = -1;  // Индекс предка
-    int cnt = 1;  // Число вершин в поддереве
+// Поправить стиль кода!
+struct SplaySet
+{
+	struct Node
+	{
+		Node *left = 0, *right = 0;  // Индексы левого и правого сына
+		Node *par = 0;  // Индекс предка
+		//int cnt = 1;  // Число вершин в поддереве
 
-    int key;
+		int key = INT_MIN;
+		Node(int key = 0) : key(key) {}
+	};
+
+	// Корень дерева
+	Node *root = 0;
+	SplaySet() {}
+	~SplaySet() { /*destroy(root);*/ }
+
+
+	// ==== База splay-дерева ====
+	// Очистка вершины
+	void destroy(Node *x)
+	{
+		if (!x) return;
+		destroy(x->left);
+		destroy(x->right);
+		delete x;
+	}
+
+	// Размер поддерева вершины. Если вершины не существует, то 0
+	/*int get_count(Node *x) const
+	{
+		return x ? x->cnt : 0;
+	}
+
+	// Проталкивание изменений вниз
+	void push(Node *x)
+	{
+		if (!x) return;
+	}
+
+	// Поднятие изменений наверх
+	void pull(Node *x)
+	{
+		if (!x) return;
+		x->cnt = 1 + get_count(x->left) + get_count(x->right);
+	}*/
+
+	// Проверка на корень
+	bool is_root(Node *x) const
+	{
+		return x && !x->par;
+	}
+
+	// Пересчёт всей дополнительной информации производится при повороте ребра
+	// Ребро в дереве можно однозначно определить по его ниждему концу
+	// Функция выполняет простой повроот ребра, то есть zig
+	void rotate(Node *x)
+	{
+		Node *p = x->par;
+		Node *g = p->par;
+
+		// Обновим информацию в вершинах (проталкивание изменений вниз)
+		//push(p);
+		//push(x);
+
+		// Обновим ребенка деда и предка x (обмен x и p)
+		if (g)
+		{
+			if (g->left == p)
+				g->left = x;
+			else if (g->right == p)
+				g->right = x;
+		}
+		x->par = g;
+
+		// Переподвешивание поддеревьев
+		if (p->left == x)
+		{
+			p->left = x->right;
+			if (p->left)
+				p->left->par = p;
+			x->right = p;
+		}
+		else
+		{
+			p->right = x->left;
+			if (p->right)
+				p->right->par = p;
+			x->left = p;
+		}
+		p->par = x;
+
+		// Обновим информацию (поднятие изменений наверх)
+		//pull(p);
+		//pull(x);
+	}
+
+	void splay(Node *x)
+	{
+		// Пока вершина x -- не корень дерева,
+		while (!is_root(x))
+		{
+			Node *p = x->par;
+			// Поворачиваем рёбра zig-ом, zig-zig-ом или zig-zag-ом.
+			if (!is_root(p))
+			{
+				Node *g = p->par;
+				bool zigzig = (x == p->left) == (p == g->left);
+				rotate(zigzig ? p : x);
+			}
+			rotate(x);
+		}
+		//push(x);
+	}
+
+	Node *rightest(Node *x) const
+	{
+		if (!x || !x->right) return x;
+		return rightest(x->right);
+	}
+
+	Node *merge(Node *L, Node *R)
+	{
+		if (!L) return R;
+		if (!R) return L;
+		Node *rt = rightest(L);
+		splay(rt);
+		rt->right = R;
+		R->par = rt;
+		return rt;
+	}
+
+
+	// ==== Функции для работы как с BST ====
+	// Найти первую вершину с ключом =key
+	Node *find(int key)
+	{
+		Node *x = root;
+		while (x && key != x->key)
+		{
+			Node *next = (key > x->key) ? x->right : x->left;
+			if (!next)
+			{
+				splay(x);
+				root = x;
+			}
+			x = next;
+		}
+		return x;
+	}
+
+	// Добавить вершину в дерево
+	void add(Node *x)
+	{
+		if (!root)
+		{
+			root = x;
+			return;
+		}
+		Node *y = root;
+		while (true)
+		{
+			Node *&next = (x->key > y->key) ? y->right : y->left;
+			if (!next)
+			{
+				next = x;
+				next->par = y;
+				root = next;
+				splay(next);
+				return;
+			}
+			y = next;
+		}
+	}
+
+	// Удалить вершину из дерева
+	void del(Node *x)
+	{
+		if (!x) return;
+		splay(x);
+		if (x->left) x->left->par = 0;
+		if (x->right) x->right->par = 0;
+		root = merge(x->left, x->right);
+		// delete x;  // не destroy так как одна вершина
+	}
+
+	
+	// === Функции для работы как с сетом
+	bool contains(int key)
+	{
+		Node *r = find(key);
+		return r && r->key == key;
+	}
+
+	// Добавить элемент с заданным ключом
+	void add(int key)
+	{
+		// if (!contains(key))
+		{
+			add(new Node(key));
+		}
+	}
+
+	// Удалить вершину по ключу
+	void del(int key)
+	{
+		Node *k = find(key);
+		if (k->key == key) del(k);
+	}
 };
-
-vector<Node> t;  // массив всех вершин
-int last_index = 0;
-
-int splay(int x) {
-    // Пока вершина x -- не корень дерева,
-    while (!is_root(x)) {
-        int p = t[x].par;
-        // Поворачиваем рёбра zig-ом, zig-zig-ом или zig-zag-ом.
-        if (!is_root(p)) {
-            int g = t[p].par;
-            bool zigzig = (x == t[p].left) == (p == t[g].left);
-            rotate(zigzig ? p : x);
-        }
-        rotate(x);
-    }
-    push(x);
-    return x;
-}
-
-bool is_root(int x) {
-    return t[x].par == -1;
-}
-
-// Пересчёт всей дополнительной информации производится при повороте ребра
-// Ребро в дереве можно однозначно определить по его ниждему концу
-// Функция выполняет простой повроот ребра, то есть zig
-void rotate(int x) {
-    int p = t[x].par;
-    int g = t[p].par;
-
-    // Обновим информацию в вершинах (проталкивание изменений вниз)
-    push(p);
-    push(x);
-
-    // Обновим ребенка деда и предка x (обмен x и p)
-    if (g != -1) {
-        if (t[g].left == p)
-            t[g].left = x;
-        else if (t[g].right == p)
-            t[g].right = x;
-    }
-    t[x].par = g;
-
-    // Переподвешивание поддеревьев
-    if (t[p].left == x) {
-        //     P           X
-        //    / \         / \
-        //   X   C  -->  A   P
-        //  / \             / \
-        // A   B           B   C
-        t[p].left = t[x].right;
-        if (t[p].left != -1)
-          t[t[p].left].par = p;
-        t[x].right = p;
-    } else {
-        //   P              X
-        //  / \            / \
-        // A   X    -->   P   C
-        //    / \        / \
-        //   B   C      A   B
-        t[p].right = t[x].left;
-        if (t[p].right != -1)
-          t[t[p].right].par = p;
-        t[x].left = p;
-    }
-    t[p].par = x;
-
-    // Обновим информацию (поднятие изменений наверх)
-    pull(p);
-    pull(x);
-}
-
-// Размер поддерева вершины. Если вершины не существует, то 0
-int get_count(int x) {
-    return x != -1 ? t[x].cnt : 0;
-}
-
-// Проталкивание изменений вниз
-void push(int x) {
-    if (x == -1)
-        return;
-}
-
-// Поднятие изменений наверх
-void pull(int x) {
-    if (x == -1)
-        return;
-    t[x].cnt = 1 + get_count(t[x].left) + get_count(t[x].right);
-}
-
-
-// Функции для работы со splay-деревом как с BST. БАГИ НАДО ИСПРАВЛЯТЬ
-int find(int key, int root) {
-    if (root == -1)
-        return -1;
-    if (t[root].key == key)
-        return splay(root);
-    return (t[root].key < key) ? find(key, t[root].left) : find(key, t[root].right);
-}
-
-// Все ключи левого дерева меньше всех ключей правого
-int merge(int L, int R) {
-    if (L == -1) return R;
-    if (R == -1) return L;
-    while (t[L].right != -1) {
-        L = t[L].right;
-    }
-    splay(L);
-    t[L].right = R;
-    return L;
-}
-
-// В левом поддереве все ключи < key, в правом -- все >= key
-pair<int, int> split(int key, int root) {
-    if (root == -1)
-        return { -1, -1 };
-    splay(root);
-    int L = t[root].left;
-    int R = root;
-    t[R].left = t[L].par = -1;
-    return { L, R };
-}
-
-int add(int key, int root) {
-    if (-1 != find(key, root))
-        return root;
-    auto &&[L, R] = split(key, root);
-    int i = last_index++;
-    t[i].key = key;
-    t[i].left = L;
-    t[i].right = R;
-    t[L].par = t[R].par = i;
-    return i;
-}
-
-int del(int key, int root) {
-    int v = find(key, root);
-    if (-1 == v)
-        return root;
-
-    // Удаление вершины
-    int i = --last_index;
-    if (t[i].par != -1) {
-        if (t[t[i].par].left == i)
-            t[t[i].par].left = v;
-        else
-            t[t[i].par].right = v;
-    }
-    if (t[i].left != -1)
-        t[t[i].left].par = v;
-    if (t[i].right != -1)
-        t[t[i].right].par = v;
-    swap(t[v], t[i]);  // Теперь посделняя вершина на месте удалённой
-
-    return merge(t[i].left, t[i].right);
-}
 ```
 
 ### splay "сверху"
