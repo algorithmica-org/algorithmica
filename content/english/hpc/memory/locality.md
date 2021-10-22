@@ -1,6 +1,6 @@
 ---
 title: Spacial and Temporal Locality
-weight: 1
+weight: 2
 ---
 
 In some environments, the programmer has no direct control over caching. Moreover, sometimes we don't even know the high-level characteristics of the cache hierarchy, such as the memory size of each layer, the block size, the strategy used for cache eviction, or even the number of cache layers.

@@ -3,18 +3,18 @@ title: Cache-Oblivious Algorithms
 weight: 2
 ---
 
-In the context of underdefined cache hierarchies, there are two types of efficient [external memory](../external) algorithms:
+In the context of cache hierarchies, there are two types of efficient [external memory](../external) algorithms:
 
 - *Cache-aware* algorithms that are efficient for *known* $B$ and $M$.
 - *Cache-oblivious* algorithms that are efficient for *any* $B$ and $M$.
 
 For example, external merge sort is cache-aware, but not cache-oblivious: we need to know memory characteristics of the system, namely the ratio of available memory to the block size, to find the right $k$ to do k-way merge sort.
 
-Cache-oblivious algorithms are interesting because they automatically become optimal for all memory levels in the cache hierarchy, and not just the one for which they were tuned. We will not consider some applications in matrix calculations.
+Cache-oblivious algorithms are interesting because they automatically become optimal for all memory levels in the cache hierarchy, and not just the one for which they were specifically tuned. In this article we will consider some of their applications in matrix calculations.
 
-### Matrix Transpose
+## Matrix Transpose
 
-Assume we have a square matrix $A$ of size $N \times N$. The naive way to transpose it goes something like this:
+Assume we have a square matrix $A$ of size $N \times N$ and we need to transpose it. The naive by-definition approach would go something like this:
 
 ```cpp
 for (int i = 0; i < n; i++)
@@ -26,12 +26,9 @@ Here we used a single pointer to the beginning of the memory region instead of a
 
 The I/O complexity of this code is $O(N^2)$ because the writes are not sequential. If you try to swap the iteration variables it is going to be the the other way around, but the result will be the same.
 
-*Cache-oblivious algorithm* would be to do this:
+### Algorithm
 
-1. Divide the input matrix into 4 smaller matrices.
-2. Transpose each one recursively.
-3. Combine results by swapping the corner result matrices.
-4. Stop until it fits into cache.
+The *cache-oblivious* way relies on the following block matrix identity:
 
 $$
 \begin{pmatrix}
@@ -44,10 +41,13 @@ B^T & D^T
 \end{pmatrix}
 $$
 
-Complexity: $O(\frac{N^2}{B})$. It makes sense to pick something like 32x32 if you don't know cache size beforehand.
+It lets us solve the problem recursively using a divide-and-conquer approach:
 
-Implementing D&C on matrices is a bit more complex than on arrays,
-but the idea is the same: we want to use "virtual" matrices instead of copying them
+1. Divide the input matrix into 4 smaller matrices.
+2. Transpose each one recursively.
+3. Combine results by swapping the corner result matrices.
+
+Implementing D&C on matrices is a bit more complex than on arrays, but the main idea is the same. Instead of copying submatrices explicitly, we want to use "views" into them, and also switch to the naive method when the data starts fitting in L1 cache (or pick something small like $32 \times 32$ if you don't know it in advance). We also need to carefully handle the case when we have odd $n$ and thus can't split the matrix into 4 equal submatrices.
 
 ```cpp
 void transpose(int *a, int n, int N) {
@@ -57,13 +57,16 @@ void transpose(int *a, int n, int N) {
                 swap(a[i * N + j], a[j * N + i]);
     } else {
         int k = n / 2;
+
         transpose(a, k, N);
         transpose(a + k, k, N);
         transpose(a + k * N, k, N);
         transpose(a + k * N + k, k, N);
+        
         for (int i = 0; i < k; i++)
             for (int j = 0; j < k; j++)
                 swap(a[i * N + (j + k)], a[(i + k) * N + j]);
+        
         if (n & 1)
             for (int i = 0; i < n - 1; i++)
                 swap(a[i * N + n - 1], a[(n - 1) * N + i]);
@@ -71,9 +74,11 @@ void transpose(int *a, int n, int N) {
 }
 ```
 
-Rectangular and non-power-of-two matrices is left as an exercise to the reader.
+The I/O complexity of the algorithm is $O(\frac{N^2}{B})$, as we only need to touch roughly half the memory blocks during each merge stage, meaning that on each stage our problem becomes smaller.
 
-### Matrix Multiplication
+Adapting this code for the general case of non-square matrices is left as an exercise to the reader.
+
+## Matrix Multiplication
 
 Next, let's consider something slightly more complex: matrix multiplication.
 
@@ -81,19 +86,19 @@ $$
 C_{ij} = \sum_k A_{ik} B_{kj}
 $$
 
-The naive would be the to transfer its definition:
+The naive algorithm just translates its definition into code:
 
 ```cpp
 // don't forget to initialize c[][] with zeroes
 for (int i = 0; i < n; i++)
     for (int j = 0; j < n; j++)
         for (int k = 0; k < n; k++)
-            c[i][j] += a[i][k] * b[k][j];
+            c[i * n + j] += a[i * n + k] * b[k * n + j];
 ```
 
-Naive? $O(N^3)$: each scalar multiplication needs a new block read 
+It needs to access $O(N^3)$ blocks in total as each scalar multiplication needs a new block read.
 
-Many people know that if we just transpose $B$ first? $O(N^3/B + N^2)$
+Many people know that one good optimization is to transpose transpose $B$ first:
 
 ```cpp
 for (int i = 0; i < n; i++)
@@ -104,12 +109,16 @@ for (int i = 0; i < n; i++)
 for (int i = 0; i < n; i++)
     for (int j = 0; j < n; j++)
         for (int k = 0; k < n; k++)
-            c[i][j] += a[i][k] * b[j][k]; // <- note the indices
+            c[i * n + j] += a[i * n + k] * b[j * n + k]; // <- note the indices
 ```
 
-It seems like we can't do better, but it turns out, we can.
+Regardless of whether the transpose is done naively or with the cache-oblivious method we just developed, the matrix multiplication with one of the matrices transposed would work in $O(N^3/B + N^2)$ as all memory accesses are now sequential.
 
-Essentially the same trick: divide data until it fits into lowest cache ($N^2 \leq M$). For matrix multiplication, this is equivalent to using this formula:
+It seems like we can't do better, but turns out we can.
+
+### Algorithm
+
+Cache-oblivious matrix multiplication involves essentially the same trick. We need to divide the data until it fits into lowest cache (i. e. $N^2 \leq M$). For matrix multiplication, this equates to using this formula:
 
 $$
 \begin{pmatrix}
@@ -124,29 +133,7 @@ A_{21} B_{11} + A_{22} B_{21} & A_{21} B_{12} + A_{22} B_{22}\\
 \end{pmatrix}
 $$
 
-Arithmetic complexity is the same, because
-
-$$
-T(N) = 8 \cdot T(N/2) + O(N^2)
-$$
-
-is solved by $T(N) = O(N^3)$.
-
-It doesn't seem like we "conquered" anything yet, but let's think about I/O complexity
-
-$$
-T(N) = \begin{cases}
-O(\frac{N^2}{B}) & N \leq \sqrt M & \text{(we only need to read it)} \\
-8 \cdot T(N/2) + O(\frac{N^2}{B}) & \text{otherwise}
-\end{cases}
-$$
-
-The recurrence is dominated by $O((\frac{N}{\sqrt M})^3)$ base cases, so the total complexity is
-
-$$
-T(N) = O\left(\frac{(\sqrt{M})^2}{B} \cdot (\frac{N}{\sqrt M})^3\right) = O(\frac{N^3}{B\sqrt{M}})
-$$
-
+It is slightly harder to implement though, as we now have 8 recursive matrix multiplications:
 
 ```cpp
 void matmul(const float *a, const float *b, float *c, int n, int N) {
@@ -184,11 +171,43 @@ void matmul(const float *a, const float *b, float *c, int n, int N) {
 }
 ```
 
-We are not going to benchmark it thoroughly, .
+Because there are many other factors in play here, we are not going to benchmark this implementation, and instead just do its theoretical performance analysis in external memory model.
+
+### Analysis
+
+Arithmetic complexity of the algorithm remains is the same, because the recurrence
+
+$$
+T(N) = 8 \cdot T(N/2) + \Theta(N^2)
+$$
+
+is solved by $T(N) = \Theta(N^3)$.
+
+It doesn't seem like we "conquered" anything yet, but let's think about its I/O complexity:
+
+$$
+T(N) = \begin{cases}
+O(\frac{N^2}{B}) & N \leq \sqrt M & \text{(we only need to read it)} \\
+8 \cdot T(N/2) + O(\frac{N^2}{B}) & \text{otherwise}
+\end{cases}
+$$
+
+The recurrence is dominated by $O((\frac{N}{\sqrt M})^3)$ base cases, meaning that the total complexity is
+
+$$
+T(N) = O\left(\frac{(\sqrt{M})^2}{B} \cdot \left(\frac{N}{\sqrt M}\right)^3\right) = O\left(\frac{N^3}{B\sqrt{M}}\right)
+$$
+
+This is better than just $O(\frac{N^3}{B})$ by quite a lot.
 
 ### Strassen Algorithm
 
-$$\begin{pmatrix}
+In a spirit similar to the Karatsuba algorithm, matrix multiplication can be decomposed in a way that involves 7 matrix multiplications of size $\frac{n}{2}$, and master theorem tells us the such divide-and-conquer algorithm would work in $O(n^{\log_2 7}) \approx O(n^{2.81})$ time and a similar asymptotic in external memory model.
+
+This technique, known as the Strassen algorithm, similarly splits each matrix into 4:
+
+$$
+\begin{pmatrix}
 C_{11} & C_{12} \\
 C_{21} & C_{22} \\
 \end{pmatrix}
@@ -202,7 +221,7 @@ B_{21} & B_{22} \\
 \end{pmatrix}
 $$
 
-Compute intermediate products of $\frac{N}{2} \times \frac{N}{2}$ matrices and combine them to get matrix $C$:
+It then computes intermediate products of the $\frac{N}{2} \times \frac{N}{2}$ matrices and combines them to get matrix $C$:
 
 $$
 \begin{aligned}
@@ -216,9 +235,11 @@ $$
 \end{aligned}
 $$
 
-We use only 7 multiplications instead of 8, so arithmetic complexity is $O(n^{\log_2 7}) \approx O(n^{2.81})$.
+You can verify these formulas with simple substitution if you feel like it.
 
-As of 2020, current world record is $O(n^{2.3728596})$
+As far as we know, none of the mainstream optimized linear algebra libraries use the Strassen algorithm, although there are some prototype implementations that become efficient for matrices larger than 4000 or so.
+
+This technique can and actually has been extended multiple times to reduce the asymptotic even further by considering more submatrix products. As of 2020, current world record is $O(n^{2.3728596})$. Whether you can multiply matrices in $O(n^2)$ or at least $O(n^2 \log^k n)$ time is an open problem.
 
 ## Further Reading
 
