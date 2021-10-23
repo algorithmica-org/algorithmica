@@ -28,16 +28,31 @@ In previous sections of this chapter, we mostly studied the theoretical side and
 
 We will do so while doing actual measurements.
 
-To recall, we are running Ryzen 4700U @ 4.1GHz. Its specs are as follows:
+To recall, we are running [Ryzen 7 4700U](https://en.wikichip.org/wiki/amd/ryzen_7/4700u) @ 4.1GHz. Its specs are as follows:
 
-- 
-- 
-- 
-- 
+- 8 physical cores (which is a very rare exception nowadays)
+- 512KB or L1 cache, half of which is instruction cache, so effectively 32K per core
+- 4MB of L2 cache, or 512K per core
+- 8MB of L3 cache, shared between 8 cores
+- 16GB of RAM
 
 You can get these stats for your chip by calling `dmidecode -t cache` and `dmidecode -t cache` on Linux or looking it up on WikiChip.
 
 Like in physics, we will try to measure it experimentally.
+
+## Memory Bandwidth
+
+```cpp
+for (int t = 0; t < K; t++)
+    for (int i = 0; i < N; i += D)
+        a[i]++;
+```
+
+Compiled with `g++ -O3 -funroll-loops -march=native`
+
+![](../img/inc.svg)
+
+![](../img/strided.svg)
 
 ## Memory Latency
 
@@ -48,8 +63,6 @@ Pointer chasing
 ## Cache Lines
 
 Burst memory.
-
-## Memory Bandwidth
 
 ### Speculative Execution
 
@@ -108,4 +121,4 @@ Fortunately, this is easy to fix: just don't use powers of two. Not necessarily 
 
 This article is inspired by http://igoro.com/archive/gallery-of-processor-cache-effects/ by Igor Ostrovsky.
 
-For a more comprehensive reading, consider "[What Every Programmer Should Know About Memory](https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)" by Ulrich Drepper.
+For a more a comprehensive read, consider "[What Every Programmer Should Know About Memory](https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)" by Ulrich Drepper.
