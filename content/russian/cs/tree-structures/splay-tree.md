@@ -4,7 +4,7 @@ authors:
 - Григорий Горюнов
 editors:
 - Сергей Слотин
-date: 2021-10-07
+date: 2021-10-24
 weight: 5
 ---
 
@@ -14,11 +14,9 @@ Splay-дерево — это сбалансированное двоичное 
 
 ## Применения
 
-<!-- Сравнение скорости работы с декартовым деревом и std::set (где применимо) -->
-
 Splay-деревом можно заменять декартово дерево, почти всегда будет прирост скорости, так как в splay-дереве нижняя амортизированная оценка на время операции $\Theta(1)$, а в декартовом — $\Theta(h) \approx \Theta(\log n)$.
 
-Сравнение скорости на задаче.
+На реальных задачах splay-дерево работает почти с такой же скоростью, как и декартово. <!-- возьми задачу на декартач на кф-е и сдай её через splay -->
 
 Splay-дерево можно применять не только как самостоятельную структуру данных, но и как вспомогательную. С использованием splay-деревьев асимптотика Link-Cut дерева улучшается с $O(\log^2 n)$ до $O(\log n)$.
 
@@ -80,231 +78,243 @@ Splay-дерево можно применять не только как сам
 
 Этот подход удобен там, что код получается напрямую из описания splay-дерева и выглядит хорошо. Если неизвестен индекс целевой вершины, то надо сначала её найти, а потом запустить от неё splay.
 
+Пример реализации --- "ordered multiset" через splay-дерево (замена встроенного в gcc ordered set-а). Поддерживаемые операции:
+
+- `bool contains(int key)`: проверить наличие элемента с ключом $key$.
+- `void add(int key)`: добавить элемент с ключом $key$. Эту функцию необходимо изменить, если нужен set, а не multiset.
+- `void del(int key)`: удалить элемент с ключом $key$. Если такого элемента нет, ничего не делать.
+- `int fbo(int i)`: найти значение элемента с порядковым номером $i$.
+- `int ook(int key)`: найти порядковый номер первого элемента с ключом $key$, если бы он был в (мульти)множестве.
+
+Ленивые операции можно делать как в дереве отрезков. В нужных местах поставлен вызов `push()`.
+
+Данная реализация сравнима по скорости с декартовым деревом (время работы примерно одинаковое). Её можно ускорить, переписав с указателей на массивы.
+
 ```cpp
-// Поправить стиль кода!
-struct SplaySet
-{
-	struct Node
-	{
-		Node *left = 0, *right = 0;  // Индексы левого и правого сына
-		Node *par = 0;  // Индекс предка
-		//int cnt = 1;  // Число вершин в поддереве
+struct SplaySet {
+    // Вершина дерева
+    struct Node {
+        Node *left = 0, *right = 0;  // Индексы левого и правого сына
+        Node *par = 0;  // Индекс предка
+        int cnt = 1;    // Число вершин в поддереве
 
-		int key = INT_MIN;
-		Node(int key = 0) : key(key) {}
-	};
+        int key = INT_MIN;
+        Node(int key = 0) : key(key) {}
+    };
 
-	// Корень дерева
-	Node *root = 0;
-	SplaySet() {}
-	~SplaySet() { /*destroy(root);*/ }
+    // Корень дерева
+    Node* root = 0;
 
-
-	// ==== База splay-дерева ====
-	// Очистка вершины
-	void destroy(Node *x)
-	{
-		if (!x) return;
-		destroy(x->left);
-		destroy(x->right);
-		delete x;
-	}
-
-	// Размер поддерева вершины. Если вершины не существует, то 0
-	/*int get_count(Node *x) const
-	{
-		return x ? x->cnt : 0;
-	}
-
-	// Проталкивание изменений вниз
-	void push(Node *x)
-	{
-		if (!x) return;
-	}
-
-	// Поднятие изменений наверх
-	void pull(Node *x)
-	{
-		if (!x) return;
-		x->cnt = 1 + get_count(x->left) + get_count(x->right);
-	}*/
-
-	// Проверка на корень
-	bool is_root(Node *x) const
-	{
-		return x && !x->par;
-	}
-
-	// Пересчёт всей дополнительной информации производится при повороте ребра
-	// Ребро в дереве можно однозначно определить по его ниждему концу
-	// Функция выполняет простой повроот ребра, то есть zig
-	void rotate(Node *x)
-	{
-		Node *p = x->par;
-		Node *g = p->par;
-
-		// Обновим информацию в вершинах (проталкивание изменений вниз)
-		//push(p);
-		//push(x);
-
-		// Обновим ребенка деда и предка x (обмен x и p)
-		if (g)
-		{
-			if (g->left == p)
-				g->left = x;
-			else if (g->right == p)
-				g->right = x;
-		}
-		x->par = g;
-
-		// Переподвешивание поддеревьев
-		if (p->left == x)
-		{
-			p->left = x->right;
-			if (p->left)
-				p->left->par = p;
-			x->right = p;
-		}
-		else
-		{
-			p->right = x->left;
-			if (p->right)
-				p->right->par = p;
-			x->left = p;
-		}
-		p->par = x;
-
-		// Обновим информацию (поднятие изменений наверх)
-		//pull(p);
-		//pull(x);
-	}
-
-	void splay(Node *x)
-	{
-		// Пока вершина x -- не корень дерева,
-		while (!is_root(x))
-		{
-			Node *p = x->par;
-			// Поворачиваем рёбра zig-ом, zig-zig-ом или zig-zag-ом.
-			if (!is_root(p))
-			{
-				Node *g = p->par;
-				bool zigzig = (x == p->left) == (p == g->left);
-				rotate(zigzig ? p : x);
-			}
-			rotate(x);
-		}
-		//push(x);
-	}
-
-	Node *rightest(Node *x) const
-	{
-		if (!x || !x->right) return x;
-		return rightest(x->right);
-	}
-
-	Node *merge(Node *L, Node *R)
-	{
-		if (!L) return R;
-		if (!R) return L;
-		Node *rt = rightest(L);
-		splay(rt);
-		rt->right = R;
-		R->par = rt;
-		return rt;
-	}
+    ~SplaySet() {
+        // При очистке дерева надо удалить все вершины
+        destroy(root);
+    }
 
 
-	// ==== Функции для работы как с BST ====
-	// Найти первую вершину с ключом =key
-	Node *find(int key)
-	{
-		Node *x = root;
-		while (x && key != x->key)
-		{
-			Node *next = (key > x->key) ? x->right : x->left;
-			if (!next)
-			{
-				splay(x);
-				root = x;
-			}
-			x = next;
-		}
-		return x;
-	}
+    // ==== splay-дерево ====
+    // Полное удаление вершины
+    void destroy(Node* x) {
+        if (!x)
+            return;
+        destroy(x->left);
+        destroy(x->right);
+        delete x;
+    }
 
-	// Добавить вершину в дерево
-	void add(Node *x)
-	{
-		if (!root)
-		{
-			root = x;
-			return;
-		}
-		Node *y = root;
-		while (true)
-		{
-			Node *&next = (x->key > y->key) ? y->right : y->left;
-			if (!next)
-			{
-				next = x;
-				next->par = y;
-				root = next;
-				splay(next);
-				return;
-			}
-			y = next;
-		}
-	}
+    // Размер поддерева вершины. Если вершины не существует, то 0
+    inline int get_count(Node* x) const { return x ? x->cnt : 0; }
 
-	// Удалить вершину из дерева
-	void del(Node *x)
-	{
-		if (!x) return;
-		splay(x);
-		if (x->left) x->left->par = 0;
-		if (x->right) x->right->par = 0;
-		root = merge(x->left, x->right);
-		// delete x;  // не destroy так как одна вершина
-	}
+    // Проталкивание изменений вниз (как в ленивых операциях)
+    inline void push(Node *x) {
+        if (!x) return;
+    }
 
-	
-	// === Функции для работы как с сетом
-	bool contains(int key)
-	{
-		Node *r = find(key);
-		return r && r->key == key;
-	}
+    // Поднятие изменений наверх (может также называться upd, relax)
+    inline void pull(Node* x) {
+        if (!x) return;
+        x->cnt = 1 + get_count(x->left) + get_count(x->right);
+    }
 
-	// Добавить элемент с заданным ключом
-	void add(int key)
-	{
-		// if (!contains(key))
-		{
-			add(new Node(key));
-		}
-	}
+    // Проверка на корень
+    inline bool is_root(Node* x) const { return x && !x->par; }
 
-	// Удалить вершину по ключу
-	void del(int key)
-	{
-		Node *k = find(key);
-		if (k->key == key) del(k);
-	}
+    // Поворот ребра (x -- x->par)
+    // Пересчёт всей дополнительной информации производится при повороте ребра
+    // Ребро в дереве можно однозначно определить по его ниждему концу
+    // Функция выполняет простой повроот ребра, то есть zig
+    inline void rotate(Node* x) {
+        Node* p = x->par;
+        Node* g = p->par;
+
+        // Обновим информацию в вершинах (проталкивание изменений вниз как в ленивых обновлениях)
+        push(p);
+        push(x);
+
+        // Обновим ребенка деда и предка x (обмен x и p)
+        if (g) {
+            if (g->left == p)
+                g->left = x;
+            else if (g->right == p)
+                g->right = x;
+        }
+        x->par = g;
+
+        // Переподвешивание поддеревьев
+        if (p->left == x) {
+            p->left = x->right;
+            if (p->left)
+                p->left->par = p;
+            x->right = p;
+        } else {
+            p->right = x->left;
+            if (p->right)
+                p->right->par = p;
+            x->left = p;
+        }
+        p->par = x;
+
+        // Обновим информацию (поднятие изменений наверх)
+        pull(p);
+        pull(x);
+    }
+
+    inline void splay(Node* x) {
+        // Пока вершина x -- не корень дерева,
+        while (!is_root(x)) {
+            Node* p = x->par;
+            // Поворачиваем рёбра zig-ом, zig-zig-ом или zig-zag-ом.
+            if (!is_root(p)) {
+                Node* g = p->par;
+                bool zigzig = (x == p->left) == (p == g->left);
+                rotate(zigzig ? p : x);
+            }
+            rotate(x);
+        }
+        push(x);
+    }
+
+    // Самая правая вершина дерева
+    Node* rightest(Node* x) const {
+        if (!x || !x->right)
+            return x;
+        return rightest(x->right);
+    }
+
+    // Слить два дерева. Ключи левого строго меньше ключей правого
+    inline Node* merge(Node* L, Node* R) {
+        if (!L) return R;
+        if (!R) return L;
+        Node* rt = rightest(L);
+        splay(rt);
+        rt->right = R;
+        R->par = rt;
+        pull(rt);
+        return rt;
+    }
+
+
+    // ==== Функции для работы как с BST ====
+    // Найти первую вершину с ключом =key
+    inline Node* find(int key) {
+        Node* x = root;
+        while (x && key != x->key) {
+            Node* next = (key > x->key) ? x->right : x->left;
+            if (!next) splay(root = x);
+            x = next;
+        }
+        return x;
+    }
+
+    // Добавить вершину в дерево
+    inline void add(Node* x) {
+        if (!root) {
+            root = x;
+            return;
+        }
+        Node* y = root;
+        while (true) {
+            Node*& next = (x->key > y->key) ? y->right : y->left;
+            if (!next) {
+                next = x, next->par = y;
+                splay(root = next);
+                return;
+            }
+            y = next;
+        }
+    }
+
+    // Удалить вершину из дерева
+    inline void del(Node* x) {
+        if (!x) return;
+        splay(x);
+        if (x->left) x->left->par = 0;
+        if (x->right) x->right->par = 0;
+        root = merge(x->left, x->right);
+        delete x;  // не destroy так как одна вершина
+    }
+
+    // Найти вершину по её порядковому номеру
+    Node* fbo(int i, Node* r) {
+        if (!r || i < 0 || i >= get_count(r))
+            return 0;  // Такой вершины не существует
+        int k = get_count(r->left);
+        if (i == k) return splay(r), r;
+        else if (i < k) return fbo(i, r->left);
+        else return fbo(i - k - 1, r->right);
+    }
+
+
+    // ==== Функции для работы как с сетом ====
+    // Проверка наличия элемента
+    inline bool contains(int key) {
+        Node* r = find(key);
+        return r && r->key == key;
+    }
+
+    // Добавить элемент с заданным ключом
+    inline void add(int key) {
+        // Если мультимножество, то проверка не нужна
+        if (!contains(key))  // Проверка на дубликат элемента
+            add(new Node(key));
+    }
+
+    // Удалить элемент по ключу. Если их было несколько, удалить только один
+    inline void del(int key) {
+        Node* k = find(key);
+        if (k && k->key == key)
+            del(k);
+    }
+
+    // Значение i-того элемента (мульти)множества
+    inline int fbo(int i) {
+        Node* nd = fbo(i, root);
+        if (nd) root = nd;
+        return nd ? nd->key : -1;  // -1: такого элемента нет
+    }
+
+    // Найти порядковый номер элемента =key, если бы он был в этом множестве
+    // Неоптимальная реализация, но зато простая
+    inline int ook(int key) {
+        Node* q = new Node(key);
+        add(q);
+        int ans = get_count(q->left);
+        del(q);
+        return ans;
+    }
 };
 ```
 
 ### splay "сверху"
 
-Этот подход освобожден от проблемы поиска вершины, поскольку splay одновременно и перестраивает дерево, и ищет вершину.
+Этот подход освобожден от проблемы поиска вершины, поскольку splay одновременно и перестраивает дерево, и ищет вершину. При таком подходе хранить нужно только корень, а остальные вершины сами найдутся.
 
-Описание этого подхода есть на neerc.ifmo.ru
+Описание этого подхода есть на [neerc](https://neerc.ifmo.ru/wiki/index.php?title=Splay-%D0%B4%D0%B5%D1%80%D0%B5%D0%B2%D0%BE#Top-down).
 <!-- описание + совместимость с другим подходом -->
 
 
 ## Оценка асимптотики
 
-TLDR: $T_{splay} = O(\log N)$ в худшем случае.
+> TLDR: $T_{splay} = O(\log N)$ в худшем случае.
 
 Заметим, что все операции работают за $O(1) + T(splay)$.
 
