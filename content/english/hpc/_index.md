@@ -91,6 +91,7 @@ This work is largely based on blog posts, research papers, conference talks and 
 - Malte Skarupke
 - Matt Kulukundis
 - Travis Downs
+- Brendan Gregg
 - Igor Ostrovsky
 - Steven Pigeon
 - Denis Bakhvalov
