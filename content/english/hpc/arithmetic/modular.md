@@ -52,7 +52,7 @@ $$
 a^{\phi(m)} \equiv 1 \pmod m
 $$
 
-where $\phi(m)$ is called Euler's totent function and is equal to the number of residues of $m$ that is coprime with it. In particular case of when $m$ is prime, $\phi(p) = p - 1$ and we get Fermat's theorem, which is just a special case.
+where $\phi(m)$ is called Euler's totient function and is equal to the number of residues of $m$ that is coprime with it. In particular case of when $m$ is prime, $\phi(p) = p - 1$ and we get Fermat's theorem, which is just a special case.
 
 ### Primality Testing
 
