@@ -131,7 +131,7 @@ Now it's turn for C:
 #include <stdio.h>
 #include <time.h>
 
-const int n = 1024;
+#define n 1024
 double a[n][n], b[n][n], c[n][n];
 
 int main() {
@@ -149,7 +149,7 @@ int main() {
             for (int k = 0; k < n; k++)
                 c[i][j] += a[i][k] * b[k][j];
 
-    float seconds = float(clock() - start) / CLOCKS_PER_SEC;
+    float seconds = (float) (clock() - start) / CLOCKS_PER_SEC;
     printf("%.4f\n", seconds);
     
     return 0;
