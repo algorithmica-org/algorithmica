@@ -92,6 +92,7 @@ This work is largely based on blog posts, research papers, conference talks and 
 - Matt Kulukundis
 - Travis Downs
 - Brendan Gregg
+- Andreas Abel
 - Igor Ostrovsky
 - Steven Pigeon
 - Denis Bakhvalov

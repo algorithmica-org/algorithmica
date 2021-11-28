@@ -22,6 +22,31 @@ One nuance here is that you can't measure the execution time of particularly qui
 
 As a workaround, you can invoke the function repeatedly in a loop, time the whole thing once, and then divide the total time by the number of iterations. You also need to ensure nothing gets cached or affected by similar side effects. This a rather tedious way of doing profiling, especially if you are interested in multiple small sections of the program.
 
+```cpp
+#include <stdio.h>
+#include <time.h>
+
+const int N = 1e6;
+
+int main() {
+    clock_t start = clock();
+
+    for (int i = 0; i < N; i++)
+        clock();
+
+    float duration = float(clock() - start) / CLOCKS_PER_SEC;
+    printf("%.2fns\n", 1e9 * duration / N);
+
+    return 0;
+}
+```
+
+It is also helpful to include and either read from the standard input or (if you are multiple )
+
+160ns, but on Windows it is
+
+There are still some nuances: compiler may (it calls a dynamically linked library, so this is not the case)
+
 ### Sampling
 
 Instrumentation can also be used for collecting other types of info that can give useful insights about the performance of a particular algorithm. For example:
@@ -311,3 +336,5 @@ When running benchmarks, always quiesce the system:
 - attach jobs to specific cores.
 
 It is very easy to get skewed results without doing anything obviously wrong. Even a program's name can affect its speed: the executable's name ends up in an environment variable, environment variables end up on the call stack, and so the length of the name affects stack alignment, which can result in data accesses slowing down due to crossing cache line or memory page boundaries.
+
+https://www.cs.huji.ac.il/~feit/exp/related.html

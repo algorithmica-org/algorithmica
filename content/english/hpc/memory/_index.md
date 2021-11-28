@@ -42,14 +42,14 @@ From this perspective, each type of memory has a few important characteristics:
 Here is an approximate comparison table for commodity hardware in 2021:
 
 | Type | $M$      | $B$ | Latency | Bandwidth | $/GB/mo[^pricing] |
-|:---- |:-------- | --- | ------- | --------- |:-------- |
-| L1   | 10K      | 64B | 0.5ns   | 80G/s     | -        |
-| L2   | 100K     | 64B | 5ns     | 40G/s     | -        |
-| L3   | 1M/core  | 64B | 20ns    | 20G/s     | -        |
-| RAM  | GBs      | 64B | 100ns   | 10G/s      | 1.5      |
-| SSD  | TBs      | 4K  | 0.1ms   | 5G/s     | 0.17     |
-| HDD  | TBs      | -   | 10ms    | 1G/s      | 0.04     |
-| S3   | $\infty$ | -   | 150ms   | $\infty$  | 0.02[^S3]  |
+|:-----|:---------|-----|---------|-----------|:------------------|
+| L1   | 10K      | 64B | 0.5ns   | 80G/s     | -                 |
+| L2   | 100K     | 64B | 5ns     | 40G/s     | -                 |
+| L3   | 1M/core  | 64B | 20ns    | 20G/s     | -                 |
+| RAM  | GBs      | 64B | 100ns   | 10G/s     | 1.5               |
+| SSD  | TBs      | 4K  | 0.1ms   | 5G/s      | 0.17              |
+| HDD  | TBs      | -   | 10ms    | 1G/s      | 0.04              |
+| S3   | $\infty$ | -   | 150ms   | $\infty$  | 0.02[^S3]         |
 
 Of course, in reality there are many specifics about each type of memory, which we will now go through.
 
@@ -68,7 +68,7 @@ From fastest to slowest:
 
 The CPU cache system has an important concept of a *cache line*, which is the basic unit of data transfer between the CPU and the RAM. The size of a cache line is 64 bytes on most architectures, meaning that all main memory is divided into blocks of 64 bytes, and whenever you request (read or write) a single byte, you are also fetching all its 63 cache line neighbors whether your want them or not.
 
-Caching on the CPU level happens automatically based on the last access times of cache lines. When accessed, the contents of a cache line are emplaced onto the lowest cache layer, and then gradually evicted to a lower levels unless accessed again in time. The programmer can't control this process explicitly, but it is worthwhile to study how it works in detail, which we will do later in this chapter.
+Caching on the CPU level happens automatically based on the last access times of cache lines. When accessed, the contents of a cache line are emplaced onto the lowest cache layer, and then gradually evicted to a higher levels unless accessed again in time. The programmer can't control this process explicitly, but it is worthwhile to study how it works in detail, which we will do [later](cpu-cache) in this chapter.
 
 Caching is done not with a separate chip, but is embedded in the CPU itself. There are also multi-socket systems that support installing multiple CPUs in the motherboard. In this case, they have separate caching systems, and more over, each socket often becomes *local* to a certain part of the main memory and thus has increased latency (~100ns) for accessing locations outside of it. Such architectures are called NUMA ("Non-Uniform Memory Access") and used as a way to increase the total amount of RAM. We will not consider them for now, but they will become important in the context of parallel computing.
 

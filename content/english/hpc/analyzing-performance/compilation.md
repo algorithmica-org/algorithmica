@@ -319,7 +319,7 @@ Because of nuances like this, it is often beneficial to expand the algebra in in
 
 ## Checklist
 
-Usually the right approach to performance is to think how the main hotspots of the implementation should look like in assembly, write high-level code that resembles it as much as possible, and then repeatedly ask yourself the following questions until you are happy with its performance:
+Usually the right approach to performance is to think how the main hot spots of the implementation should look like in assembly, write high-level code that resembles it as much as possible, and then repeatedly ask yourself the following questions until you are happy with its performance:
 
 0. Does the compiler know it is allowed to do these optimizations? (`-O3`, `-march=native`, `-ffast-math`)
 1. Are there any edge cases where optimized version would not work correctly? (use `__restrict__` and `const` keywords, try the `assume` trick)
