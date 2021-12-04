@@ -4,19 +4,20 @@ weight: 6
 draft: true
 ---
 
-This tutorial is loosely based on a [46-page paper](https://arxiv.org/pdf/1509.05053.pdf) by Paul-Virak Khuong and Pat Morin "Array layouts for comparison-based searching" and describes one particular way of performing efficient binary search by rearranging elements of a sorted array in a cache-friendly way.
+The most fascinating showcases of performance engineering are not intricate 5-10% speed improvements of some databases, but multifold optimizations of some basic algorithms you can find in a textbook — the ones that are so simple that it would never even occur to try to optimize them. These kinds of optimizations are simple and instructive, and can very much be adopted elsewhere. Yet, with remarkable periodicity, these can be optimized to ridiculous levels of performance.
 
-We briefly review relevant concepts in processor architecture; if you want to get deeper, we recommend reading the original 2015 paper, as well as these articles.
+In this article, we will focus on such an algorithm — binary search — and significantly improve its efficiency by rearranging elements of a sorted array in a more cache-friendly way. We will develop two versions, each achieving 4-7x speedup over the standard `std::lower_bound`, depending on the cache level and available memory bandwidth:
 
-Our minimalistic implementation is only ~15 lines of code while offering 4-5x speedup over `std::lower_bound`. The exact speedup depends a lot on available memory bandwidth (see notes below).
+- The first one uses what is known as *Eytzinger layout*, which is also a popular layout for other structures such as binary heaps. Our minimalistic implementation is only ~15 lines.
+- The second one is its generalization based on *B-tree layout*, which is more bulky. Although it uses SIMD, which technically disqualifies it from being binary search.
 
-**If you are writing a contest right now**, stuck on a problem where binary search is a bottleneck, and suddenly remembered about this article, **jump straight to "complete implementation"**, it's compilable and copy-pastable.
+A brief review of [CPU cache system](../cpu-cache) is strongly advised.
 
-## Why is binary search slow?
+## Why Binary Search is Slow
 
-The main problem with binary search over a sorted array is that its memory accesses pattern is neither temporary nor spacially local. For example, element $\lfloor \frac n 2 \rfloor$ is accessed very often (every search) and element $\lfloor \frac n 2 \rfloor + 1$ is not, while they are probably occupying the same cache line. In general, only the first 3-5 reads are temporary local and only the last 3-4 reads are spacially local, and the rest are just random memory accesses.
+Before jumping to optimized variants, let's briefly discuss the reasons why the textbook binary search is slow in the first place.
 
-Here is a standard way of searching for the first element not less than $x$ in a sorted array:
+Here is the standard way of searching for the first element not less than $x$ in a sorted array of $n$ integers:
 
 ```cpp
 int lower_bound(int x) {
@@ -32,9 +33,58 @@ int lower_bound(int x) {
 }
 ```
 
-The running time of this (or any) algorithm is not just the "cost" of all its arithmetic operations, but rather this cost *plus* the time spent waiting for data to be fetched from memory. Thus, depending on the algorithm and problem limitations, it can be CPU-bound or memory-bound, meaning that the running time is dominated by one of its components.
+Find the middle element of the search range, compare to $x$, cut the range in half. Beautiful in its simplicity.
 
-If array is large enough—usually around the point where it stops fitting in cache and fetches become significantly slower—the running time of binary search becomes dominated by memory fetches.
+This is actually how `std::lower_bound` from [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023) works:
+
+Metaprogramming monstrosity.
+
+```cpp
+template <typename _ForwardIterator,
+          typename _Tp,
+          typename _Compare>
+_ForwardIterator __lower_bound(_ForwardIterator __first, _ForwardIterator __last,
+                               const _Tp& __val, _Compare __comp) {
+    typedef typename iterator_traits<_ForwardIterator>::difference_type _DistanceType;
+    _DistanceType __len = std::distance(__first, __last);
+
+    while (__len > 0) {
+        _DistanceType __half = __len >> 1;
+        _ForwardIterator __middle = __first;
+        std::advance(__middle, __half);
+        if (__comp(__middle, __val)) {
+            __first = __middle;
+            ++__first;
+            __len = __len - __half - 1;
+        }
+        else
+            __len = __half;
+    }
+    return __first;
+}
+```
+
+If compiler is successful in piercing through the abstractions, it compiles to roughly the same machine code.
+
+### Spacial Locality
+
+* First ~10 queries may be cached (frequently accessed: temporal locality)
+* Last 3-4 queries may be cached (may be in the same cache line: data locality)
+* But that's it. Maybe store elements in a more cache-friendly way?
+
+![](../img/binary-search.png)
+
+### Temporal Locality
+
+When we find lower bound of $x$ in a sorted array by binary searching, the main problem is that its memory accesses pattern is neither temporary nor spacially local. 
+
+For example, element $\lfloor \frac n 2 \rfloor$ is accessed very often (every search) and element $\lfloor \frac n 2 \rfloor + 1$ is not, while they are probably occupying the same cache line. In general, only the first 3-5 reads are temporary local and only the last 3-4 reads are spacially local, and the rest are just random memory accesses.
+
+![](../img/binary-heat.png)
+
+### Branching
+
+If you [run this code with perf](/hpc/analyzing-performance/profiling/), you can see that it spends most of its time waiting for a comparison to complete, which in turn is waiting for one of its operands to be fetched from memory.
 
 To give an idea, the following code is only ~5% slower for $n \approx 10^6$:
 
@@ -55,53 +105,7 @@ int slightly_slower_lower_bound(int x) {
 }
 ```
 
-### Caching Problems
-
-Contains an "if" that is impossible to predict better than a coin flip:
-
-```cpp
-int lower_bound(int x) {
-    int l = 0, r = n - 1;
-    while (l < r) {
-        int t = (l + r) / 2;
-        if (a[t] >= x)
-            r = t;
-        else
-            l = t + 1;
-    }
-    return a[l];
-}
-```
-
-Also both temporal and spacial locality are terrible, but we address that later
-
-This is actually how `std::lower_bound` works:
-
-```cpp
-template<typename _ForwardIterator, typename _Tp, typename _Compare> _ForwardIterator
-__lower_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __val, _Compare __comp) {
-    typedef typename iterator_traits<_ForwardIterator>::difference_type _DistanceType;
-    _DistanceType __len = std::distance(__first, __last);
-
-    while (__len > 0) {
-        _DistanceType __half = __len >> 1;
-        _ForwardIterator __middle = __first;
-        std::advance(__middle, __half);
-        if (__comp(__middle, __val)) {
-            __first = __middle;
-            ++__first;
-            __len = __len - __half - 1;
-        }
-        else
-            __len = __half;
-    }
-    return __first;
-}
-```
-
-[libstdc++ from GCC](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023)
-
-### Branch-Free Binary Search
+Contains an "if" that is impossible to predict better than a coin flip.
 
 It's not illegal: ternary operator is replaced with something like `CMOV` 
 
@@ -117,17 +121,22 @@ int lower_bound(int x) {
 }
 ```
 
-Prefetching?
+But this is not the largest problem. The real problem is that it waits for its operands, and the results still can't be predicted.
 
-### Temporal Locality
+The running time of this (or any) algorithm is not just the "cost" of all its arithmetic operations, but rather this cost *plus* the time spent waiting for data to be fetched from memory. Thus, depending on the algorithm and problem limitations, it can be CPU-bound or memory-bound, meaning that the running time is dominated by one of its components.
 
-* First ~10 queries may be cached (frequently accessed: temporal locality)
-* Last 3-4 queries may be cached (may be in the same cache line: data locality)
-* But that's it. Maybe store elements in a more cache-friendly way?
+Can be fetched ahead, but there is only 50% chance we will get it right on the first layer, then 25% chance on second and so on. We could do 2, 4, 8 and so on fetches, but these would grow exponentially.
+
+IMAGE HERE
+
+If array is large enough—usually around the point where it stops fitting in cache and fetches become significantly slower—the running time of binary search becomes dominated by memory fetches.
+
+
+So, to sum up: ideally, we'd want some layout that is both blocks, and higher-order blocks to be placed in groups, and also to be capable.
 
 We can overcome this by enumerating and permuting array elements in a more cache-friendly way. The numeration we will use is actually half a millennium old, and chances are you already know it.
 
-## The Eytzinger layout
+## Eytzinger Layout
 
 **Michaël Eytzinger** is a 16th century Austrian nobleman known for his work on genealogy, particularily for a system for numbering ancestors called *ahnentafel* (German for "ancestor table").
 
@@ -138,17 +147,11 @@ It lists a person's direct ancestors in a fixed sequence of ascent. First, the p
 Here is the example for Paul I, the great-grandson of Peter I, the Great:
 
 1. Paul I
-
 2. Peter III (Paul's father)
-
 3. Catherine II (Paul's mother)
-
 4. Charles Frederick (Peter's father, Paul's paternal grandfather)
-
 5. Anna Petrovna (Peter's mother, Paul's paternal grandmother)
-
 6. Christian August (Catherine's father, Paul's maternal grandfather)
-
 7. Johanna Elisabeth (Catherine's mother, Paul's maternal grandmother)
 
 Apart from being compact, it has some nice properties, like that all even-numbered persons are male and all odd-numbered (possibly apart from 1) are female.
@@ -159,9 +162,12 @@ One can also find the number of a particular ancestor only knowing the genders o
 
 This is how this layout will look when applied to binary search:
 
-![](img/eytzinger.png)
+![](../img/eytzinger.png)
 
 You can immediately see how its temporal locality is better (in fact, theoretically optimal) as the elements closer to the root are closer to the beginning of the array, and thus are more likely to be fetched from cache.
+
+![](../img/eytzinger-search.png)
+![](../img/eytzinger-heat.png)
 
 ### Construction
 
@@ -322,7 +328,7 @@ Few more things to note:
 
 * For some reason, basic binary search implementation (the very first code block in this article) is already ~20% faster than `std::sort`.
 
-## What about B-trees?
+## B-tree Layout
 
 B-trees are basically $(k+1)$-ary trees, meaning that they store $k$ elements in each node and choose between $(k+1)$ possible branches instead of 2.
 
@@ -330,7 +336,7 @@ They are widely used for indexing in databases, especially those that operate on
 
 To perform static binary searches, one can implement a B-tree in an implicit way, i. e. without actually storing any pointers and spending only $O(1)$ additional memory, and $k$ could be made equal to the cache line size so that each node request fetches exactly one cache line.
 
-![](img/btree.png)
+![](../img/btree.png)
 
 Turns out, they have the same rate of growth but sligtly larger compute-tied constant. While the latter is explainable (our while loop only has like 5 instructions; can't outpace that), the former is surprising.
 
@@ -554,3 +560,7 @@ int search(int x) {
 That's it. This implementation should outperform even the [state-of-the-art indexes](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) used in high-performance databases, though it's mostly due to the fact that data structures used in real databases have to support fast updates while we don't.
 
 Note that this implementation is very specific to the architecture. Older CPUs and CPUs on mobile devices don't have 256-bit wide registers and will crash (but they likely have 128-bit SIMD so the loop can still be split in 4 parts instead of 2), non-Intel CPUs have their own instruction sets for SIMD, and some computers even have different cache line size.
+
+## Acknowledgements
+
+This tutorial is loosely based on a [46-page paper](https://arxiv.org/pdf/1509.05053.pdf) by Paul-Virak Khuong and Pat Morin "Array layouts for comparison-based searching".
