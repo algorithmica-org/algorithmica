@@ -1,5 +1,5 @@
 ---
-title: Implicit Data Structures
+title: Dynamic Prefix Sum
 weight: 7
 draft: true
 ---
@@ -13,6 +13,11 @@ Segment tree is a data structure that stores information about array segments. I
 Segment trees are used for windowing queries or range queries in general, either by themselves or as part of a larger algorithm. They are very rarely mentioned in scientific literature, because they are relatively novel (invented around 2000), and *asymptotically* they don't do anything that any other binary tree can't, but they are dominant structure in the world of competitive programming because of their performance and ease of implementation.
 
 Segment trees are built recursively: build a tree for left and right halves and merge results to get root.
+
+```cpp
+void add(int k, int x); // 0-based indexation
+int sum(int k); // sum of elements indexed [0, k]
+```
 
 ## Segment Trees
 
@@ -32,33 +37,37 @@ Segment trees are built recursively: build a tree for left and right halves and 
 
 ```cpp
 struct segtree {
-    int lb, rb; // left and right borders of this segment
-    int sum = 0; // sum on this segment
+    int lb, rb;
+    int s = 0;
     segtree *l = 0, *r = 0;
-    segtree(int _lb, int _rb) {
-        lb = _lb, rb = _rb;
+
+    segtree(int lb, int rb) : lb(lb), rb(rb) {
         if (lb + 1 < rb) {
             int t = (lb + rb) / 2;
             l = new segtree(lb, t);
             r = new segtree(t, rb);
         }
     }
+    
     void add(int k, int x) {
-        sum += x;
+        s += x;
         if (l) {
-            if (k < l->rb) l->add(k, x);
-            else r->add(k, x);
+            if (k < l->rb)
+                l->add(k, x);
+            else
+                r->add(k, x);
         }
     }
-    int get_sum(int lq, int rq) {
-        if (lb >= lq && rb <= rq) return sum;
-        if (max(lb, lq) >= min(rb, rq)) return 0;
-        return l->get_sum(lq, rq) + r->get_sum(lq, rq);
+    
+    int sum(int k) { // [0, k)
+        if (rb <= k)
+            return s;
+        if (lb >= k)
+            return 0;
+        return l->sum(k) + r->sum(k);
     }
 };
 ```
-
-https://algorithmica.org/ru/segtree
 
 ----
 
@@ -68,35 +77,68 @@ https://algorithmica.org/ru/segtree
 * Wasted memory, recursion, branching
 
 ```cpp
-int n, t[4 * MAXN];
+int t[4 * N];
 
-void build(int a[], int v, int tl, int tr) {
-    if (tl == tr)
-        t[v] = a[tl];
-    else {
-        int tm = (tl + tr) / 2;
-        build (a, v*2, tl, tm);
-        build (a, v*2+1, tm+1, tr);
-        t[v] = t[v*2] + t[v*2+1];
+void _add(int k, int x, int v = 1, int l = 0, int r = N) {
+    t[v] += x;
+    if (l + 1 < r) {
+        int m = (l + r) / 2;
+        if (k < m)
+            _add(k, x, 2 * v, l, m);
+        else
+            _add(k, x, 2 * v + 1, m, r);
     }
 }
 
-int sum(int v, int tl, int tr, int l, int r) {
-    if (l > r)
+int _sum(int k, int v = 1, int l = 0, int r = N) {
+    if (l > k)
         return 0;
-	if (l == tl && r == tr)
+    if (r - 1 <= k)
         return t[v];
-    int tm = (tl + tr) / 2;
-    return sum (v*2, tl, tm, l, min(r,tm))
-         + sum (v*2+1, tm+1, tr, max(l,tm+1), r);
+    int m = (l + r) / 2;
+    return _sum(k, 2 * v, l, m)
+         + _sum(k, 2 * v + 1, m, r);
 }
 ```
 
-http://e-maxx.ru/algo/segment_tree
-
-----
-
 ### Implicit (Iterative)
+
+```cpp
+void add(int k, int x) {
+    int v = 1, l = 0, r = N;
+    while (l + 1 < r) {
+        t[v] += x;
+        int m = (l + r) / 2;
+        if (k < m)
+            v = 2 * v, r = m;
+        else
+            v = 2 * v + 1, l = m;
+    }
+    t[v] += x;
+}
+
+int sum(int k) {
+    if (k == N - 1)
+        return t[1];
+    int v = 1, l = 0, r = n;
+    int s = 0;
+    while (l < r) {
+        int m = (l + r) / 2;
+        v *= 2;
+        if (k < m) {
+            if (k == m - 1)
+                return s + t[v];
+            r = m;
+        } else {
+            s += t[v];
+            v++;
+            l = m;
+        }
+    }
+    return s;
+}
+```
+### Implicit (Bottom-up)
 
 * Different layout: leaf nodes are numbered $n$ to $(2n - 1)$, "parent" is $\lfloor k/2 \rfloor$
 * Minimum possible amount of memory
