@@ -114,6 +114,8 @@ Important lesson is to count the number of cache lines to fetch, and not the tot
 
 ### Cache Associativity
 
+256 at 0.067 and 257 at 0.751
+
 Let's try a few other, larger strides. Since strides larger than 16 will "skip" some cache lines altogether, we normalize the running time in terms of total number of values incremented, and also adjust the array size so that the loop always does a roughly constant number of iterations and reads constant number of cache lines.
 
 IMAGE HERE
