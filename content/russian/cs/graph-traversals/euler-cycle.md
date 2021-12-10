@@ -28,7 +28,7 @@ void euler(int v) {
     while (!g[v].empty()) {
         u = *g[v].begin(); // берем любое ребро
         remove_edge(v, u); // удаляем его
-        dfs(u);            // запускаемся от противоположного конца
+        euler(u);            // запускаемся от противоположного конца
     }
     cout << v <<  " ";     // выписываем текущую вершину
 }
@@ -55,7 +55,7 @@ void euler(int v) {
         u = *g[v].begin();
         g[v].erase(u);
         g[u].erase(v); // если граф ориентированный, обратное ребро удалять не надо
-        dfs(u);
+        euler(u);
     }
     cout << v <<  " ";
 }
@@ -93,7 +93,7 @@ void euler(int v) {
         g[v].pop();
         if (!edges[e].deleted) {
             edges[e].deleted = edges[e^1].deleted = true;
-            dfs(e.to);
+            euler(e.to);
         }
     }
     cout << v <<  " ";
