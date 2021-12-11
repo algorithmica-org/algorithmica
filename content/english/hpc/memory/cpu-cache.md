@@ -193,6 +193,33 @@ Graph looks like if it was shifted by 1 to the left — exactly like it should.
 
 When iterating over arrays, the latency is hidden by *prefetching* — implicit or explicit. You should design your algorithms in a way that allows for this sort of concurrency.
 
+### Pointers
+
+There are some syntactical issues in getting "pointer to pointer to pointer…" constructions to work, so instead we will define a struct type that just wraps a pointers to its own kind — this is how most pointer chasing works anyway:
+
+```cpp
+struct node { node* ptr; };
+```
+
+Now we fill our array with pointers:
+
+```cpp
+node
+
+for (int i = 0; i < N; i++) {
+    q[k].ptr = q + p[i];
+    k = p[i];
+}
+
+
+for (int i = 0; i < N; i++)
+    ptr = ptr->ptr;
+```
+
+After going [through some trouble](https://askubuntu.com/questions/91909/trouble-compiling-a-32-bit-binary-on-a-64-bit-machine) getting 32-bit libs to get this running on a computer made in this century.
+
+Tip: use raw pointers when you can.
+
 ### Pipelining and Speculative Execution
 
 *Implicit prefetching*: memory reads can be speculative too, and reads will be pipelined anyway.
