@@ -102,13 +102,15 @@ This work is largely based on blog posts, research papers, conference talks and 
 - Edmond Chow
 - Oleksandr Bacherikov
 
-Release date: fall 2021
+Volume: 300-400 pages  
+Release date: early 2022
 
 ### Part II: Parallel Algorithms
 
 Concurrency, models of parallelism, green threads and runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking and graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication and sorting.
 
-Release date: early 2022
+Volume: 150-200 pages  
+Release date: late 2022 / 2023?
 
 ### Part III: Distributed Computing
 
@@ -127,3 +129,95 @@ Release date: ???
 The examples in this book use C++, GCC, x86-64, CUDA and Spark, although the underlying principles we aim to convey are not specific to them.
 
 To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment, and thus more helpful for the reader. I would have respectively picked C / Rust, LLVM, arm, OpenCL and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
+
+### Planned New ToC
+
+Halfway through the book I've realized that very long (>10 pages) articles is perhaps not the best format for the web, and it would be better to increase the number of chapters and split the articles into smaller (5-8 pages) posts each covering one particular technique, so that the book can generate more readership with better Google rankings and referrals to specific topics.
+
+I have something like this in mind:
+
+```
+1. Complexity Models
+ 1.1. Beyond Big O
+ 1.2. How Code Gets Executed
+ 1.3. Modern Computing
+2. Analyzing Performance
+ 1.1. Introduction to Assembly
+ 1.2. Program Memory Layout
+ 1.3. Control Flow
+ 1.4. Functions and Recursion
+ 1.5. Indirect Branching
+ 1.6. Branchless Computing
+3. Compilation
+ 3.1. Negotiating with Compilers
+ 3.2. Stitching Programs Together
+ 3.3. Situational Optimizations
+ 3.4. Why Undefined Behavior Exists
+ 3.5. What Compilers Can and Cannot Do
+4. Profiling
+ 4.1. Instrumentation
+ 4.2. Statistical Profiling
+ 4.3. Program Simulation
+ 4.4. Machine Code Analyzers
+ 4.5. Removing Noise
+ 4.6. Benchmarking
+5. Arithmetic
+ 5.1. Floating-Point Numbers
+ 5.2. Interval Arithmetic
+ 5.3. Newton's Method
+ 5.4. Fast Inverse Square Root
+ 5.5. Integers
+ 5.6. Integer Division
+ 5.7. Bit Manipulation
+6. Number Theory
+ 6.1. Modular Reduction
+ 6.3. Modular Inverse
+ 6.5. Finite Fields and Data Representation
+ 6.7. Cryptography, Hashing and PRNG
+7. External Memory
+ 7.1. Sorting in External Memory
+ 7.2. List Ranking and Graph Algorithms
+ 7.3. Eviction Policies
+ 7.4. Spacial and Temporal Locality
+ 7.5. Cache Blocking
+ 7.6. Cache-Oblivious Algorithms
+ 7.7. Sublinear Algorithms
+8. RAM & CPU Caches
+ 8.1. Memory Bandwidth
+ 8.2. Cache Lines, Alignment and Packing
+ 8.3. Memory Paging
+ 8.4. Cache Associativity
+ 8.5. Memory Latency and Prefetching
+ 8.6. Memory Management
+9. SIMD Parallelism
+ 9.1. Using SIMD in C/C++
+ 9.2. Reductions
+ 9.3. Data Twiddling
+ 9.4. Auto-Vectorization
+ 9.5. SSE & AVX Cookbook
+10. Instruction-Level Parallelism
+ 10.1. Pipelining and Hazards
+ 10.2. Throughput Computing
+ 10.3. µOps & Scheduling
+ 10.4. Theoretical Performance Limits
+11. Data Structures Case Studies
+ 12.1. Layouts for Binary Search
+ 12.2. Prefix Sum
+ 12.3. Hash Tables
+ 12.4. (Static) Range Minimum Query
+ 12.5. Ordered Trees
+ 12.6. Bitmaps
+12. Algorithms Case Studies
+ 12.1. Logistic Regression
+ 12.2. Karatsuba Algorithm
+ 12.3. Fast Fourier Transform
+ 12.4. Argmin with SIMD
+ 12.5. String Searching
+ 12.6. Parsing Integers
+ 12.7. Sorting
+ 12.9. Matrix Multiplication
+ 12.10. Integer Factorization
+ 12.11. Binary GCD
+```
+
+I will probably start refactoring once I'm done with the original plan, but it may start morphing before that.
