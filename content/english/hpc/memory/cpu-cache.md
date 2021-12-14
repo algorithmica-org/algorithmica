@@ -29,17 +29,17 @@ The last few points may be a bit hand-wavy, but don't worry: they will become cl
 
 **Setup.** As before, I will be running these experiments on [Ryzen 7 4700U](https://en.wikichip.org/wiki/amd/ryzen_7/4700u), which is a "Zen 2" CPU whose cache-related specs are as follows:
 
-- 8 physical cores (without hyper-threading), clocked at 4.1GHz in boost mode;
+- 8 physical cores (without hyper-threading) clocked at 2GHz[^boost];
 - 512K of 8-way set associative L1 cache, half of which is instruction cache — meaning 32K per core;
 - 4M of 8-way set associative L2 cache, or 512K per core;
 - 8M of 16-way set associative L3 cache, *shared* between 8 cores (4M actually);
 - 16G of DDR4 RAM @ 2667MHz.
 
+[^boost]: Although the CPU can be clocked at 4.1GHz in boost mode, we will perform most experiments at 2GHz to reduce noise — so keep in mind that in realistic applications the numbers can be multiplied by 2.
+
 You can compare it with your own hardware by running `dmidecode -t cache` or `lshw -class memory` on Linux or just looking it up on WikiChip.
 
-Due to difficulties in [refraining compiler from cheating](http://localhost:1313/hpc/analyzing-performance/profiling/), the code snippets in this article are be slightly simplified for exposition purposes. Check the [code repository](https://github.com/sslotin/amh-code/tree/main/cpu-cache) if you want to reproduce them yourself.
-
-2 GHz.
+Due to difficulties in [refraining compiler from cheating](..//hpc/analyzing-performance/profiling/), the code snippets in this article are be slightly simplified for exposition purposes. Check the [code repository](https://github.com/sslotin/amh-code/tree/main/cpu-cache) if you want to reproduce them yourself.
 
 I am not going to turn off frequency boosting or silence other programs while doing these benchmarks. The goal is to get realistic values, like when optimizing a video game.
 
@@ -47,7 +47,7 @@ I am not going to turn off frequency boosting or silence other programs while do
 
 For many algorithms, memory bandwidth is the most important characteristic of the cache system. Coincidentally, it is also the easiest to measure.
 
-Let's create an array and linearly iterate over it $K$ times, incrementing its values:
+For our benchmark, let's create an array and linearly iterate over it $K$ times, incrementing its values:
 
 ```cpp
 int a[N];
@@ -57,38 +57,74 @@ for (int t = 0; t < K; t++)
         a[i]++;
 ```
 
-Changing $N$, adjusting $K$ so that the total number of cells accessed remains roughly constant, and normalizing timings as "operations per second", we get the following results:
+Changing $N$ and adjusting $K$ so that the total number of cells accessed remains roughly constant, and normalizing the timings as "operations per second", we get the following results:
 
 ![Dotted vertical lines are cache layer sizes](../img/inc.svg)
 
-When the whole array fits into the lowest layer of cache, the program is bottlenecked by CPU rather than L1 cache bandwidth. Incrementing an array can be done with SIMD; compiled it uses just two operations per 8 elements — performing the read-fused addition and writing the result back:
+You can clearly see the sizes of the cache layers on this graph. When the whole array fits into the lowest layer of cache, the program is bottlenecked by CPU rather than L1 cache bandwidth. As the the array becomes larger, overhead becomes smaller, and the performance approaches this theoretical maximum. But then it drops: first to ~12 GFLOPS when it exceeds L1 cache, and then gradually to about 2.1 GFLOPS when it can no longer fit in L3.
+
+All CPU cache layers are placed on the same microchip as the processor, so bandwidth, latency, all its other characteristics scale with the clock frequency. RAM, on the other side, lives on its own clock, and its characteristics remain constant. This can be seen on these graphs if we run the same benchmark while turning frequency boost on:
+
+![](../img/boost.svg)
+
+To reduce noise, we will run all the remaining benchmarks at plain 2GHz — but the lesson to retain here is that the relative performance of different approaches or decisions between algorithm designs may depend on the clock frequency — unless when we are working with datasets that either fit in cache entirely.
+
+<!-- TODO: measure frequency-boosted latency also and move to a separate section -->
+
+**Exercise: theoretical peak performance.** By the way, assuming infinite bandwidth, what would the throughput of that loop be? How to verify that the 14 GFLOPS figure is the CPU limit and not L1 peak bandwidth? For that we need to look a bit closer at how the processor will execute the loop.
+
+Incrementing an array can be done with SIMD; when compiled, it uses just two operations per 8 elements — performing the read-fused addition and writing the result back:
 
 ```asm
 vpaddd  ymm0, ymm1, YMMWORD PTR [rax]
 vmovdqa YMMWORD PTR [rax], ymm0
 ```
 
-This computation is bottlenecked by the write, which has a throughput of 1. This means that we can theoretically increment and write back 8 values per cycle on average, yielding the performance of 4.1 GHz × 8 = 32.8 GFLOPS.
+This computation is bottlenecked by the write, which has a throughput of 1. This means that we can theoretically increment and write back 8 values per cycle on average, yielding the performance of 2 GHz × 8 = 16 GFLOPS (or 32.8 in boost mode), which is fairly close to what we observed.
 
-As the the array becomes larger, overhead becomes smaller, and the performance approaches this theoretical maximum. But then it drops: first to 25 GFLOPS when it exceeds L1 cache, and then gradually to about 2.1 GFLOPS when it can no longer fit in L3.
+On all modern architectures, you can typically assume that you won't ever be bottlenecked by the throughput of L1 cache, but rather by the read/write execution ports or the arithmetic. In these extreme cases, it may be beneficial to store some data in registers without touching any of the memory, which we will cover later in the book.
 
-### Parallel Execution
+### Cache Sharing
 
-The last cliff is not sharp because of noisy neighbors. L1 and L2 caches are private to the core, but L3 is shared. When a single program accesses a cache line, it causes the whole thing to stall, hence the performance penalty.
+Starting from a certain level in the hierarchy, cache becomes shared between different cores. This limits the size and bandwidth of the cache, reducing performance in case of parallel algorithms or just noisy neighbors.
 
-![Cache hierarchy in Zen 2](../img/zen2.png)
+On my machine, there is actually not 4M, but 8M of L3 cache, but it is shared between groups of 4 cores so that each core "sees" only 4M that is shared with 3 other cores — and, of course, all the cores have uniform access to RAM. There may be more complex situations, especially in the case of multi-socket and NUMA architectures. The "topology" of the cache system can be retrieved with the `lstopo` utility.
 
-Bandwidth at this level is shared.
+![Cache hierarchy scheme generated by lstopo command on Linux](../img/lstopo.png)
 
-Another factor is that it is that the clock frequency is boosted. We can set it at sustainable level, and it flattens out.
+This has some very important implications for certain parallel algorithms:
 
-![Cache hierarchy scheme generated by lstopo](../img/lstopo.png)
+- If and algorithm is memory-bound, then it doesn't matter how much cores you add, as it will be bottlenecked by the RAM bandwidth.
+- On non-uniform architectures, it matters which cores are running which execution threads.
 
-Instead of jumping ahead, we are just going to use GNU parallel and taskset to manage affinity. Turn off turbo boost.
+To show this, we can run the same benchmarks in parallel. Instead of changing source code to run multiple threads, we can make use of GNU parallel. Due to the asymmetry `taskset` to manage CPU affinity and set them to the first "half" of cores (to temporary ignore the second issue).
+
+```bash
+parallel taskset -c 0,1,2,3 ./run ::: {0..3}
+```
+
+You can now see that the L3 effects diminishes with more cores competing for it, and after falling into the RAM region the total performance remains constant.
+
+![](../img/parallel.svg)
+
+This asymmetry makes it important to manage where exactly different threads should be running. By default, the operating systems knows nothing about affinity, so it assigns threads to cores arbitrarily and dynamically during execution, based on core load and job priority, and settings of the scheduler. This can be affected directly, which is what we did with taskset to restrict the available cores to the first half that share the same 4M region of L3.
+
+Let's add another 2-thread run, but now with running on cores in different 4-core groups that don't share L3 cache:
+
+```bash
+parallel taskset -c 0,1 ./run ::: {0..1}
+parallel taskset -c 0,4 ./run ::: {0..1}
+```
+
+You can see that it performs better — as if there were twice as much L3 cache available.
+
+![](../img/affinity.svg)
+
+These issues are especially tricky when benchmarking and is usually the largest source of noise in real-world applications.
 
 ### Cache Lines
 
-One unignorable feature of the memory system is that it deals with cache lines, and not individual bytes.
+The most unignorable feature of the memory system is that it deals with cache lines, and not individual bytes.
 
 To demonstrate this, we will add "step" parameter to our loop — we will now increment every $D$-th element:
 
@@ -112,9 +148,51 @@ When we change the step parameter to 8, the graphs equalize:
 
 Important lesson is to count the number of cache lines to fetch, and not the total count of memory accesses, especially when working with large problems. 
 
+### Memory Paging
+
+Let's consider other possible values of $D$.
+
+## Other Types of Cache
+
+Lastly, let's talk about something else. Data is not the only thing that is loaded intensively and needs to be cached.
+
+### Paging and TLB
+
+It is "lookaside" is because it is looked up concurrently with the accesses in the cache. First layer typically uses virtual addresses anyway. Memory controller retrieves entries in cache and TLB, and then compares the tag.
+
+Paging is implemented both on software (OS) and hardware level.
+
+Typical size of a page is 4KB,
+
+TLB cache which is used for storing.
+
+### Instruction Cache
+
+Unrolling loops.
+
+Aligning. No-op.
+
+There are actually multiple.
+
 ### Cache Associativity
 
+```cpp
+for (int i = 0; i < N; i += 256)
+    a[i]++;
+```
+
+```cpp
+for (int i = 0; i < N; i += 257)
+    a[i]++;
+```
+
 256 at 0.067 and 257 at 0.751
+
+Если очень упрощенно и не совсем точно, то на уровне CPU для каждого уровня кэша есть специальная структура данных, которая поддерживает какое-то количество «ячеек», в которых могут быть данные. При чтении какой-то ячейки из общей памяти процессор сначала смотрит в какую-то из ячеек этой структуры, и если там уже есть нужные данные, то сразу берет их, а если нет, то идет в следующий уровень кэша, пока не дойдет до общей памяти.
+
+Так как ячеек в общей памяти гораздо больше, чем ячеек в кэше, то некоторые из них приходиться «мапать» в одну и ту же ячейку кэша — и чтобы сделать это, процессоры просто берут последние сколько-то бит в адресе ячейки, как бы беря его по модулю размера кэша, чтобы получить номер кэш-ячейки.
+
+Теперь к сути — почему при шаге в 256 и 257 скорость чтения должна как-либо отличаться? Дело в том, что когда мы итерируемся с шагом 256 (либо любым другим, кратным большой степени двойки), мы посещаем только те ячейки, адреса которых при делении на степень двойки будут давать какое-то очень ограниченное множество остатков, и их можно разместить только в такое же ограниченное множество ячеек в кэше, и поэтому кэш будет использоваться далеко не полностью. Здесь это и происходит — из-за этого массив не помещается в L3 кэш, и его приходится читать из памяти, которая на порядок медленнее.
 
 Let's try a few other, larger strides. Since strides larger than 16 will "skip" some cache lines altogether, we normalize the running time in terms of total number of values incremented, and also adjust the array size so that the loop always does a roughly constant number of iterations and reads constant number of cache lines.
 
@@ -302,28 +380,6 @@ __builtin_prefetch(&q[((1 << D) * k + (1 << D) - 1) % n]);
 ```
 
 Managing issues such as integer overflow, we can cut latency down.
-
-## Other Types of Cache
-
-Lastly, let's talk about something else. Data is not the only thing that is loaded intensively and needs to be cached.
-
-### Paging and TLB
-
-It is "lookaside" is because it is looked up concurrently with the accesses in the cache. First layer typically uses virtual addresses anyway. Memory controller retrieves entries in cache and TLB, and then compares the tag.
-
-Paging is implemented both on software (OS) and hardware level.
-
-Typical size of a page is 4KB,
-
-TLB cache which is used for storing.
-
-### Instruction Cache
-
-Unrolling loops.
-
-Aligning. No-op.
-
-There are actually multiple.
 
 ## Summary and Lessons Learned
 
