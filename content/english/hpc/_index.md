@@ -196,15 +196,16 @@ I have something like this in mind:
  8.7. Sublinear Algorithms
 9. RAM & CPU Caches
  9.1. Memory Bandwidth
- 9.4. Cache Lines, Alignment and Packing
- 9.2. Memory Paging
- 9.3. Cache Associativity
- 9.5. Memory Latency
- 9.6. Prefetching
- 9.7. Pointer Alternatives
- 9.8. Code Layout
- 9.9. Memory Management
- 9.10. memcpy and memset
+ 9.2. Cache Lines and Memory Alignment
+ 9.3. Bit Fields and Packing
+ 9.4. Memory Paging
+ 9.5. Cache Associativity
+ 9.6. Memory Latency
+ 9.7. Prefetching
+ 9.8. Pointer Alternatives
+ 9.9. Code Layout
+ 9.10. Memory Management
+ 9.11. memcpy and memset
 10. SIMD Parallelism
  10.1. Using SIMD in C/C++
  10.2. Reductions
