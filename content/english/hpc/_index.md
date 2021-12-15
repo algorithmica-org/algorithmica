@@ -138,86 +138,97 @@ I have something like this in mind:
 
 ```
 1. Complexity Models
- 1.1. Beyond Big O
+ 1.1. Modern Computing Machinery
  1.2. How Code Gets Executed
- 1.3. Modern Computing
+ 1.3. Beyond Big O
 2. Analyzing Performance
  1.1. Introduction to Assembly
- 1.2. Program Memory Layout
- 1.3. Control Flow
+ 1.2. Control Flow
+ 1.3. Loop Unrolling
  1.4. Functions and Recursion
- 1.5. Indirect Branching
- 1.6. Branchless Computing
-3. Compilation
- 3.1. Negotiating with Compilers
- 3.2. Stitching Programs Together
- 3.3. Situational Optimizations
- 3.4. Why Undefined Behavior Exists
- 3.5. What Compilers Can and Cannot Do
-4. Profiling
- 4.1. Instrumentation
- 4.2. Statistical Profiling
- 4.3. Program Simulation
- 4.4. Machine Code Analyzers
- 4.5. Removing Noise
- 4.6. Benchmarking
-5. Arithmetic
- 5.1. Floating-Point Numbers
- 5.2. Interval Arithmetic
- 5.3. Newton's Method
- 5.4. Fast Inverse Square Root
- 5.5. Integers
- 5.6. Integer Division
- 5.7. Bit Manipulation
-6. Number Theory
- 6.1. Modular Reduction
- 6.3. Modular Inverse
- 6.5. Finite Fields and Data Representation
- 6.7. Cryptography, Hashing and PRNG
-7. External Memory
- 7.1. Sorting in External Memory
- 7.2. List Ranking and Graph Algorithms
- 7.3. Eviction Policies
- 7.4. Spacial and Temporal Locality
- 7.5. Cache Blocking
- 7.6. Cache-Oblivious Algorithms
- 7.7. Sublinear Algorithms
-8. RAM & CPU Caches
- 8.1. Memory Bandwidth
- 8.2. Cache Lines, Alignment and Packing
- 8.3. Memory Paging
- 8.4. Cache Associativity
- 8.5. Memory Latency and Prefetching
- 8.6. Memory Management
-9. SIMD Parallelism
- 9.1. Using SIMD in C/C++
- 9.2. Reductions
- 9.3. Data Twiddling
- 9.4. Auto-Vectorization
- 9.5. SSE & AVX Cookbook
-10. Instruction-Level Parallelism
- 10.1. Pipelining and Hazards
- 10.2. Throughput Computing
- 10.3. µOps & Scheduling
- 10.4. Theoretical Performance Limits
-11. Data Structures Case Studies
- 12.1. Layouts for Binary Search
+ 1.5. Inlining
+ 1.6. Indirect Branching
+3. Instruction-Level Parallelism
+ 3.1. Pipelining and Hazards
+ 3.2. Branchless Computing
+ 3.3. Throughput Computing
+ 3.4. µOps & Scheduling
+ 3.5. Theoretical Performance Limits
+4. Compilation
+ 4.1. Negotiating with Compilers
+ 4.2. Stitching Programs Together
+ 4.3. Situational Optimizations
+ 4.4. Why Undefined Behavior Exists
+ 4.5. Memory Aliasing
+ 4.6. Arithmetic Optimizations
+5. Profiling
+ 5.1. Instrumentation
+ 5.2. Statistical Profiling
+ 5.3. Program Simulation
+ 5.4. Machine Code Analyzers
+ 5.5. Frequency Scaling
+ 5.6. Removing Noise
+ 5.7. Benchmarking
+6. Arithmetic
+ 6.1. Floating-Point Numbers
+ 6.2. Interval Arithmetic
+ 6.3. Newton's Method
+ 6.4. Fast Inverse Square Root
+ 6.5. Integers
+ 6.6. Integer Division
+ 6.7. Bit Manipulation
+7. Number Theory
+ 7.1. Prime Numbers
+ 7.2. Modular Inverse
+ 7.3. Modular Reduction
+ 7.4. Finite Fields
+ 7.5. Data Storage
+ 7.6. Cryptography
+ 7.7. Hashing
+ 7.8. Random Number Generation
+8. External Memory
+ 8.1. External Sorting
+ 8.2. List Ranking
+ 8.3. Eviction Policies
+ 8.4. Data Locality
+ 8.5. Cache Blocking
+ 8.6. Cache-Oblivious Algorithms
+ 8.7. Sublinear Algorithms
+9. RAM & CPU Caches
+ 9.1. Memory Bandwidth
+ 9.4. Cache Lines, Alignment and Packing
+ 9.2. Memory Paging
+ 9.3. Cache Associativity
+ 9.5. Memory Latency
+ 9.6. Prefetching
+ 9.7. Pointer Alternatives
+ 9.8. Code Layout
+ 9.9. Memory Management
+ 9.10. memcpy and memset
+10. SIMD Parallelism
+ 10.1. Using SIMD in C/C++
+ 10.2. Reductions
+ 10.3. Auto-Vectorization
+ 10.4. Data Twiddling
+ 10.5. SSE & AVX Cookbook
+11. Algorithm Case Studies
+ 11.1. Binary GCD
+ 11.2. Integer Factorization
+ 11.3. Logistic Regression
+ 11.4. Karatsuba Algorithm
+ 11.5. Fast Fourier Transform
+ 11.6. Argmin with SIMD
+ 11.7. Parsing Integers
+ 11.8. String Searching
+ 11.9. Sorting
+ 11.10. Matrix Multiplication
+12. Data Structure Case Studies
+ 12.1. Binary Search
  12.2. Prefix Sum
  12.3. Hash Tables
- 12.4. (Static) Range Minimum Query
- 12.5. Ordered Trees
- 12.6. Bitmaps
-12. Algorithms Case Studies
- 12.1. Logistic Regression
- 12.2. Karatsuba Algorithm
- 12.3. Fast Fourier Transform
- 12.4. Argmin with SIMD
- 12.5. String Searching
- 12.6. Parsing Integers
- 12.7. Sorting
- 12.9. Matrix Multiplication
- 12.10. Integer Factorization
- 12.11. Binary GCD
+ 12.4. Bitmaps
+ 12.5. Range Minimum Query
+ 12.6. Ordered Trees
 ```
 
 I will probably start refactoring once I'm done with the original plan, but it may start morphing before that.
