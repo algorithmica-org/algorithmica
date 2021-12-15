@@ -124,10 +124,10 @@ These issues are especially tricky when benchmarking and is usually the largest 
 
 ### Cache Lines
 
-The most unignorable feature of the memory system is that it deals with cache lines, and not individual bytes.
+The most important feature of the memory system is that it deals with cache lines, and not individual bytes.
 
-To demonstrate this, we will add "step" parameter to our loop — we will now increment every $D$-th element:
-
+To demonstrate this, let's add "step" parameter to our loop — we will now increment every $D$-th element:
+ 
 ```cpp
 for (int t = 0; t < K; t++)
     for (int i = 0; i < N; i += D)
@@ -136,93 +136,107 @@ for (int t = 0; t < K; t++)
 
 When we run it with $D=16$, we can observe something interesting:
 
-![Blue line is every 16 elements](../img/strided.svg)
+![Performance is normalized by the total time to run benchmark, not the total number of elements incremented](../img/strided.svg)
 
 As the problem size grows, the graphs of the two loops meet, despite one doing 16 times less work than the other. This is because in terms of cache lines, we are fetching exactly the same memory; the fact that the strided computation only needs one sixteenth of it is irrelevant.
 
-That said, it does work a bit faster when the array fits in L1. This is because all it does is `inc DWORD PTR [rdx]` (yes, x86 has instructions that only involve memory locations and no registers or immediate values). It also has a throughput of 1, but while the former code needed 2 of writes per cache line, this only needs one, hence it works twice as fast when memory is not a concern.
+It does work a bit faster when the array fits into lower layers of cache because the loop becomes much simples: all it does is `inc DWORD PTR [rdx]` (yes, x86 has instructions that only involve memory locations and no registers or immediate values). It also has a throughput of one, but while the former code needed to perform two of writes per cache line, this only needs one, hence it works twice as fast when memory is not a concern.
 
 When we change the step parameter to 8, the graphs equalize:
 
 ![](../img/strided2.svg)
 
-Important lesson is to count the number of cache lines to fetch, and not the total count of memory accesses, especially when working with large problems. 
+The important lesson is to count the number of cache lines to fetch when analyzing memory-bound algorithms, and not the total count of memory accesses. This becomes increasingly important with larger problem sizes.
 
 ### Memory Paging
 
-Let's consider other possible values of $D$.
+Let's consider other possible values of $D$ and try to measure loop performance. Since for values larger than 16 we will skip some cache lines altogether, requiring less memory reads and fewer cache, we change the size of the array so that the total number of cache lines fetched is constant.
 
-## Other Types of Cache
+```cpp
+const int N = (1 << 13);
+int a[D * N];
 
-Lastly, let's talk about something else. Data is not the only thing that is loaded intensively and needs to be cached.
+for (int i = 0; i < D * N; i += D)
+    a[i] += 1;
+```
 
-### Paging and TLB
+All we change now is the stride, and $N$ remains constant. It is equal to $2^{13}$ cache lines or $2^{13} \cdot 2^6 = 2^{19}$ bytes, precisely so that the entire addressable array can fit into L2 cache, regardless of step size. The graph should look flat, but this is not what happens.
 
-It is "lookaside" is because it is looked up concurrently with the accesses in the cache. First layer typically uses virtual addresses anyway. Memory controller retrieves entries in cache and TLB, and then compares the tag.
+![](../img/strides.svg)
 
-Paging is implemented both on software (OS) and hardware level.
+This anomaly is due to the cache system, but the standard L1-L3 data caches have nothing to do with it. *Memory paging* is at fault, in particular the type of cache called *translation lookaside buffer* (TLB) that is responsible for retrieving the physical addresses of 4K memory pages of virtual memory.
 
-Typical size of a page is 4KB,
+On our CPU, there is not one, but two layers of TLB cache. L1 TLB can house 64 entries for a total $64 \times 4K = 512K$ of data, and L2 TLB has 2048 entries for a total of $2048 \times 4K = 8M$, which is — surprise-surprise — exactly the array size at the point where the cliff starts ($8K \times 256 \times 4B = 8M$). You can fetch this information for your architecture with `cpuid` command.
 
-TLB cache which is used for storing.
+This is a huge issue, as such access patterns when we need to jump large distances are actually quite common in real programs too. Why not just make page size larger? This reduces granularity of system memory allocation — increasing fragmentation. So modern operating systems actually give us freedom in choosing page size on demand. You can read more on madvise if you are interested, but for our benchmarks we will just turn on huge pages for all allocations by default like this:
 
-### Instruction Cache
+```bash
+echo always >/sys/kernel/mm/transparent_hugepage/enabled
+```
 
-Unrolling loops.
+This flattens the curve:
 
-Aligning. No-op.
+![](../img/strides-hugepages.svg)
 
-There are actually multiple.
+Typical size of a page is 4KB, but it can be up to 1G or so for large databases, but enabling it by default is not a good idea as scenarios when we have a VPS with 256M or RAM and more than 256 processes are not uncommon.
+
+Typical page sizes are 4K, 2M and 1G (e. g. allowing for 256K, 128M, 64G memory regions to be stored in a 64-entry L1 TLB respectively).
 
 ### Cache Associativity
+
+If you looked carefully, you could notice patterns while inspecting the dots below the graph in the previous experiment. These are not just noise: certain step sizes indeed perform much worse than their neighbors.
+
+For example, the stride of 256 corresponding to this loop:
 
 ```cpp
 for (int i = 0; i < N; i += 256)
     a[i]++;
 ```
 
+and this one
+
 ```cpp
 for (int i = 0; i < N; i += 257)
     a[i]++;
 ```
 
-256 at 0.067 and 257 at 0.751
+differ by more than 10x: 256 runs at 0.067 while 257 runs at 0.751.
 
-Если очень упрощенно и не совсем точно, то на уровне CPU для каждого уровня кэша есть специальная структура данных, которая поддерживает какое-то количество «ячеек», в которых могут быть данные. При чтении какой-то ячейки из общей памяти процессор сначала смотрит в какую-то из ячеек этой структуры, и если там уже есть нужные данные, то сразу берет их, а если нет, то идет в следующий уровень кэша, пока не дойдет до общей памяти.
+This is not just a single specific bad value: it is the same for all indices that are multiple of large powers of two, and it continues much further to the right.
 
-Так как ячеек в общей памяти гораздо больше, чем ячеек в кэше, то некоторые из них приходиться «мапать» в одну и ту же ячейку кэша — и чтобы сделать это, процессоры просто берут последние сколько-то бит в адресе ячейки, как бы беря его по модулю размера кэша, чтобы получить номер кэш-ячейки.
+![](../img/strides-two.svg)
 
-Теперь к сути — почему при шаге в 256 и 257 скорость чтения должна как-либо отличаться? Дело в том, что когда мы итерируемся с шагом 256 (либо любым другим, кратным большой степени двойки), мы посещаем только те ячейки, адреса которых при делении на степень двойки будут давать какое-то очень ограниченное множество остатков, и их можно разместить только в такое же ограниченное множество ячеек в кэше, и поэтому кэш будет использоваться далеко не полностью. Здесь это и происходит — из-за этого массив не помещается в L3 кэш, и его приходится читать из памяти, которая на порядок медленнее.
+This effect is due to a feature called *cache associativity*, and an interesting artifact of how CPU caches are implemented in hardware.
 
-Let's try a few other, larger strides. Since strides larger than 16 will "skip" some cache lines altogether, we normalize the running time in terms of total number of values incremented, and also adjust the array size so that the loop always does a roughly constant number of iterations and reads constant number of cache lines.
-
-IMAGE HERE
-
-What are the spikes there? These correspond to step sizes that are either powers of two, or divisible by large powers of two. This is due to a feature called *cache associativity*, and an interesting artifact of how CPU caches are implemented in hardware.
-
-Here is the gist of it.
+When studying memory theoretically using the external memory model, we discussed different ways one can [implement caching policies](/hpc/memory/locality/) in software, and went into detail on particular case of a simple but effective strategy, LRU, which required some non-trivial data manipulation. In the context of hardware, such scheme is called *fully associative cache*.
 
 ![Fully associative cache](../img/cache2.png)
 
-Implementing something like that is prohibitively expensive.
+The problem with it is that implementing something like that is prohibitively expensive. In hardware, you can implement something when you have 16 entries or so, but it becomes unfeasible when it comes to storing and managing hundreds of cache lines.
 
-The simplest way to implement cache is to map each block of 64 bytes in RAM to a cache line which it can possibly occupy. Say if in we have 4096 blocks in memory and 64 cache lines for them, this means that each cache line at any time stores the value of one of $\frac{4096}{64} = 64$ different blocks, along with a "tag" information which helps identifying which block it is.
+We can resort to another, much simpler approach: we could just map each block of 64 bytes in RAM to a cache line which it can possibly occupy. Say if in we have 4096 blocks in memory and 64 cache lines for them, this means that each cache line at any time stores the value of one of $\frac{4096}{64} = 64$ different blocks, along with a "tag" information which helps identifying which block it is.
+
+Simply speaking, the CPU just maintains these cells containing data, and when reading any cell from the main memory the CPU first looks it up in the cache, and if it contains the data, it reads it, and otherwise goes to a higher cache level until it reaches main memory. Simple and beautiful.
 
 ![Direct-mapped cache](../img/cache1.png)
 
-The simplest way to do this is to take address, and to reinterpret it in three parts:
+Direct-mapped cache is easy to implement, but the problem with it is that the entries can be kicked out way too quickly, leading to lower cache utilization. In fact, we could just bounce between two addresses, leaving
 
-The way it happens is an address is split into three parts, the last of which is used for determining the cache line it is mapped to.
-
-![](../img/address.png)
-
-Therefore, every
-
-For that, we settle for something in-between direct-mapped and fully associative cache: the *set-associative cache*.
+For that reason, we settle for something in-between direct-mapped and fully associative cache: the *set-associative cache*. It splits addresses into groups which separately act as small fully-associative cache.
 
 ![Set-associative cache](../img/cache3.png)
 
-Different cache layers may have different associativity.
+*Associativity* is the size of such sets — for example 16 meaning that this way we would need to wait at least 16 reads for an entry to get kicked out. Different cache layers may have different associativity. Most CPU caches are set-associative, unless we are talking about small specialized ones that only house 64 or less entries and can get by with fully-associative schemes.
+
+If we implemented cache in software, we would compute some hash function to use as key. In hardware, we can't really do that because e. g. for L1 cache 4 or 5 cycles is all we got, and even taking a modulo takes 10-15 cycles, let alone something cryptographically secure. Therefore, hardware takes a different approach and calculates this address based on the address. It takes the address, and reinterprets it in three parts:
+
+![](../img/address.png)
+
+The last part is used for determining the cache line it is mapped to. All addresses with the same "middle" part will therefore map to the same set.
+
+Now, where were we? Oh yes, the reason why iterating with strides of 256 has such a terrible slowdown. This because they all map to the same set, and effectively the size of the cache (and all below it) shrinks by 256/16=16. No longer being able to reside in L2, it spills all the way to the order-of-magnitude slower RAM, which causes the expected slowdown.
+
+This issue arises with remarkable frequency in all types of algorithms that love powers of two. Luckily, this behavior is more of an anomaly than some that needs to be dealt with. The solution is usually simple: avoid iterating in powers of two, using different sizer on 2d arrays or inserting "holes" in the memory layout.
 
 ## Memory Latency
 
@@ -230,7 +244,7 @@ Despite bandwidth — how many data one can load — is a more complicated conce
 
 Measuring memory bandwidth is easy because the CPU can simply queue up multiple iterations of data-parallel loops like the one above. The scheduler gets access to the needed memory locations far in advance and can dispatch read requests in a way that will overlap all memory operations, hiding the latency.
 
-To measure latency, we need to design an experiment where the CPU can't cheat by knowing the memory location in advance. We can do this: generate a random permutation of size $n$ that corresponds a full cycle, and then repeatedly follow the permutation.
+To measure latency, we need to design an experiment where the CPU can't cheat by knowing the memory location in advance. We can do this like this: generate a random permutation of size $n$ that corresponds a full cycle, and then repeatedly follow the permutation.
 
 ```cpp
 int p[N], q[N];
@@ -247,13 +261,39 @@ for (int t = 0; t < K; t++)
         k = q[k];
 ```
 
-In general software, this performance anti-pattern is known as *pointer chasing*, and iterating an array this way is considerably slower.
+This performance anti-pattern is known as *pointer chasing*, and it very frequent in software, especially written in high-level languages. Iterating an array this way is considerably slower.
 
-IMAGE HERE
+![](../img/permutation-latency.svg)
 
 When speaking of latency, it makes more sense to use cycles or nanoseconds rather than bandwidth units. So we will replace this graph with its reciprocal:
 
-IMAGE HERE
+![](../img/latency-throughput.svg)
+
+It is generally *much* slower — by multiple orders of magnitude — to iterate an array this way. Not only because it makes SIMD practically impossible, but also because it stalls the pipeline a lot.
+
+### Latency of RAM and TLB
+
+![](../img/permutation-boost.svg)
+
+It becomes more clear when looking at the relative speedup:
+
+![](../img/permutation-boost-speedup.svg)
+
+By the way, how does TLB affect latency?
+
+The TLB cache is called "lookaside" because the lookup can happen independently from normal data cache lookups.
+
+So, the effect is independent.
+
+It is "lookaside" is because it is looked up concurrently with the accesses in the cache. First layer typically uses virtual addresses anyway. Memory controller retrieves entries in cache and TLB, and then compares the tag.
+
+Paging is implemented both on software (OS) and hardware level.
+
+TLB cache which is used for storing.
+
+It is possible, but quite tedious to also construct an experiment actually measuring all this — so you will have to take my word on that one.
+
+### Pointers
 
 The latency of L1 fetch is 4 or 5 cycles, the latter being the case if we need to use fused computation of address. In theory, it works slightly faster if we are working with actual pointers.
 
@@ -381,6 +421,10 @@ __builtin_prefetch(&q[((1 << D) * k + (1 << D) - 1) % n]);
 
 Managing issues such as integer overflow, we can cut latency down.
 
+<!--
+Instruction Cache. Unrolling loops. Aligning. No-op.
+-->
+
 ## Summary and Lessons Learned
 
 Our experiments suggest the following:
@@ -408,6 +452,8 @@ But in some cases the specifics start to matter. In set-associative cache, there
 Unfortunately, this happens quite often, as we programmers love using powers of two for our algorithms and data structures.
 
 Fortunately, this is easy to fix: just don't use powers of two. Not necessarily for the algorithm, but at least for the memory layout.
+
+https://www.7-cpu.com/cpu/Zen2.html
 
 ## Further Reading
 
