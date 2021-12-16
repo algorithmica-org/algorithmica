@@ -107,7 +107,7 @@ You can now see that the L3 effects diminishes with more cores competing for it,
 
 ![](../img/parallel.svg)
 
-This asymmetry makes it important to manage where exactly different threads should be running. By default, the operating systems knows nothing about affinity, so it assigns threads to cores arbitrarily and dynamically during execution, based on core load and job priority, and settings of the scheduler. This can be affected directly, which is what we did with taskset to restrict the available cores to the first half that share the same 4M region of L3.
+This asymmetry makes it important to manage where exactly different threads should be running. By default, the operating systems knows nothing about affinity, so it assigns threads to cores arbitrarily and dynamically during execution, based on core load and job priority, and settings of the scheduler. This can be affected directly, which is what we did with `taskset` to restrict the available cores to the first half that share the same 4M region of L3.
 
 Let's add another 2-thread run, but now with running on cores in different 4-core groups that don't share L3 cache:
 
@@ -148,6 +148,94 @@ When we change the step parameter to 8, the graphs equalize:
 
 The important lesson is to count the number of cache lines to fetch when analyzing memory-bound algorithms, and not the total count of memory accesses. This becomes increasingly important with larger problem sizes.
 
+### Memory Alignment
+
+The fact that the memory is split into cache lines has huge implications on data structure layout. If you need to retrieve a certain atomic object, such as a 32-bit integer, you want to have it all located in a single cache line: both because hardware stitching results together takes precious transistor space and because retrieving 2 cache lines is slow and increases memory bandwidth. The "natural" alignment of `int` is 4 bytes.
+
+For this reason, in C and most other programming languages structures by default pad structures with blank bytes in order to insure that every data member will not be split by a cache line boundary. Instead of playing a complex tetris game and rearranging its members, it simply pads each element so that the alignment of the next one matches its "natural" one. In addition, the data structure as a whole may be padded with a final unnamed member to allow each member of an array of structures to be properly aligned.
+
+Consider the following toy example:
+
+```cpp
+struct Data {
+    char a;
+    short b;
+    int c;
+    char d;
+};
+```
+
+When stored succinctly, it needs a total of $1 + 2 + 4 + 1 = 8$ bytes per instance, but doing so raises a few issues. Assuming that the whole structure has alignment of 4 (its largest member, `int`), `a` is fine, but `b`, `c` and `d` are not aligned.
+
+To fix this, compiler inserts unnamed members so that each next unaligned member gets to its alignment:
+
+```cpp
+struct Data {
+    char a;    // 1 byte
+    char x[1]; // 1 byte for the following 'short' to be aligned on a 2 byte boundary
+    short b;   // 2 bytes 
+    int c;     // 4 bytes - largest structure member
+    char d;    // 1 byte
+    char y[3]; // 3 bytes to make total size of the structure 12 bytes (divisible by 4)
+};
+```
+
+Padding is only inserted when a structure member is followed by a member with a larger alignment requirement or at the end of the structure. By changing the ordering of members in a structure, it is possible to change the amount of padding required to maintain alignment. For example, if members are sorted by descending alignment requirements a minimal amount of padding is required. The minimal amount of padding required is always less than the largest alignment in the structure. Computing the maximum amount of padding required is more complicated, but is always less than the sum of the alignment requirements for all members minus twice the sum of the alignment requirements for the least aligned half of the structure members.
+
+By default, when you allocate an array, the only guarantee about its alignment you get is that none of its elements are split by a cache line. For an array of `int`, this means that it gets the alignment of 4 bytes (`sizeof int`), which lets you load exactly one cache line when reading any element.
+
+Alignment requirements can be declared not only for the data type, but for a particular variable. The typical use cases are allocating something the beginning of a 64-byte cache line, 32-byte SIMD block or a 4K memory page.
+
+```cpp
+alignas(64) float a[n];
+```
+
+For allocating an array dynamically, we can use `std::aligned_alloc` which takes the alignment value and the size of array in bytes, and returns a pointer to the allocated memory (just like `new` does), which should be explicitly deleted when no longer used.
+
+### Bit Fields and Packing
+
+If you know what you are doing, you can turn disable padding and instead pack you data structure as tight as possible. This is done
+
+When loading it though, the
+
+```cpp
+struct __attribute__ ((packed)) Data {
+    char a;
+    short b;
+    int c;
+    char d;
+};
+```
+
+This is a less standardized feature, but you can also use it with *bit fields* to members of less than fixed size.
+
+```cpp
+struct __attribute__ ((packed)) Data {
+    char a;     // 1 byte
+    int b : 24; // 3 bytes
+};
+```
+
+The structure takes 4 bytes when packed and 8 bytes when padded. This feature is not so widespread because CPUs don't have 3-byte arithmetic and has to do some inefficient conversion during loading:
+
+```cpp
+int load(char *p) {
+    char x = p[0], y = p[1], z = p[2];
+    return (x << 16) + (y << 8) + z;
+}
+```
+
+This can be optimized by loading a 4-byte `int` and then using a mask to discard its highest bits.
+
+```cpp
+int load(int *p) {
+    int x = *p;
+    return x & ((1<<24) - 1);
+}
+```
+
+Compilers usually don't do that, because this is not technically legal sometimes: may not own that 4th byte, and won't let you load it even if you are discarding it.
+
 ### Memory Paging
 
 Let's consider other possible values of $D$ and try to measure loop performance. Since for values larger than 16 we will skip some cache lines altogether, requiring less memory reads and fewer cache, we change the size of the array so that the total number of cache lines fetched is constant.
@@ -168,7 +256,7 @@ This anomaly is due to the cache system, but the standard L1-L3 data caches have
 
 On our CPU, there is not one, but two layers of TLB cache. L1 TLB can house 64 entries for a total $64 \times 4K = 512K$ of data, and L2 TLB has 2048 entries for a total of $2048 \times 4K = 8M$, which is — surprise-surprise — exactly the array size at the point where the cliff starts ($8K \times 256 \times 4B = 8M$). You can fetch this information for your architecture with `cpuid` command.
 
-This is a huge issue, as such access patterns when we need to jump large distances are actually quite common in real programs too. Why not just make page size larger? This reduces granularity of system memory allocation — increasing fragmentation. So modern operating systems actually give us freedom in choosing page size on demand. You can read more on madvise if you are interested, but for our benchmarks we will just turn on huge pages for all allocations by default like this:
+This is a huge issue, as such access patterns when we need to jump large distances are actually quite common in real programs too. Why not just make page size larger? This reduces granularity of system memory allocation — increasing fragmentation. Paging is implemented both on software (OS) and hardware level, and modern operating systems actually give us freedom in choosing page size on demand. You can read more on madvise if you are interested, but for our benchmarks we will just turn on huge pages for all allocations by default like this:
 
 ```bash
 echo always >/sys/kernel/mm/transparent_hugepage/enabled
@@ -273,76 +361,90 @@ It is generally *much* slower — by multiple orders of magnitude — to iterate
 
 ### Latency of RAM and TLB
 
+Similar to bandwidth, the latency of CPU cache scales with its clock frequency, while the RAM lives on its own fixed-frequency clock, and its performance is therefore usually measured in nanoseconds. We can observe this difference if we change the frequency by turning turbo boost on.
+
 ![](../img/permutation-boost.svg)
 
-It becomes more clear when looking at the relative speedup:
+The graph starts making a bit more sense if we look at the relative speedup instead.
 
 ![](../img/permutation-boost-speedup.svg)
 
-By the way, how does TLB affect latency?
+You would expect 2x rates for array sizes that fit into CPU cache entirely, but then roughly equal for arrays stored in RAM. But this is not quite what is happening: there is a small, fixed-latency delay on lower clocked run even for RAM accesses. This happens because the CPU first checks its cache before dispatching a read query to the main memory — to save RAM bandwidth for other processes that potentially need it.
 
-The TLB cache is called "lookaside" because the lookup can happen independently from normal data cache lookups.
+Actually, TLB misses may stall memory reads for the same reason. The TLB cache is called "lookaside" because the lookup can happen independently from normal data cache lookups. L1 and L2 caches on the other side are private to the core, and so they can store virtual addresses and be queried concurrently with TLB — after fetching a cache line, its tag is used to restore the physical address, which is then checked against the concurrently fetched TLB entry. This trick does not work for shared memory however, because their bandwidth is limited, and dispatching read queries there for no reason is not a good idea in general. So we can observe a similar effect in L3 and RAM reads when the page does not fit L1 TLB and L2 TLB respectively.
 
-So, the effect is independent.
-
-It is "lookaside" is because it is looked up concurrently with the accesses in the cache. First layer typically uses virtual addresses anyway. Memory controller retrieves entries in cache and TLB, and then compares the tag.
-
-Paging is implemented both on software (OS) and hardware level.
-
-TLB cache which is used for storing.
+For sparse reads, it often makes sense to increase page size, which improves the latency.
 
 It is possible, but quite tedious to also construct an experiment actually measuring all this — so you will have to take my word on that one.
 
-### Pointers
+### Pointers and Its Alternatives
 
-The latency of L1 fetch is 4 or 5 cycles, the latter being the case if we need to use fused computation of address. In theory, it works slightly faster if we are working with actual pointers.
+Memory addressing operator is fused on x86, so `k = q[k]` folds into one terse `mov rax, DWORD PTR q[0+rax*4]` instruction, although it does a multiplication by 4 and an addition under the hood. Although fully fused, These additional computations actually add some delay to memory operations, and in fact the latency of L1 fetch is 4 or 5 cycles — the latter being the case if we need to perform complex computation of address. For this reason, the permutation benchmark measures 3ns or 6 cycles per fetch: 5 for the read (including +1 for address computation) and 1 to move the result to the right register.
 
-```cpp
-// pointer implementation
-```
-
-IMAGE
-
-On 64-bit architectures, the pointers are all 64-bit (despite only using 48 bits), so the array takes a bit more space and falls off cache more quickly. On 32-bit, it should be slightly faster.
-
-IMAGE: original, 64-bit pointers, 32-bit pointers
-
-Graph looks like if it was shifted by 1 to the left — exactly like it should.
-
-When iterating over arrays, the latency is hidden by *prefetching* — implicit or explicit. You should design your algorithms in a way that allows for this sort of concurrency.
-
-### Pointers
-
-There are some syntactical issues in getting "pointer to pointer to pointer…" constructions to work, so instead we will define a struct type that just wraps a pointers to its own kind — this is how most pointer chasing works anyway:
+We can make our benchmark run slightly faster if we replace "fake pointers" — indices — with actual pointers. There are some syntactical issues in getting "pointer to pointer to pointer…" constructions to work, so instead we will define a struct type that just wraps a pointers to its own kind — this is how most pointer chasing works anyway:
 
 ```cpp
 struct node { node* ptr; };
 ```
 
-Now we fill our array with pointers:
+Now we randomly fill our array with pointers and chase them instead:
 
 ```cpp
-node
-
-for (int i = 0; i < N; i++) {
-    q[k].ptr = q + p[i];
-    k = p[i];
-}
-
+node* k = q + p[N - 1];
 
 for (int i = 0; i < N; i++)
-    ptr = ptr->ptr;
+    k = k->ptr = q + p[i];
+
+for (int i = 0; i < N; i++)
+    k = k->ptr;
 ```
 
-After going [through some trouble](https://askubuntu.com/questions/91909/trouble-compiling-a-32-bit-binary-on-a-64-bit-machine) getting 32-bit libs to get this running on a computer made in this century.
+This code now runs in 2ns / 4 cycles for arrays that fit in L1 cache. Why not 4+1=5? Because Zen 2 [has an interesting feature](https://www.agner.org/forum/viewtopic.php?t=41) that allows zero-latency reuse of data accessed just by address, so the "move" here is transparent, resulting in whole 2 cycles saved.
 
-Tip: use raw pointers when you can.
+Unfortunately, there is a problem with it on 64-bit systems as the pointers become twice as large, making the array spill out of cache much sooner compared to using a 32-bit index. Graph looks like if it was shifted by one power of two to the left — exactly like it should.
 
-### Pipelining and Speculative Execution
+![](../img/permutation-p64.svg)
 
-*Implicit prefetching*: memory reads can be speculative too, and reads will be pipelined anyway.
+This problem is mitigated by switching to 32-bit mode. You need to go [through some trouble](https://askubuntu.com/questions/91909/trouble-compiling-a-32-bit-binary-on-a-64-bit-machine) getting 32-bit libs to get this running on a computer made in this century, but this is justified by the result — unless you also need to interoperate with 64-bit software or access more than 4G or RAM.
 
-In fact, this sometimes works even when we are not sure which branch is going to be executed next — because, well, we wait for a hundred cycles anyway, why not evaluate at least one of the branches ahead of time?
+![](../img/permutation-p32.svg)
+
+The fact that on larger problem sizes the performance is bottlenecked by memory rather than CPU lets us to try something even more stranger: using less than 4 bytes for storing indices. This can be done with bit fields:
+
+```cpp
+struct __attribute__ ((packed)) node { int idx : 24; };
+```
+
+You don't need to do anything other than defining a structure for the bit field. The CPU does truncation by itself.
+
+```cpp
+int k = p[N - 1];
+
+for (int i = 0; i < N; i++) {
+    k = q[k].idx = p[i];
+
+for (int i = 0; i < N; i++) {
+    k = q[k].idx;
+```
+
+This measures at 6.5ns in the L1 cache, but the conversion procedure chosen by the compiler is suboptimal: it is done by loading 3 bytes, which is not optimal. Instead, we could just load a 4-byte integer and truncate it ourselves (we also need to add one more element to the `q` array to ensure we own that extra one byte of memory):
+
+```cpp
+k = *((int*) (q + k));
+k &= ((1<<24) - 1);
+```
+
+It now runs in 4ns, and produces the following graph:
+
+![](../img/permutation-bf-custom.svg)
+
+In short: for something very small, use pointers; for something very large, use bit fields.
+
+### Hardware Prefetching
+
+In the bandwidth benchmark, we iterated over array and fetched its elements. Although separately each memory read in that case is not different from the fetch in pointer chasing, they run much faster because they can are overlapped: and in fact, CPU issues read requests in advance without waiting for the old ones to complete, so that the results come about the same time as the CPU needs them.
+
+In fact, this sometimes works even when we are not sure which instruction is going to be executed next. Consider the following example:
 
 ```cpp
 bool cond = some_long_memory_operation();
@@ -353,11 +455,9 @@ else
     do_that_fast_operation();
 ```
 
-(By the way, this is what Meltdown was all about)
+What most modern CPUs do is they start evaluating one (most likely) branch without waiting for the condition to be computed. If they are right, then you will progress faster, and if they are wrong, the worst thing will happen is they discard some useless computation. This includes memory operations too, including cache system — because, well, we wait for a hundred cycles anyway, why not evaluate at least one of the branches ahead of time. By the way, this is what Meltdown was all about.
 
-### Hardware Prefetching
-
-Hiding latency is crucial — it is pretty much the single most important idea we keep coming back to in this book. Apart from having a very large pipeline and using the fact that scheduler can look ahead in it, modern memory controllers can detect simple patterns such as iterating backwards, forwards, including using constant small-ish strides.
+This general technique of hiding latency with bandwidth is called *prefetching* — and it can be either implicit or explicit. CPU automatically running ahead in the pipeline is just one way to use it. Hardware can figure out even without looking at the future instructions, and just by analyzing memory access patterns. Hiding latency is crucial — it is pretty much the single most important idea we keep coming back to in this book. Apart from having a very large pipeline and using the fact that scheduler can look ahead in it, modern memory controllers can detect simple patterns such as iterating backwards, forwards, including using constant small-ish strides.
 
 Here is how to test it: we now generate our permutation in a way that makes us load consecutive cache lines, but we fetch elements in random order inside the cache lines.
 
@@ -375,15 +475,13 @@ for (int i = 0; i + 16 < N; i += 16) {
 }
 ```
 
-The performance is almost on par with linear iteration:
+The latency here remains constant at 3ns regardless (or whatever is the latency of pointers / bit fields implementation).
 
-IMAGE HERE
-
-Hardware prefetching is usually powerful enough for most cases. You can iterate over multiple arrays, sometimes with small strides, or load just small amounts. It is as intelligent — and as detrimental to performance — as branch prediction.
+Hardware prefetching is usually powerful enough for most cases. You can iterate over multiple arrays, sometimes with small strides, or load just small amounts. It is as intelligent and detrimental to performance as branch prediction.
 
 ### Software Prefetching
 
-Sometimes the CPU can't figure it out by itself. In this case, we need to point it explicitly.
+Sometimes the hardware can't figure out what to prefetch next by itself, and in this case, we need to point it explicitly.
 
 The easiest thing is to just use any byte in the cache line as an operand, but CPUs have an explicit instruction to just "lift" a cache line without doing anything with it. As far as I know, this instruction is not a part of the C/C++ standard or any other language, but is widely available in compilers.
 
@@ -411,7 +509,11 @@ for (int t = 0; t < K; t++) {
 }
 ```
 
-It is almost 2 times faster, as we expected. Interestingly, we can cut it arbitrarily close (to the cost of computing the next index — [modulo is expensive](../arithmetic/integer)).
+It is almost 2 times faster, as we expected.
+
+![](../img/sw-prefetch.svg)
+
+Interestingly, we can cut it arbitrarily close (to the cost of computing the next index — [modulo is expensive](../arithmetic/integer)).
 
 One can show that in order to load $k$-th element ahead, we can do this:
 
@@ -419,7 +521,9 @@ One can show that in order to load $k$-th element ahead, we can do this:
 __builtin_prefetch(&q[((1 << D) * k + (1 << D) - 1) % n]);
 ```
 
-Managing issues such as integer overflow, we can cut latency down.
+Managing issues such as integer overflow, we can cut latency down arbitrarily close to just calculating the address using the formula.
+
+![](../img/sw-prefetch-others.svg)
 
 <!--
 Instruction Cache. Unrolling loops. Aligning. No-op.
@@ -427,19 +531,16 @@ Instruction Cache. Unrolling loops. Aligning. No-op.
 
 ## Summary and Lessons Learned
 
-Our experiments suggest the following:
+Excluding TLB, our experiments suggest the following:
 
-| Type | $M$      | $B$ | Latency | Bandwidth | $/GB/mo[^pricing] |
-|:-----|:---------|-----|---------|-----------|:------------------|
-| L1   | 10K      | 64B | 0.5ns   | 80G/s     | -                 |
-| L2   | 100K     | 64B | 5ns     | 40G/s     | -                 |
-| L3   | 1M/core  | 64B | 20ns    | 20G/s     | -                 |
-| RAM  | GBs      | 64B | 100ns   | 10G/s     | 1.5               |
-| SSD  | TBs      | 4K  | 0.1ms   | 5G/s      | 0.17              |
-| HDD  | TBs      | -   | 10ms    | 1G/s      | 0.04              |
-| S3   | $\infty$ | -   | 150ms   | $\infty$  | 0.02[^S3]         |
+| Type | Size | Latency | Bandwidth |
+|:-----|:-----|---------|-----------|
+| L1   | 32K  | 2ns     | $\infty$  |
+| L2   | 512K | 10ns    | 50G/s     |
+| L3   | 4M   | 50ns    | 35G/s     |
+| RAM  | GB   | 100ns   | 8G/s      |
 
-(transform it to just text)
+There are more thorough [measurements for Zen 2](https://www.7-cpu.com/cpu/Zen2.html).
 
 We can learn valuable lessons from our experiments. There are two types of memory-bound algorithms. Loops or data structures.
 
@@ -452,8 +553,6 @@ But in some cases the specifics start to matter. In set-associative cache, there
 Unfortunately, this happens quite often, as we programmers love using powers of two for our algorithms and data structures.
 
 Fortunately, this is easy to fix: just don't use powers of two. Not necessarily for the algorithm, but at least for the memory layout.
-
-https://www.7-cpu.com/cpu/Zen2.html
 
 ## Further Reading
 
