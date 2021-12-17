@@ -177,12 +177,13 @@ I have something like this in mind:
  6.5. Integers
  6.6. Integer Division
  6.7. Bit Manipulation
+ 6.8. Data Compression
 7. Number Theory
  7.1. Prime Numbers
  7.2. Modular Inverse
  7.3. Modular Reduction
  7.4. Finite Fields
- 7.5. Data Storage
+ 7.5. Error Correction
  7.6. Cryptography
  7.7. Hashing
  7.8. Random Number Generation
