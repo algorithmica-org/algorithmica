@@ -5,7 +5,7 @@ authors:
   - Александр Кульков
 created: 2019
 weight: 6
-date: {}
+date: 2021-09-14
 prerequisites:
   - polynomials
   - interpolation
