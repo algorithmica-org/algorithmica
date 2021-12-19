@@ -100,6 +100,7 @@ This work is largely based on blog posts, research papers, conference talks and 
 - Victor Eijkhout
 - Robert van de Geijn
 - Edmond Chow
+- Peter Cordes
 - Oleksandr Bacherikov
 
 Volume: 300-400 pages  
@@ -202,11 +203,12 @@ I have something like this in mind:
  9.4. Memory Paging
  9.5. Cache Associativity
  9.6. Memory Latency
- 9.7. Prefetching
- 9.8. Pointer Alternatives
- 9.9. Code Layout
- 9.10. Memory Management
- 9.11. memcpy and memset
+ 9.7. Memory-Level Parallelism
+ 9.8. Prefetching
+ 9.9. Pointers and Their Alternatives
+ 9.10. Code Layout
+ 9.11. Memory Management
+ 9.12. memcpy and memset
 10. SIMD Parallelism
  10.1. Using SIMD in C/C++
  10.2. Reductions
