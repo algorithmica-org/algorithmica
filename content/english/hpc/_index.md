@@ -146,9 +146,10 @@ I have something like this in mind:
  1.1. Introduction to Assembly
  1.2. Control Flow
  1.3. Loop Unrolling
- 1.4. Functions and Recursion
- 1.5. Inlining
- 1.6. Indirect Branching
+ 1.4. Operation Fusion
+ 1.5. Functions and Recursion
+ 1.6. Inlining
+ 1.7. Indirect Branching
 3. Instruction-Level Parallelism
  3.1. Pipelining and Hazards
  3.2. Branchless Computing
@@ -195,7 +196,8 @@ I have something like this in mind:
  8.4. Data Locality
  8.5. Cache Blocking
  8.6. Cache-Oblivious Algorithms
- 8.7. Sublinear Algorithms
+ 8.7. B-Trees
+ 8.8. Sublinear Algorithms
 9. RAM & CPU Caches
  9.1. Memory Bandwidth
  9.2. Cache Lines and Memory Alignment
@@ -222,7 +224,7 @@ I have something like this in mind:
  11.4. Karatsuba Algorithm
  11.5. Fast Fourier Transform
  11.6. Argmin with SIMD
- 11.7. Parsing Integers
+ 11.7. Reading and Writing Integers
  11.8. String Searching
  11.9. Sorting
  11.10. Matrix Multiplication
