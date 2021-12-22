@@ -142,7 +142,7 @@ I have something like this in mind:
  1.1. Modern Computing Machinery
  1.2. How Code Gets Executed
  1.3. Beyond Big O
-2. Analyzing Performance
+2. CPU Microarchitecture
  1.1. Introduction to Assembly
  1.2. Control Flow
  1.3. Loop Unrolling
@@ -169,7 +169,7 @@ I have something like this in mind:
  5.3. Program Simulation
  5.4. Machine Code Analyzers
  5.5. Frequency Scaling
- 5.6. Removing Noise
+ 5.6. Reducing Noise
  5.7. Benchmarking
 6. Arithmetic
  6.1. Floating-Point Numbers
@@ -208,9 +208,10 @@ I have something like this in mind:
  9.7. Memory-Level Parallelism
  9.8. Prefetching
  9.9. Pointers and Their Alternatives
- 9.10. Code Layout
- 9.11. Memory Management
- 9.12. memcpy and memset
+ 9.10. RAM-Specific Timings
+ 9.11. Code Layout
+ 9.12. Memory Management
+ 9.13. memcpy and memset
 10. SIMD Parallelism
  10.1. Using SIMD in C/C++
  10.2. Reductions
@@ -231,10 +232,10 @@ I have something like this in mind:
 12. Data Structure Case Studies
  12.1. Binary Search
  12.2. Prefix Sum
- 12.3. Hash Tables
- 12.4. Bitmaps
- 12.5. Range Minimum Query
- 12.6. Ordered Trees
+ 12.3. Ordered Trees
+ 12.4. Hash Tables
+ 12.5. Bitmaps
+ 12.6. Range Minimum Query
 ```
 
 I will probably start refactoring once I'm done with the original plan, but it may start morphing before that.
