@@ -179,13 +179,13 @@ I have something like this in mind:
  6.5. Integers
  6.6. Integer Division
  6.7. Bit Manipulation
- 6.8. Data Compression
+(6.8. Data Compression)
 7. Number Theory
  7.1. Prime Numbers
  7.2. Modular Inverse
  7.3. Modular Reduction
- 7.4. Finite Fields
- 7.5. Error Correction
+(7.4. Finite Fields)
+(7.5. Error Correction)
  7.6. Cryptography
  7.7. Hashing
  7.8. Random Number Generation
@@ -196,8 +196,8 @@ I have something like this in mind:
  8.4. Data Locality
  8.5. Cache Blocking
  8.6. Cache-Oblivious Algorithms
- 8.7. B-Trees
- 8.8. Sublinear Algorithms
+(8.7. B-Trees)
+(8.8. Sublinear Algorithms)
 9. RAM & CPU Caches
  9.1. Memory Bandwidth
  9.2. Cache Lines and Memory Alignment
@@ -210,8 +210,8 @@ I have something like this in mind:
  9.9. Pointers and Their Alternatives
  9.10. RAM-Specific Timings
  9.11. Code Layout
- 9.12. Memory Management
- 9.13. memcpy and memset
+(9.12. Memory Management)
+(9.13. memcpy and memset)
 10. SIMD Parallelism
  10.1. Using SIMD in C/C++
  10.2. Reductions
@@ -226,16 +226,17 @@ I have something like this in mind:
  11.5. Fast Fourier Transform
  11.6. Argmin with SIMD
  11.7. Reading and Writing Integers
- 11.8. String Searching
- 11.9. Sorting
- 11.10. Matrix Multiplication
+(11.8. Reading and Writing Floats)
+(11.9. String Searching)
+ 11.10. Sorting
+ 11.11. Matrix Multiplication
 12. Data Structure Case Studies
  12.1. Binary Search
  12.2. Prefix Sum
- 12.3. Ordered Trees
+(12.3. Ordered Trees)
  12.4. Hash Tables
- 12.5. Bitmaps
- 12.6. Range Minimum Query
+(12.5. Bitmaps)
+(12.6. Range Minimum Query)
 ```
 
 I will probably start refactoring once I'm done with the original plan, but it may start morphing before that.
