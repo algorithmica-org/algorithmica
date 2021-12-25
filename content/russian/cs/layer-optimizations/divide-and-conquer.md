@@ -2,7 +2,8 @@
 title: Оптимизация через разделяй-и-властвуй
 weight: 1
 prerequisites:
-- .
+  - .
+published: true
 ---
 
 *Эта статья — одна из [серии](../). Рекомендуется сначала прочитать все предыдущие.*
@@ -39,7 +40,7 @@ void solve(int l, int r, int _l, int _r, int k) {
         return; // отрезок пустой -- выходим
     int opt = _l, t = (l + r) / 2;
     for (int i = _l; i <= min(_r, t); i++) { 
-        int val = f[i + 1][k - 1] + cost(i, j);
+        int val = f[i + 1][k - 1] + cost(i, t - 1);
         if (val < f[t][k])
             f[t][k] = val, opt = i;
     }
