@@ -186,7 +186,7 @@ loop:
     neg   edx
     cmovs edx, ecx       ; a = max(diff, -diff) = abs(diff)
     tzcnt ecx, edx       ; az = __builtin_ctz(a)
-    sarx  edx, edx, ecx  ; a >= az
+    sarx  edx, edx, ecx  ; a >>= az
     test  edx, edx       ; a != 0?
     jne   loop
 ```
