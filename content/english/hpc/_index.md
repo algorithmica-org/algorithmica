@@ -85,23 +85,27 @@ Among cool things that we will speed up:
 
 This work is largely based on blog posts, research papers, conference talks and other work authored by a lot of people:
 
-- Agner Fog
-- Daniel Lemire
-- Wojciech Muła
-- Malte Skarupke
+- [Agner Fog](https://agner.org/optimize/)
+- [Daniel Lemire](https://lemire.me/en/#publications)
+- [Wojciech Muła](http://0x80.pl/articles/index.html)
+- [Malte Skarupke](https://probablydance.com/)
 - Matt Kulukundis
-- Travis Downs
-- Brendan Gregg
-- Andreas Abel
-- Igor Ostrovsky
-- Steven Pigeon
-- Denis Bakhvalov
+- [Travis Downs](https://travisdowns.github.io/)
+- [Brendan Gregg](https://www.brendangregg.com/blog/index.html)
+- [Andreas Abel](http://embedded.cs.uni-saarland.de/abel.php)
+- [Jakob Kogler](https://cp-algorithms.com/)
+- [Igor Ostrovsky](http://igoro.com/)
+- [Steven Pigeon](https://hbfs.wordpress.com/)
+- [Denis Bakhvalov](https://easyperf.net/notes/)
 - Kazushige Goto
-- Victor Eijkhout
-- Robert van de Geijn
-- Edmond Chow
-- Peter Cordes
+- [Paul Khuong](https://pvk.ca/)
+- [Pat Morin](https://cglab.ca/~morin/)
+- [Victor Eijkhout](https://www.tacc.utexas.edu/about/directory/victor-eijkhout)
+- [Robert van de Geijn](https://www.cs.utexas.edu/~rvdg/)
+- [Edmond Chow](https://www.cc.gatech.edu/~echow/)
+- [Peter Cordes](https://stackoverflow.com/users/224132/peter-cordes)
 - Oleksandr Bacherikov
+- [ridiculous_fish](https://ridiculousfish.com/blog/)
 
 Volume: 300-400 pages  
 Release date: early 2022
@@ -220,16 +224,17 @@ I have something like this in mind:
  10.5. SSE & AVX Cookbook
 11. Algorithm Case Studies
  11.1. Binary GCD
- 11.2. Integer Factorization
- 11.3. Logistic Regression
- 11.4. Karatsuba Algorithm
- 11.5. Fast Fourier Transform
- 11.6. Argmin with SIMD
- 11.7. Reading and Writing Integers
-(11.8. Reading and Writing Floats)
-(11.9. String Searching)
- 11.10. Sorting
- 11.11. Matrix Multiplication
+(11.2. Prime Number Sieves)
+ 11.3. Integer Factorization
+ 11.4. Logistic Regression
+ 11.5. Big Integers & Karatsuba Algorithm
+ 11.6. Fast Fourier Transform
+ 11.7. Argmin with SIMD
+ 11.8. Reading and Writing Integers
+(11.9. Reading and Writing Floats)
+(11.10. String Searching)
+ 11.11. Sorting
+ 11.12. Matrix Multiplication
 12. Data Structure Case Studies
  12.1. Binary Search
  12.2. Prefix Sum
