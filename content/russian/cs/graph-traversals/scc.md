@@ -79,9 +79,7 @@ for (int i = 0; i < n; i++)
 reverse(order.begin(), order.end());
 for (int v : order)
     if (component[v] == 0)
-    	dfs2(v), cnt_components++;
-  		
-  
+        dfs2(v), cnt_components++;
 ```
 
 TL;DR:
