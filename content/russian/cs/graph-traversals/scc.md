@@ -1,8 +1,9 @@
 ---
 title: Компоненты сильной связности
 prerequisites:
-- topological-sorting
+  - topological-sorting
 weight: 8
+published: true
 ---
 
 Ранее мы научились топологически сортировать *ациклические* графы. Но в *циклических* графах тоже иногда требуется найти какую-то структуру, для чего нам нужно ввести понятие *сильной связности*.
@@ -57,7 +58,7 @@ void dfs1(int v) {
 void dfs2(int v) {
     component[v] = cnt_components;
     for (int u : t[v])
-        if (cnt_components[u] == 0)
+        if (component[u] == 0)
             dfs2(u);
 }
 
@@ -78,7 +79,10 @@ for (int i = 0; i < n; i++)
 reverse(order.begin(), order.end());
 for (int v : order)
     if (component[v] == 0)
+    	cnt_components++
         dfs2(v);
+  		
+  
 ```
 
 TL;DR:
