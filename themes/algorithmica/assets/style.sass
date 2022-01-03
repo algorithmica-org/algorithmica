@@ -259,6 +259,9 @@ main
   margin: auto
   padding: 6px 12px
 
+  // so that the footer is stuck to bottom even if the page is short:
+  min-height: calc(100vh - 160px)
+
 header
   margin-top: 20px
 
@@ -377,7 +380,7 @@ footer
   color: $dimmed
   font-size: 0.75em
   margin: 50px 0px 0px
-  padding: 4px
+  padding: 8px
   line-height: 1.5em
   font-family: $font-interface
 
