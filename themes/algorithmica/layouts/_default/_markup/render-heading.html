@@ -1,0 +1,5 @@
+{{- if .Page.IsPage -}}
+<h{{ .Level }} id="{{ .Anchor }}"><a class="anchor" href="{{ .Page.Permalink }}#{{ .Anchor }}">#</a>{{ .Text | safeHTML }}</h{{ .Level }}>
+{{- else -}}
+<h{{ .Level }} id="{{ .Anchor }}">{{ .Text | safeHTML }}</h{{ .Level }}>
+{{- end -}}
