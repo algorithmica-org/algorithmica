@@ -215,7 +215,7 @@ Similar to our handmade float implementation, hardware floats use one bit for si
 
 ![](../img/float.svg)
 
-One of the reasons why they are stored in this exact order is so that it would be easier to compare and sort them: if you flip the sign bit, you can simply use the same comparator circuit as for unsigned integers.
+One of the reasons why they are stored in this exact order is so that it would be easier to compare and sort them: you can simply use largely the same comparator circuit as for [unsigned integers](../integer) — except for maybe flipping the bits in the case of negative numbers.
 
 IEEE 754 and a few consequent standards define not one, but *several* representations that differ in sizes, most notably:
 
