@@ -1,6 +1,6 @@
 ---
 title: Modern Hardware
-weight: 1
+weight: 2
 ignoreIndexing: true
 ---
 

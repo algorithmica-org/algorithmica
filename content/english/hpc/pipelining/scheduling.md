@@ -1,7 +1,6 @@
 ---
-title: µOps & Scheduling
-weight: 4
-draft: true
+title: Instruction Scheduling
+weight: 3
 ---
 
 This is a bit of an advanced and not well understood topic.

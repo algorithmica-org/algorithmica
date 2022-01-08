@@ -1,7 +1,9 @@
 ---
 title: Throughput Computing
-weight: 3
+weight: 4
 ---
+
+Convert to scalar code. Link to SIMD example of reduction.
 
 This is different. For single-invocation procedures you essentially want to minimize the latency on the critical data path. For stuff that gets called in a loop, you need to maximize throughput.
 

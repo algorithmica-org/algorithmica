@@ -1,6 +1,6 @@
 ---
 title: Integer Factorization
-weight: 7
+weight: 3
 draft: true
 ---
 

@@ -1,8 +1,14 @@
 ---
 title: Programming Languages
 aliases: [/hpc/analyzing-performance]
-weight: 2
+weight: 1
 ---
+
+We've talked about the hardware side — let's now talk about software: how code gets executed.
+
+It is a common misconception among inexperienced (<- replace this word to smth milder) programmers is that languages can be compared in terms of speed. Like if there was some multiplier that that taxes all your operations.
+
+So let us try to study a simple example.
 
 If you are reading this book, then somewhere on your computer science journey you had a moment when you first started to care about efficiency of your code.
 
@@ -20,15 +26,15 @@ Processors can be thought of as state machines. They keep their state in several
 
 These instructions — called *machine code* — are binary encoded, quirky and very difficult to work with, so no sane person writes them directly nowadays. Instead, we use higher-level programming languages and employ alternative means to feed instructions to the processor.
 
-From programmer's perspective, there are two types of languages: *compiled* and *interpreted*. The former you have to pre-process before executing, while the latter are executed during runtime using an *interpreter*.
+From the programmer's perspective, there are two types of languages: *compiled* and *interpreted*. The former you have to pre-process before executing, while the latter are executed during runtime using an *interpreter*.
 
 From computer's perspective, there are also two types of languages: *native* and *managed*. The former directly execute machine code, while the latter use some sort a *runtime* to do so. 
 
 Since running machine code in an interpreter doesn't make sense, there are in total three types of languages:
 
-- Interpreted languages, such as Python, JavaScript or Ruby.
-- Compiled languages with a runtime, such as Java, C# or Erlang (and languages that work on their VMs, such as Scala, F# or Elixir).
-- Compiled native languages, such as C, Go or Rust.
+- Interpreted languages, such as Python, JavaScript, or Ruby.
+- Compiled languages with a runtime, such as Java, C#, or Erlang (and languages that work on their VMs, such as Scala, F#, or Elixir).
+- Compiled native languages, such as C, Go, or Rust.
 
 Interpreters and virtual machines provide flexibility and enable some nice high-level programming features such as dynamic code alteration. Unfortunately, there are also unavoidable trade-offs between performance and the benefits that dynamic languages can provide.
 

@@ -1,7 +1,6 @@
 ---
 title: Cryptography, Hashing and PRNG
 weight: 6
-draft: true
 ---
 
 In 1940, British mathematician Godfrey Harold Hardy published a famous essay titled [a Mathematician's Apology](https://en.wikipedia.org/wiki/A_Mathematician%27s_Apology) where he discusses the notion that mathematics should be pursued for its own sake rather than for the sake of its applications. As a 62-year-old, he saw the devastation caused by first world war, and was amidst the second one.

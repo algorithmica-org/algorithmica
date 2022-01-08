@@ -1,7 +1,6 @@
 ---
-title: Layouts for Binary Search
-weight: 6
-draft: true
+title: Binary Search
+weight: 1
 ---
 
 The most fascinating showcases of performance engineering are not intricate 5-10% speed improvements of some databases, but multifold optimizations of some basic algorithms you can find in a textbook — the ones that are so simple that it would never even occur to try to optimize them. These kinds of optimizations are simple and instructive, and can very much be adopted elsewhere. Yet, with remarkable periodicity, these can be optimized to ridiculous levels of performance.

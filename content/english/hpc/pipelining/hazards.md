@@ -1,7 +1,9 @@
 ---
-title: Pipelining and Hazards
-weight: 2
+title: Pipeline Hazards
+weight: 1
 ---
+
+situations that prevent the next instruction in the instruction stream from executing during its designated clock cycles
 
 Let's dive deeper into microarchitecture.
 

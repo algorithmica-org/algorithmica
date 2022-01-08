@@ -1,7 +1,6 @@
 ---
-title: Dynamic Prefix Sum
-weight: 7
-draft: true
+title: Segment Trees
+weight: 2
 ---
 
 The lessons we learned from studying layouts for binary search can be applied to broader range of data structures.

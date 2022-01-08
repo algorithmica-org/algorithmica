@@ -170,15 +170,14 @@ I have something like this in mind:
  4.5. Memory Aliasing
  4.6. Arithmetic Optimizations
  4.7. Code Layout
- 4.8. Compile-time Computation
+ 4.8. Compile-Time Computation
 5. Profiling
  5.1. Instrumentation
  5.2. Statistical Profiling
  5.3. Program Simulation
  5.4. Machine Code Analyzers
- 5.5. Frequency Scaling
- 5.6. Reducing Noise
- 5.7. Benchmarking
+ 5.5. Reducing Noise
+ 5.6. Benchmarking
 6. Arithmetic
  6.1. Floating-Point Numbers
  6.2. Interval Arithmetic
@@ -215,10 +214,9 @@ I have something like this in mind:
  9.6. Memory Latency
  9.7. Memory-Level Parallelism
  9.8. Prefetching
- 9.9. RAM-Specific Timings
- 9.10. Pointers and Their Alternatives
-(9.11. Memory Management)
-(9.12. memcpy and memset)
+ 9.9. Pointers and Their Alternatives
+(9.10. Memory Management)
+(9.11. memcpy and memset)
 10. SIMD Parallelism
  10.1. Using SIMD in C/C++
  10.2. Reductions
@@ -232,15 +230,16 @@ I have something like this in mind:
  11.4. Logistic Regression
  11.5. Big Integers & Karatsuba Algorithm
  11.6. Fast Fourier Transform
- 11.7. Argmin with SIMD
- 11.8. Reading and Writing Integers
-(11.9. Reading and Writing Floats)
-(11.10. String Searching)
- 11.11. Sorting
- 11.12. Matrix Multiplication
+ 11.7. Number-Theoretic Transform
+ 11.8. Argmin with SIMD
+ 11.9. Reading and Writing Integers
+(11.10. Reading and Writing Floats)
+(11.11. String Searching)
+ 11.12. Sorting
+ 11.13. Matrix Multiplication
 12. Data Structure Case Studies
  12.1. Binary Search
- 12.2. Prefix Sum
+ 12.2. Dynamic Prefix Sum
 (12.3. Ordered Trees)
 (12.4. Range Minimum Query)
  12.5. Hash Tables

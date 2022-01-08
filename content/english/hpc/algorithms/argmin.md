@@ -1,5 +1,6 @@
 ---
 title: Argmin with SIMD
-weight: 4
+weight: 7
 ---
 
+...

@@ -1,5 +1,5 @@
 ---
-title: Pipelining
+title: Instruction-Level Parallelism
 weight: 3
 ---
 

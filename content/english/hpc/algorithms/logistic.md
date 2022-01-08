@@ -1,5 +1,4 @@
 ---
-# this will probably be moved to SIMD
 title: Optimizing Logistic Regression
 weight: 5
 draft: true

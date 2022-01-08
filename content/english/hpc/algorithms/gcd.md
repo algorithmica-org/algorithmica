@@ -1,6 +1,6 @@
 ---
 title: Binary GCD
-weight: 5
+weight: 1
 aliases: [/hpc/analyzing-performance/gcd]
 ---
 
