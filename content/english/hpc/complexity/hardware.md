@@ -1,26 +1,26 @@
 ---
 title: Modern Hardware
-weight: -1
+weight: 1
 ignoreIndexing: true
 ---
 
-The main disadvantage of the supercomputers of 1960s wasn't that they were slow — relatively speaking, they weren't — but that they were giant, complex to use, and so expensive that only the governments of world superpowers could afford them. Their size was in fact the reason they were so expensive: they required a lot of custom components that had to be very carefully assembled in the macro-world by people holding advanced degrees in electrical engineering, in a process that couldn't be up-scaled for mass production.
+The main disadvantage of the supercomputers of the 1960s wasn't that they were slow — relatively speaking, they weren't — but that they were giant, complex to use, and so expensive that only the governments of the world superpowers could afford them. Their size was the reason they were so expensive: they required a lot of custom components that had to be very carefully assembled in the macro-world, by people holding advanced degrees in electrical engineering, in a process that couldn't be up-scaled for mass production.
 
-The tipping point was the development of *microchips* — single, tiny, complete circuits — which revolutionized the industry and turned out to be probably the most important invention of the 20th century. What was a multimillion-dollar cupboard of computing machinery in 1965 could in 1975 fit on a [4×4 mm slice of silicon](https://en.wikipedia.org/wiki/MOS_Technology_6502)[^size] that you can buy for $25. This dramatic improvement in affordability started the home computer revolution during the following decade, with computers like Apple II, Atari 2600, Commodore 64 and IBM PC becoming available to the masses.
+The turning point was the development of *microchips* — single, tiny, complete circuits — which revolutionized the industry and turned out to be probably the most important invention of the 20th century. What was a multimillion-dollar cupboard of computing machinery in 1965 could in 1975 fit on a [4×4 mm slice of silicon](https://en.wikipedia.org/wiki/MOS_Technology_6502)[^size] that you can buy for $25. This dramatic improvement in affordability started the home computer revolution during the following decade, with computers like Apple II, Atari 2600, Commodore 64, and IBM PC becoming available to the masses.
 
 [^size]: Actual sizes of CPUs are about centimeter-scale because of power management, heat dissipation, and the need to plug it into the motherboard without excessive swearing.
 
-### Fabrication Process
+### How Microchips are Made
 
 Microchips are "printed" on a slice of crystalline silicon using a process called [photolithography](https://en.wikipedia.org/wiki/Photolithography), which involves
 
 1. growing and slicing a [very pure silicon crystal](https://en.wikipedia.org/wiki/Wafer_(electronics)),
-2. covering it with a layer of [substance that dissolves when photons hit it](https://en.wikipedia.org/wiki/Photoresist),
+2. covering it with a layer of [a substance that dissolves when photons hit it](https://en.wikipedia.org/wiki/Photoresist),
 3. hitting it with photons in a set pattern,
 4. chemically [etching](https://en.wikipedia.org/wiki/Etching_(microfabrication)) the now exposed parts,
 5. removing the remaining photoresist,
 
-…and then performing another 40-50 steps over the span of several months to complete the rest of the CPU.
+…and then performing another 40-50 steps over several months to complete the rest of the CPU.
 
 ![](../img/lithography.png)
 
@@ -30,11 +30,11 @@ Consider now the "hit it with photons" part. For that, we can use a system of le
 - ability to scale the production;
 - much lower material and power usage, translating to much lower cost per unit.
 
-Apart from these immediate benefits, photolithography enabled a clear path to improve performance further: you can just make lenses stronger, which in turn will create identically smaller devices with relatively little effort.
+Apart from these immediate benefits, photolithography enabled a clear path to improve performance further: you can just make lenses stronger, which in turn would create smaller, but functionally identical devices with relatively little effort.
 
 ### Dennard Scaling
 
-Consider what happens when we scale a microchip down. A smaller, but nearly identical circuit requires proportionally less materials, and smaller transistors take less time to switch (along with all other physical processes in the chip), allowing reducing the voltage and increasing the clock rate.
+Consider what happens when we scale a microchip down. A smaller circuit requires proportionally fewer materials, and smaller transistors take less time to switch (along with all other physical processes in the chip), allowing reducing the voltage and increasing the clock rate.
 
 A more detailed observation, known as the *Dennard scaling*, states that reducing transistor dimensions by 30%
 
@@ -46,13 +46,11 @@ Since the per-unit manufacturing cost is a function of area, and the exploitatio
 
 [^power]: The cost of electricity for running a busy server for 2-3 years roughly equals the cost of making the chip itself.
 
-Due to the trade-offs between energy and performance you can make during the design, the fidelity of the fabrication process itself, such as "180nm" or "65nm", directly translating to the density of transistors, became the trademark for CPU efficiency.
+Due to the trade-offs between energy and performance you can make during the design, the fidelity of the fabrication process itself, such as "180nm" or "65nm", directly translating to the density of transistors, became the trademark for CPU efficiency[^fidelity].
 
-<!--
-[^fidelity]: To avoid upsetting and confusing consumers with this new reality, chip makers agreed to stop delineating their chips by the size of their components. A special committee had a meeting every two years where they took the previous node name, divided by the square root of two, rounded to the nearest integer, declared that result to be the new node name, and then drank lots of wine. Chip makers now group components into generations by the time that they where made, and so "nm" doesn't mean nanometer anymore.
--->
+[^fidelity]: At some point, when Moore's law started to slow down, chip makers stopped delineating their chips by the size of their components — and it is now more like a marketing term. [A special committee](https://en.wikipedia.org/wiki/International_Technology_Roadmap_for_Semiconductors) has a meeting every two years where they take the previous node name, divide it by the square root of two, round to the nearest integer, declare the result to be the new node name, and then drink lots of wine. The "nm" doesn't mean nanometer anymore.
 
-Throughout most of the computing history, optical shrinking was the main driving force behind performance improvements. Gordon Moore, the former CEO of Intel, made a prediction in 1975 that the transistor count in microprocessors will double every two years. His prediction held to this day and became known as *Moore's law*.
+Throughout most of the computing history, optical shrinking was the main driving force behind performance improvements. Gordon Moore, the former CEO of Intel, predicted in 1975 that the transistor count in microprocessors will double every two years. His prediction held to this day and became known as *Moore's law*.
 
 ![](../img/dennard.ppm)
 
@@ -62,7 +60,7 @@ Thermodynamically, a computer is just a very efficient device for converting ele
 
 Around 2005–2007, this strategy stopped working because of *leakage* effects: the circuit features became so small that their magnetic fields started to make the electrons in the neighboring circuitry move in directions they are not supposed to, causing unnecessary heating and occasional bit flipping.
 
-The only way to mitigate this is to increase voltage, and to balance off power consumption you need to reduce clock frequency, which makes the whole process progressively less profitable as transistor density increases. At some point, clock rates could no longer be increased by scaling, and then miniaturization trend started to slow down.
+The only way to mitigate this is to increase voltage; and to balance off power consumption you need to reduce clock frequency, which in turn makes the whole process progressively less profitable as transistor density increases. At some point, clock rates could no longer be increased by scaling, and the miniaturization trend started to slow down.
 
 <!--
 
@@ -80,14 +78,23 @@ Leakage: interfering magnetic fields make electrons move in the directions they 
 
 ### Modern Computing
 
-Dennard scaling ended, but Moore's law has not died yet.
+Dennard scaling has ended, but Moore's law is not dead yet.
 
-Clock rates plateaued, but the transistor count is still increasing, allowing for creation of new, *parallel* hardware. Instead of chasing faster cycles, CPU designs started to focus on getting more useful things done in a single cycle. Instead of getting smaller, transistors have been changing shape.
+Clock rates plateaued, but the transistor count is still increasing, allowing for the creation of new, *parallel* hardware. Instead of chasing faster cycles, CPU designs started to focus on getting more useful things done in a single cycle. Instead of getting smaller, transistors have been changing shape.
 
-This resulted in increasingly complex architectures capable of doing dozens, hundreds or thousands of different things every cycle. For modern computers, the "let's count all operations" approach for predicting algorithm performance isn't just slightly wrong, but is off by several orders of magnitude.
+This resulted in increasingly complex architectures capable of doing dozens, hundreds, or even  thousands of different things every cycle.
 
-![Die shot of a Zen CPU microarchitecture by AMD. It has 1,400,000,000 transistors per core](../img/die-shot.jpg)
+![Die shot of a Zen CPU core by AMD (~1,400,000,000 transistors)](../img/die-shot.jpg)
 
-Theoretical Computer Science is now what's called a dead field: really exciting things stopped happening in the 70s; everything past that are just attempts to replace logarithms in the asymptotic with something slightly less than logarithms. If 50 years ago such algorithms had hope that eventually there will be enough computing power to process the large datasets for which they beat their asymptotically inferior, but practical counterparts, nowadays we know for a fact that they never will.
+Here are some core approaches making use of more available transistors that are driving recent computer designs:
 
-This is what this book is about: accepting the reality and optimizing for the hardware you have, beyond just asymptotic complexity. You will probably not learn a single asymptotically faster algorithm here, but you will learn how to squeeze performance from all of non-exponentially-increasing transistors you have, which is a far more impactful skill.
+- Overlapping the execution of instructions so that different parts of the CPU are kept busy (pipelining);
+- Executing operations without necessarily waiting for the previous ones to complete (speculative and out-of-order execution);
+- Adding multiple execution units to process independent operations simultaneously (superscalar processors);
+- Increasing the machine word size, to the point of adding instructions capable of executing the same operation on a block of 128, 256, or 512 bits of data split into groups ([SIMD](/hpc/simd/));
+- Adding [layers of cache](/hpc/cpu-cache/) on the chip to speed up [RAM and external memory](/hpc/external-memory/) access time (memory doesn't quite follow the laws of silicon scaling);
+- Adding multiple identical cores on a chip (parallel computing, GPUs);
+- Using multiple chips in a motherboard and multiple cheaper computers in a data center (distributed computing);
+- Using custom hardware to solve a specific problem with better chip utilization (ASICs, FPGAs).
+
+For modern computers, the "[let's count all operations](../)" approach for predicting algorithm performance isn't just slightly wrong but is off by several orders of magnitude. This calls for new computation models and other ways of assessing algorithm performance.
