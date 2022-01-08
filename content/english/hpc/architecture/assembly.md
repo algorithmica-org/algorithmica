@@ -1,6 +1,6 @@
 ---
-title: Computer Architecture & Assembly
-#title: Reading Assembly
+title: Assembly Language
+aliases: [/hpc/analyzing-performance/assembly]
 weight: 1
 ---
 

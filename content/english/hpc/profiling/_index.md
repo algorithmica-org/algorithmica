@@ -1,6 +1,7 @@
 ---
-title: Profiling and Benchmarking
-weight: 4
+title: Profiling
+aliases: [/hpc/analyzing-performance/profiling]
+weight: 5
 ---
 
 There are two general ways of finding performance issues: starting at the code and profiling. Just as there are three levels of depth in the first approach — you can inspect source code, intermediate representation and assembly — there are three main approaches when it comes to profiling: instrumentation, statistical profiling and simulation.
@@ -338,3 +339,9 @@ When running benchmarks, always quiesce the system:
 It is very easy to get skewed results without doing anything obviously wrong. Even a program's name can affect its speed: the executable's name ends up in an environment variable, environment variables end up on the call stack, and so the length of the name affects stack alignment, which can result in data accesses slowing down due to crossing cache line or memory page boundaries.
 
 https://www.cs.huji.ac.il/~feit/exp/related.html
+
+### Interleaving
+
+Similar to how Americans report pre-tax salary, Americans use non-PPP-adjusted stats, attention-seeking startups report revenue instead of profit, performance engineers report the best version of benchmark if not stated otherwise.
+
+I have never seen people do that though. It makes most difference when comparing branchy and branch-free algorithms.

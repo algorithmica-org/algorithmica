@@ -87,6 +87,7 @@ This work is largely based on blog posts, research papers, conference talks and 
 
 - [Agner Fog](https://agner.org/optimize/)
 - [Daniel Lemire](https://lemire.me/en/#publications)
+- Andrei Alexandrescu
 - [Wojciech Muła](http://0x80.pl/articles/index.html)
 - [Malte Skarupke](https://probablydance.com/)
 - Matt Kulukundis
@@ -142,11 +143,12 @@ Halfway through the book I've realized that very long (>10 pages) articles is pe
 I have something like this in mind:
 
 ```
-1. Complexity Models
- 1.1. Modern Computing Machinery
- 1.2. How Code Gets Executed
- 1.3. Beyond Big O
-2. CPU Microarchitecture
+0. Preface: Why Go Beyond Big O
+1. Computer Models
+ 1.1. Modern Hardware
+ 1.2. The "Speed" of Programming Languages
+ 1.3. The Relevance of Algorithmic Programming
+2. Computer Architecture
  1.1. Introduction to Assembly
  1.2. Control Flow
  1.3. Loop Unrolling
@@ -164,7 +166,7 @@ I have something like this in mind:
  4.1. Negotiating with Compilers
  4.2. Stitching Programs Together
  4.3. Situational Optimizations
- 4.4. Why Undefined Behavior Exists
+ 4.4. Contracts and Undefined Behavior
  4.5. Memory Aliasing
  4.6. Arithmetic Optimizations
  4.7. Code Layout

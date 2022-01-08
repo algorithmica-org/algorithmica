@@ -1,7 +1,9 @@
 ---
 title: Probability Theory Refresher
-weight: 3
+weight: 1000
+part: Appendix
 draft: true
+ignoreIndexing: true
 ---
 
 Throughout this book, we will extensively use probability theory both to design faster algorithms and assess them. This section is a brief refresher on statistics for computer science.

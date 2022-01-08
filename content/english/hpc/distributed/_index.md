@@ -1,6 +1,6 @@
 ---
 title: Distributed Computing
-weight: 9
+weight: 200
 part: Distributed Computing
 draft: true
 ---

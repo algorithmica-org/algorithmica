@@ -1,7 +1,7 @@
 ---
-title: Analyzing Performance
-part: Performance Engineering
-weight: 1
+title: Computer Architecture
+alias: /hpc/analyzing-performance
+weight: 2
 ---
 
 If you are reading this book, then somewhere on your computer science journey you had a moment when you first started to care about efficiency of your code.

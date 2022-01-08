@@ -1,6 +1,7 @@
 ---
-title: Negotiating with Compilers
-weight: 2
+title: Compilation
+aliases: [/hpc/analyzing-performance/compilation]
+weight: 4
 ---
 
 The main benefit of [learning assembly language](../assembly) is not the ability to write programs in it, but the understanding of what is happening during the execution of compiled code and its performance implications.

@@ -1,7 +1,6 @@
 ---
 title: RAM & CPU Caches
-weight: 4
-draft: true
+weight: 9
 ---
 
 Previously in this chapter, we studied computer memory from theoretical standpoint, using the [external memory model](../external-memory) to estimate performance of memory-bound algorithms.
@@ -325,6 +324,10 @@ The last part is used for determining the cache line it is mapped to. All addres
 Now, where were we? Oh yes, the reason why iterating with strides of 256 has such a terrible slowdown. This because they all map to the same set, and effectively the size of the cache (and all below it) shrinks by 256/16=16. No longer being able to reside in L2, it spills all the way to the order-of-magnitude slower RAM, which causes the expected slowdown.
 
 This issue arises with remarkable frequency in all types of algorithms that love powers of two. Luckily, this behavior is more of an anomaly than some that needs to be dealt with. The solution is usually simple: avoid iterating in powers of two, using different sizer on 2d arrays or inserting "holes" in the memory layout.
+
+Inside these sets, cache operates simply as LRU. Instead of storing time, you just store counters: the later an element was accessed, the lower its counter is. In hardware, you need to maintain $n$ counters of $\log_2 n$ bits each. When a cell is accessed, its counter becomes $(n-1)$ (maximum possible), and the others that are larger need to be decremented by one. Then to kick out an element you need to find the counter with zero and replace it, and then decrement everyone else's counters.
+
+Cost is you need to store more of them (1 more bit per element), and that you need more energy to update all of them. So the practical trade-off is to limit these groups.
 
 ## Memory Latency
 

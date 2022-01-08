@@ -1,6 +1,6 @@
 ---
-title: Memory
-weight: 3
+title: External Memory
+weight: 8
 ---
 
 If a CPU core has a frequency of 3 GHz, it roughly means that it is capable of executing up to $3 \cdot 10^9$ operations per second, depending on what constitutes an "operation". This is the baseline: on modern architectures, it can be increased by techniques such as SIMD and instruction-level parallelism up to $10^{11}$ operations per second, if the computation allows it.
