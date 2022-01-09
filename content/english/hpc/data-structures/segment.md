@@ -1,6 +1,7 @@
 ---
 title: Segment Trees
 weight: 2
+draft: true
 ---
 
 The lessons we learned from studying layouts for binary search can be applied to broader range of data structures.

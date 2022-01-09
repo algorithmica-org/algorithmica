@@ -1,6 +1,7 @@
 ---
 title: Simulation
 weight: 3
+draft: true
 ---
 
 The last approach (or rather a group of them) is not to gather the data by actually running the program, but to analyze what should happen by *simulating* it with specialized tools, which roughly fall into two categories.

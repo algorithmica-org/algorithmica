@@ -1,6 +1,7 @@
 ---
 title: Interrupts and System Calls
 weight: 9
+draft: true
 ---
 
 ```asm
