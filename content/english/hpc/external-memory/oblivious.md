@@ -1,6 +1,6 @@
 ---
 title: Cache-Oblivious Algorithms
-weight: 2
+weight: 7
 ---
 
 In the context of cache hierarchies, there are two types of efficient [external memory](../external) algorithms:
