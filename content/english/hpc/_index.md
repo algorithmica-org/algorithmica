@@ -87,10 +87,9 @@ This work is largely based on blog posts, research papers, conference talks and 
 
 - [Agner Fog](https://agner.org/optimize/)
 - [Daniel Lemire](https://lemire.me/en/#publications)
-- Andrei Alexandrescu
+- [Andrei Alexandrescu](https://erdani.com/index.php/about/)
 - [Wojciech Muła](http://0x80.pl/articles/index.html)
 - [Malte Skarupke](https://probablydance.com/)
-- Matt Kulukundis
 - [Travis Downs](https://travisdowns.github.io/)
 - [Brendan Gregg](https://www.brendangregg.com/blog/index.html)
 - [Andreas Abel](http://embedded.cs.uni-saarland.de/abel.php)
@@ -98,15 +97,16 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Igor Ostrovsky](http://igoro.com/)
 - [Steven Pigeon](https://hbfs.wordpress.com/)
 - [Denis Bakhvalov](https://easyperf.net/notes/)
-- Kazushige Goto
 - [Paul Khuong](https://pvk.ca/)
 - [Pat Morin](https://cglab.ca/~morin/)
 - [Victor Eijkhout](https://www.tacc.utexas.edu/about/directory/victor-eijkhout)
 - [Robert van de Geijn](https://www.cs.utexas.edu/~rvdg/)
 - [Edmond Chow](https://www.cc.gatech.edu/~echow/)
 - [Peter Cordes](https://stackoverflow.com/users/224132/peter-cordes)
-- Oleksandr Bacherikov
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
+- Kazushige Goto
+- Matt Kulukundis
+- Oleksandr Bacherikov
 
 Volume: 300-400 pages  
 Release date: early 2022

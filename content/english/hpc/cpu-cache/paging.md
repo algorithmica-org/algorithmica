@@ -1,6 +1,6 @@
 ---
 title: Memory Paging
-weight: 4
+weight: 7
 ---
 
 Let's consider other possible values of $D$ and try to measure loop performance. Since for values larger than 16 we will skip some cache lines altogether, requiring less memory reads and fewer cache, we change the size of the array so that the total number of cache lines fetched is constant.

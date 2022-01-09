@@ -1,6 +1,6 @@
 ---
 title: Memory-Level Parallelism
-weight: 1
+weight: 3
 ---
 
 ...

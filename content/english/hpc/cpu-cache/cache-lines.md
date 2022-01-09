@@ -1,6 +1,6 @@
 ---
 title: Cache Lines
-weight: 2
+weight: 4
 ---
 
 The most important feature of the memory system is that it deals with cache lines, and not individual bytes.

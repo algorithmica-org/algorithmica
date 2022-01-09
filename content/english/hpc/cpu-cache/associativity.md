@@ -1,6 +1,6 @@
 ---
 title: Cache Associativity
-weight: 5
+weight: 8
 ---
 
 If you looked carefully, you could notice patterns while inspecting the dots below the graph in the previous experiment. These are not just noise: certain step sizes indeed perform much worse than their neighbors.

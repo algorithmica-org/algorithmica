@@ -1,6 +1,6 @@
 ---
 title: Memory Bandwidth
-weight: 1
+weight: 2
 ---
 
 For many algorithms, memory bandwidth is the most important characteristic of the cache system. Coincidentally, it is also the easiest to measure.

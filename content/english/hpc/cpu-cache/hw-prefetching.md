@@ -1,6 +1,6 @@
 ---
 title: Hardware Prefetching
-weight: 1
+weight: 5
 ---
 
 In the bandwidth benchmark, we iterated over array and fetched its elements. Although separately each memory read in that case is not different from the fetch in pointer chasing, they run much faster because they can are overlapped: and in fact, CPU issues read requests in advance without waiting for the old ones to complete, so that the results come about the same time as the CPU needs them.

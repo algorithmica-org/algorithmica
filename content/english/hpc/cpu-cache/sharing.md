@@ -1,6 +1,6 @@
 ---
 title: Cache Sharing
-weight: 3
+weight: 4
 ---
 
 Starting from a certain level in the hierarchy, cache becomes shared between different cores. This limits the size and bandwidth of the cache, reducing performance in case of parallel algorithms or just noisy neighbors.
