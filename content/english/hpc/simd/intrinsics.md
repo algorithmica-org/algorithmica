@@ -1,5 +1,6 @@
 ---
-title: Intrinsics and Vector Extensions
+title: Intrinsics and Vector Types
+aliases: [/hpc/simd/x86-simd]
 weight: 1
 ---
 
