@@ -1,7 +1,6 @@
 ---
 title: Bit Manipulation
-weight: 4
-draft: true
+weight: 7
 ---
 
 This article is largely based on [Bit Twiddling Hacks](https://graphics.stanford.edu/~seander/bithacks.html) by Sean Eron Anderson. Some methods were added, and some removed due to being solved by hardware. Most of these are already optimized by compilers.

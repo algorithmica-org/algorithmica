@@ -1,5 +1,5 @@
 ---
-title: Pointers and Their Alternatives
+title: Pointer Alternatives
 weight: 9
 ---
 

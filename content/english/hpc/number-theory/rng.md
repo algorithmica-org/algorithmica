@@ -1,0 +1,10 @@
+---
+title: Random Number Generation
+weight: 7
+---
+
+We can use iterated hash function for what it's worth.
+
+Linear congruent generator
+period of LCG
+

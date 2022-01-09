@@ -1,5 +1,5 @@
 ---
-title: Code Layout
+title: Machine Code Layout
 weight: 10
 ---
 

@@ -188,14 +188,13 @@ I have something like this in mind:
  6.7. Bit Manipulation
 (6.8. Data Compression)
 7. Number Theory
- 7.1. Prime Numbers
- 7.2. Modular Inverse
- 7.3. Modular Reduction
-(7.4. Finite Fields)
-(7.5. Error Correction)
- 7.6. Cryptography
- 7.7. Hashing
- 7.8. Random Number Generation
+ 7.1. Modular Inverse
+ 7.2. Montgomery Multiplication
+(7.3. Finite Fields)
+(7.4. Error Correction)
+ 7.5. Cryptography
+ 7.6. Hashing
+ 7.7. Random Number Generation
 8. External Memory
  8.1. External Sorting
  8.2. List Ranking

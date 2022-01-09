@@ -1,13 +1,7 @@
 ---
-title: Cryptography, Hashing and PRNG
+title: Cryptography
 weight: 6
 ---
-
-In 1940, British mathematician Godfrey Harold Hardy published a famous essay titled [a Mathematician's Apology](https://en.wikipedia.org/wiki/A_Mathematician%27s_Apology) where he discusses the notion that mathematics should be pursued for its own sake rather than for the sake of its applications. As a 62-year-old, he saw the devastation caused by first world war, and was amidst the second one.
-
-A scientist faces a moral dilemma because some of its inventions may do more harm than good. One can find calm in pursueing useless math. Hardy himself specialized in number theory, and he was content about it not having any applications: "No one has yet discovered any warlike purpose to be served by the theory of numbers or relativity, and it seems unlikely that anyone will do so for many years".
-
-It is ironic that within just 5 years number theory was the basis of cracking Enigma and relativity theory developing atomic bomb respectively.
 
 This article is an overview of all topics related to modern internet-era cryptography.
 
@@ -55,58 +49,6 @@ The property of confusion hides the relationship between the ciphertext and the 
 
 AES is implemented in hardware.
 
-## Hash Functions
-
-Hash functions take an object (a short message, document, image, or basically any binary sequence) and transform it into a fixed-length seemingly random sequence, but in a deterministic way.
-
-Hash function is any function that is:
-
-* Computed fast — at least in linear time, that is.
-* Has a limited image — say, 64-bit values.
-* "Deterministically-random": if it takes $n$ different values, then the probability of collision of two random hashes is $\frac{1}{n}$ and can't be predicted well without knowing the hash function.
-
-One good test is that can't create a collision in any better time than by birthday paradox. Square root of the hash space.
-
-* Checksums.
-* Hash tables. Memoisation.
-* Locality-sensitive hashing
-
-### Cryptographic
-
-SHA-1, MD5
-
-Passwords. There are special hash functions that have a parameter associated with it.
-
-Salt and pepper. Dictionary attack. You can precompute a large table of hashes and just join it with a large database.
-
-### Non-cryptographic
-
-Identity
-Polynomial
-Chess
-
-MurMurHash
-CRC32
-
-### Signatures
-
-We now know enough to implement digital signatures.
-
-JWT. The principle is the same as with certificates and other documents. Instead of carrying. It may or may not me encrypted.
-
-JWT is a new piece of technology. You can essentially store whatever you need about the user on their device. Now, instead of going to a central database and checking for permisions on every request. You can also add "valid for 5 more minutes" to the token. Nobody usually even encrypts it. The simplest way you can do it is to add a fixed random string to the beginning of the message and calculating a hash of it.
-
-### Blockchain
-
-Proof-of-work. There are smarter blockchains that actually do something useful for proof of work.
-
-## Random Number Generation
-
-We can use iterated hash function for what it's worth.
-
-Linear congruent generator
-period of LCG
-
 ## Perfect Security
 
 Almost all practical cryptography relies on certain assumptions. They inevitably leak at least some information about the message.
@@ -123,13 +65,17 @@ Quantum computing is one of them.
 
 [Алгоритм Шора](https://en.wikipedia.org/wiki/Shor%27s_algorithm) позволяет факторизовывать числа за полиномиальное время на квантовом компьютере. Но на 2019 год все квантовые вычисления проще симулировать на обычном компьютере. Самое большое число, факторизованное на реальном квантовом компьютере — 4088459.
 
+### RSA
+
+...
+
 ## Cryptographic protocols
 
 In this article, we have learned how to:
 
 * Transfer two messages given that you can have some random information between people.
 * Transfer two messages without any common information.
-* Sign a message verifying its truthfullness.
+* Sign a message verifying its truthfulness.
 * Performing any action, although in a very computationally inefficient and non-private way.
 
 If you feel curious, here are a few more things to think about:

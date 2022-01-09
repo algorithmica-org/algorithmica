@@ -30,25 +30,3 @@ int ilp_sum_v2() {
 }
 
 ```
-
-### Prefetching*
-
-What you write:
-
-```cpp
-for (int i = 0; i < n; i++) {
-    do_stuff(a[i]);
-}
-```
-
-What compiler does:
-
-```cpp
-for (int i = 0; i < n; i++) {
-    if (int(&a[i]) % BLOCK_SIZE == 0)
-        __builtin_prefetch(&a[i] + BLOCK_SIZE);;
-    do_stuff(a[i]);
-}
-```
-
-You can request more than one block at a time, but we forget about it for now
