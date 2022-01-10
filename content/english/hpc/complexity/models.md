@@ -1,6 +1,7 @@
 ---
 title: Models of Computation
 weight: 3
+draft: true
 ---
 
 In classical theoretical computer science, really exciting things stopped happening in the 70s; everything past that are just attempts to replace logarithms in the asymptotic with something slightly less than logarithms. If 50 years ago such algorithms had hope that eventually there will be enough computing power to process the large datasets for which they beat their asymptotically inferior, but practical counterparts, nowadays we know for certain that they never will.

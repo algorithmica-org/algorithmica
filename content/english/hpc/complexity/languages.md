@@ -1,42 +1,51 @@
 ---
 title: Programming Languages
 aliases: [/hpc/analyzing-performance]
-weight: 1
+weight: 2
 ---
 
-We've talked about the hardware side — let's now talk about software: how code gets executed.
+If you are reading this book, then somewhere on your computer science journey you had a moment when you first started to care about the efficiency of your code.
 
-It is a common misconception among inexperienced (<- replace this word to smth milder) programmers is that languages can be compared in terms of speed. Like if there was some multiplier that that taxes all your operations.
-
-So let us try to study a simple example.
-
-If you are reading this book, then somewhere on your computer science journey you had a moment when you first started to care about efficiency of your code.
-
-Mine was in high school, when I entered the world of competitive programming and started learning C++. I was happily coding small projects in JavaScript and PHP before that, but I realized that making websites won't get you into a university, but doing well in olympiads will.
-
-I was an okay programmer, especially for a highschooler, but coming from high-level languages, I had never really wondered how much time it took for my code to execute. But suddenly it started to matter: each problem now has a strict time limit. I started counting my operations. How many can you do in one second?
+Mine was in high school, when I realized that making websites and doing *useful* programming won't get you into a university, and entered the exciting world of algorithmic programming olympiads. I was an okay programmer, especially for a highschooler, but I had never really wondered how much time it took for my code to execute before. But suddenly it started to matter: each problem now has a strict time limit. I started counting my operations. How many can you do in one second?
 
 I didn't know much about computer architecture to answer this question. But I also didn't need the right answer — I needed a rule of thumb. My thought process was: "2-3GHz means 2 to 3 billion instructions executed every second, and in a simple loop that does something with array elements, I also need to increment loop counter, check end-of-loop condition, do array indexing and stuff like that, so let's add room for 3-5 more instructions for every useful one" and ended up with using $5 \cdot 10^8$ as an estimate. None of these statements are true, but counting how many operations my algorithm needed and dividing it by this number was a good rule of thumb for my use case.
 
-The real answer is, of course, much more complicated and highly dependent on what kind of "operation" you have in mind. It can be as low as $10^7$ for pointer chasing and as high as $10^{11}$ for dense linear algebra. To demonstrate these striking differences, we will use the case study of matrix multiplication implemented in different languages.
+The real answer, of course, is much more complicated and highly dependent on what kind of "operation" you have in mind. It can be as low as $10^7$ for things like [pointer chasing](/hpc/memory/latency) and as high as $10^{11}$ for [SIMD-accelerated](/hpc/simd) linear algebra. To demonstrate these striking differences, we will use the case study of matrix multiplication implemented in different languages — and dig deeper into how computers execute them.
 
-## How Code Gets Executed
+<!--
 
-Processors can be thought of as state machines. They keep their state in several fixed-length registers, one of which, the instruction pointer, indicates a memory location of the next instruction to be read and executed. This instruction somehow modifies the registers and moves the instruction pointer to the next instruction to be executed, and so on.
+Because of this logic, and also because of the [computation model](../) postulated in CS 101, many programmers have a misconception that computers can execute a certain number of "operations" per second, and that using different programming languages has some sort of [multiplier effect](https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html) on that number:
+
+- "you can execute about $5 \cdot 10^8$ operations per second on this machine",
+- "C is 2 times faster than Java",
+- "Python is 100x slower than C++".
+
+-->
+
+## Types of Languages
+
+<!--
+
+Processors can be thought of as *state machines*. They keep their *state* in several fixed-length *registers*, one of which, the instruction pointer, indicates a memory location of the next instruction to be read and executed. This instruction somehow modifies the registers and moves the instruction pointer to the next instruction to be executed, and so on.
 
 These instructions — called *machine code* — are binary encoded, quirky and very difficult to work with, so no sane person writes them directly nowadays. Instead, we use higher-level programming languages and employ alternative means to feed instructions to the processor.
 
-From the programmer's perspective, there are two types of languages: *compiled* and *interpreted*. The former you have to pre-process before executing, while the latter are executed during runtime using an *interpreter*.
+-->
 
-From computer's perspective, there are also two types of languages: *native* and *managed*. The former directly execute machine code, while the latter use some sort a *runtime* to do so. 
+On the lowest level, computers execute *machine code* consisting of binary-encoded *instructions* which are used to control the CPU. They are specific, quirky, and require a great deal of intellectual effort to work with, so one of the first things people did after creating computers was creating *programming languages*, which abstract away some details of how computers operate to simplify the process of programming.
 
-Since running machine code in an interpreter doesn't make sense, there are in total three types of languages:
+A programming language is fundamentally just an interface. Any program written in it is just a nicer higher-level representation which still at some point needs to be transformed into the machine code to be executed on the CPU — and there are several different means of doing that:
+
+- From a programmer's perspective, there are two types of languages: *compiled*, which pre-process before executing, and *interpreted*, which are executed during runtime using a separate program called *an interpreter*.
+- From a computer's perspective, there are also two types of languages: *native*, which directly execute machine code, and *managed*, which rely on some sort of *a runtime* to do it.
+
+Since running machine code in an interpreter doesn't make sense, this makes a total of three types of languages:
 
 - Interpreted languages, such as Python, JavaScript, or Ruby.
 - Compiled languages with a runtime, such as Java, C#, or Erlang (and languages that work on their VMs, such as Scala, F#, or Elixir).
 - Compiled native languages, such as C, Go, or Rust.
 
-Interpreters and virtual machines provide flexibility and enable some nice high-level programming features such as dynamic code alteration. Unfortunately, there are also unavoidable trade-offs between performance and the benefits that dynamic languages can provide.
+There is no "right" way of executing computer programs: each approach has its own gains and drawbacks. Interpreters and virtual machines provide flexibility and enable some nice high-level programming features such as dynamic typing, run-time code alteration, and automatic memory management, but this comes with some unavoidable performance trade-offs, which we will now talk about.
 
 ### Interpreted languages
 
@@ -73,7 +82,7 @@ print(duration)
 
 This code runs in 630 seconds. That's more than 10 minutes!
 
-Let's try to put this number in perspective. The CPU that ran it has a clock frequency of 1.4GHz, meaning that it does $1.4 \cdot 10^9$ cycles per second, almost $10^{15}$ for the entire computation, and 880 cycles per each multiplication in the innermost loop.
+Let's try to put this number in perspective. The CPU that ran it has a clock frequency of 1.4GHz, meaning that it does $1.4 \cdot 10^9$ cycles per second, totaling to almost $10^{15}$ for the entire computation, and about 880 cycles per each multiplication in the innermost loop.
 
 This is not surprising if you consider the things that Python needs to do to figure out what the programmer meant:
 
@@ -83,11 +92,11 @@ This is not surprising if you consider the things that Python needs to do to fig
 - looks up its type, figures out that it's a `float`, and fetches the method implementing `*` operator;
 - does the same things for `b` and `c` and finally add-assigns the result to `c[i][j]`.
 
-If we get rid of all this type checking and pointer chasing, perhaps we can get cycles per multiplication ratio to 1, or whatever the cost of native multiplication is?
+Granted, the interpreters of widely-used languages such as Python are well-optimized, and they can skip through some of these steps on repeated execution of the same code. Buy still, some quite significant overhead is unavoidable due to the language design. If we get rid of all this type checking and pointer chasing, perhaps we can get cycles per multiplication ratio closer to 1, or whatever the "cost" of native multiplication is?
 
 ### Managed Languages
 
-Here is the same matrix multiplication, but implemented in Java:
+The same matrix multiplication procedure, but implemented in Java:
 
 ```java
 import java.util.Random;
@@ -122,11 +131,11 @@ public class Matmul {
 }
 ```
 
-It now runs in 10 seconds, or roughly 13 cycles per multiplication. Considering that we need to read elements of `b` non-sequentially form memory, the running time is roughly what it is supposed to be.
+It now runs in 10 seconds, which amounts to roughly 13 CPU cycles per multiplication — 63 times faster than Python. Considering that we need to read elements of `b` non-sequentially from the memory, the running time is roughly what it is supposed to be.
 
-Note that Java is a compiled, but not native language. The code compiles to bytecode, which is then interpreted by a virtual machine (JVM). To achieve higher performance, frequently executed parts of the code, such as the innermost for loop, are compiled into machine code during runtime and executed with almost no overhead. This technique is called *just-in-time compilation*.
+Java is a *compiled*, but not *native* language. The program first compiles to *bytecode*, which is then interpreted by a virtual machine (JVM). To achieve higher performance, frequently executed parts of the code, such as the innermost `for` loop, are compiled into the machine code during runtime and then executed with almost no overhead. This technique is called *just-in-time compilation*.
 
-JIT compilation is not a feature of the language itself, of its implementation. There is also a JIT-compiled version of Python called [PyPy](https://www.pypy.org/), which needs about 12 seconds to execute the code above without any changes.
+JIT compilation is not a feature of the language itself, but of its implementation. There is also a JIT-compiled version of Python called [PyPy](https://www.pypy.org/), which needs about 12 seconds to execute the code above without any changes to it.
 
 ### Compiled Languages
 
@@ -162,13 +171,17 @@ int main() {
 }
 ```
 
-It takes 9 seconds when you compile it with `gcc -O3`. The 1-3 second advantage over Java and PyPy can be explained as the additional time of JIT-compilation. It doesn't seem like a lot, but we haven't yet taken advantage of a far better C compiler ecosystem. If we add `-march=native` and `-ffast=math` flags, time suddenly goes down to 0.6 seconds!
+It takes 9 seconds when you compile it with `gcc -O3`.
 
-What happened here is we communicated the compiler the exact model of CPU we are running (`-march=native`) and gave it freedom to rearrange floating-point computations (`-ffast=math`), and so it took advantage of it, most importantly using vectorization — an architecture-specific technique we will study in detail later in chapter 3.
+It doesn't seem like a huge improvement — the 1-3 second advantage over Java and PyPy can be attributed to the additional time of JIT-compilation — but we haven't yet taken advantage of a far better C compiler ecosystem. If we add `-march=native` and `-ffast=math` flags, time suddenly goes down to 0.6 seconds!
+
+What happened here is we [communicated to the compiler](/hpc/compilation/flags/) the exact model of the CPU we are running (`-march=native`) and gave it the freedom to rearrange [floating-point computations](/hpc/arithmetic/float) (`-ffast=math`), and so it took advantage of it and used [vectorization](/hpc/simd) to achieve this speedup.
+
+It's not like it is impossible to tune the JIT-compilers of PyPy and Java to achieve the same performance without significant changes to the source code, but it is certainly easier for languages that compile directly to native code.
 
 ### BLAS
 
-Finally, let's look what an expert-optimized implementation is capable of. We will test an optimized linear algebra library called [OpenBLAS](https://www.openblas.net/). The easiest way to use it is to go back to Python and call it from `numpy`:
+Finally, let's take a look at what an expert-optimized implementation is capable of. We will test a widely-used optimized linear algebra library called [OpenBLAS](https://www.openblas.net/). The easiest way to use it is to go back to Python and just call it from `numpy`:
 
 ```python
 import time
@@ -187,10 +200,12 @@ duration = time.time() - start
 print(duration)
 ```
 
-Now it takes ~0.12 seconds: a ~5x speedup over C++ and ~5250x speedup over our initial Python implementation!
+Now it takes ~0.12 seconds: a ~5x speedup over the auto-vectorized C version and ~5250x speedup over our initial Python implementation!
 
-You don't typically see such dramatic improvements. For now, we are not ready to tell you exactly how this is achieved. Implementations of dense matrix multiplication in OpenBLAS are typically [5000 lines of handwritten assembly](https://github.com/xianyi/OpenBLAS/blob/develop/kernel/x86_64/dgemm_kernel_16x2_haswell.S) for *each* architecture. In later chapters, we will explain all the relevant techniques one by one, and in chapter 6, we will return to this example and develop our own BLAS-level implementation with just under 40 lines of C.
+You don't typically see such dramatic improvements. For now, we are not ready to tell you exactly how this is achieved. Implementations of dense matrix multiplication in OpenBLAS are typically [5000 lines of handwritten assembly](https://github.com/xianyi/OpenBLAS/blob/develop/kernel/x86_64/dgemm_kernel_16x2_haswell.S) tailored separately for *each* architecture. In later chapters, we will explain all the relevant techniques one by one, and then return to this example and develop our own BLAS-level implementation using just under 40 lines of C.
 
-The point here is that using a native language doesn't give you performance; it gives you *control* over performance. And to make use of it, having just a general intuition about performance isn't enough. It is instrumental to understand CPU microarchitecture, which is what we will focus on in this chapter.
+### Takeaway
 
-Comparing languages in terms of performance is just absurd. Languages are just tools that take away some of control over performance in exchange for nice abstractions.
+The key lesson here is that using a native, low-level language doesn't necessarily give you performance; but it does give you *control* over performance.
+
+Complementary to the "N operations per second" simplification, many programmers also have a misconception that using different programming languages has some sort of multiplier on that number. Thinking this way and [comparing languages](https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html) in terms of performance doesn't make much sense: programming languages are fundamentally just tools that take away *some* control over performance in exchange for convenient abstractions.  Regardless of the execution environment, it is still largely a programmer's job to use the opportunities that the hardware provides.

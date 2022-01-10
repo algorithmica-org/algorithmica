@@ -33,6 +33,8 @@ The shorter this loop is, the faster you will iterate. Here are some hints on ho
 
 Also, make the dataset as representing of your real use case as possible, and reach an agreement with people on the procedure of benchmarking. This is especially important for data processing algorithms and data structures: most sorting algorithms perform differently depending on the input, hash tables perform differently with different distributions of keys.
 
+https://github.com/google/benchmark
+
 ### Interleaving
 
 Similar to how Americans report pre-tax salary, Americans use non-PPP-adjusted stats, attention-seeking startups report revenue instead of profit, performance engineers report the best version of benchmark if not stated otherwise.

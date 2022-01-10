@@ -29,7 +29,7 @@ The idea to express execution time as a function of input size seems obvious now
 
 What caused the shift was the acquired confidence among computer scientists that computers will continue to become faster — and indeed they have. Over time, people stopped counting execution time, then stopped counting cycles, and then even stopped counting operations exactly, replacing it with an *estimate* that, on sufficiently large inputs, is only off by no more than a constant factor. With *asymptotic complexity*, verbose "$4 \cdot n^3 - n^2$ operations" turns into plain "$\Theta(n^3)$", hiding the initial costs of individual operations in the "Big O", along with all the other intricacies of the hardware.
 
-![](../img/complexity.jpg)
+![](img/complexity.jpg)
 
 The reason we use asymptotic complexity is that it provides simplicity while still being just precise enough to yield useful results about relative algorithm performance on large datasets. Under the promise that computers will eventually become fast enough to handle any *sufficiently large* input in a reasonable amount of time, asymptotically faster algorithms will always be faster in real-time too, regardless of the hidden constant.
 
