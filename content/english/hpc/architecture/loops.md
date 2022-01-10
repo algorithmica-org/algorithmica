@@ -1,5 +1,5 @@
 ---
-title: Loops and Loop Unrolling
+title: Loops and Conditionals
 weight: 2
 ---
 
@@ -13,17 +13,15 @@ loop:
     jne  loop
 ```
 
-It calculates the sum of a 32-bit integer array, just as a simple `for` loop would.
+It calculates the sum of a 32-bit integer array, just as a simple `for` loop would. The "body" of the loop is `add edx, DWORD PTR [rax]`. This instruction loads data from the iterator `rax` and adds it to the accumulator `edx`. Next, we move the iterator 4 bytes forward with `add rax, 4`. Then, a slightly more complicated thing happens.
 
-The "body" of the loop is `add edx, DWORD PTR [rax]`. This instruction loads data from the iterator `rax` and adds it to the accumulator `edx`.
+### Jumps
 
-Next, we move the iterator 4 bytes forward with `add rax, 4`.
+Assembly doesn't have if-s, for-s, functions, or other control flow structures that high-level languages have. What it does have is `goto`, or "jump", how it is known in the world of low-level programming.
 
-Then a slightly more complicated thing happens. Assembly doesn't have if-s, for-s, functions or other control flow structures that high level languages have. What it does have is `goto`, or "jump", how it is known in the world of low-level programming.
+**Jump** moves the instruction pointer to a location specified by its operand. This location may be either an absolute address in memory, relative to the current address or even [computed during runtime](../indirect). To avoid the headache of managing these addresses directly, you can mark any instruction with a string followed by `:`, and then use this string as a label which gets replaced by the relative address of this instruction when converted to machine code.
 
-**Jump** "jumps" to location specified by a label, which needs to be declared somewhere else as a string followed by `:`. When converted to machine code, it is replaced by an instruction that moves the instruction pointer by a fixed number of bytes so that it ends up at the instruction pointed by the label.
-
-Label can be any string, but compilers don't get creative with naming and [just use](https://godbolt.org/z/T45x8GKa5) the `.Ln` pattern for loops, where `n` is the line number in the source, and function names with their signatures when picking names for labels.
+Labels can be any strings, but compilers don't get creative and [typically](https://godbolt.org/z/T45x8GKa5) just use the line numbers in the source code and function names with their signatures when picking names for labels.
 
 **Unconditional** jump `jmp` can only be used to implement `while (true)` kind of loops or stitch parts of a program together. A family of **conditional** jumps is used to implement actual control flow.
 
@@ -33,7 +31,7 @@ In our example, `cmp rax, rcx` compares the iterator `rax` with the end-of-array
 
 ### Loop Unrolling
 
-One thing you might have noticed about the loop above is that there is a lot of overhead to process a single element. During each cycle, there is only one useful instruction executed, and the other 3 are maintaining the iterator and trying to find out if we are done yet.
+One thing you might have noticed about the loop above is that there is a lot of overhead to process a single element. During each cycle, there is only one useful instruction executed, and the other 3 are incrementing the iterator and trying to find out if we are done yet.
 
 What we can do is to *unroll* the loop by grouping iterations together — equivalent to writing something like this in C:
 
@@ -59,8 +57,8 @@ loop:
     jne  loop
 ```
 
-Now we only need 3 loop control instructions for 4 useful ones (improvement from $\frac{1}{4}$ to $\frac{4}{7}$ in terms of efficiency), and this can be continued to reduce the overhead almost to zero.
+Now we only need 3 loop control instructions for 4 useful ones (an improvement from $\frac{1}{4}$ to $\frac{4}{7}$ in terms of efficiency), and this can be continued to reduce the overhead almost to zero.
 
-In practice though, unrolling loops isn't always necessary for performance because of a mechanism called *out-of-order execution*. Modern processors don't actually execute instructions one-by-one, but maintain a "pool" of pending instructions so that two independent operations can be executed concurrently without waiting for each other to finish.
+In practice though, unrolling loops isn't always necessary for performance because modern processors don't actually execute instructions one-by-one, but maintain a [queue of pending instructions](/hpc/pipelining) so that two independent operations can be executed concurrently without waiting for each other to finish.
 
-This is our case too: the real speedup from unrolling won't be fourfold, because incrementing the counter and checking for end of loop are independent from the loop body and can be scheduled to run concurrently with it.
+This is our case too: the real speedup from unrolling won't be fourfold, because the operations of incrementing the counter and checking if we are done are independent from the loop body, and can be scheduled to run concurrently with it. But may still be beneficial to [ask the compiler](/hpc/compilation/situational) to unroll it to some extent.
