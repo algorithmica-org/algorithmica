@@ -8,7 +8,4 @@ When I began learning how to optimize programs myself, one big mistake I made wa
 
 Unfortunately, this is how most programmers approach optimization. Most texts about performance do not teach you to reason about software performance qualitatively. Instead they give you general advices about certain implementation approaches — and general performance intuition is clearly not enough.
 
-It would have probably saved me dozens, if not hundreds of hours if I learned computer architecture *before* doing algorithmic programming. So, even if most people aren't *excited* about it, we are going to spend the first few chapters learning how CPUs work and start with [learning assembly](assembly).
-
-<!-- todo: replace "learn" with synonyms -->
-
+It would have probably saved me dozens, if not hundreds of hours if I learned computer architecture *before* doing algorithmic programming. So, even if most people aren't *excited* about it, we are going to spend the first few chapters studying how CPUs work and start with learning assembly.
