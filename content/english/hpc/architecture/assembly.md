@@ -62,7 +62,7 @@ Most instructions write their result into the first operand, which can also be i
 
 There are also 32-, 16-bit and 8-bit registers that have similar names (`rax` → `eax` → `ax` → `al`). They are not fully separate but *aliased*: the first 32 bits of `rax` are `eax`, the first 16 bits of `eax` are `ax`, and so on. This is made to save die space while maintaining compatibility, and it is also the reason why basic type casts in compiled programming languages are usually free. 
 
-These are just the *general-purpose* registers that you use directly in most instructions. There is also a separate set of registers for [floating-point arithmetic](/hpc/arithmetic/float), a bunch of very wide registers used in [vector extensions](/hpc/simd), and a few special ones that are needed for [control flow](../jumps), but we'll get there in time.
+These are just the *general-purpose* registers that you can, with [some exceptions](../functions), use however you like in most instructions. There is also a separate set of registers for [floating-point arithmetic](/hpc/arithmetic/float), a bunch of very wide registers used in [vector extensions](/hpc/simd), and a few special ones that are needed for [control flow](../jumps), but we'll get there in time.
 
 **Memory addressing** is done with the `[]` operator, but it can do more than just reinterpret a value stored in a register as a memory location. Address operand takes up to 4 parameters presented in the syntax:
 
