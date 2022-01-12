@@ -90,11 +90,11 @@ struct Cat {
 
 We want to create an animal and, without knowing its type in advance, call its `.speak()` method, which should somehow invoke the right implementation:
 
-```cpp
+```c++
 Dog sparkles;
 Cat mittens;
 
-Animal *catdog = (rand() & 1 ? &sparkles : &mittens);
+Animal *catdog = (rand() & 1) ? &sparkles : &mittens;
 catdog->speak();
 ```
 
