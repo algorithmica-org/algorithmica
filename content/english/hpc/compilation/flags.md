@@ -1,5 +1,5 @@
 ---
-title: Targets and Flags
+title: Flags and Targets
 weight: 2
 ---
 
