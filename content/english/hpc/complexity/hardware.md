@@ -98,3 +98,23 @@ Here are some core approaches making use of more available transistors that are 
 - Using custom hardware to solve a specific problem with better chip utilization (ASICs, FPGAs).
 
 For modern computers, the "[let's count all operations](../)" approach for predicting algorithm performance isn't just slightly wrong but is off by several orders of magnitude. This calls for new computation models and other ways of assessing algorithm performance.
+
+<!--
+
+Pointer jumping and processing in most scripting languages: $10^7$
+Branchy operations in native languages: $10^8$
+Branchless scalar processing in native languages: $10^9$
+Bandwidth-bound or complex SIMD applications: $10^{10}$
+Linear algebra, single core: $10^{11}$
+Typical desktop CPU: $10^{12}$
+Typical mobile phone GPU: $10^{12}$
+Typical integrated graphics card: $2 \cdot 10^{12}$
+High-end gaming setups: $10^{13}$
+Deep learning hardware: $10^{14}$
+Deep learning full rigs: $10^{15}$
+Being considered a supercomputer: $10^{16}$
+Setups used to train LM neural networks: $5 \cdot 10^{17}$
+Fugaku (#1): $2 \cdot 10^{18}$
+Folding@home: $3 \cdot 10^{18}$
+
+-->
