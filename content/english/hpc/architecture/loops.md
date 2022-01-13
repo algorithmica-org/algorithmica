@@ -29,6 +29,20 @@ It is reasonable to think that these conditions are computed as `bool`-s somewhe
 
 In our example, `cmp rax, rcx` compares the iterator `rax` with the end-of-array pointer `rcx`. This updates the flags register, and now it can be used by `jne loop`, which looks up a certain bit there that tells whether the two values are equal or not, and then either jumps back to the beginning or continues to the next instruction, thus breaking the loop.
 
+<!--
+
+Many other operations set something in the FLAGS register. For example, add often. It is useful to, and then decrement or increment it to save on instruction. Like a while loop:
+
+```
+while (n--) {
+    // ...
+}
+```
+
+There is an important "conditional move" operation.
+
+-->
+
 ### Loop Unrolling
 
 One thing you might have noticed about the loop above is that there is a lot of overhead to process a single element. During each cycle, there is only one useful instruction executed, and the other 3 are incrementing the iterator and trying to find out if we are done yet.

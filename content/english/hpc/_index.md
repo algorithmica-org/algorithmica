@@ -88,6 +88,7 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Agner Fog](https://agner.org/optimize/)
 - [Daniel Lemire](https://lemire.me/en/#publications)
 - [Andrei Alexandrescu](https://erdani.com/index.php/about/)
+- Chandler Carruth
 - [Wojciech Muła](http://0x80.pl/articles/index.html)
 - [Malte Skarupke](https://probablydance.com/)
 - [Travis Downs](https://travisdowns.github.io/)
