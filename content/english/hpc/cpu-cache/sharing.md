@@ -1,5 +1,5 @@
 ---
-title: Cache Sharing
+title: Memory Sharing
 weight: 4
 ---
 
@@ -40,3 +40,7 @@ You can see that it performs better — as if there were twice as much L3 cache 
 ![](../img/affinity.svg)
 
 These issues are especially tricky when benchmarking and is usually the largest source of noise in real-world applications.
+
+Non-uniform memory access, RAM paging
+
+https://randomascii.wordpress.com/2022/01/12/5-5-mm-in-1-25-nanoseconds/
