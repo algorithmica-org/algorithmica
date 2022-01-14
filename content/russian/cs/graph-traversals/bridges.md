@@ -80,7 +80,7 @@ void dfs(int v, int p = -1) {
 void dfs(int v, int p = -1) {
     used[v] = 1;
     d[v] = h[v] = (p == -1 ? 0 : h[p] + 1);
-	int children = 0;
+    int children = 0;
     for (int u : g[v]) {
         if (u != p) {
             if (used[u])
