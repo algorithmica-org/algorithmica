@@ -40,17 +40,54 @@ This whole sequence of operations is *long*. It takes up to 15-20 CPU cycles eve
 
 Pipelining does not reduce *actual* latency but functionally makes it seem like if it was composed of only the execution and memory stage. You still need to pay these 15-20 cycles, but you only need to do it once after you've found the sequence of instructions you are going to execute.
 
-### Latency and Throughput of Instructions
+Having this in mind, hardware manufacturers like to use *cycles per instruction* (CPI) instead of something like "average instruction latency" as the main performance indicator for CPU designs. It is a [pretty good metric](/hpc/profiling/benchmarking) for algorithm designs too, if we only consider *useful* instructions.
 
-It makes sense to duplicate frequently used stages. Such processors are called *superscalar*.
+### Superscalar Processors
 
-![Pipeline of a superscalar CPU with the width of 2](img/superscalar.png)
+CPI of a perfectly pipelined processor should tend to one, but it can actually be even lower than one.
 
-Interleaving the stages of execution is a general idea in hardware, and it is applied not only in the general CPU pipeline, but also on the level of separate instructions and [memory](/hpc/cpu-cache/mlp).
+As there are many different instructions, It is very common for programs to have groups of logically independent operations that can be processed separately by different execution units. To improve their utilization, we can duplicate everything else the pipeline so that more than one instruction is processed in a time, and then, if possible, schedule the instructions on different parts of the ALU. Such architectures, capable of executing more than one, are called *superscalar*, and most modern CPUs are.
 
-The latency and throughput numbers are architecture-specific. Some samples for my Zen 2:
+<!-- Pipeline of a superscalar CPU with the width of 2 img/superscalar.png -->
 
-All are specified for 32-bit integers.
+Interleaving the stages of execution is a general idea in digital electronics, and it is applied not only in the main CPU pipeline, but also on the level of separate instructions and [memory](/hpc/cpu-cache/mlp). Most execution units have their own little pipelines, and can take another instruction just one or two cycles after the previous one. If a certain instruction is frequently used, it makes sense to duplicate its execution unit also, and also place frequently jointly used instructions on the same execution unit: e. g. not using the same for arithmetic and memory operation.
+
+### Microcode
+
+While complex instruction sets had the benefit, with superscalar processors you want your instructions to be as tiny and atomic as possible. Such as fused add instruction. This also provides a simple way to "retire" old instructions that nobody is using and you don't want to support anymore: just replace them with a hundred or so microcoded instruction. They are not used anyway.
+
+Instructions are microcoded.
+
+uOps ("micro-ops", the first letter is meant to be greek letter mu as in us (microsecond), but nobody cares enough to type it).
+
+Each architecture has its own set of "ports", each capable of executing its own set of instructions (uOps, to be more exact).
+
+But still, when you use it, it appears and feels like a single instruction. How does CPU achieve that?
+
+### Instruction Scheduling
+
+This poses some additional challenges in coordinating how to execute instruction and in which order. This is why modern schedulers take more die space than the entirety of the integer ALU. They are insanely complex, but this mental model works good enough most of the time.
+
+Modern processors don’t actually execute instructions one-by-one, but maintain a *pipeline* of pending instructions so that two independent operations can be executed concurrently without waiting for each other to finish.
+
+Out-of-order execution. A buffer of pending instructions.
+
+A bit more precisely, the CPU will look at the instruction stream up to some distance in the future. If there are branches, it will do branch prediction to produce a sequential stream of instructions. Then it will see which of the instructions are ready for execution. For example, if it sees a future instruction X that only uses registers A and B, and there are no instructions before it that touch those registers, and none of the instructions that are currently in the pipeline modify those registers, either, then it is safe to start to execute X as soon as there is an execution unit that is available.
+
+All of this happens in the hardware, all the time, fully automatically. The only thing that the programmer needs to do is to make sure there are sufficiently many independent instructions always available for execution. The magic takes place inside the CPU. The compiler just produces two machine language instructions, without any special annotation that indicates whether or not these instructions can be executed in parallel. The CPU will then automatically figure out which of the instructions can be executed in parallel.
+
+You can schedule independent instructions separately, but only up to some extent. This buffer is large, hundreds of operations. Still not enough for something extra long like main memory accesses.
+
+### Instruction Timings
+
+In this context, it makes sense to use two different "[costs](/hpc/complexity)" for instructions:
+
+- *Latency*: how many cycles are needed to receive the results of an instruction.
+- *Throughput*: how many instructions can be, on average, executed per cycle.
+
+Because our minds are so used to the cost model where "more" means "worse", it makes sense to use the reciprocals of throughput. It can be less than zero — because of superscalar processors.
+
+The latency and throughput numbers are architecture-specific. You can get this data from special documents called [instruction tables](https://www.agner.org/optimize/instruction_tables.pdf). Some sample values for my Zen 2 (all are specified for 32-bit integers, if there is any difference):
 
 | Instruction | Latency | RThroughput |
 |-------------|---------|:------------|
@@ -64,76 +101,16 @@ All are specified for 32-bit integers.
 | `mul`       | 3       | 1           |
 | `div`       | 13-28   | 13-28       |
 
-[Integer division](/hpc/arithmetic/division) is an exception: it is either very poorly pipelined or not pipelined at all (like in this case).
+Some caveats:
 
-You could consider that the latency is zero or undefined. For memory operations, latency is usually specified for L1 cache.
+- Some instructions have a latency of 0. This means that these instruction are used to control the scheduler, and they don't reach the execution stage. This is by the virtue of renaming. But they still have non-zero latency because we first need to [process them](/hpc/architecture/layout). Decode width. You can't get throughput higher than that.
+- Most instructions are pipelined. Throughput means that after exactly $n$ cycles it can take another one. [Integer division](/hpc/arithmetic/division) is an exception: it is either very poorly pipelined or not pipelined at all (like in this case).
+- You could consider that the latency is zero or undefined. For memory operations, latency is usually specified for L1 cache. Latency can be dependent on data (again, division). Sometimes operations have many forms. For example, "mov" with memory operands does. Fused operations do memory accesses to.
+- Some instruction tables also list execution ports (or sometimes "pipes"). This is mostly relevant for SIMD.
 
-Decode width. You can't get throughput higher than that.
+This is a bit of an advanced and not well understood topic. Documentation is very obscure. people have to reverse engineer it. There are reasons to believe that folks at Intel don't know that themselves. The most comprehensive one is probably, uops.info.
 
-Some instructions. They have the same latency
-
-Sometimes operations have many forms. For example, "mov" with memory operands does. For
-
-"RThroughput" is shorthand for "reciprocal throughput". Values less than one mean that.
-
-Execution ports (or sometimes "pipes"). This is mostly relevant for SIMD.
-
-Some instructions have a latency of 0. This means that these instruction are used to control the scheduler, and they don't reach the execution stage. This is by the virtue of renaming. But they still have non-zero latency because we first need to [process them](/hpc/architecture/layout).
-
-You can get this data from special documents called [instruction tables](https://www.agner.org/optimize/instruction_tables.pdf).
-
-You can schedule independent instructions separately, but only up to some extent.
-
-### Instruction Scheduling
-
-Modern processors don’t actually execute instructions one-by-one, but maintain a *pipeline* of pending instructions so that two independent operations can be executed concurrently without waiting for each other to finish.
-
-uOps ("micro-ops", the first letter is meant to be greek letter mu as in us (microsecond), but nobody cares enough to type it).
-
-Each architecture has its own set of "ports", each capable of executing its own set of instructions (uOps, to be more exact).
-
-But still, when you use it, it appears and feels like a single instruction. How does CPU achieve that?
-
-The thing is, most of CPU isn't about computing.
-
-Although logically it takes fundamentally 3 cycles, in CPUs it is much more.
-
-But there is much more that can benefit from parallel thinking.
-
-
-or specialized hardware. But actually there is a lot of parallelism happening inside CPU.
-
-The magic takes place inside the CPU. The compiler just produces two machine language instructions, without any special annotation that indicates whether or not these instructions can be executed in parallel. The CPU will then automatically figure out which of the instructions can be executed in parallel.
-
-A bit more precisely, the CPU will look at the instruction stream up to some distance in the future. If there are branches, it will do branch prediction to produce a sequential stream of instructions. Then it will see which of the instructions are ready for execution. For example, if it sees a future instruction X that only uses registers A and B, and there are no instructions before it that touch those registers, and none of the instructions that are currently in the pipeline modify those registers, either, then it is safe to start to execute X as soon as there is an execution unit that is available.
-
-All of this happens in the hardware, all the time, fully automatically. The only thing that the programmer needs to do is to make sure there are sufficiently many independent instructions always available for execution.
-
-### Latency and Throughput
-
-and adds a new level of complexity
-
-Programming pipelined and superscalar processors presents its own challenges, which we are going to address in this chapter.
-
-
-### Instruction Scheduling
-
-superscalar processors
-
-Out-of-order execution. A buffer of pending instructions.
-
-uops, execution ports.
-
-This is a bit of an advanced and not well understood topic.
-
-Documentation is very obscure.
-
-You know that your documentation is good when people have to reverse engineer it.
-
-There are reasons to believe that folks at Intel don't know that themselves.
-
-llvm-mca
-
+There are tools like llvm-mca, but they aren't perfect either.
 
 ### An Education Analogy
 
@@ -164,3 +141,5 @@ There are many aspects, and in this chapter we are going to explore them
 You might fail a course, but proceed somewhere else.
 
 Similar to education, these also cause problems, and the first thing we will do in this chapter is learn how to avoid them.
+
+Programming pipelined and superscalar processors presents its own challenges, which we are going to address in this chapter.
