@@ -3,6 +3,21 @@ title: Pipeline Hazards
 weight: 1
 ---
 
+Такая техника позволяет одновременно обрабатывать в очереди много инструкций и скрыть их задержку, но если возникает ситуация, что процессор, например, ждет данных от какой-то инструкции, либо не может заранее определить, какую инструкцию ему дальше исполнять, то в пайплайне возникает «пузырь».
+
+
+by analogy with an air bubble in a fluid pipe — it propagates through the pipeline.
+
+![Pipeline stall on the execution stage](../img/bubble.png)
+
+Есть два основных типа пузырей: условно лёгкий, когда процессор ждет данные от предыдущей операции (зависит от задержки этой операции, но в нашем случае это ~5 циклов) и тяжелый, когда процессор ждет новых инструкций (~15 циклов).
+
+
+
+Let's talk more about the instruction scheduling and what can go wrong in the pipeline.
+
+
+
 situations that prevent the next instruction in the instruction stream from executing during its designated clock cycles
 
 Let's dive deeper into microarchitecture.
@@ -36,22 +51,6 @@ $\text{# of instructions} \to \infty,\; CPI \to 1$
 2. Decode: sets up necessary data
 3. Execute: sends on a separate execution unit
 4. Write: write data back to registers or set some flag
-
-## Latency and Throughput
-
-| Operation | Latency | $\frac{1}{throughput}$ |
-| --------- | ------- |:------------ |
-| MOV       | 1       | 1/3          |
-| JMP       | 0       | 2            |
-| ADD       | 1       | 1/3          |
-| SUM       | 1       | 1/3          |
-| CMP       | 1       | 1/3          |
-| POPCNT    | 3       | 1            |
-| MUL       | 3       | 1            |
-| DIV       | 11-21   | 7-11         |
-
-"Nehalem" (Intel i7) op tables
-https://www.agner.org/optimize/instruction_tables.pdf
 
 ### Superscalar Processors
 

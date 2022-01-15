@@ -3,34 +3,105 @@ title: Instruction-Level Parallelism
 weight: 3
 ---
 
-In the previous version, we have an inherently sequential chain of operations in the innermost loop. We accumulate the minimum in variable v by a sequence of min operations. There is no way to start the second operation before we know the result of the first operation; there is no room for parallelism here:
+When programmers hear the word *parallelism*, they mostly think about *multi-core parallelism*, the practice of explicitly splitting a computation into semi-independent *threads* that work together to solve a common problem.
 
-...
-v = std::min(v, z0);
-v = std::min(v, z1);
-v = std::min(v, z2);
-v = std::min(v, z3);
-v = std::min(v, z4);
-...
-Independent operations
-There is a simple way to reorganize the operations so that we have more room for parallelism. Instead of accumulating one minimum, we could accumulate two minimums, and at the very end combine them:
+This type of parallelism is mainly about reducing *latency* and achieving *scalability*, but not about improving *efficiency*. You can solve a problem ten times as big with a parallel algorithm, but it would take at least ten times as many computational resources. Although parallel hardware is becoming [ever more abundant](/hpc/complexity/hardware), and parallel algorithm design is becoming an increasingly more important area, for now, we will consider the use of more than one CPU core cheating.
 
-...
-v0 = std::min(v0, z0);
-v1 = std::min(v1, z1);
-v0 = std::min(v0, z2);
-v1 = std::min(v1, z3);
-v0 = std::min(v0, z4);
-...
-v = std::min(v0, v1);
-The result will be clearly the same, but we are calculating the operations in a different order. In essence, we split the work in two independent parts, calculating the minimum of odd elements and the minimum of even elements, and finally combining the results. If we calculate the odd minimum v0 and even minimum v1 in an interleaved manner, as shown above, we will have more opportunities for parallelism. For example, the 1st and 2nd operation could be calculated simultaneously in parallel (or they could be executed in a pipelined fashion in the same execution unit). Once these results are available, the 3rd and 4th operation could be calculated simultaneously in parallel, etc. We could potentially obtain a speedup of a factor of 2 here, and naturally the same idea could be extended to calculating e.g. 4 minimums in an interleaved fashion.
+But there are other types of parallelism, already existing inside a CPU core, that you can use *for free*.
 
-Instruction-level parallelism is automatic
-Now that we know how to reorganize calculations so that there is potential for parallelism, we will need to know how to realize the potential. For example, if we have these two operations in the C++ code, how do we tell the computer that the operations can be safely executed in parallel?
+<!--
 
-v0 = std::min(v0, z0);
-v1 = std::min(v1, z1);
-The delightful answer is that it happens completely automatically, there is nothing we need to do (and nothing we can do)!
+This technique only applies 
+
+Parallel hardware is now everywhere. When you opened this page in your browser, it was retrieved by a 50-core server CPU, then parsed by an 8-core desktop CPU, and then rendered by a 400-core GPU. Not all cores were involved with serving you this page at all times — they might have been doing something else.
+
+Parallelism helps in reducing *latency*. It is important, but for now, our main concern is not *scalability*, but *efficiency* of algorithms.
+
+Sharing computations is an art in itself, but for now, we want to learn how to use resources that we already have more efficiently.
+
+While multi-core parallelism is "cheating", many form of parallelism exist  "for free".
+
+Adapting algorithms for parallel hardware is important for achieving *scalability*. In the first part of this book, we will consider this technique "cheating". We only do optimizations that are truly free, and preferably don't take away resources from other processes that might be running concurrently.
+
+-->
+
+### Instruction Pipelining
+
+To execute *any* instruction, processors need to do a lot of preparatory work first, which includes:
+
+- **fetching** a chunk of machine code from memory,
+- **decoding** it and splitting into instructions,
+- **executing** these instructions, which may involve doing some **memory** operations, and
+- **writing** the results back into registers.
+
+This whole sequence of operations is *long*. It takes up to 15-20 CPU cycles even for something simple like `add`-ing two register-stored values together. To hide this latency, modern CPUs use *pipelining*: after an instruction passes through the first stage, they start processing the next one right away, without waiting for the previous one to fully complete.
+
+![](img/pipeline.png)
+
+Pipelining does not reduce *actual* latency but functionally makes it seem like if it was composed of only the execution and memory stage. You still need to pay these 15-20 cycles, but you only need to do it once after you've found the sequence of instructions you are going to execute.
+
+### Latency and Throughput of Instructions
+
+It makes sense to duplicate frequently used stages. Such processors are called *superscalar*.
+
+![Pipeline of a superscalar CPU with the width of 2](img/superscalar.png)
+
+Interleaving the stages of execution is a general idea in hardware, and it is applied not only in the general CPU pipeline, but also on the level of separate instructions and [memory](/hpc/cpu-cache/mlp).
+
+The latency and throughput numbers are architecture-specific. Some samples for my Zen 2:
+
+All are specified for 32-bit integers.
+
+| Instruction | Latency | RThroughput |
+|-------------|---------|:------------|
+| `jmp`       | -       | 2           |
+| `mov r, r`  | -       | 1/4         |
+| `mov r, m`  | 4       | 1/2         |
+| `mov m, r`  | 3       | 1           |
+| `add`       | 1       | 1/3         |
+| `cmp`       | 1       | 1/4         |
+| `popcnt`    | 1       | 1/4         |
+| `mul`       | 3       | 1           |
+| `div`       | 13-28   | 13-28       |
+
+[Integer division](/hpc/arithmetic/division) is an exception: it is either very poorly pipelined or not pipelined at all (like in this case).
+
+You could consider that the latency is zero or undefined. For memory operations, latency is usually specified for L1 cache.
+
+Decode width. You can't get throughput higher than that.
+
+Some instructions. They have the same latency
+
+Sometimes operations have many forms. For example, "mov" with memory operands does. For
+
+"RThroughput" is shorthand for "reciprocal throughput". Values less than one mean that.
+
+Execution ports (or sometimes "pipes"). This is mostly relevant for SIMD.
+
+Some instructions have a latency of 0. This means that these instruction are used to control the scheduler, and they don't reach the execution stage. This is by the virtue of renaming. But they still have non-zero latency because we first need to [process them](/hpc/architecture/layout).
+
+You can get this data from special documents called [instruction tables](https://www.agner.org/optimize/instruction_tables.pdf).
+
+You can schedule independent instructions separately, but only up to some extent.
+
+### Instruction Scheduling
+
+Modern processors don’t actually execute instructions one-by-one, but maintain a *pipeline* of pending instructions so that two independent operations can be executed concurrently without waiting for each other to finish.
+
+uOps ("micro-ops", the first letter is meant to be greek letter mu as in us (microsecond), but nobody cares enough to type it).
+
+Each architecture has its own set of "ports", each capable of executing its own set of instructions (uOps, to be more exact).
+
+But still, when you use it, it appears and feels like a single instruction. How does CPU achieve that?
+
+The thing is, most of CPU isn't about computing.
+
+Although logically it takes fundamentally 3 cycles, in CPUs it is much more.
+
+But there is much more that can benefit from parallel thinking.
+
+
+or specialized hardware. But actually there is a lot of parallelism happening inside CPU.
 
 The magic takes place inside the CPU. The compiler just produces two machine language instructions, without any special annotation that indicates whether or not these instructions can be executed in parallel. The CPU will then automatically figure out which of the instructions can be executed in parallel.
 
@@ -38,38 +109,7 @@ A bit more precisely, the CPU will look at the instruction stream up to some dis
 
 All of this happens in the hardware, all the time, fully automatically. The only thing that the programmer needs to do is to make sure there are sufficiently many independent instructions always available for execution.
 
-### Instruction Pipelining
-
-The same things applies to CPUs and other hardware. To increase the utilization, instructions are processed in a pipeline.
-
-Modern processors don’t actually execute instructions one-by-one, but maintain a *pipeline* of pending instructions so that two independent operations can be executed concurrently without waiting for each other to finish.
-
-When I said that `add` instruction only takes one cycle, I lied a little bit. Every instruction needs a bit more than that. The whole thing takes around 5-6 clock cycles. But still, when you use it, it appears and feels like a single instruction. How does CPU achieve that?
-
-The thing is, most of CPU isn't about computing.
-
-![](img/pipeline.png)
-
-Although logically it takes fundamentally 3 cycles, in CPUs it is much more.
-
-### An Education Metaphor
-
-As a everyday metaphor, consider how a university works. It could have one student at a time and around 50 professors, which would take turns in tutoring, but this would be highly inefficient and result in one bachelor's degree every 4 year.
-
-Maybe this is how the members of the British royal family study.
-
-But for better of worse, the education is scaled.
-
-Instead, universities do two smart things:
-
-1. They teach to large groups of students at once instead of individuals.
-2. They overlap their "classes" so that each can all professors keep busy. This way you can increase throughput by 4x.
-
-For the first trick, the CPU world analogue is SIMD, which we covered in the previous chapter. And for the second, it is the technique called pipelining, which we are going to discuss next.
-
 ### Latency and Throughput
-
-![](img/superscalar.png)
 
 and adds a new level of complexity
 
@@ -93,3 +133,34 @@ You know that your documentation is good when people have to reverse engineer it
 There are reasons to believe that folks at Intel don't know that themselves.
 
 llvm-mca
+
+
+### An Education Analogy
+
+As a everyday metaphor, consider how a university works. It could have one student at a time and around 50 professors, which would take turns in tutoring, but this would be highly inefficient and result in one bachelor's degree every 4 year.
+
+Maybe this is how the members of the British royal family study.
+
+But for better of worse, the education is scaled.
+
+Instead, universities do two smart things:
+
+1. They teach to large groups of students at once instead of individuals, broadcasting the same thing (SIMD).
+2. They might split work between different parallel groups (superscalar processing).
+2. They overlap their classes so that each can all professors keep busy. This way you can increase throughput by 4x.
+
+For the first trick, the CPU world analogue is SIMD, which we covered in the previous chapter. And for the second, it is the technique called pipelining, which we are going to discuss next.
+
+Kind of match.
+
+1. SIMD to process 16, 32, or 64 bytes of data at a time.
+2. Superscalar processing to handle 2 to 4 SIMD blocks at a time
+3. Pipelining (~15, roughly equal to the number of years between kindergarten and PhD)
+
+In addition to that, other aspects are also true. Execution paths become more divergent. Some are stalled at various stages. Also some are interrupted. Some are speculated without knowing what happens.
+
+There are many aspects, and in this chapter we are going to explore them
+
+You might fail a course, but proceed somewhere else.
+
+Similar to education, these also cause problems, and the first thing we will do in this chapter is learn how to avoid them.
