@@ -8,6 +8,15 @@ Branchless and sometimes branch-free.
 Predication
 
 
+Hardware (stats-based) branch predictor is built-in in CPUs,
+$\implies$ Replacing high-entropy `if`'s with predictable ones help
+You can replace conditional assignments with arithmetic:
+  `x = cond * a + (1 - cond) * b`
+This became a common pattern, so CPU manufacturers added `CMOV` op
+  that does `x = (cond ? a : b)` in one cycle
+*^This masking trick will be used a lot for SIMD and CUDA later*
+
+
 ---
 
 Интересные примеры из реального мира:
