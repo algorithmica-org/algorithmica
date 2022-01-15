@@ -3,6 +3,17 @@ title: Throughput Computing
 weight: 4
 ---
 
+Optimizing for latency is quite different from optimizing for throughput.
+
+- You need to imagine the execution graph with its latencies and try to make it shorter. In most cases it just means finding the critical path and trying to get rid of it. [Binary GCD](/hpc/algorithms/gcd) is a good example of that.
+- You still need to imaging execution graph, but now loop it around. In most cases, there is one instruction that is the bottleneck.
+
+There are some examples where both are relevant, but in general you are bottlenecked either by latency or bandwidth.
+
+Loops are usually good examples. Consider the problem of computing an array sum.
+
+The same thing you could repeat for [SIMD](/hpc/simd/reduction). And in fact, compilers aren't always able to produce optimal code for this case.
+
 Convert to scalar code. Link to SIMD example of reduction.
 
 This is different. For single-invocation procedures you essentially want to minimize the latency on the critical data path. For stuff that gets called in a loop, you need to maximize throughput.

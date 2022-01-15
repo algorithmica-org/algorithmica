@@ -40,18 +40,26 @@ This whole sequence of operations is *long*. It takes up to 15-20 CPU cycles eve
 
 Pipelining does not reduce *actual* latency but functionally makes it seem like if it was composed of only the execution and memory stage. You still need to pay these 15-20 cycles, but you only need to do it once after you've found the sequence of instructions you are going to execute.
 
-Having this in mind, hardware manufacturers like to use *cycles per instruction* (CPI) instead of something like "average instruction latency" as the main performance indicator for CPU designs. It is a [pretty good metric](/hpc/profiling/benchmarking) for algorithm designs too, if we only consider *useful* instructions.
+Having this in mind, hardware manufacturers prefer to use *cycles per instruction* (CPI) instead of something like "average instruction latency" as the main performance indicator for CPU designs. It is a [pretty good metric](/hpc/profiling/benchmarking) for algorithm designs too, if we only consider *useful* instructions.
+
+CPI of a perfectly pipelined processor should tend to one, but it can actually be even lower if we make each stage of the pipeline "wider" by duplicating it, so that more than one instruction can be processed at a time. Because the cache and most of the ALU can be shared, this ends up being cheaper than adding a fully separate core. Such architectures, capable of executing more than one instruction per cycle, are called *superscalar*, and most modern CPUs are.
+
+You can only take advantage of superscalar processing if the stream of instructions contains groups of logically independent operations that can be processed separately. The instructions don't always arrive in the most convenient order, so, when possible, modern CPUs can execute them *out-of-order* to improve overall utilization and minimize pipeline stalls. How this magic works is a topic for [a more advanced discussion](scheduling), but for now, you can assume that the CPU maintains a buffer of pending instructions up to some distance in the future, and executes them as soon as the values of its operands are computed and there is an execution unit available.
+
+<!-- This poses some additional challenges in coordinating how to execute the instructions — and also in which order. -->
 
 ### Instruction Timings
+
+Interleaving the stages of execution is a general idea in digital electronics, and it is applied not only in the main CPU pipeline, but also on the level of separate instructions and [memory](/hpc/cpu-cache/mlp). Most execution units have their own little pipelines and can take another instruction just one or two cycles after the previous one.
 
 In this context, it makes sense to use two different "[costs](/hpc/complexity)" for instructions:
 
 - *Latency*: how many cycles are needed to receive the results of an instruction.
 - *Throughput*: how many instructions can be, on average, executed per cycle.
 
-Because our minds are so used to the cost model where "more" means "worse", it makes sense to use the reciprocals of throughput. It can be less than zero — because of superscalar processors.
+<!-- alternative throughput definitions, maybe in scheduling? -->
 
-The latency and throughput numbers are architecture-specific. You can get this data from special documents called [instruction tables](https://www.agner.org/optimize/instruction_tables.pdf). Some sample values for my Zen 2 (all are specified for 32-bit integers, if there is any difference):
+You can get latency and throughput numbers for a specific architecture from special documents called [instruction tables](https://www.agner.org/optimize/instruction_tables.pdf). Here are some samples values for my Zen 2 (all specified for 32-bit operands, if there is any difference):
 
 | Instruction | Latency | RThroughput |
 |-------------|---------|:------------|
@@ -65,45 +73,51 @@ The latency and throughput numbers are architecture-specific. You can get this d
 | `mul`       | 3       | 1           |
 | `div`       | 13-28   | 13-28       |
 
-Some caveats:
+Some comments:
 
-- Some instructions have a latency of 0. This means that these instruction are used to control the scheduler, and they don't reach the execution stage. This is by the virtue of renaming. But they still have non-zero latency because we first need to [process them](/hpc/architecture/layout). Decode width. You can't get throughput higher than that.
-- Most instructions are pipelined. Throughput means that after exactly $n$ cycles it can take another one. [Integer division](/hpc/arithmetic/division) is an exception: it is either very poorly pipelined or not pipelined at all (like in this case).
-- You could consider that the latency is zero or undefined. For memory operations, latency is usually specified for L1 cache. Latency can be dependent on data (again, division). Sometimes operations have many forms. For example, "mov" with memory operands does. Fused operations do memory accesses to.
-- Some instruction tables also list execution ports (or sometimes "pipes"). This is mostly relevant for SIMD.
+- Because our minds are so used to the cost model where "more" means "worse", people mostly use *reciprocals* of throughput instead of throughput.
+- If a certain instruction is especially frequent, its execution unit could be duplicated to increase its throughput — possibly to even more than one, but not higher than the [decode width](/hpc/architecture/layout).
+- Some instructions have a latency of 0. This means that these instruction are used to control the scheduler and don't reach the execution stage. They still have non-zero reciprocal throughput because the [CPU front-end](/hpc/architecture/layout) still needs to process them.
+- Most instructions are pipelined, and if they have the reciprocal throughput of $n$, this usually means that their execution unit can take another instruction after $n$ cycles (and if it is below 1, this means that there are multiple execution units, all capable of taking another instruction on the next cycle). One notable exception is the [integer division](/hpc/arithmetic/division): it is either very poorly pipelined or not pipelined at all.
+- Some instructions have variable latency, depending on not only the size, but also the values of the operands. For memory operations (including fused ones like `add`), latency is usually specified for the best case (an L1 cache hit).
+
+There are many more important little details, but this mental model will suffice for now.
+
+<!--
+
+This mental model covers 80% of your needs.
+
+Some instruction tables also list execution ports (or sometimes "pipes"). This is mostly relevant for SIMD.
 
 This is a bit of an advanced and not well understood topic. Documentation is very obscure. people have to reverse engineer it. There are reasons to believe that folks at Intel don't know that themselves. The most comprehensive one is probably, uops.info.
 
 There are tools like llvm-mca, but they aren't perfect either.
 
-### A Metaphor
+-->
 
-As a everyday metaphor, consider how a university works. It could have one student at a time and around 50 professors, which would take turns in tutoring, but this would be highly inefficient and result in one bachelor's degree every 4 year.
+### An Education Analogy
 
-Maybe this is how the members of the British royal family study.
+Consider how our education system works:
 
-But for better of worse, the education is scaled.
+1. Topics are taught to groups of students instead of individuals as broadcasting the same things to everyone at once is more efficient.
+2. An intake of students is split into groups lead by different teachers; assignments and other course materials are shared between groups.
+3. Each year the same course is taught to a new intake so that the teachers are kept busy.
 
-Instead, universities do two smart things:
+These innovations greatly increase the *throughput* of the whole system, although the *latency* (time to graduation for a particular student) remains unchanged (and maybe increases a little bit because personalized tutoring is more effective).
 
-1. They teach to large groups of students at once instead of individuals, broadcasting the same thing (SIMD).
-2. They might split work between different parallel groups (superscalar processing).
-2. They overlap their classes so that each can all professors keep busy. This way you can increase throughput by 4x.
+You can find many analogies with modern CPUs:
 
-For the first trick, the CPU world analogue is SIMD, which we covered in the previous chapter. And for the second, it is the technique called pipelining, which we are going to discuss next.
+1. CPUs use [SIMD parallelism](/hpc/simd) to execute the same operation on a block of different data points (comprised of 16, 32, or 64 bytes).
+2. There are multiple execution units that can process these instructions simultaneously while sharing other CPU facilities (usually 2-4 execution units).
+3. Instructions are processed in pipelined fashion (saving roughly the same number of cycles as the number of years between kindergarten and PhD).
 
-Kind of match.
+<!-- You can continue "up": there are multiple school branches (cores), multiple schools (computers), etc. -->
 
-1. SIMD to process 16, 32, or 64 bytes of data at a time.
-2. Superscalar processing to handle 2 to 4 SIMD blocks at a time
-3. Pipelining (~15, roughly equal to the number of years between kindergarten and PhD)
+In addition to that, several other aspects also match:
 
-In addition to that, other aspects are also true. Execution paths become more divergent. Some are stalled at various stages. Also some are interrupted. Some are speculated without knowing what happens.
-
-There are many aspects, and in this chapter we are going to explore them
-
-You might fail a course, but proceed somewhere else.
-
-Similar to education, these also cause problems, and the first thing we will do in this chapter is learn how to avoid them.
+- Execution paths become more divergent with time and need different execution units.
+- Some instructions may be stalled for various reasons.
+- Some instructions are even speculated (executed ahead of time), but then discarded.
+- Some instructions may be split in several distinct micro-operations that can proceed on their own.
 
 Programming pipelined and superscalar processors presents its own challenges, which we are going to address in this chapter.
