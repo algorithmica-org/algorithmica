@@ -3,6 +3,8 @@ title: The Cost of Branching
 weight: 2
 ---
 
+Minified code sample from [the most upvoted Stackoverflow answer ever](https://stackoverflow.com/questions/11227809/why-is-processing-a-sorted-array-faster-than-processing-an-unsorted-array)
+
 ### Branch Prediction
 
 One more important thing to note is that conditional jumps may be very expensive. This is due to the fact that a modern CPU has a pretty deep "pipeline" or instructions on different stages of execution: some may be just loading from memory, some may be decoding, executing or writing the results. The whole process takes 12-15 cycles, not counting the latency of the operation itself, and you essentially "pay" these 12-15 cycles if you can't predict the next instruction you will be executing well in advance.
