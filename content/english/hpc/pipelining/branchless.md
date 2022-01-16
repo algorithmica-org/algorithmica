@@ -59,13 +59,13 @@ for (int i = 0; i < N; i++)
 
 ### Forcing Predication
 
-В компиляторах есть способы, как сообщить, что бранч лучше заменить на cmov — __builtin_expect_with_probability(cond, true, 0.5) в GCC и __builtin_unpredictable(cond) в Clang — но оба теряются к тому моменту, когда оптимизатор решает, что выгоднее
+There are ways how to tell the compiler that `cmov` is beneficial You can use `__builtin_expect_with_probability(cond, true, 0.5` in GCC and `__builtin_unpredictable(cond)` in Clang, but both these hints are lost by the time optimizer decides what is more beneficial: branch or a cmov.
 
 https://bugs.llvm.org/show_bug.cgi?id=40027
 
 Branching is expensive.
 
-You can use cmov instructions. And something more complex in simd.
+You can use `cmov` instructions. And something more complex in simd.
 
 Unfortunately.
 
@@ -83,11 +83,15 @@ This became a common pattern, so CPU manufacturers added `CMOV` op
   that does `x = (cond ? a : b)` in one cycle
 *^This masking trick will be used a lot for SIMD and CUDA later*
 
+### Real-World Examples
 
----
+**Strings.** Oversimplifying things, the struct of an `std::string` is composed of a pointer to a null-terminated char array (aka c-string) allocated somewhere on the heap and the string size.
 
-Интересные примеры из реального мира:
+A very common value for strings is the empty string (which is also its default value), which you also need to handle somehow. An idiomatic thing to do is to put `nullptr` as pointer and 0 as the string length, and then check if the pointer is null or if the size is zero.
 
-1. Упрощенно, внутри структуры std::string есть указатель на выделенный где-то null-terminated отрезок массива чаров и size_t размер строки. Очень частое значение для строк — пустая строка, которую тоже нужно как-то обрабатывать. Вместо того, чтобы записать в качестве указателя пустой строки nullptr и делать в коде дорогую проверку «не является ли строка пустой», в компиляторе GCC просто выделено специальное место, в которой лежит нулевой байт, на адрес которого ссылаются все нулевые строки. Все процедуры со строками вынуждены читать этот бесполезный нулевой байт, но это получается дешевле, чем делать проверку.
+However, this check requires a separate branch and divergence in the execution path. So what we can do instead is to allocate a zero string somewhere (a pointer to a zero byte) and then simply point all empty strings there. All string operations have to read this useless zero byte, but it is still cheaper than doing the branch check.
 
-2. Бинарный поиск можно написать без бранчей, и на маленьких (влезающих в кэш) данных он будет работать в ~4 раза быстрее и стандартного самописного бинпоиска, и std::lower_bound — причем как чистый drop-in replacement, без какой-либо перестановки данных. Нет никаких серьёзных причин, почему обычный бинарный поиск компилятор не может оптимизировать сам — в GCC и LLVM заведены баги про это, но разработчики разных частей компилятора заявляют «это должно оптимизироваться не на этой стадии, а раньше/позже» и уже много лет перевешивают ответственность друг на друга
+**Binary search.** Binary search [can be implemented](/hpc/algorithms/binary-search) without branches, and on small (fitting into cache) arrays it works ~4x faster than the branchy `std::lower_bound`.
+
+That there are no substantial reasons why compilers can't do this on their own, but unfortunately this is just how it is right now.
+
