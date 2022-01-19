@@ -3,10 +3,12 @@ title: Sums and Other Reductions
 weight: 3
 ---
 
-We will start with the example of calculating the sum an array:
+*Reduction* (also known as *folding* in functional programming) is the action of computing the value of some associative and commutative operation (i.e. $(a \circ b) \circ c = a \circ (b \circ c)$ and $a \circ b = b \circ a$) over a range of arbitrary elements.
+
+The simplest example of reduction is calculating the sum an array:
 
 ```c++
-int sum_naive(int *a, int n) {
+int sum(int *a, int n) {
     int s = 0;
     for (int i = 0; i < n; i++)
         s += a[i];
@@ -20,7 +22,7 @@ $$
 s_i = \sum_{j=0}^{n / 8} a_{8 \cdot j + i }
 $$
 
-If we store these 8 accumulators in a single 256-bit vector, we can update them all at once by adding consecutive 8-element segments of the array. Armed with [the GCC vector extension](../x86-simd) syntax, this is straightforward:
+If we store these 8 accumulators in a single 256-bit vector, we can update them all at once by adding consecutive 8-element segments of the array. With [vector extensions](../x86-simd), this is straightforward:
 
 ```c++
 int sum_simd(v8si *a, int n) {
@@ -44,15 +46,17 @@ int sum_simd(v8si *a, int n) {
 }
 ```
 
-This is how compilers actually vectorize array sums and other reduction. Surprisingly, this is not the fastest way to do it, and we will come back to this problem in the last chapter to show why.
+You can use this approach for for other reductions, such as for finding the minimum or the xor-sum of an array.
 
 ### Horizontal Summation
 
-The last part, where we sum up the 8 accumulators stored in a vector register into a single scalar to get the total sum, is called "horizontal summation". Although extracting and adding every scalar one by one only takes a constant number of cycles, it can be computed slightly faster using a [special instruction](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#techs=AVX,AVX2&text=_mm256_hadd_epi32&expand=2941) that adds together pairs of adjacent elements in a register.
+The last part, where we sum up the 8 accumulators stored in a vector register into a single scalar to get the total sum, is called "horizontal summation".
 
-![](../img/hsum.png)
+Although extracting and adding every scalar one by one only takes a constant number of cycles, it can be computed slightly faster using a [special instruction](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#techs=AVX,AVX2&text=_mm256_hadd_epi32&expand=2941) that adds together pairs of adjacent elements in a register.
 
-Since it is a very specific operation, it can only be expressed using SIMD intrinsics, although the compiler probably emits roughly the same procedure anyway:
+![Horizontal summation in SSE/AVX. Note how the output is stored: the (a b a b) interleaving is common for reducing operations](../img/hsum.png)
+
+Since it is a very specific operation, it can only be done with SIMD intrinsics — although the compiler probably emits roughly the same procedure for the scalar code anyway:
 
 ```c++
 int hsum(__m256i x) {
@@ -64,4 +68,34 @@ int hsum(__m256i x) {
 }
 ```
 
-There are similar techniques for computing "horizontal minimum" and some other reductions.
+There are [other similar instructions](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#techs=AVX,AVX2&ig_expand=3037,3009,5135,4870,4870,4872,4875,833,879,874,849,848,6715,4845&text=horizontal), e. g. for integer multiplication or calculating absolute differences between adjacent elements (used in image processing).
+
+### Instruction-Level Parallelism
+
+Our implementation matches what the compiler produces automatically, but it is actually [suboptimal](/hpc/pipelining/throughput): when we use just one accumulator, we have to wait one cycle between the loop iterations for vector addition to complete, while its throughput is 2 on this microarchitecture.
+
+If we again divide the array in $B \geq 2$ parts and use a *separate* accumulator for each, we can saturate the throughput of vector addition and increase the performance twofold:
+
+```c++
+const int B = 2;
+
+int sum_simd(v8si *a, int n) {
+    v8si b[B] = {0};
+
+    for (int i = 0; i < n / 8; i += B)
+        for (int j = 0; j < B; j++)
+            b[j] += a[i + j];
+    
+    for (int i = 1; i < B; i++)
+        b[0] += b[i];
+    
+    int s = 0;
+
+    for (int i = 0; i < 8; i++)
+        s += b[0][i];
+
+    return s;
+}
+```
+
+If you have more than 2 relevant execution ports, you can increase `B` accordingly. But the n-fold performance increase will only apply to arrays that fit L1 cache — [memory bandwidth](/hpc/cpu-cache/bandwidth) will be the bottleneck for anything larger.
