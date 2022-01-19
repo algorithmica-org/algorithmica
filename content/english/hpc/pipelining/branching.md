@@ -35,7 +35,7 @@ On Clang, this produces assembly that looks like this:
     jmp  body
 counter:
     add  rcx, 4
-    jz   finished
+    jz   finished   ; "jump if rcx became zero"
 body:
     mov  edx, dword ptr [rcx + a + 4000000]
     cmp  edx, 49
@@ -70,6 +70,8 @@ It's peak is at 50-55%, as expected: branch misprediction is the most expensive 
 
 An interesting detail is that this graph is not unimodal: there is another local minimum at around 85-90%. We spend ~6.15 cycles per element there, or about 10-15% faster compared to when we always take the branch, accounting for the fact that we need to perform less additions. Branch misprediction stop affecting performance at this point, because it happens, not the whole instruction buffer is discarded, but only the operations that were speculatively scheduled. That 10-15% mispredict rate is the equilibrium point where we can see far enough in the pipeline not to stall, but save 10-15% on taking the cheaper ">=" branch.
 
+Note that it costs almost nothing to check for a condition that never or almost never occurs. This is why programmers use runtime exceptions and base case checks so profusely: if they are indeed rare, they don't really cost anything.
+
 ### Pattern Detection
 
 Here, everything that was needed of a branch prediction is a hardware statistics counter: if we went to branch A more often than to branch B, then it makes sense to speculatively execute branch A. But branch predictors on modern CPUs are considerably more advanced than that and can detect much more complicated patterns.
@@ -85,23 +87,23 @@ std::sort(a, a + n);
 
 We are still processing the same elements, but in different order, and instead of 14 cycles, it now runs in a little bit more than 4, which is exactly the average of the cost of the pure "<" and ">=" branches.
 
-The branch predictor pick up on much more complicated patterns than just "always left, then always right" or "left-right-left-right". If we just decrease the size of the array $N$ to 1000 (without sorting it), then branch predictor memorizes the entire sequence of branches, and the benchmark again measures at around 4 — in fact, even slightly less than in the sorted array, because in the former case branch predictor needs to spend some time flicking between the "always yes" and "always no" states.
+The branch predictor can pick up on much more complicated patterns than just "always left, then always right" or "left-right-left-right". If we just decrease the size of the array $N$ to 1000 (without sorting it), then branch predictor memorizes the entire sequence of comparisons, and the benchmark again measures at around 4 — in fact, even slightly less than in the sorted array, because in the former case branch predictor needs to spend some time flicking between the "always yes" and "always no" states.
 
-### Likeliness of Branches
+### Hinting Likeliness of Branches
 
-Because of array layout issues. Using `[[likely]]` and `[[unlikely]]` attributes like this:
+If you know beforehand which branch is more likely, it may be beneficial to [pass that information](/hpc/compilation/situational) to the compiler:
 
 ```c++
 for (int i = 0; i < N; i++)
-    if (a[i] < 90) [[likely]]
+    if (a[i] < P) [[likely]]
         s += a[i];
 ```
 
-It doesn't communicate anything to the branch predictor. Instead, it [changes the machine code layout](/hpc/architecture/layout) so that the rare branch doesn't obstruct the pipeline.
+When `P = 75`, it measures around ~7.3 cycles per element, while the original version without the hint needs ~8.3.
 
-For this reason, runtime exceptions and base case checks usually don't really cost anything if they are indeed rare.
+This hint does not eliminate the branch or communicate anything to the branch predictor, but it changes the [machine code layout](/hpc/architecture/layout) in a way that lets the CPU front-end process the more likely branch slightly faster (although usually by no more than one cycle).
 
-If the branches are fundamentally unpredictable, there is another idea. You can just get rid of branches — which we are going to explore in [the next section](../branchless).
+This optimization is only beneficial when you know which branch is more likely to be taken before the compilation stage. When the branch is fundamentally unpredictable, we can try to remove it completely using *predication* — a profoundly important technique that we are going to explore in [the next section](../branchless).
 
 ### Acknowledgements
 
