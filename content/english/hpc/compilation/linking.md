@@ -5,7 +5,7 @@ weight: 3
 
 <!-- static linking flag -->
 
-We have the last stage, linking, because it is is both easier and faster — due to parallelism and caching of intermediate results — to compile programs on a file-by-file basis and then link those files together.
+We have the last [stage](../stages), linking, because it is is both easier and faster — due to parallelism and caching of intermediate results — to compile programs on a file-by-file basis and then link those files together.
 
 It also gives the ability to distribute code as *libraries*, which can be either *static* or *shared*:
 
