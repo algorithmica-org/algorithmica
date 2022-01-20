@@ -40,7 +40,18 @@ sar  ebx, 31    ; t >>= 31
 mul  eax, ebx   ; x *= t
 ```
 
-But the compiler actually produced something different. Instead of going with this arithmetic trick, it used a special `cmov` ("conditional move") instruction that assigns a value based on a condition (which is computed and checked using the flags register, the same way as for jumps):
+Another, more complicated way to implement this whole sequence is to convert this sign byte into a mask and then use bitwise `and` instead of multiplication: `((a[i] - 50) >> 1 - 1) & a`. This makes the whole sequence one cycle faster, considering that unlike other instructions, `mul` takes 3 cycles:
+
+```nasm
+mov  ebx, eax   ; t = x
+sub  ebx, 50    ; t -= 50
+sar  ebx, 31    ; t >>= 31
+; mul  eax, ebx ; x *= t
+sub  ebx, 1     ; t -= 1 (causing underflow if t = 0)
+and  eax, ebx   ; x &= t
+```
+
+But the compiler actually elects to do something different. Instead of going with this arithmetic trick, it used a special `cmov` ("conditional move") instruction that assigns a value based on a condition (which is computed and checked using the flags register, the same way as for jumps):
 
 ```nasm
 mov     ebx, 0      ; cmov doesn't support immediate values, so we need a zero register
