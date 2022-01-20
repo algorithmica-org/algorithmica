@@ -1,6 +1,7 @@
 ---
 title: Non-Zero-Cost Abstractions
 weight: 7
+draft: true
 ---
 
 In general, abstractions are great. Applied well, they reduce the amount of code and the mental burden of a programer.

@@ -1,6 +1,7 @@
 ---
 title: Compile-Time Computation
 weight: 8
+draft: true
 ---
 
 ### Precalculation
