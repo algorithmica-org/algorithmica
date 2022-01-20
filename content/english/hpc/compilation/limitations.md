@@ -3,6 +3,8 @@ title: What Compilers Can and Can't Do
 weight: 10
 ---
 
+Let's sum up this chapter with a general advice.
+
 Writing optimizing compilers is very hard. The last Turing award went to Alfred Aho and Jeffrey Ullman for [a 1000-page book](https://www.amazon.com/Compilers-Principles-Techniques-Tools-2nd/dp/0321486811/ref=pd_sbs_2?pd_rd_w=UZXK6&pf_rd_p=2419a049-62bf-452e-b0d0-ca5b7e35a7b4&pf_rd_r=AR7FPK4XQJD91HGS4PA3&pd_rd_r=2c8dc8d5-d0b8-40f3-b413-dbc23caaff70&pd_rd_wg=HsK5g&pd_rd_i=0321486811&psc=1) they wrote about compilers, which is considered an *introductory* textbook.
 
 There are about 120 of optimizations in GCC included in `-O3`, and about 60 of them even have their own [Wikipedia pages](https://en.wikipedia.org/wiki/Category:Compiler_optimizations). At a very high level, these optimizations improve performance by:
@@ -22,7 +24,7 @@ In general, when an optimization doesn't happen, it is usually because one of th
 
 In addition, optimization sometimes fails just due to the source code being overly complicated.
 
-## Checklist
+### Checklist
 
 Usually the right approach to performance is to think how the main hot spots of the implementation should look like in assembly, write high-level code that resembles it as much as possible, and then repeatedly ask yourself the following questions until you are happy with its performance:
 

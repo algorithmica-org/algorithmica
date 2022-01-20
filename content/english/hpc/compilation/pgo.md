@@ -1,6 +1,6 @@
 ---
 title: Profile-Guided Optimization
-weight: 6
+weight: 5
 ---
 
 Adding all this metadata to the source code is tedious. People already hate writing C++ even without having to do it.

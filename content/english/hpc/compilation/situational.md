@@ -1,6 +1,6 @@
 ---
 title: Situational Optimizations
-weight: 5
+weight: 3
 ---
 
 Generally, you always want to specify the exact platform you are running and turn on `-O3`, but other optimizations, like the ones discussed [in the previous section](../assembly), are far more situational and require some input from the programmer.

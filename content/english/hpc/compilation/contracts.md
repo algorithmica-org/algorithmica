@@ -1,6 +1,6 @@
 ---
 title: Contract Programming
-weight: 4
+weight: 6
 ---
 
 In safe languages like Java and Rust, you normally have a well-defined behavior for every possible operation and every possible input. There are some things that are *underdefined*, like the order of keys in a hash table, but these are usually some minor details left to implementation for potential performance gains in the future.

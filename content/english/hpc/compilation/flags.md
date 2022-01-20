@@ -5,6 +5,8 @@ weight: 2
 
 The first step of getting high performance from the compiler is to ask for it.
 
+### Optimization Levels
+
 There are 4 *and a half* main levels of optimization for speed in GCC:
 
 - `-O0` is the default one that does no optimizations (although, in a sense, it does optimize: for compilation time).
@@ -12,6 +14,10 @@ There are 4 *and a half* main levels of optimization for speed in GCC:
 - `-O2` enables all optimizations that are known to have little to no negative side effects and take reasonable time to complete (this is what most projects use for production builds).
 - `-O3` does very aggressive optimization, enabling almost all *correct* optimizations implemented in GCC.
 - `-Ofast` does everything in `-O3`, plus a few more optimizations flags that may break strict standard compliance, but not in a way that would be critical for most applications (e. g. floating-point operations may be rearranged so that the result is off by a few bits of the mantissa).
+
+There are many other flags that are not enabled by default. `-ffast-math`, `-unroll-loops`.
+
+### Specifying Targets
 
 The next thing you want to do is to tell the compiler more about the computer(s) this code is supposed to be run on: the smaller the set of platforms is, the better. By default it will generate binaries that can run on any relatively new (>2000) x86 CPU. The simplest way to narrow it down is to pass `-march` flag to specify the exact microarchitecture: `-march=haswell`. If you are compiling on the same computer that will run the binary, you can use `-march=native` for auto-detection.
 
@@ -25,6 +31,8 @@ These options can also be specified for a compilation unit with pragmas instead 
 ```
 
 This is useful when you need to optimize a single high-performance procedure without increasing the build time for the entire project.
+
+### Multiversioned Functions
 
 Sometimes you may also want to provide several architecture-specific implementations in a single library. You can use attribute-based syntax to select between multiversioned functions automatically during compile-time:
 
