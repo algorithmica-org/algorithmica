@@ -3,6 +3,19 @@ title: Modular Inverse
 weight: 1
 ---
 
+```c++
+mint inv() const {
+    uint t = x;
+    uint res = 1;
+    while (t != 1) {
+        uint z = mod / t;
+        res = (ull) res * (mod - z) % mod;
+        t = mod - t * z;
+    }
+    return res;
+}
+```
+
 In this section, we are going to discuss some preliminaries before discussing more advanced topics.
 
 In computers, we use the 1st of January, 1970 as the start of the "Unix era", and all time computations are usually done relative to that timestamp.
