@@ -3,15 +3,17 @@ title: Contract Programming
 weight: 6
 ---
 
-In safe languages like Java and Rust, you normally have a well-defined behavior for every possible operation and every possible input. There are some things that are *underdefined*, like the order of keys in a hash table, but these are usually some minor details left to implementation for potential performance gains in the future.
+In "safe" languages like Java and Rust, you normally have a well-defined behavior for every possible operation and every possible input. There are some things that are *under-defined*, like the order of keys in a hash table, but these are usually some minor details left to implementation for potential performance gains in the future.
 
 In contrast, C and C++ take the concept of undefined behavior to another level. Certain operations don't cause an error during compilation or runtime but are just not *allowed* — in the sense of there being a contract between a programmer and a compiler, that in case of undefined behavior the compiler can do literally anything, including formatting your hard drive.
 
-But compiler authors are not interested in formatting your hard drive of blowing up your monitor. Instead, undefined behavior is used to guarantee a lack of corner cases and help optimization.
+### Why Undefined Behavior Exists
 
-For example, consider the case of signed overflow. On almost all architectures, signed integers overflow the same way as unsigned ones, with `INT_MAX + 1 == INT_MIN`, but yet this behavior is not a part of the C/C++ standard. This was very much intentional: if you disallow signed integer overflow, then `(x + 1) > x` is guaranteed to be always true for `int`, but not for `unsigned int`. For signed types, this allows compilers to optimize such checks away.
+Compiler authors are not interested in formatting your hard drive of blowing up your monitor. Instead, undefined behavior is used to guarantee a lack of corner cases and help optimization.
 
-As a more naturally occurring example, consider the case of a loop with an integer control variable. C++ and Rust are advocating for using an unsigned integer (`size_t` / `usize`), while C programmers stubbornly keep using `int`. For a reason why, consider the following `for` loop:
+For example, consider the case of signed overflow. On almost all architectures, [signed integers](/hpc/arithmetic/integer) overflow the same way as unsigned ones, with `INT_MAX + 1 == INT_MIN`, but yet this behavior is not a part of the C/C++ standard. This is very much intentional: if you disallow signed integer overflow, then `(x + 1) > x` is guaranteed to be always true for `int`, but not for `unsigned int`. For signed types, this allows compilers to optimize such checks away.
+
+As a more naturally occurring example, consider the case of a loop with an integer control variable. Rust and modern C++ are advocating for using an unsigned integer (`size_t` / `usize`), while C programmers stubbornly keep using `int`. For a reason why, consider the following `for` loop:
 
 ```cpp
 for (unsigned int i = 0; i < n; i++) {
@@ -33,9 +35,13 @@ T at(size_t k) {
 }
 ```
 
-An interesting fact is that these checks are quite rarely actually executed during runtime, because compiler can often prove during compilation time that everything is fine — for example, when iterating in a `for` loop from 1 to the array size and indexing $i$-th element on each step.
+An interesting fact is that these checks are quite rarely actually executed during runtime, because the compiler can often prove, during compilation time, that everything will be fine. For example, when iterating in a `for` loop from 1 to the array size and indexing $i$-th element on each step, nothing illegal can possibly happen.
 
-When compiler can't prove inexistence of corner cases, but you can, you can use the mechanism of undefined behavior to provide it with additional information. Clang has a helpful `__builtin_assume` function where you can put a statement that is guaranteed to be true, and compiler will use this assumption. In GCC you can do the same with `__builtin_unreachable`:
+### Assumptions
+
+When the compiler can't prove inexistence of corner cases, but you can, this additional information can be provided using the mechanism of undefined behavior.
+
+Clang has a helpful `__builtin_assume` function where you can put a statement that is guaranteed to be true, and compiler will use this assumption. In GCC you can do the same with `__builtin_unreachable`:
 
 ```cpp
 void assume(bool pred) {
@@ -44,9 +50,26 @@ void assume(bool pred) {
 }
 ```
 
-Then you can put `assume(k < vector.size())` before `at` and the bounds check should be optimized away.
+Then you can put `assume(k < vector.size())` before `at`, and the bounds check should be optimized away.
+
+Another thing you can do is use it as a run-time debug check.
+
+Combine it with `assert` and `static_assert` to find bugs.
+
+```cpp
+void assume(bool pred) {
+    if (!pred)
+        #ifdef
+        __builtin_unreachable();
+        #else
+        exit(0); // ?
+        #endif
+}
+```
 
 ### Arithmetic
+
+One large chunk is related to arithmetic.
 
 Corner cases and tiny details are also something you should keep in mind when doing arithmetic. 
 
@@ -120,4 +143,53 @@ void add(int * __restrict__ a, const int * __restrict__ b, int n) {
 }
 ```
 
+`std::assume_aligned`, specifiers. This is useful for SIMD instructions that need memory alignment guarantees
+
 These keywords are also a good idea to use by themselves for the purpose of self-documenting.
+
+General advice is to inspect the assembly, and then try to think about corner cases limiting the compiler form optimizing it.
+
+### C++20 Contracts
+
+They are not implemented in any major compiler, but this is an exciting new feature.
+
+http://www.hellenico.gr/cpp/w/cpp/language/attributes/contract.html
+
+This feature is quite powerful, and it has made into the C++20 standard. Now you can write code like this:
+
+```c++
+T at(size_t k)
+    [[ expects: k < n ]]
+{
+    return _memory[k];
+}
+```
+
+Specify preconditions.
+
+You can use `ensures` and `assert` keywords. It has the additional bonus that the program can be built in debug mode,.
+
+```c++
+int foo(int x, int y)
+    [[ expects: x > y ]]   // precondition  #1
+    [[ expects: y > 0 ]]   // precondition  #2
+    [[ ensures r: r < x ]] // postcondition #3
+{
+    int z = (x - x % y) / y;
+    [[ assert: z >= 0 ]];  // assertion
+    return z;
+}
+```
+
+
+```c++
+float length(float x, float y)
+    [[ expects: x >= 0 ]]   // precondition  #1
+    [[ expects: y >= 0 ]]   // precondition  #2
+    [[ ensures r: r > x && r > y ]] // postcondition #3
+{
+    float r = sqrt(x * x + y * y);
+    [[ assert: z >= 0 ]];  // assertion
+    return z;
+}
+```
