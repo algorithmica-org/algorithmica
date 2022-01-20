@@ -27,7 +27,7 @@ This process is called *link-time optimization*, and it is possible because mode
 
 LTO is a relatively recent feature (it appeared in GCC only around 2014), and it is still far from perfect. In C and C++, the way to make sure no performance is lost is to create a *header-only library*. As the name suggests, they are just header files that contain full definitions of all functions, and so by simply including them, the compiler gets access to all optimizations possible. Although you do have to recompile them from scratch each time, this approach retains full control and makes sure that no performance is lost.
 
-### Inspecting Output
+### Inspecting the Output
 
 Examining output from each of these stages can yield useful insights into what's happening in your program.
 
