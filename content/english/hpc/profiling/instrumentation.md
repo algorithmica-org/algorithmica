@@ -3,11 +3,9 @@ title: Instrumentation
 weight: 1
 ---
 
-## Instrumentation
-
 *Instrumentation* is an overcomplicated term that means inserting timers and other tracking code into programs. The simplest example is using the `time` utility in Unix-like systems to measure the duration of execution for the whole program.
 
-More generally, you want to know *which parts* of the program actually need optimization. There are tools shipped with compilers and IDEs that can time designated functions automatically — but it is more robust to do it by hand using any methods of interacting with time that the language provides:
+More generally, we want to know *which parts* of the program need optimization. There are tools shipped with compilers and IDEs that can time designated functions automatically, but it is more robust to do it by hand using any methods of interacting with time that the language provides:
 
 ```cpp
 clock_t start = clock();
@@ -18,7 +16,7 @@ printf("do_something() took %.4f", seconds);
 
 One nuance here is that you can't measure the execution time of particularly quick functions this way. The `clock` function returns the current timestamp in microseconds ($10^{-6}$), and it does so by waiting to the nearest ceiled microsecond — so it basically takes up to 1000ns to complete, which is an eternity in the world of low-level optimization.
 
-As a workaround, you can invoke the function repeatedly in a loop, time the whole thing once, and then divide the total time by the number of iterations. You also need to ensure nothing gets cached or affected by similar side effects. This a rather tedious way of doing profiling, especially if you are interested in multiple small sections of the program.
+As a workaround, you can invoke the function repeatedly in a loop, time the whole thing once, and then divide the total time by the number of iterations. You also need to ensure nothing gets cached or affected by similar side effects. This is a rather tedious way of doing profiling, especially if you are interested in multiple small sections of the program.
 
 ```cpp
 #include <stdio.h>
@@ -39,13 +37,17 @@ int main() {
 }
 ```
 
+<!--
+
 It is also helpful to include and either read from the standard input or (if you are multiple )
 
 160ns, but on Windows it is
 
 There are still some nuances: compiler may (it calls a dynamically linked library, so this is not the case)
 
-### Sampling
+-->
+
+### Event Sampling
 
 Instrumentation can also be used for collecting other types of info that can give useful insights about the performance of a particular algorithm. For example:
 

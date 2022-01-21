@@ -9,7 +9,7 @@ Do achieve this, the address space of the virtual memory is divided into *pages*
 
 Since the address translation needs to be done for each memory request, this process is also cached with what's called *translation lookaside buffer* (TLB), which is just a very small cache for physical page addresses. When it doesn't hit, you essentially pay double the cost of a memory access. For this reason, some operating systems have support for larger pages (~2MB).
 
-![From John Bell\'s OS course at University of Illinois](img/virtual-memory.jpg)
+![From John Bell\'s OS course at University of Illinois](../img/virtual-memory.jpg)
 
 This mechanism allows using external memory quite transparently. Operating systems have two basic mechanisms:
 

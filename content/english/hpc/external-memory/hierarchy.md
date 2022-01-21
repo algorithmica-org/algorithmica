@@ -7,7 +7,7 @@ weight: 1
 
 Modern computer memory is hierarchical. It consists of multiple *cache layers* of varying speed and size, where *upper* levels typically store most frequently accessed data from *lower* levels to reduce latency. Each new level is usually an order of magnitude faster, but also smaller and/or more expensive.
 
-![](img/hierarchy.png)
+![](../img/hierarchy.png)
 
 Abstractly, various memory devices can be described as modules that have a certain storage capacity $M$ and can read or write data in blocks of $B$ (not individual bytes!), taking a fixed time to complete.
 
