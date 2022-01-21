@@ -48,15 +48,9 @@ Since there are far more differences between the architectures than just this on
 
 For historical reasons, instruction mnemonics in most assembly languages are very terse. Back when people used to write assembly by hand and repeatedly wrote the same set of common instructions, one less character to type was one step away from insanity.
 
-For example, `mov` is "copy[^mov] a word" (from or into memory, or between two registers[^renaming]), `inc` is "increment by 1" and `idiv` is "signed division". You can look up the description of an instruction by its name in [one of x86 references](https://www.felixcloutier.com/x86/), but most instructions do what you'd think they do.
+For example, `mov` is for "store/load a word", `inc` is for "increment by 1", `mul` for is "multiply", and `idiv` is for "integer division". You can look up the description of an instruction by its name in [one of x86 references](https://www.felixcloutier.com/x86/), but most instructions do what you'd think they do.
 
-[^mov]: Despite the name, the `mov` instruction doesn't *move* the value into a register, but *copies* it, preserving the original.
-
-[^renaming]: When used to copy the value of a register into the other, the `mov` instruction instead performs *register renaming* — informs the CPU that the value referred by register X is actually stored in register Y — without causing any additional delay as to when doing actual copying (except for reading and decoding the instruction itself).
-
-Most instructions write their result into the first operand, which can also be involved in the computation like in the `add eax, [rdi]` example we saw before. Operands can be either constant values, registers or memory locations.
-
-**Constants** are just integer or floating point values: `42`, `0x2a`, `3.14`, `6.02e23`. They are embedded right into the machine code. There are also string constants such as `hello` or `world\n` with their own little subset of operations, but that is a somewhat obscure corner of the assembly language that we are not going to explore.
+Most instructions write their result into the first operand, which can also be involved in the computation like in the `add eax, [rdi]` example we saw before. Operands can be either registers, constant values, or memory locations.
 
 **Registers** are named `rax`, `rbx`, `rcx`, `rdx`, `rdi`, `rsi`, `rbp`, `rsp`, and `r8`-`r15` for a total of 16 of them. The "letter" ones are named like that for historical reasons: `rax` is "accumulator", `rcx` is "counter", `rdx` is "data" and so on, but, of course, they don't have to be used only for that.
 
@@ -64,17 +58,41 @@ There are also 32-, 16-bit and 8-bit registers that have similar names (`rax` �
 
 These are just the *general-purpose* registers that you can, with [some exceptions](../functions), use however you like in most instructions. There is also a separate set of registers for [floating-point arithmetic](/hpc/arithmetic/float), a bunch of very wide registers used in [vector extensions](/hpc/simd), and a few special ones that are needed for [control flow](../jumps), but we'll get there in time.
 
-**Memory addressing** is done with the `[]` operator, but it can do more than just reinterpret a value stored in a register as a memory location. Address operand takes up to 4 parameters presented in the syntax:
+**Constants** are just integer or floating point values: `42`, `0x2a`, `3.14`, `6.02e23`. They are more commonly called *immediate values* because they are embedded right into the machine code. Because it may considerably increase the complexity of the instruction encoding, some instructions don't support immediate values, or allow just a fixed subset of them. In some cases you have to load a constant value into a register and then use it instead of an immediate value.
+
+Apart from numeric values, there are also string constants such as `hello` or `world\n` with their own little subset of operations, but that is a somewhat obscure corner of the assembly language that we are not going to explore here.
+
+### Moving Data
+
+Some instructions may have the same mnemonic, but have different operand types, in which case they are considered distinct instructions as they may perform slightly different operations and take different time to execute. The `mov` instruction is a vivid example of that, as it comes in around 20 different forms, all related to moving data: either between the memory and registers or just between two registers. Despite the name, it doesn't *move* a value into a register, but *copies* it, preserving the original.
+
+When used to copy data between two registers, the `mov` instruction instead performs *register renaming* internally — informs the CPU that the value referred by register X is actually stored in register Y — without causing any additional delay except for maybe reading and decoding the instruction itself. For the same reason, the `xchg` instruction that swaps two registers also doesn't cost anything.
+
+As we've seen above with the fused `add`, you don't have to use `mov` for every memory operation: some arithmetic instructions conveniently support memory locations as operands.
+
+<!--
+
+Some operations are fused like `add r m` or `inc m` (this is one of the rare instructions that doesn't use any register values as operands).
+
+When address is used,
+
+Mirroring
+
+-->
+
+### Addressing Modes
+
+Memory addressing is done with the `[]` operator, but it can do more than just reinterpret a value stored in a register as a memory location. The address operand takes up to 4 parameters presented in the syntax:
 
 ```
 SIZE PTR [base + index * scale + displacement]
 ```
 
-where scale can be 2, 4, or 8, and it calculates the pointer `base + index * scale + displacement` and dereferences it.
+where `displacement` needs to be an integer constant and `scale` can be either 2, 4, or 8. What it does is calculates the pointer `base + index * scale + displacement` and dereferences it.
 
-Using complex addressing is [at most one cycle slower](/hpc/cpu-cache/pointers) than dereferencing a pointer directly, and it can be useful when you have, say, an array of structures, and want to load a specific field of its $i$-th element.
+<!-- You can use them in any order: the assembler will figure it out. -->
 
-The address computation is often useful by itself: the `lea` ("load effective address") instruction calculates the memory address of the operand and stores it in a register in one cycle, without doing any actual memory operations. While its intended use is for actually computing memory addresses, it is also often used as an arithmetic trick that would otherwise involve 1 multiplication and 2 additions — for example, you can multiply by 3, 5, and 9 with it.
+Using complex addressing is [at most one cycle slower](/hpc/cpu-cache/pointers) than dereferencing a pointer directly, and it can be useful when you have, for example, an array of structures and want to load a specific field of its $i$-th element.
 
 Addressing operator needs to be prefixed with a size specifier for how many bits of data are needed:
 
@@ -83,9 +101,11 @@ Addressing operator needs to be prefixed with a size specifier for how many bits
 - `DWORD` for 32 bits
 - `QWORD` for 64 bits
 
-There is also a more rare `TBYTE` for 80 bits, and `XMMWORD`, `YMMWORD`, and `ZMMWORD` for 128, 256, and 512 bits respectively.
+There is also a more rare `TBYTE` for [80 bits](/hpc/arithmetic/float), and `XMMWORD`, `YMMWORD`, and `ZMMWORD` for [128, 256, and 512 bits](/hpc/simd) respectively. All these types don't have to be written in uppercase, but this is how most compilers emit them.
 
-(These types don't have to be written in uppercase, but this is how most compilers emit them.)
+The address computation is often useful by itself: the `lea` ("load effective address") instruction calculates the memory address of the operand and stores it in a register in one cycle, without doing any actual memory operations. While its intended use is for actually computing memory addresses, it is also often used as an arithmetic trick that would otherwise involve 1 multiplication and 2 additions — for example, you can multiply by 3, 5, and 9 with it.
+
+It also frequently serves as a replacement for `add`, because it lets you avoid using a separate `mov` instruction if you need to move the result of `add` somewhere else: `add` only works in the `a += b` mode, while `lea` lets you do `a = b + c` (or even `a = b + c + d` if one of them is a constant).
 
 ### Alternative Syntax
 
