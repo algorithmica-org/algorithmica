@@ -87,9 +87,10 @@ This work is largely based on blog posts, research papers, conference talks and 
 
 - [Agner Fog](https://agner.org/optimize/)
 - [Daniel Lemire](https://lemire.me/en/#publications)
+- [Andrei Alexandrescu](https://erdani.com/index.php/about/)
+- Chandler Carruth
 - [Wojciech Muła](http://0x80.pl/articles/index.html)
 - [Malte Skarupke](https://probablydance.com/)
-- Matt Kulukundis
 - [Travis Downs](https://travisdowns.github.io/)
 - [Brendan Gregg](https://www.brendangregg.com/blog/index.html)
 - [Andreas Abel](http://embedded.cs.uni-saarland.de/abel.php)
@@ -97,15 +98,16 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Igor Ostrovsky](http://igoro.com/)
 - [Steven Pigeon](https://hbfs.wordpress.com/)
 - [Denis Bakhvalov](https://easyperf.net/notes/)
-- Kazushige Goto
 - [Paul Khuong](https://pvk.ca/)
 - [Pat Morin](https://cglab.ca/~morin/)
 - [Victor Eijkhout](https://www.tacc.utexas.edu/about/directory/victor-eijkhout)
 - [Robert van de Geijn](https://www.cs.utexas.edu/~rvdg/)
 - [Edmond Chow](https://www.cc.gatech.edu/~echow/)
 - [Peter Cordes](https://stackoverflow.com/users/224132/peter-cordes)
-- Oleksandr Bacherikov
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
+- Kazushige Goto
+- Matt Kulukundis
+- Oleksandr Bacherikov
 
 Volume: 300-400 pages  
 Release date: early 2022
@@ -142,11 +144,12 @@ Halfway through the book I've realized that very long (>10 pages) articles is pe
 I have something like this in mind:
 
 ```
-1. Complexity Models
- 1.1. Modern Computing Machinery
- 1.2. How Code Gets Executed
- 1.3. Beyond Big O
-2. CPU Microarchitecture
+0. Preface: Why Go Beyond Big O
+1. Computer Models
+ 1.1. Modern Hardware
+ 1.2. The "Speed" of Programming Languages
+ 1.3. The Relevance of Algorithmic Programming
+2. Computer Architecture
  1.1. Introduction to Assembly
  1.2. Control Flow
  1.3. Loop Unrolling
@@ -164,19 +167,18 @@ I have something like this in mind:
  4.1. Negotiating with Compilers
  4.2. Stitching Programs Together
  4.3. Situational Optimizations
- 4.4. Why Undefined Behavior Exists
+ 4.4. Contracts and Undefined Behavior
  4.5. Memory Aliasing
  4.6. Arithmetic Optimizations
  4.7. Code Layout
- 4.8. Compile-time Computation
+ 4.8. Compile-Time Computation
 5. Profiling
  5.1. Instrumentation
  5.2. Statistical Profiling
  5.3. Program Simulation
  5.4. Machine Code Analyzers
- 5.5. Frequency Scaling
- 5.6. Reducing Noise
- 5.7. Benchmarking
+ 5.5. Reducing Noise
+ 5.6. Benchmarking
 6. Arithmetic
  6.1. Floating-Point Numbers
  6.2. Interval Arithmetic
@@ -187,14 +189,13 @@ I have something like this in mind:
  6.7. Bit Manipulation
 (6.8. Data Compression)
 7. Number Theory
- 7.1. Prime Numbers
- 7.2. Modular Inverse
- 7.3. Modular Reduction
-(7.4. Finite Fields)
-(7.5. Error Correction)
- 7.6. Cryptography
- 7.7. Hashing
- 7.8. Random Number Generation
+ 7.1. Modular Inverse
+ 7.2. Montgomery Multiplication
+(7.3. Finite Fields)
+(7.4. Error Correction)
+ 7.5. Cryptography
+ 7.6. Hashing
+ 7.7. Random Number Generation
 8. External Memory
  8.1. External Sorting
  8.2. List Ranking
@@ -213,10 +214,9 @@ I have something like this in mind:
  9.6. Memory Latency
  9.7. Memory-Level Parallelism
  9.8. Prefetching
- 9.9. RAM-Specific Timings
- 9.10. Pointers and Their Alternatives
-(9.11. Memory Management)
-(9.12. memcpy and memset)
+ 9.9. Pointers and Their Alternatives
+(9.10. Memory Management)
+(9.11. memcpy and memset)
 10. SIMD Parallelism
  10.1. Using SIMD in C/C++
  10.2. Reductions
@@ -230,15 +230,16 @@ I have something like this in mind:
  11.4. Logistic Regression
  11.5. Big Integers & Karatsuba Algorithm
  11.6. Fast Fourier Transform
- 11.7. Argmin with SIMD
- 11.8. Reading and Writing Integers
-(11.9. Reading and Writing Floats)
-(11.10. String Searching)
- 11.11. Sorting
- 11.12. Matrix Multiplication
+ 11.7. Number-Theoretic Transform
+ 11.8. Argmin with SIMD
+ 11.9. Reading and Writing Integers
+(11.10. Reading and Writing Floats)
+(11.11. String Searching)
+ 11.12. Sorting
+ 11.13. Matrix Multiplication
 12. Data Structure Case Studies
  12.1. Binary Search
- 12.2. Prefix Sum
+ 12.2. Dynamic Prefix Sum
 (12.3. Ordered Trees)
 (12.4. Range Minimum Query)
  12.5. Hash Tables

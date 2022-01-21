@@ -1,6 +1,6 @@
 ---
 title: Bit Manipulation
-weight: 4
+weight: 7
 draft: true
 ---
 

@@ -1,6 +1,6 @@
 ---
 title: SSE & AVX Cookbook
-weight: 3
+weight: 11
 draft: true
 ---
 
