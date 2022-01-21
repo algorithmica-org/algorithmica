@@ -119,3 +119,5 @@ Next, you can "zoom in" on any of these functions, and, among others things, it 
 On the left column, you can see the fraction of times the instruction pointer stopped on a specific line. Because of intricacies such as pipelining and out-of-order execution, "now" is not a well-defined concept in modern CPUs, so the data is slightly inaccurate as the instruction pointer drifts a little bit forward. But it is still useful: here we spend ~65% of the time on the jump instruction because it has a comparison operator before it, indicating that the control flow waits there for this comparison to be decided.
 
 At the individual cycle level, we need something more precise.
+
+<!-- flame graphs -->

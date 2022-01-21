@@ -46,3 +46,5 @@ for (int i = 0; i < n; i++)
 ```
 
 There are [many other ways](https://software.intel.com/sites/default/files/m/4/8/8/2/a/31848-CompilerAutovectorizationGuide.pdf) of hinting compiler what we meant exactly, but in especially complex cases — when inside the loop there are a lot of branches or some functions are called — it is easier to go down to the intrinsics level and write it yourself.
+
+`std::assume_aligned`, specifiers. This is useful for SIMD instructions that need memory alignment guarantees
