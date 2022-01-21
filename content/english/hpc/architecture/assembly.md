@@ -105,7 +105,7 @@ There is also a more rare `TBYTE` for [80 bits](/hpc/arithmetic/float), and `XMM
 
 The address computation is often useful by itself: the `lea` ("load effective address") instruction calculates the memory address of the operand and stores it in a register in one cycle, without doing any actual memory operations. While its intended use is for actually computing memory addresses, it is also often used as an arithmetic trick that would otherwise involve 1 multiplication and 2 additions — for example, you can multiply by 3, 5, and 9 with it.
 
-It also frequently serves as a replacement for `add`, because it lets you avoid using a separate `mov` instruction if you need to move the result of `add` somewhere else: `add` only works in the `a += b` mode, while `lea` lets you do `a = b + c` (or even `a = b + c + d` if one of them is a constant).
+It also frequently serves as a replacement for `add` because it doesn't need a separate `mov` instruction if you need to move the result somewhere else: `add` only works in the two-register `a += b` mode, while `lea` lets you do `a = b + c` (or even `a = b + c + d` if one of them is a constant).
 
 ### Alternative Syntax
 
