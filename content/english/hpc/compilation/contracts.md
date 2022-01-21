@@ -121,7 +121,7 @@ So, for the general case, we have to insert some crutches to make it work:
 ```nasm
 mov  ebx, eax
 shr  ebx, 31    ; extract the sign bit
-add  eax, ebx   ; add 1 to the value if it is negative, to ensure rounding towards zero
+add  eax, ebx   ; add 1 to the value if it is negative to ensure rounding towards zero
 sar  eax        ; this one shifts in sign bits
 ```
 
@@ -151,7 +151,7 @@ void add(int *a, int *b, int n) {
 
 Since each iteration of this loop is independent, it can be executed in parallel and [vectorized](/hpc/simd). But is it, technically?
 
-There may be a problem if the arrays `a` and `b` intersect. Consider the case when `b == a + 1`, that is, if `b` is a just a memory view of `a` starting from the second element. In this case, the next iteration depends on the previous one, and the only correct solution is execute the loop sequentially. The compilers has to check for such possibilities, even if the programmer knows they can't happen.
+There may be a problem if the arrays `a` and `b` intersect. Consider the case when `b == a + 1`, that is, if `b` is a just a memory view of `a` starting from the second element. In this case, the next iteration depends on the previous one, and the only correct solution is execute the loop sequentially. The compiler has to check for such possibilities, even if the programmer knows they can't happen.
 
 This is why we have `const` and `restrict` keywords. The first one enforces that that we won't modify memory with the pointer variable, and the second is a way to tell compiler that the memory is guaranteed to be not aliased.
 
