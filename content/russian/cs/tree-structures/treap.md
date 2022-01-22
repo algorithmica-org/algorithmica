@@ -91,8 +91,8 @@ $$
 $$
 E[d_i] = \sum_{j \neq i} p(j, i)
        = \sum_{j \neq i} \frac{1}{|i-j|+1}
-       = \sum_{j < i} \frac{1}{i  -j + 1} + \sum_{j > i} \frac{1}{j - i + 1}
-       \leq 2 \cdot (\sum_{k=2}^n \frac{1}{k})
+       = \sum_{j < i} \frac{1}{i - j} + \sum_{j > i} \frac{1}{j - i}
+       \leq 2 \cdot \sum_{k=2}^n \frac{1}{k}
        = O(\log n)
 $$
 
