@@ -56,8 +56,8 @@
         menu.classList.add('scrolled')
       }
     })
-    // onkeypress didn't work with arrows for some reasons
     window.addEventListener('keydown', function(e) {
+      if (e.altKey) { return }
       if (e.key == 'ArrowLeft') {
         document.getElementById('prev-article').click()
       } else if (e.key == 'ArrowRight') {
