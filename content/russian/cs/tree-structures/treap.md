@@ -1,14 +1,15 @@
 ---
 title: Декартово дерево
 authors:
-- Сергей Слотин
-date: 2021-08-20
-created: "2018"
+  - Сергей Слотин
+date: 2022-01-22
+created: '2018'
 prerequisites:
-- .
-- ../basic-structures/heap
-- /math/probability/expectation
+  - .
+  - ../basic-structures/heap
+  - /math/probability/expectation
 weight: 1
+published: true
 ---
 
 Рене Декарт (фр. *René Descartes*) — великий французский математик и философ XVII века.
@@ -88,7 +89,11 @@ $$
 Теперь, чтобы найти матожидание глубины, эти вероятности надо просуммировать:
 
 $$
-E[d_i] = \sum_{j \neq i} p(j, i) = \sum_{j \neq i} \frac{1}{|i-j|+1} \leq \sum_{i=1}^n \frac{2}{n} = O(\log n)
+E[d_i] = \sum_{j \neq i} p(j, i)
+       = \sum_{j \neq i} \frac{1}{|i-j|+1}
+       = \sum_{j < i} \frac{1}{i  -j + 1} + \sum_{j > i} \frac{1}{j - i + 1}
+       \leq 2 \cdot (\sum_{k=2}^n \frac{1}{k})
+       = O(\log n)
 $$
 
 Перед последним переходом мы получили сумму гармонического ряда.
