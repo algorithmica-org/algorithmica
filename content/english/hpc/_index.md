@@ -88,7 +88,7 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Agner Fog](https://agner.org/optimize/)
 - [Daniel Lemire](https://lemire.me/en/#publications)
 - [Andrei Alexandrescu](https://erdani.com/index.php/about/)
-- Chandler Carruth
+- [Chandler Carruth](https://twitter.com/chandlerc1024)
 - [Wojciech Muła](http://0x80.pl/articles/index.html)
 - [Malte Skarupke](https://probablydance.com/)
 - [Travis Downs](https://travisdowns.github.io/)
@@ -105,9 +105,8 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Edmond Chow](https://www.cc.gatech.edu/~echow/)
 - [Peter Cordes](https://stackoverflow.com/users/224132/peter-cordes)
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
-- Kazushige Goto
-- Matt Kulukundis
-- Oleksandr Bacherikov
+- [Geoff Langdale](https://branchfree.org/)
+- [Matt Kulukundis](https://twitter.com/JuvHarlequinKFM)
 
 Volume: 300-400 pages  
 Release date: early 2022
