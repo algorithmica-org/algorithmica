@@ -14,9 +14,9 @@ float seconds = float(clock() - start) / CLOCKS_PER_SEC;
 printf("do_something() took %.4f", seconds);
 ```
 
-One nuance here is that you can't measure the execution time of particularly quick functions this way. The `clock` function returns the current timestamp in microseconds ($10^{-6}$), and it does so by waiting to the nearest ceiled microsecond — so it basically takes up to 1000ns to complete, which is an eternity in the world of low-level optimization.
+One nuance here is that you can't measure the execution time of particularly quick functions this way because the `clock` function returns the current timestamp in microseconds ($10^{-6}$) and also by itself takes up to a few hundred nanoseconds to complete. All other time-related utilities similarly have at least microsecond granularity, which is an eternity in the world of low-level optimization.
 
-As a workaround, you can invoke the function repeatedly in a loop, time the whole thing once, and then divide the total time by the number of iterations. You also need to ensure nothing gets cached or affected by similar side effects. This is a rather tedious way of doing profiling, especially if you are interested in multiple small sections of the program.
+To achieve higher precision, you can invoke the function repeatedly in a loop, time the whole thing once, and then divide the total time by the number of iterations:
 
 ```cpp
 #include <stdio.h>
@@ -28,28 +28,20 @@ int main() {
     clock_t start = clock();
 
     for (int i = 0; i < N; i++)
-        clock();
+        clock(); // benchmarking the clock function itself
 
     float duration = float(clock() - start) / CLOCKS_PER_SEC;
-    printf("%.2fns\n", 1e9 * duration / N);
+    printf("%.2fns per iteration\n", 1e9 * duration / N);
 
     return 0;
 }
 ```
 
-<!--
-
-It is also helpful to include and either read from the standard input or (if you are multiple )
-
-160ns, but on Windows it is
-
-There are still some nuances: compiler may (it calls a dynamically linked library, so this is not the case)
-
--->
+You also need to ensure that nothing gets cached, optimized away by the compiler, or affected by similar side effects. This is a separate and highly complicated topic that we will discuss in more detail at [the end of the chapter](../benchmarking).
 
 ### Event Sampling
 
-Instrumentation can also be used for collecting other types of info that can give useful insights about the performance of a particular algorithm. For example:
+Instrumentation can also be used to collect other types of information that can give useful insights about the performance of a particular algorithm. For example:
 
 - for a hash function, we are interested in the average length of its input;
 - for a binary tree, we care about its size and height;
