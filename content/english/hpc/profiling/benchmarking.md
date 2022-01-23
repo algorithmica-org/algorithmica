@@ -1,9 +1,8 @@
 ---
 title: Benchmarking
 weight: 6
+draft: true
 ---
-
-(This is an early draft. Don't read it.)
 
 Performance cycle is implementing, running and collecting metrics, and finding where the bottleneck is. The shorter this cycle is, the better.
 
@@ -17,23 +16,22 @@ The shorter this loop is, the faster you will iterate.
 
 Faster — and accurate — as possible.
 
-### Managing Experiments
-
-This isn't the universally best approach, but this is what I do. For something smaller, you may use this:
-
-```c++
-
-```
+## Managing Experiments
 
 Here are some hints on how to set up your environment to achieve this (you can find many examples in the [code repo](https://github.com/sslotin/ahm-code) for this book):
 
-- Separate all testing and analytics code from the implementation of the algorithm itself, and also different implementations from each other. In C/C++, you can do this by creating a single header file (e. g. `matmul.hh`) with a function interface and the code for its benchmarking in `main`, and many implementation files for each algorithm version (`v1.cc`, `v2.cc`, etc.) that all include that single header file.
-- To speed up builds and reruns, create a Makefile or just a bunch of small scripts that calculate the statistics you may need.
-- To speed up high-level analytics, create a Jupyter notebook where you put small scripts and do all the plots. You can also put build scripts there if you feel like it.
-
-https://github.com/google/benchmark
-
 Using C-style global defines instead of `const int`.
+
+Similarly in header files, e. g. for data structures that share the construction stage.
+
+You might want to do something more complicated for performance-critical production code, but you are just prototyping, don't over-engineer it go with the simplest approach.
+
+It is also helpful to include and either read from the standard input or (if you are multiple )
+
+### Writing Code
+
+Separate all testing and analytics code from the implementation of the algorithm itself, and also different implementations from each other. In C/C++, you can do this by creating a single header file (e. g. `matmul.hh`) with a function interface and the code for its benchmarking in `main`, and many implementation files for each algorithm version (`v1.cc`, `v2.cc`, etc.) that all include that single header file.
+
 
 ```c++
 #include <stdio.h>
@@ -77,13 +75,6 @@ int main(int argc, char* argv[]) {
     int *a = new int[n];
     int *q = new int[m];
 
-    /*
-    for (int i = 0; i < n; i++)
-        a[i] = i;
-    for (int i = 0; i < m; i++)
-        q[i] = rand() % n;
-    */
-
     for (int i = 0; i < n; i++)
         a[i] = rand();
     for (int i = 0; i < m; i++)
@@ -97,35 +88,11 @@ int main(int argc, char* argv[]) {
     int checksum = 0;
     clock_t start = clock();
 
-    /*    
-    for (int i = 0; i < m; i++) {
-        int x = lower_bound(q[i]);
-        int y = *std::lower_bound(a, a + n, q[i]);
-        if (x != y) {
-            std::cout << q[i] << " " << x << " " << y << std::endl;
-            //for (int j = 0; j < n; j++)
-            //    if (abs(a[j] - q[i]) <= 2)
-            //        std::cout << a[j] << std::endl;
-            //return 0;
-        }
-    }
-    */
-
-    /*
-    int last = 0;
-
-    for (int i = 0; i < m; i++) {
-        last = lower_bound(q[i] ^ last);
-        checksum ^= last;
-    }
-    */
-
     for (int i = 0; i < m; i++)
         checksum ^= lower_bound(q[i]);
 
     float seconds = float(clock() - start) / CLOCKS_PER_SEC;
 
-    //printf("%.4f s total time\n", seconds);
     printf("%.2f ns per query\n", 1e9 * seconds / m);
     printf("%d\n", checksum);
     
@@ -134,14 +101,65 @@ int main(int argc, char* argv[]) {
 
 ```
 
-Similarly in header files, e. g. for data structures that share the construction stage.
+take advantage of compile-time constants. If it is not needed, read parameters from the command line.
 
-You might want to do something more complicated for performance-critical production code, but you are just prototyping, don't over-engineer it go with the simplest approach.
+### Makefiles
 
-It is also helpful to include and either read from the standard input or (if you are multiple )
+- To speed up builds and reruns, create a Makefile or just a bunch of small scripts that calculate the statistics you may need.
 
 
-### Measuring the Right Thing
+```c++
+compile = g++ -std=c++17 -O3 -march=native -Wall
+
+%: %.cc gcd.hh
+	$(compile) $< -o $@ 
+
+%.s: %.cc gcd.hh
+	$(compile) -S -fverbose-asm $< -o $@
+
+%.run: %
+	@./$<
+
+.PHONY: %.run
+```
+
+### Jupyter Notebooks
+
+- To speed up high-level analytics, create a Jupyter notebook where you put small scripts and do all the plots. You can also put build scripts there if you feel like it.
+
+### Benchmarking Inside C++
+
+Less overhead, and it lets you run more experiments.
+
+For C++ specifically, https://github.com/google/benchmark
+You need to install it. May make sense for your use case, not only if you work for Google.
+opinionated towards a particular way of doing things
+
+Some languages also have embedded facilities for benchmarking. Props to Julia and IPython team.
+
+This isn't the universally best approach, but this is what I do. For something smaller, you may use this:
+
+```c++
+void timeit(int (*f)(int, int)) {
+    clock_t start = clock();
+
+    volatile int checksum = 0;
+
+    for (int i = 0; i < k; i++)
+        for (int j = 0; j < n; j++)
+            checksum += f(a[j], b[j]);
+    
+    float seconds = float(clock() - start) / CLOCKS_PER_SEC;
+
+    printf("%.2f ns per call\n", 1e9 * seconds / n / k);
+    
+    cout << double(clock() - start) / CLOCKS_PER_SEC << endl;
+}
+```
+
+Then call it from `main` using several different implementations.
+
+## Measuring the Right Thing
 
 Also, make the dataset as representing of your real use case as possible, and reach an agreement with people on the procedure of benchmarking. This is especially important for data processing algorithms and data structures: most sorting algorithms perform differently depending on the input, hash tables perform differently with different distributions of keys.
 
@@ -178,7 +196,7 @@ Use random numbers. Not 1,2,3,4 because of branch prediction issues. You also be
 
 To put numbers in perspective, use statistics like "ns per query" or "cycles per byte" instead of wall clock whenever it is applicable. When you start to approach very high levels of performance, it makes sense to calculate what the theoretically maximal performance is and start thinking about your algorithm performance as a fraction of it.
 
-### Noise Mitigation
+## Reducing Noise
 
 Since we are guiding our optimization by experiments, it is important to account for side effects and external noise in them, especially when reporting results to someone else:
 
@@ -196,6 +214,6 @@ When running benchmarks, always quiesce the system:
 
 It is very easy to get skewed results without doing anything obviously wrong. Even a program's name can affect its speed: the executable's name ends up in an environment variable, environment variables end up on the call stack, and so the length of the name affects stack alignment, which can result in data accesses slowing down due to crossing cache line or memory page boundaries.
 
-### Further Reading
+## Further Reading
 
 In you are interested, you can explore this comprehensive [list of experimental computer science resources](https://www.cs.huji.ac.il/w~feit/exp/related.html) by Dror Feitelson, perhaps starting with "[Producing Wrong Data Without Doing Anything Obviously Wrong](http://eecs.northwestern.edu/~robby/courses/322-2013-spring/mytkowicz-wrong-data.pdf)" by Todd Mytkowicz et al.
