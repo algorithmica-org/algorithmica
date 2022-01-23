@@ -3,9 +3,15 @@ title: Statistical Profiling
 weight: 2
 ---
 
-Another, less invasive approach to profiling is to interrupt the execution of a program at random intervals and look where the instruction pointer is. The number of times the pointer stopped in each function's block would be roughly proportional to the total time spent executing these functions. You can also get some other useful information this way, like finding out which functions are called by which functions by inspecting the call stack.
+[Instrumentation](../instrumentation) is a rather tedious way of doing profiling, especially if you are interested in multiple small sections of the program. And even if it can be partially automated by the tooling, it still won't help you gather some fine-grained statistics because of its inherent overhead.
 
-This could in principle be done by just running a program with `gdb` and `ctrl+c`'ing it at random intervals, but modern CPUs and operating systems provide special utilities for this type of profiling. Hardware *performance counters* are special registers built into microprocessors that can store the counts of certain hardware-related activities. They are cheap to add on a microchip, as they are basically just binary counters with an activation wire connected to them.
+Another, less invasive approach to profiling is to interrupt the execution of a program at random intervals and look where the instruction pointer is. The number of times the pointer stopped in each function's block would be roughly proportional to the total time spent executing these functions. You can also get some other useful information this way, like finding out which functions are called by which functions by inspecting [the call stack](/hpc/architecture/functions).
+
+This could, in principle, be done by just running a program with `gdb` and `ctrl+c`'ing it at random intervals but modern CPUs and operating systems provide special utilities for this type of profiling.
+
+### Hardware Events
+
+Hardware *performance counters* are special registers built into microprocessors that can store the counts of certain hardware-related activities. They are cheap to add on a microchip, as they are basically just binary counters with an activation wire connected to them.
 
 Each performance counter is connected to a large subset of circuitry and can be configured to be incremented on a particular hardware event, such as a branch mispredict or a cache miss. You can reset a counter at the start of a program, run it, and output its stored value at the end, and it will be equal to the exact number of times a certain event has been triggered throughout the execution.
 
@@ -15,9 +21,9 @@ Overall, event-driven statistical profiling is usually the most effective and ea
 
 ### Profiling with perf
 
-There are many profilers and other performance analysis tools. The one we will mostly rely on in this book is [perf](https://perf.wiki.kernel.org/), which is a statistical profiler available in the Linux kernel. On non-Linux systems, you can use [VTune](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/vtune-profiler.html#gs.cuc0ks) from Intel, which provides roughly the same functionality for our purposes. It is available for free, although it is a proprietary software for which you need to refresh a community license every 90 days, while perf is free as in freedom.
+Performance analysis tools that rely on the event sampling techniques described above are called *statistical profilers*. There are many of them, but the one we will mainly use in this book is [perf](https://perf.wiki.kernel.org/), which is a statistical profiler shipped with the Linux kernel. On non-Linux systems, you can use [VTune](https://software.intel.com/content/www/us/en/develop/tools/oneapi/components/vtune-profiler.html#gs.cuc0ks) from Intel, which provides roughly the same functionality for our purposes. It is available for free, although it is proprietary, and you need to refresh your community license every 90 days, while perf is free as in freedom.
 
-Perf is a command-line application that generates reports based on live execution of programs. It does not need the source and can profile a very wide range of applications, even those that involve multiple processes and interaction with the operating system.
+Perf is a command-line application that generates reports based on the live execution of programs. It does not need the source and can profile a very wide range of applications, even those that involve multiple processes and interaction with the operating system.
 
 For explanation purposes, I have written a small program that creates an array of a million random integers, sorts it, and then does a million binary searches on it:
 
@@ -38,7 +44,7 @@ int query() {
 }
 ```
 
-After compiling it (`g++ -O3 -march=native example.cc -o run`), we can run it with `perf stat ./run`, which outputs the counts of basic performance events during the execution:
+After compiling it (`g++ -O3 -march=native example.cc -o run`), we can run it with `perf stat ./run`, which outputs the counts of basic performance events during its execution:
 
 ```yaml
  Performance counter stats for './run':
@@ -60,7 +66,7 @@ After compiling it (`g++ -O3 -march=native example.cc -o run`), we can run it wi
    0.000000000 seconds sys
 ```
 
-You can see that the execution took 0.53 seconds, or 852M cycles at effective 1.32 GHz clock rate, over which 479M instructions were executed. There were also a total of 122.7M branches, and 15.7% of them were mispredicted.
+You can see that the execution took 0.53 seconds or 852M cycles at an effective 1.32 GHz clock rate, over which 479M instructions were executed. There were also 122.7M branches, and 15.7% of them were mispredicted.
 
 You can get a list of all supported events with `perf list`, and then specify a list of specific events you want with the `-e` option. For example, for diagnosing binary search, we mostly care about cache misses:
 
@@ -73,7 +79,7 @@ You can get a list of all supported events with `perf list`, and then specify a 
 
 By itself, `perf stat` simply sets up performance counters for the whole program. It can tell you the total number of branch mispredictions, but it won't tell you *where* they are happening, let alone *why* they are happening.
 
-To try the stop-the-world approach we talked about initially, we need to use `perf record <cmd>`, which records profiling data and dumps it as a `perf.data` file, and then call `perf report` to inspect it. I highly advise you to go and try it yourselves because the last command is interactive and colorful, but for those that can't do it right now, I'll try to describe it the best I can.
+To try the stop-the-world approach we discussed previously, we need to use `perf record <cmd>`, which records profiling data and dumps it as a `perf.data` file, and then call `perf report` to inspect it. I highly advise you to go and try it yourselves because the last command is interactive and colorful, but for those that can't do it right now, I'll try to describe it the best I can.
 
 When you call `perf report`, it first displays a `top`-like interactive report that tells you which functions are taking how much time:
 
@@ -116,8 +122,8 @@ Next, you can "zoom in" on any of these functions, and, among others things, it 
        │    ↑ jne    20
 ```
 
-On the left column, you can see the fraction of times the instruction pointer stopped on a specific line. Because of intricacies such as pipelining and out-of-order execution, "now" is not a well-defined concept in modern CPUs, so the data is slightly inaccurate as the instruction pointer drifts a little bit forward. But it is still useful: here we spend ~65% of the time on the jump instruction because it has a comparison operator before it, indicating that the control flow waits there for this comparison to be decided.
+On the left column is the fraction of times that the instruction pointer stopped on a specific line. You can see that we spend ~65% of the time on the jump instruction because it has a comparison operator before it, indicating that the control flow waits there for this comparison to be decided.
 
-At the individual cycle level, we need something more precise.
+Because of intricacies such as [pipelining](/hpc/pipelining) and out-of-order execution, "now" is not a well-defined concept in modern CPUs, so the data is slightly inaccurate as the instruction pointer drifts a little bit forward. The instruction-level data is still useful, but at the individual cycle level, we need to switch to [something more precise](../simulation).
 
 <!-- flame graphs -->
