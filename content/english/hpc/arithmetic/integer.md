@@ -95,7 +95,9 @@ Big-endian is also more "natural" — this is how we write binary numbers on pap
 
 Sometimes we need to multiply two 64-bit integers to get a 128-bit integer — that usually serves as a temporary value and e. g. reduced by modulo right away.
 
-There are no 128-bit registers to hold the result of such multiplication, but `mul` instruction can operate in a manner [similar to division](/hpc/analyzing-performance/gcd/), by multiplying whatever is stored in `rax` by its operand and [writing the result](https://gcc.godbolt.org/z/4Gfxhs84Y) into two registers — the lower 64 bits of the result will go into `rdx`, and `rax` will have the higher 64 bits. Some languages have a special type to support such an operation:
+There are no 128-bit registers to hold the result of such multiplication, but `mul` instruction can operate in a manner [similar to division](/hpc/analyzing-performance/gcd/), by multiplying whatever is stored in `rax` by its operand and [writing the result](https://gcc.godbolt.org/z/4Gfxhs84Y) into two registers — the lower 64 bits of the result will go into `rdx`, and `rax` will have the higher 64 bits.
+
+Some compilers have a separate type supporting this operation. In GCC and Clang it is available as `__int128`:
 
 ```cpp
 void prod(int64_t a, int64_t b, __int128 *c) {
@@ -103,7 +105,7 @@ void prod(int64_t a, int64_t b, __int128 *c) {
 }
 ```
 
-For all purposes other than multiplication, 128-bit integers are just bundled as two registers. This makes it too weird to have a full-fledged 128-bit type, so the support for it is limited. The typical use for this type is to get either the lower or the higher part of the multiplication and forget about it:
+Its typical use case is to immediately extract either the lower or the higher part of the multiplication and forget about it:
 
 ```c++
 __int128_t x = 1;
@@ -111,4 +113,23 @@ int64_t hi = x >> 64;
 int64_t lo = (int64_t) x; // will be just truncated
 ```
 
-Other platforms provide similar mechanisms for dealing with longer-than-word multiplication. For example, arm has `mulhi` and `mullo` instruction, returning lower and higher parts of the multiplication, and x86 SIMD extensions have similar 32-bit instructions.
+For all purposes other than multiplication, 128-bit integers are just bundled as two registers. This makes it too weird to have a full-fledged 128-bit type, so the support for it is limited, other than for basic arithmetic operations. For example:
+
+```c++
+__int128_t add(__int128_t a, __int128_t b) {
+    return a + b;
+}
+```
+
+is compiled into:
+
+```nasm
+add:
+    mov rax, rdi
+    add rax, rdx    ; this sets the carry flag in case of an overflow
+    adc rsi, rcx    ; +1 if the carry flag is set
+    mov rdx, rsi
+    ret
+```
+
+Other platforms provide similar mechanisms for dealing with longer-than-word multiplication. For example, Arm has `mulhi` and `mullo` instructions, returning lower and higher parts of the multiplication, and x86 [SIMD extensions](/hpc/simd) have similar 32-bit instructions.
