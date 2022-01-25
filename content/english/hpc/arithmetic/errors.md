@@ -7,27 +7,27 @@ The way rounding works in hardware floats is remarkably simple: it occurs if and
 
 Apart from the default mode (also known as Banker's rounding), you can [set](https://www.cplusplus.com/reference/cfenv/fesetround/) other rounding logic with 4 more modes:
 
-* round to nearest, with ties always rounding "away" from zero;
+* round to nearest, with perfect ties always rounding "away" from zero;
 * round up (toward $+∞$; negative results thus round toward zero);
 * round down (toward $-∞$; negative results thus round away from zero);
-* round toward zero (truncation of the binary result).
+* round toward zero (a truncation of the binary result).
 
-The alternative rounding modes are also useful in diagnosing numerical instability. If the results of a subroutine vary substantially between rounding to the positive and negative infinities, then it indicates susceptibility to round-off errors. Is a better test than switching all computations to a lower precision and checking whether the result changed by too much, because the default rounding to nearest results in the right "expected" value given enough averaging: statistically, half of the time they are rounding up and the other are rounding down, so they cancel each other.
+The alternative rounding modes are also useful in diagnosing numerical instability. If the results of a subroutine vary substantially between rounding to the positive and negative infinities, then it indicates susceptibility to round-off errors. Is a better test than switching all computations to a lower precision and checking whether the result changed by too much because the default rounding to nearest results in the right "expected" value given enough averaging: statistically, half of the time they are rounding up and the other are rounding down, so they cancel each other.
 
 Note that while most operations with real numbers are commutative and associative, their rounding errors are not: even the result of $(x+y+z)$ depends on the order of summation. Compilers are not allowed to produce non-spec-compliant results, so this disables some potential optimizations that involve rearranging operands. You can disable this strict compliance with the `-ffast-math` flag in GCC and Clang, although you need to be aware that this lets compilers sometimes choose less precise computation paths.
 
-It seems surprising to expect this guarantee from hardware that performs complex calculations such as natural logarithms and square roots, but this is it: you guaranteed to get the highest precision possible from all operations. This makes it remarkably easy to analyze round-off errors, as we will see in a bit.
+It seems surprising to expect this guarantee from hardware that performs complex calculations such as natural logarithms and square roots, but this is it: you are guaranteed to get the highest precision possible from all operations. This makes it remarkably easy to analyze round-off errors, as we will see in a bit.
 
 ## Measuring and Mitigating Errors
 
 There are two natural ways to measure computational errors:
 
-* The engineers who create hardware or spec-compliant exact software are concerned with *units in the last place* (ulps), which is the distance between two numbers in terms of how many representable numbers can fit between the precise real value and the actual result of computation.
+* The engineers who create hardware or spec-compliant exact software are concerned with *units in the last place* (ulps), which is the distance between two numbers in terms of how many representable numbers can fit between the precise real value and the actual result of the computation.
 * People that are working on numerical algorithms care about *relative precision*, which is the absolute value of the approximation error divided by the real answer: $|\frac{v-v'}{v}|$.
 
 In either case, the usual tactic to analyze errors is to assume the worst case and simply bound them.
 
-If you perform a single basic arithmetic operation, then the worst thing that can happen is the result rounding to the nearest representable number, meaning that the error in this case does not exceed 0.5 ulps. To reason about relative errors the same way, we can define a number $\epsilon$ called *machine epsilon*, equal to the difference between $1$ and the next representable value (which should be equal to 2 to the negative power of however many bits are dedicated to mantissa).
+If you perform a single basic arithmetic operation, then the worst thing that can happen is the result rounding to the nearest representable number, meaning that the error does not exceed 0.5 ulps. To reason about relative errors the same way, we can define a number $\epsilon$ called *machine epsilon*, equal to the difference between $1$ and the next representable value (which should be equal to 2 to the negative power of however many bits are dedicated to mantissa).
 
 This means that if after a single arithmetic operation you get result $x$, then the real value is somewhere in the range
 
@@ -60,7 +60,7 @@ for (int i = 0; i < n; i++)
     x *= a[i];
 ```
 
-After the first multiplication, the value of $x$ relative to the value of the real product is bounded by $(1 + \epsilon)$, and after each additional multiplication this upper bound is multiplied by another $(1 + \epsilon)$. By induction, after $n$ multiplications, the computed value is bound by $(1 + \epsilon)^n = 1 + n \epsilon + O(\epsilon^2)$ and a similar lower bound.
+After the first multiplication, the value of $x$ relative to the value of the real product is bounded by $(1 + \epsilon)$, and after each additional multiplication, this upper bound is multiplied by another $(1 + \epsilon)$. By induction, after $n$ multiplications, the computed value is bound by $(1 + \epsilon)^n = 1 + n \epsilon + O(\epsilon^2)$ and a similar lower bound.
 
 This implies that the relative error is $O(n \epsilon)$, which is sort of okay, because usually $n \ll \frac{1}{\epsilon}$.
 
@@ -90,7 +90,7 @@ $$
 
 If $x$ and $y$ are close in magnitude, the error will be $O(\epsilon \cdot |x|)$.
 
-Under direct computation, the subtraction "magnifies" the errors of the squaring. But this can be fixed by instead using the following formula:
+Under direct computation, the subtraction "magnifies" the errors of squaring. But this can be fixed by instead using the following formula:
 
 $$
 f(x, y) = x^2 - y^2 = (x + y) \cdot (x - y)
@@ -100,7 +100,7 @@ In this one, it is easy to show that the error is be bound by $\epsilon \cdot |x
 
 ### Kahan Summation
 
-From previous example, we can see that long chains of operations are not a problem, but adding and subtracting numbers of different magnitude is. The general approach to dealing with such problems is to try to keep big numbers with big numbers and low numbers with low numbers.
+From the previous example, we can see that long chains of operations are not a problem, but adding and subtracting numbers of different magnitude is. The general approach to dealing with such problems is to try to keep big numbers with big numbers and low numbers with low numbers.
 
 Consider the standard summation algorithm:
 
@@ -141,7 +141,7 @@ for (int i = 0; i < n; i++) {
 
 This trick is known as *Kahan summation*. Its relative error is bounded by $2 \epsilon + O(n \epsilon^2)$: the first term comes from the very last summation, and the second term is due to the fact that we work with less-than-epsilon errors on each step.
 
-Of course, a more general approach would be to switch to a more precise data type, like `double`, either way effectively squaring the machine epsilon. It can sort of be scaled by bundling two `double` variable together ne for storing the value, and another for its non-representable errors, so that they actually represent $a+b$. This approach is known as *double-double* arithmetic, and can be similarly generalized to define quad-double and higher precision arithmetic.
+Of course, a more general approach would be to switch to a more precise data type, like `double`, either way effectively squaring the machine epsilon. It can sort of be scaled by bundling two `double` variables together: one for storing the value, and another for its non-representable errors, so that they actually represent $a+b$. This approach is known as *double-double* arithmetic, and it can be similarly generalized to define quad-double and higher precision arithmetic.
 
 <!--
 
