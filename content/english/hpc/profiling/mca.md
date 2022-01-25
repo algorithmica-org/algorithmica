@@ -3,9 +3,7 @@ title: Machine Code Analyzers
 weight: 4
 ---
 
-The last approach to profiling is not to gather the data by actually running the program but to analyze what should happen by *simulating* it with specialized tools. There are many subcategories of such profilers, differing in which aspect of computation is simulated, but the one we are going to focus on in this section is *machine code analyzers*.
-
-A machine code analyzer is a program that takes a small snippet of assembly code and simulates its execution on a particular microarchitecture using information available to compilers, and outputs the latency and throughput of the whole block, as well as cycle-perfect utilization of various resources within the CPU.
+A *machine code analyzer* is a program that takes a small snippet of assembly code and [simulates](../simulation) its execution on a particular microarchitecture using information available to compilers, and outputs the latency and throughput of the whole block, as well as cycle-perfect utilization of various resources within the CPU.
 
 ### Using `llvm-mca`
 
