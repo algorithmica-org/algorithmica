@@ -3,23 +3,9 @@ title: Benchmarking
 weight: 6
 ---
 
-<!--
-
-Performance cycle is implementing, running and collecting metrics, and finding where the bottleneck is. The shorter this cycle is, the better.
-
-Practices of assessing performance faster and in more reliable manner.
-
-We've learned various ways of assessing software performance.
-
-In this article, we will discuss how to make more performance measurements more .
-
-Faster — and accurate — as possible.
-
--->
-
 Most good software engineering practices in one way or another address the issue of making *development cycles* faster: you want to compile your software faster (build systems), catch bugs as soon as possible (static analysis, continuous integration), release as soon as the new version is ready (continuous deployment), and react to user feedback without much delay (agile development).
 
-Performance engineering is not different, and if you do it correctly, it should also resemble a cycle:
+Performance engineering is not different. If you do it correctly, it should also resemble a cycle:
 
 1. Run the program and collect metrics.
 2. Figure out where the bottleneck is.
@@ -141,7 +127,7 @@ Another way to do it is to use C-style global defines and then pass them with th
 const int T = 1e9 / N;
 ```
 
-This way you can make use of compile-time constants, which may be very beneficial for performance of some algorithms, at the expense having to re-build the program each time you want to change the parameter, which considerably increases the time you need to collect metrics across a range of parameter values.
+This way you can make use of compile-time constants, which may be very beneficial for the performance of some algorithms, at the expense of having to re-build the program each time you want to change the parameter, which considerably increases the time you need to collect metrics across a range of parameter values.
 
 ### Makefiles
 
@@ -168,7 +154,7 @@ compile = g++ -std=c++17 -O3 -march=native -Wall
 
 You can now compile `example.cc` with `make example`, and automatically run it with `make example.run`. 
 
-You can also add scripts for calculating statistics in the Makefile.
+You can also add scripts for calculating statistics in the Makefile, or incorporate it with `perf stat` calls to make profiling automatic.
 
 ### Jupyter Notebooks
 
