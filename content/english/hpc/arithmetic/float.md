@@ -127,7 +127,7 @@ $$
 
 and in 28 other ways that don't overflow the mantissa.
 
-This can be problematic for some applications, such as comparisons or hashing. To fix this, we can *normalize* these representations using a certain convention. In decimal, the [standard form](https://en.wikipedia.org/wiki/Scientific_notation) is to always put the comma after the first digit (`6.022e23`), and for binary we can do the same:
+This can be problematic for some applications, such as comparisons or hashing. To fix this, we can *normalize* these representations using a certain convention. In decimal, the [standard form](https://en.wikipedia.org/wiki/Scientific_notation) is to always put the comma after the first digit (`6.022e23`), and for binary, we can do the same:
 
 $$
 42 = 10101_2 = 1.0101_2 \times 2^5
@@ -187,6 +187,6 @@ fp operator*(fp a, fp b) {
 }
 ```
 
-Many applications that require higher levels of precision use software floating-point arithmetic in a similar fashion. Buf of course, you don't want to execute a sequence 10 or so instructions that this code compiles to each time you want to multiply two real numbers, so floating-point arithmetic is implemented in hardware — often in separate coprocessors due to its complexity.
+Many applications that require higher levels of precision use software floating-point arithmetic in a similar fashion. But of course, you don't want to execute a sequence of 10 or so instructions that this code compiles to each time you want to multiply two real numbers, so on modern CPUs, floating-point arithmetic is implemented in hardware — usually as separate coprocessors due to its complexity.
 
-The FPU of x86 (often referred to as x87) has separate registers and its own tiny instruction set that supports memory operations, basic arithmetic, trigonometry and some common operations such logarithm, exponent and square root.
+The *floating-point unit* of x86 (often referred to as x87) has separate registers and its own tiny instruction set that supports memory operations, basic arithmetic, trigonometry, and some common operations such as logarithm, exponent, and square root. To make these operations properly work together, some additional details of floating-point number representation need to be clarified — which we will do in [the next section](../ieee).
