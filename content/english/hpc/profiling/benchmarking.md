@@ -1,112 +1,155 @@
 ---
 title: Benchmarking
 weight: 6
-draft: true
 ---
+
+<!--
 
 Performance cycle is implementing, running and collecting metrics, and finding where the bottleneck is. The shorter this cycle is, the better.
 
-If you do it correctly, working on improving performance should resemble a loop:
+Practices of assessing performance faster and in more reliable manner.
 
-1. run the program and collect metrics,
-2. figure out where the bottleneck is,
-3. remove the bottleneck and go to step 1.
+We've learned various ways of assessing software performance.
 
-The shorter this loop is, the faster you will iterate.
+In this article, we will discuss how to make more performance measurements more .
 
 Faster — and accurate — as possible.
 
-## Managing Experiments
+-->
 
-Here are some hints on how to set up your environment to achieve this (you can find many examples in the [code repo](https://github.com/sslotin/ahm-code) for this book):
+Most good software engineering practices in one way or another address the issue of making *development cycles* faster: you want to compile your software faster (build systems), catch bugs as soon as possible (static analysis, continuous integration), release as soon as the new version is ready (continuous deployment), and react to user feedback without much delay (agile development).
 
-Using C-style global defines instead of `const int`.
+Performance engineering is not different, and if you do it correctly, it should also resemble a cycle:
 
-Similarly in header files, e. g. for data structures that share the construction stage.
+1. Run the program and collect metrics.
+2. Figure out where the bottleneck is.
+3. Remove the bottleneck and go to step 1.
 
-You might want to do something more complicated for performance-critical production code, but you are just prototyping, don't over-engineer it go with the simplest approach.
+In this section, we will talk about benchmarking and discuss some practical techniques that make this cycle shorter and help you iterate faster. Most of the advice comes from working on this book, so you can find many real examples of described setups in the [code repository](https://github.com/sslotin/ahm-code) for this book.
 
-It is also helpful to include and either read from the standard input or (if you are multiple )
+### Benchmarking Inside C++
 
-### Writing Code
+There are several approaches to writing benchmarking code. Perhaps the most popular one is to include several same-language implementations you want to compare in one file, separately invoke them from the `main` function, and calculate all the metrics you want in the same source file.
 
-Separate all testing and analytics code from the implementation of the algorithm itself, and also different implementations from each other. In C/C++, you can do this by creating a single header file (e. g. `matmul.hh`) with a function interface and the code for its benchmarking in `main`, and many implementation files for each algorithm version (`v1.cc`, `v2.cc`, etc.) that all include that single header file.
-
+The disadvantage of this method is that you need to write a lot of boilerplate code and duplicate it for each implementation, but it can be partially neutralized with metaprogramming. For example, when you are benchmarking multiple [gcd](/hpc/algorithms/gcd) implementations, you can reduce benchmarking code considerably with this higher-order function:
 
 ```c++
-#include <stdio.h>
-#include <time.h>
+const int N = 1e6, T = 1e9 / N;
+int a[N], b[N];
 
-const int N = 1e6;
-
-#ifndef N
-#define N (1<<20)
-#endif
-int main(int argc, char* argv[]) {
-    int n = (argc > 1 ? atoi(argv[1]) : N);
-    int m = (argc > 2 ? atoi(argv[2]) : 1<<20);
-
+void timeit(int (*f)(int, int)) {
     clock_t start = clock();
 
-    for (int i = 0; i < N; i++)
-        clock();
+    int checksum = 0;
 
-    float duration = float(clock() - start) / CLOCKS_PER_SEC;
-    printf("%.2fns\n", 1e9 * duration / N);
+    for (int t = 0; t < T; t++)
+        for (int i = 0; i < n; i++)
+            checksum ^= f(a[i], b[i]);
+    
+    float seconds = float(clock() - start) / CLOCKS_PER_SEC;
+
+    printf("checksum: %d\n", checksum);
+    printf("%.2f ns per call\n", 1e9 * seconds / N / T);
+}
+
+int main() {
+    for (int i = 0; i < N; i++)
+        a[i] = rand(), b[i] = rand();
+    
+    timeit(std::gcd);
+    timeit(my_gcd);
+    timeit(my_another_gcd);
+    // ...
 
     return 0;
 }
 ```
 
+This is a very low-overhead method that lets you run more experiments and [get more accurate results](../noise) from them. You still have to perform some repeated actions, but they can be largely automated with frameworks, [Google benchmark library](https://github.com/google/benchmark) being the most popular choice for C++. Some programming languages also have handy built-in tools for benchmarking: special mention here goes to [Python's timeit function](https://docs.python.org/3/library/timeit.html) and [Julia's @benckmark macro](https://github.com/JuliaCI/BenchmarkTools.jl).
+
+Although *efficient* in terms of execution speed, C and C++ are not the most *productive* languages, especially when it comes to analytics. When your algorithm depends on some parameters such as the input size, and you need to collect more than just one data point from each implementation, you really want to integrate your benchmarking code with the outside environment and analyze the results using something else.
+
+### Splitting Up Implementations
+
+One way to improve modularity and reusability is to separate all testing and analytics code from the actual implementation of the algorithm, and also make it so that different versions are implemented in separate files, but have the same interface.
+
+In C/C++, you can do this by creating a single header file (e. g. `gcd.hh`) with a function interface and all its benchmarking code in `main`:
+
 ```c++
-#include <bits/stdc++.h>
+int gcd(int a, int b); // to be implemented
 
-#ifndef N
-#define N (1<<20)
-#endif
+// for data structures, you also need to create a setup function
+// (unless the same preprocessing step for all versions would suffice)
 
-void prepare(int *a, int n);
-int lower_bound(int x);
+int main() {
+    const int N = 1e6, T = 1e9 / N;
+    int a[N], b[N];
+    // careful: local arrays are allocated on the stack and may cause stack overflow
+    // for large arrays, allocate with "new" or create a global array
 
-int main(int argc, char* argv[]) {
-    int n = (argc > 1 ? atoi(argv[1]) : N);
-    int m = (argc > 2 ? atoi(argv[2]) : 1<<20);
-
-    int *a = new int[n];
-    int *q = new int[m];
-
-    for (int i = 0; i < n; i++)
-        a[i] = rand();
-    for (int i = 0; i < m; i++)
-        q[i] = rand();
-
-    a[0] = RAND_MAX;
-    std::sort(a, a + n);
-
-    prepare(a, n);
+    for (int i = 0; i < N; i++)
+        a[i] = rand(), b[i] = rand();
 
     int checksum = 0;
+
     clock_t start = clock();
 
-    for (int i = 0; i < m; i++)
-        checksum ^= lower_bound(q[i]);
-
+    for (int t = 0; t < T; t++)
+        for (int i = 0; i < n; i++)
+            checksum += gcd(a[i], b[i]);
+    
     float seconds = float(clock() - start) / CLOCKS_PER_SEC;
 
-    printf("%.2f ns per query\n", 1e9 * seconds / m);
     printf("%d\n", checksum);
+    printf("%.2f ns per call\n", 1e9 * seconds / N / T);
     
     return 0;
 }
-
 ```
 
-take advantage of compile-time constants. If it is not needed, read parameters from the command line.
+Then you create many implementation files for each algorithm version (e. g. `v1.cc`, `v2.cc` and so on, or some meaningful names if applicable) that all include that single header file:
+
+```c++
+#include "gcd.hh"
+
+int gcd(int a, int b) {
+    if (b == 0)
+        return a;
+    else
+        return gcd(b, a % b);
+}
+```
+
+The whole purpose of doing this is to be able to benchmark a specific algorithm version from the command line without touching any source code files. For this purpose, you may also want to expose any parameters that it may have — for example, by parsing them from the command line arguments:
+
+```c++
+int main(int argc, char* argv[]) {
+    int N = (argc > 1 ? atoi(argv[1]) : 1e6);
+    const int T = 1e9 / N;
+
+    // ...
+}
+```
+
+Another way to do it is to use C-style global defines and then pass them with the `-D N=...` flag during compilation:
+
+```c++
+#ifndef N
+#define N 1000000
+#endif
+
+const int T = 1e9 / N;
+```
+
+This way you can make use of compile-time constants, which may be very beneficial for performance of some algorithms, at the expense having to re-build the program each time you want to change the parameter, which considerably increases the time you need to collect metrics across a range of parameter values.
 
 ### Makefiles
 
-- To speed up builds and reruns, create a Makefile or just a bunch of small scripts that calculate the statistics you may need.
+<!-- TODO -->
 
+Splitting up source files allows you to speed up compilation using a caching build system such as [Make](https://en.wikipedia.org/wiki/Make_(software)).
+
+I usually carry a version of this Makefile across my projects:
 
 ```c++
 compile = g++ -std=c++17 -O3 -march=native -Wall
@@ -123,97 +166,38 @@ compile = g++ -std=c++17 -O3 -march=native -Wall
 .PHONY: %.run
 ```
 
+You can now compile `example.cc` with `make example`, and automatically run it with `make example.run`. 
+
+You can also add scripts for calculating statistics in the Makefile.
+
 ### Jupyter Notebooks
 
-- To speed up high-level analytics, create a Jupyter notebook where you put small scripts and do all the plots. You can also put build scripts there if you feel like it.
+To speed up high-level analytics, you can create a Jupyter notebook where you put all your scripts and do all the plots.
 
-### Benchmarking Inside C++
+It is convenient to add a wrapper for benchmarking an implementation, which just returns a scalar result:
 
-Less overhead, and it lets you run more experiments.
-
-For C++ specifically, https://github.com/google/benchmark
-You need to install it. May make sense for your use case, not only if you work for Google.
-opinionated towards a particular way of doing things
-
-Some languages also have embedded facilities for benchmarking. Props to Julia and IPython team.
-
-This isn't the universally best approach, but this is what I do. For something smaller, you may use this:
-
-```c++
-void timeit(int (*f)(int, int)) {
-    clock_t start = clock();
-
-    volatile int checksum = 0;
-
-    for (int i = 0; i < k; i++)
-        for (int j = 0; j < n; j++)
-            checksum += f(a[j], b[j]);
-    
-    float seconds = float(clock() - start) / CLOCKS_PER_SEC;
-
-    printf("%.2f ns per call\n", 1e9 * seconds / n / k);
-    
-    cout << double(clock() - start) / CLOCKS_PER_SEC << endl;
-}
+```python
+def bench(source, n=2**20):
+    !make -s {source}
+    if _exit_code != 0:
+        raise Exception("Compilation failed")
+    res = !./{source} {n} {q}
+    duration = float(res[0].split()[0])
+    return duration
 ```
 
-Then call it from `main` using several different implementations.
+Then you can use it to write clean analytics code:
 
-## Measuring the Right Thing
+```python
+ns = list(int(1.17**k) for k in range(30, 60))
+baseline = [bench('std_lower_bound', n=n) for n in ns]
+results = [bench('my_binary_search', n=n) for n in ns]
 
-Also, make the dataset as representing of your real use case as possible, and reach an agreement with people on the procedure of benchmarking. This is especially important for data processing algorithms and data structures: most sorting algorithms perform differently depending on the input, hash tables perform differently with different distributions of keys.
+# plotting relative speedup for different array sizes
+import matplotlib.pyplot as plt
 
-Interleaving
-
-Similar to how Americans report pre-tax salary, Americans use non-PPP-adjusted stats, attention-seeking startups report revenue instead of profit, performance engineers report the best version of benchmark if not stated otherwise.
-
-I have never seen people do that though. It makes most difference when comparing branchy and branch-free algorithms.
-
-```c++
-for (int i = 0; i < m; i++)
-    q[i] = rand();
-
-int checksum = 0;
-
-for (int i = 0; i < m; i++)
-    checksum ^= lower_bound(q[i]);
+plt.plot(ns, [x / y for x, y in zip(baseline, results)])
+plt.show()
 ```
 
-```c++
-for (int i = 0; i < m; i++)
-    checksum ^= lower_bound(checksum ^ q[i]);
-```
-
-The best way to measure something is to plug it into real application.
-
-You also may want to mark checksums as `volatile` to prevent the compiler from [optimizing too much](/hpc/cpu-cache/latency).
-
-When your algorithm only writes data and doesn't calculate any sort of checksum, you can use `__sync_synchronize()`, which acts as a memory fence to prevent the compiler from optimizing between iterations.
-
-People report things they like to report and leave out the things they don't.
-
-Use random numbers. Not 1,2,3,4 because of branch prediction issues. You also better generate them ahead of time and use a fixed seed between invocations to minimize the noise and make the benchmark reproducible, which will help in debugging.
-
-To put numbers in perspective, use statistics like "ns per query" or "cycles per byte" instead of wall clock whenever it is applicable. When you start to approach very high levels of performance, it makes sense to calculate what the theoretically maximal performance is and start thinking about your algorithm performance as a fraction of it.
-
-## Reducing Noise
-
-Since we are guiding our optimization by experiments, it is important to account for side effects and external noise in them, especially when reporting results to someone else:
-
-- Unless you are expecting a 2x kind of improvement, treat microbenchmarking the same way as A/B testing. When you run a program on a laptop for under a second, a ±5% fluctuation in performance is normal, so if you want to revert or keep a potential +1% improvement, run it until you reach a statistical significance, by calculating variances and p-values.
-- Make sure there are no cold start effects due to cache. I usually solve this by making one cold test run where I check correctness of the algorithm, and then run it many times over for benchmarking (without checking correctness).
-- If you benchmark a CPU-intensive algorithm, measure its performance in cycles using `perf stat`: this way it will be independent of clock frequency, fluctuations fo which is usually the main source of noise.
-- Otherwise, set core frequency to the level you expect it to be and make sure nothing interferes with it. On Linux you can do it with `cpupower` (e. g. `sudo cpupower frequency-set -g powersave` to put it to minimum or `sudo cpupower frequency-set -g ondemand` to enable turbo boost). I use a [convenient GNOME shell extension](https://extensions.gnome.org/extension/1082/cpufreq/) that has a separate button to do it.
-
-When running benchmarks, always quiesce the system:
-
-- make sure no other jobs are running,
-- turn turbo boost and hyper-threading off,
-- turn off network and don't fiddle with the mouse,
-- attach jobs to specific cores.
-
-It is very easy to get skewed results without doing anything obviously wrong. Even a program's name can affect its speed: the executable's name ends up in an environment variable, environment variables end up on the call stack, and so the length of the name affects stack alignment, which can result in data accesses slowing down due to crossing cache line or memory page boundaries.
-
-## Further Reading
-
-In you are interested, you can explore this comprehensive [list of experimental computer science resources](https://www.cs.huji.ac.il/w~feit/exp/related.html) by Dror Feitelson, perhaps starting with "[Producing Wrong Data Without Doing Anything Obviously Wrong](http://eecs.northwestern.edu/~robby/courses/322-2013-spring/mytkowicz-wrong-data.pdf)" by Todd Mytkowicz et al.
+Once established, this workflow makes you iterate much faster and just focus on optimizing the algorithm itself.
