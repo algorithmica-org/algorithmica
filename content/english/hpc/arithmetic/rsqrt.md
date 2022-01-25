@@ -13,9 +13,9 @@ Calculating inverse square root directly — by first calculating square root an
 
 But there is a surprisingly good approximation algorithm that takes advantage of the way floating-point numbers are stored in memory. In fact, it is so good that it has been [implemented in hardware](https://www.felixcloutier.com/x86/rsqrtps), so the algorithm is no longer relevant by itself for software engineers, but we are nonetheless going to walk through it for its intrinsic beauty and great educational value.
 
-Apart from the method itself, quite interesting is the history of its creation. It is attributed to a game studio *id Software* that used it in their iconic 1999 game *Quake III Arena*, although apparently it got there by a chain of "I learned it from a guy who learned it from a guy" that seems to end on William Kahan (the same one that is responsible for IEEE 754 and Kahan summation algorithm).
+Apart from the method itself, quite interesting is the history of its creation. It is attributed to a game studio *id Software* that used it in their iconic 1999 game *Quake III Arena*, although apparently, it got there by a chain of "I learned it from a guy who learned it from a guy" that seems to end on William Kahan (the same one that is responsible for IEEE 754 and Kahan summation algorithm).
 
-It became popular in game developing community around 2005, when they released the source code of the game. Here is [the relevant excerpt from it](https://github.com/id-Software/Quake-III-Arena/blob/master/code/game/q_math.c#L552), including the comments:
+It became popular in game developing community around 2005 when they released the source code of the game. Here is [the relevant excerpt from it](https://github.com/id-Software/Quake-III-Arena/blob/master/code/game/q_math.c#L552), including the comments:
 
 ```c++
 float Q_rsqrt(float number) {
@@ -35,7 +35,7 @@ float Q_rsqrt(float number) {
 }
 ```
 
-We will go through what it does step by step, but first we need to take a small detour.
+We will go through what it does step by step, but first, we need to take a small detour.
 
 ### Calculating Approximate Logarithm
 
@@ -122,7 +122,7 @@ i = * ( long * ) &y;
 i = 0x5f3759df - ( i >> 1 );
 ```
 
-We reinterpret `y` as an integer on the first line, and then plug into in to the formula, the first term of which is the magic number $\frac{3}{2} L (B - \sigma) = \mathtt{0x5F3759DF}$, while the second is calculated with a binary shift instead of division.
+We reinterpret `y` as an integer in the first line, and then it plug into the formula on the second, the first term of which is the magic number $\frac{3}{2} L (B - \sigma) = \mathtt{0x5F3759DF}$, while the second is calculated with a binary shift instead of division.
 
 ### Iterating with Newton's Method
 
@@ -139,8 +139,8 @@ x2 = number * 0.5F;
 y  = y * ( threehalfs - ( x2 * y * y ) );
 ```
 
-The initial approximation is so good that just one iteration was enough for game development purposes. It falls within 99.8% of the correct answer after just the first iteration, and can be reiterated further to improve accuracy — which is what is done in the hardware: the x86 does a few of them and guarantees a relative error of no more than $1.5 \times 2^{-12}$.
+The initial approximation is so good that just one iteration was enough for game development purposes. It falls within 99.8% of the correct answer after just the first iteration and can be reiterated further to improve accuracy — which is what is done in the hardware: [the x86 instruction](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,3009,5135,4870,4870,4872,4875,833,879,874,849,848,6715,4845,6046,3853,288,6570,6527,6527,90,7307,6385,5993&text=rsqrt&techs=AVX,AVX2) does a few of them and guarantees a relative error of no more than $1.5 \times 2^{-12}$.
 
 ## Further Reading
 
-[Wikipedia article of fast inverse square root](https://en.wikipedia.org/wiki/Fast_inverse_square_root#Floating-point_representation)
+[Wikipedia article of fast inverse square root](https://en.wikipedia.org/wiki/Fast_inverse_square_root#Floating-point_representation).
