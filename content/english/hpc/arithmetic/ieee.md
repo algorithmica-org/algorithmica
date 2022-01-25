@@ -101,4 +101,4 @@ Both NaNs are encoded as all their exponent set to ones and the mantissa part be
 
 ## Further Reading
 
-If you are so inclined, you can read the classic "[What Every Computer Scientist Should Know About Floating-Point Arithmetic](https://www.itu.dk/~sestoft/bachelor/IEEE754_article.pdf)" (1991) and [the paper introducing Grisu3](https://www.cs.tufts.edu/~nr/cs257/archive/florian-loitsch/printf.pdf), the current state-of-the art for printing floating-point numbers.
+If you are so inclined, you can read the classic "[What Every Computer Scientist Should Know About Floating-Point Arithmetic](https://www.itu.dk/~sestoft/bachelor/IEEE754_article.pdf)" (1991) and [the paper introducing Grisu3](https://www.cs.tufts.edu/~nr/cs257/archive/florian-loitsch/printf.pdf), the current state-of-the-art for printing floating-point numbers.
