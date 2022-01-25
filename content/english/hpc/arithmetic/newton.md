@@ -3,9 +3,9 @@ title: Newton's Method
 weight: 3
 ---
 
-Reaching the maximum possible precision is very rarely required from a practical algorithm. In real-world data, modeling and measurement errors are usually a few orders of magnitude larger than the errors that come from rounding floating-point numbers and such, so we are often perfectly happy with picking an approximate method that trades off precision for speed.
+Reaching the maximum possible precision is rarely required from a practical algorithm. In real-world data, modeling and measurement errors are usually several orders of magnitude larger than the errors that come from rounding floating-point numbers and such, so we are often perfectly happy with picking an approximate method that trades off precision for speed.
 
-In this section, we will go through some classic numerical methods, just to get the gist of it.
+In this section, we introduce one of the most important building blocks in such approximate, numerical algorithms: *the Newton's method*.
 
 ## Newton's Method
 
@@ -15,9 +15,9 @@ $$
 f(x) = 0
 $$
 
-The only thing assumed about the function $f$ is that at least a one root exists and that $f(x)$ is continuous and differentiable on the search interval.
+The only thing assumed about the function $f$ is that at least one root exists and that $f(x)$ is continuous and differentiable on the search interval.
 
-The main idea of the algorithm is to start with some initial approximation $x_0$ and then iteratively improve it by drawing the tangent to the graph of the function at $x = x_i$ and setting the next approximation $x_{i+1}$ equal to the $x$-coordinate of its intersection with the $x$-axis. The intuition is that if the function $f$ is "[good](https://en.wikipedia.org/wiki/Smoothness)", and $x_i$ is already close enough to the root, then $x_{i+1}$ will be even closer.
+The main idea of the algorithm is to start with some initial approximation $x_0$ and then iteratively improve it by drawing the tangent to the graph of the function at $x = x_i$ and setting the next approximation $x_{i+1}$ equal to the $x$-coordinate of its intersection with the $x$-axis. The intuition is that if the function $f$ is "[good](https://en.wikipedia.org/wiki/Smoothness)" and $x_i$ is already close enough to the root, then $x_{i+1}$ will be even closer.
 
 ![](../img/newton.png)
 
@@ -104,7 +104,7 @@ $$
 which means that the error roughly squares (and halves) on each iteration once we are close to the solution. Since the logarithm $(- \log_{10} \delta_i)$ is roughly the number of accurate significant digits in the answer $x_i$, squaring the relative error corresponds precisely to doubling the number of significant
 digits that we had observed.
 
-This is known as *quadratic convergence*, and in fact this is not limited to finding square roots. With detailed proof being left as an exercise to the reader, it can be shown that, in general
+This is known as *quadratic convergence*, and in fact, this is not limited to finding square roots. With detailed proof being left as an exercise to the reader, it can be shown that, in general
 
 $$
 |\delta_{i+1}| = \frac{|f''(x_i)|}{2 \cdot |f'(x_n)|} \cdot \delta_i^2
@@ -114,4 +114,4 @@ which results in at least quadratic convergence under a few additional assumptio
 
 ## Further Reading
 
-[Introduction to numerical methods at MIT](https://ocw.mit.edu/courses/mathematics/18-330-introduction-to-numerical-analysis-spring-2012/lecture-notes/MIT18_330S12_Chapter4.pdf)
+[Introduction to numerical methods at MIT](https://ocw.mit.edu/courses/mathematics/18-330-introduction-to-numerical-analysis-spring-2012/lecture-notes/MIT18_330S12_Chapter4.pdf).
