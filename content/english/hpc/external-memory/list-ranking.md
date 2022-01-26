@@ -3,10 +3,7 @@ title: List Ranking
 weight: 5
 ---
 
-
-## List Ranking
-
-Now we are going to use external sorting and joining to solve a problem that seems useless, but is actually a very important primitive many graph algorithms in external memory as well as in parallel computing, so bear with me.
+Now we are going to use [external sorting](../sorting) and [joining](../sorting#joining) to solve a problem that seems useless, but is actually a very important primitive many graph algorithms in external memory as well as in parallel computing, so bear with me.
 
 **Problem.** Given a linked list, compute *rank* of each element, equal to its distance from the front element.
 

@@ -21,7 +21,7 @@ Here is an approximate comparison table for commodity hardware in 2021:
 
 | Type | $M$      | $B$ | Latency | Bandwidth | $/GB/mo[^pricing] |
 |:-----|:---------|-----|---------|-----------|:------------------|
-| L1   | 10K      | 64B | 0.5ns   | 80G/s     | -                 |
+| L1   | 10K      | 64B | 2ns     | 80G/s     | -                 |
 | L2   | 100K     | 64B | 5ns     | 40G/s     | -                 |
 | L3   | 1M/core  | 64B | 20ns    | 20G/s     | -                 |
 | RAM  | GBs      | 64B | 100ns   | 10G/s     | 1.5               |
