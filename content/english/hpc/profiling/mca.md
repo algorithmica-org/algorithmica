@@ -7,7 +7,7 @@ A *machine code analyzer* is a program that takes a small snippet of assembly co
 
 ### Using `llvm-mca`
 
-There are many different machine code analyzers, but I personally prefer `llvm-mca`, which you can probably install via a package manager together with `clang`. You can also access it through a new web-based tool called [UICA](https://uica.uops.info).
+There are many different machine code analyzers, but I personally prefer `llvm-mca`, which you can probably install via a package manager together with `clang`. You can also access it through a web-based tool called [UICA](https://uica.uops.info) or in the [Compiler Explorer](https://godbolt.org/) by selecting "Analysis" as the language.
 
 What `llvm-mca` does is it runs a set number of iterations of a given assembly snippet and computes statistics about the resource usage of each instruction, which is useful for finding out where the bottleneck is.
 
