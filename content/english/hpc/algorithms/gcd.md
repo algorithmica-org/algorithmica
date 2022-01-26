@@ -27,7 +27,7 @@ This is true, because if $g = \gcd(a, b)$ divides both $a$ and $b$, it should al
 
 The formula above is essentially the algorithm itself: you can simply apply it recursively, and since each time one of the arguments strictly decreases, it will eventually converge to the $b = 0$ case.
 
-The textbook also probably mentioned that the worst possible input to Euclid's algorithm — the one that maximizes the total number of steps — are consecutive Fibonacci numbers, and since they grow exponentially, the running time of the algorithm is logarithmic in the worst case. This is also true for its *average* running time, if we define it as the expected number os steps for pairs of uniformly distributed integers. [The wikipedia article](https://en.wikipedia.org/wiki/Euclidean_algorithm) also has a cryptic derivation of a more precise $0.84 \cdot \ln n$ asymptotic estimate.
+The textbook also probably mentioned that the worst possible input to Euclid's algorithm — the one that maximizes the total number of steps — are consecutive Fibonacci numbers, and since they grow exponentially, the running time of the algorithm is logarithmic in the worst case. This is also true for its *average* running time if we define it as the expected number of steps for pairs of uniformly distributed integers. [The Wikipedia article](https://en.wikipedia.org/wiki/Euclidean_algorithm) also has a cryptic derivation of a more precise $0.84 \cdot \ln n$ asymptotic estimate.
 
 ![You can see bright blue lines at the proportions of the golden ratio](../img/euclid.svg)
 
@@ -102,11 +102,11 @@ Analogous to the Euclidean algorithm, it is based on a few similar observations:
 3. $\gcd(2a, b) = \gcd(a, b)$ if $b$ is odd and symmetrically $\gcd(a, b) = \gcd(a, 2b)$ if $a$ is odd;
 4. $\gcd(a, b) = \gcd(|a − b|, \min(a, b))$, if $a$ and $b$ are both odd.
 
-Likewise, the algorithm itself is just repeated application of these identities.
+Likewise, the algorithm itself is just a repeated application of these identities.
 
-Its running time is still logarithmic, which is even easier to show because in each of these identities one of the arguments is divided by 2 — except for the last case, in which the new first argument, an absolute difference of two odd numbers, will be even and thus will be divided by 2 on the next iteration.
+Its running time is still logarithmic, which is even easier to show because in each of these identities one of the arguments is divided by 2 — except for the last case, in which the new first argument, the absolute difference of two odd numbers, is guaranteed to be even and thus will be divided by 2 on the next iteration.
 
-What makes this algorithm especially interesting to us is that the only arithmetic operations it uses are binary shifts, comparisons and subtractions, all of which typically take just one cycle.
+What makes this algorithm especially interesting to us is that the only arithmetic operations it uses are binary shifts, comparisons, and subtractions, all of which typically take just one cycle.
 
 ### Implementation
 
@@ -133,7 +133,7 @@ int gcd(int a, int b) {
 }
 ```
 
-Let's run it, and… it sucks. The difference in speed compared to `std::gcd` is indeed 2x, but on the other side of equation. This is mainly because of all the branching needed to differentiate between the cases. Let's start optimizing.
+Let's run it, and… it sucks. The difference in speed compared to `std::gcd` is indeed 2x, but on the other side of the equation. This is mainly because of all the branching needed to differentiate between the cases. Let's start optimizing.
 
 First, let's replace all divisions by 2 with divisions by whichever highest power of 2 we can. We can do it efficiently with `__builtin_ctz`, the "count trailing zeros" instruction available on modern CPUs. Whenever we are supposed to divide by 2 in the original algorithm, we will call this function instead, which will give us the exact amount to right-shift the number by. Assuming that the we are dealing with large random numbers, this is expected to decrease the number of iterations by almost a factor 2, because $1 + \frac{1}{2} + \frac{1}{4} + \frac{1}{8} + \ldots \to 2$.
 
@@ -203,7 +203,7 @@ Let's draw the dependency graph of this loop:
 \path [->, dashed] (shift) edge [bend left=25] (min);
 @@
 
-Modern processors can execute many instructions in parallel, essentially meaning that the true "cost" of this computation is roughly the sum of latencies on its critical path: in this case it is the total latency of diff, abs, ctz and shift.
+Modern processors can execute many instructions in parallel, essentially meaning that the true "cost" of this computation is roughly the sum of latencies on its critical path. In this case, it is the total latency of `diff`, `abs`, `ctz`, and `shift`.
 
 We can decrease this latency using the fact that we can actually calculate `ctz` using just `diff = a - b`, because a negative number divisible by $2^k$ still has $k$ zeros at the end. This lets us not wait for `max(diff, -diff)` to be computed first, resulting in a shorter graph like this:
 
