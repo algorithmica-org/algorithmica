@@ -87,11 +87,7 @@ loop:
     jne  loop
 ```
 
-If you run `perf` on it, you will see that it spends ~90% of the time on the `idiv` line. What's happening here?
-
-In short: division works very poorly on x86 and computers in general. Integer division is notoriously hard to implement in hardware. The circuitry takes a lot of space in the ALU, the computation has a lot of stages, and as a result `div` and its siblings routinely take 10-20 cycles to complete.
-
-Since nobody wants to duplicate all this mess for a separate modulo operation, the `div` instruction serves both purposes. To perform an integer division, you need to put the dividend *specifically* in the `eax` register and call `div` with the divisor as its sole operand. After this, the quotient will be stored in `eax` and the remainder will be stored in `edx`, with latency being slightly less on smaller data type sizes.
+If you run [perf](/hpc/profiling/events) on it, you will see that it spends ~90% of the time on the `idiv` line. This isn't surprising: general [integer division](/hpc/arithmetic/division) works notoriously slow on all computers, including x86.
 
 But there is one kind of division that works well in hardware: division by a power of 2.
 
@@ -99,7 +95,7 @@ But there is one kind of division that works well in hardware: division by a pow
 
 The *binary GCD algorithm* was discovered around the same time as Euclid's, but on the other end of the civilized world, in ancient China. In 1967, it was rediscovered by Josef Stein for use in computers that either don't have division instruction or have a very slow one — it wasn't uncommon for CPUs of that era to use hundreds or thousands of cycles for rare or complex operations.
 
-Analagous to the Euclidean algorithm, it is based on a few similar observations:
+Analogous to the Euclidean algorithm, it is based on a few similar observations:
 
 1. $\gcd(0, b) = b$ and symmetrically $\gcd(a, 0) = a$;
 2. $\gcd(2a, 2b) = 2 \cdot \gcd(a, b)$;
