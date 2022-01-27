@@ -3,26 +3,26 @@ title: List Ranking
 weight: 5
 ---
 
-Now we are going to use [external sorting](../sorting) and [joining](../sorting#joining) to solve a problem that seems useless, but is actually a very important primitive many graph algorithms in external memory as well as in parallel computing, so bear with me.
+In this section, we will apply [external sorting](../sorting) and [joining](../sorting#joining) to solve a problem that seems useless on the surface but is actually a key primitive used in a large number of external memory and parallel algorithms.
 
-**Problem.** Given a linked list, compute *rank* of each element, equal to its distance from the front element.
+**Problem.** Given a singly-linked list, compute the *rank* of each element, equal to its distance from the *last* element.
 
-![](../img/list-ranking.png)
+![Example input and output for the list ranking problem](../img/list-ranking.png)
 
-The problem is easily solvable in RAM model, but it is nontrivial how to solve this in external memory. Since our data is stored so chaotically, we can't simply traverse the list by querying each new element. 
+This problem can be trivially solved in the RAM model: you just traverse the entire list with a counter. But this pointer jumping wouldn't work well in the external memory setting because the list nodes are stored arbitrarily, and in the worst case, reading each new node may require reading a new block.
 
 ### Algorithm
 
-Consider a slightly more general version of the problem. Now, each element has a *weight* $w_i$, and for each element we need to compute the sum of weights of all preceding elements instead of just its rank. To solve the initial problem, we can just set all weights equal to 1.
+Consider a slightly more general version of the problem. Now, each element has a *weight* $w_i$, and for each element, we need to compute the sum of the weights of all its preceding elements instead of just its rank. To solve the initial problem, we can just set all weights equal to 1.
 
-Now, the key idea of the algorithm is to remove some fraction of elements, recursively solve the problem, and then use it to reconstruct the answer for the initial problem.
+The main idea of the algorithm is to remove some fraction of elements, recursively solve the problem, and then use these weight-ranks to reconstruct the answer for the initial problem — which is the tricky part.
 
-Consider some three consecutive elements: $x$, $y$ and $z$. Assume that we deleted $y$ and solved the problem for the remaining list, which included $x$ and $z$, and now we need to restore the answer for the original triplet. The weight of $x$ would be correct as it is, but we need to calculate the answer for $y$ and adjust it for $z$, namely:
+Consider some three consecutive elements $x$, $y$ and $z$. Assume that we deleted $y$ and solved the problem for the remaining list, which included $x$ and $z$, and now we need to restore the answer for the original triplet. The weight of $x$ would be correct as it is, but we need to calculate the answer for $y$ and adjust it for $z$, namely:
 
 - $w_y' = w_y + w_x$
 - $w_z' = w_z + w_y + w_x$
 
-Now, we can just delete, say, first element, solve the problem recursively, and recalculate weights for the original array. But, unfortunately, it would work in quadratic time, because to make the update, we would need to know where its neighbors are, and since we can't hold the entire array in memory, we would need to scan it each time.
+Now, we can just delete, say, the first element, solve the problem recursively, and recalculate weights for the original array. But, unfortunately, it would work in quadratic time, because to make the update, we would need to know where its neighbors are, and since we can't hold the entire array in memory, we would need to scan it each time.
 
 Therefore, on each step, we want to remove as many elements as possible. But we also have a constraint: we can't remove two consecutive elements because then merging results wouldn't be that simple.
 
@@ -32,23 +32,29 @@ $$
 T(N) = T\left(\frac{3}{4} N\right) = O(N)
 $$
 
-The only tricky part here is how to implement the merge step in external memory. 
+The only tricky part here is how to implement the merge step in external memory. To do it efficiently, we need to maintain our list in the following form:
 
-To do it efficiently, we need to maintain our list in the following form:
 - List of tuples $(i, j)$ indicating that element $j$ follows after element $i$
 - List of tuples $(i, w_i)$ indicating that element $i$ currently has weight $w_i$
 - A list of deleted elements
 
 Now, to restore the answer after randomly deleting some elements and recursively solving the smaller problem, we need to iterate over all lists using three pointers looking for deleted elements. and for each such element, we will write $(j, w_i)$ to a separate table, which would signify that before the recursive step we need to add $w_i$ to $j$. We can then join this new table with initial weights, add these additional weights to them.
 
-After coming back from recursion, we need to update weights for the deleted elements, which we can do with the same technique, iterating over reversed connections instead of direct ones.
+After coming back from the recursion, we need to update weights for the deleted elements, which we can do with the same technique, iterating over reversed connections instead of direct ones.
 
-I/O complexity of this algorithm with therefore be the same as joining, namely $SORT(N)$.
+I/O complexity of this algorithm with therefore be the same as joining, namely $SORT(N) = O\left(\frac{N}{B} \log_{\frac{M}{B}} \frac{N}{M} \right)$.
 
 ### Applications
 
 List ranking is especially useful in graph algorithms.
 
-For example, we can obtain the euler tour of a tree in external memory by constructing a linked list where, for each edge, we add two copies of it, one for each direction. Then we can apply the list ranking algorithm and get the position of each node which will be the same as its number (*tin*) in the euler tour.
+For example, we can obtain the Euler tour of a tree in external memory by constructing a linked list from the tree that corresponds to its Wuler tour and then applying the list ranking algorithm — the ranks of each node will be the same as its index $tin_v$ in the Euler tour. To construct this list, we need to:
 
-Exactly same approach cay be applied to parallel algorithms, but we will cover that more deeply later.
+- split each undirected tree edge into two directed ones;
+- duplicate the parent node for each up-edge (because list nodes can only have one incoming edge, but we visit some tree vertices multiple times);
+- route each such node either to the "next sibling", if it has one, or otherwise to its own parent;
+- and then finally break the resulting cycle at the root.
+
+This general technique is called *tree contraction*, and it serves as the basis for a large number of tree algorithms.
+
+Exactly the same approach can be applied to parallel algorithms, and we will convert that much more deeply in part 2.
