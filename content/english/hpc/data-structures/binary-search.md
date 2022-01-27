@@ -75,9 +75,9 @@ If compiler is successful in piercing through the abstractions, it compiles to r
 
 ### Temporal Locality
 
-When we find lower bound of $x$ in a sorted array by binary searching, the main problem is that its memory accesses pattern is neither temporary nor spacially local. 
+When we find lower bound of $x$ in a sorted array by binary searching, the main problem is that its memory accesses pattern is neither temporary nor spatially local. 
 
-For example, element $\lfloor \frac n 2 \rfloor$ is accessed very often (every search) and element $\lfloor \frac n 2 \rfloor + 1$ is not, while they are probably occupying the same cache line. In general, only the first 3-5 reads are temporary local and only the last 3-4 reads are spacially local, and the rest are just random memory accesses.
+For example, element $\lfloor \frac n 2 \rfloor$ is accessed very often (every search) and element $\lfloor \frac n 2 \rfloor + 1$ is not, while they are probably occupying the same cache line. In general, only the first 3-5 reads are temporary local and only the last 3-4 reads are spatially local, and the rest are just random memory accesses.
 
 ![](../img/binary-heat.png)
 
