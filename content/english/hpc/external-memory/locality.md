@@ -123,7 +123,7 @@ int rmq(int l, int r) { // half-interval [l; r)
 
 The `__lg` function is an intrinsic available in GCC that calculates the binary logarithm of a number rounded down. Internally it uses the `clz` ("count leading zeros") instruction and subtracts this count from 32 (in case of a 32-bit integer), and thus takes just a few cycles.
 
-The reason why I bring it up in this article is that there are multiple alternative ways it can be built, with different performances in terms of I/O operations. In general, a sparse table can be built in $O(n \log n)$ time in dynamic programming fashion by iterating in the order of increasing $i$ or $k$ and applying the following identity:
+The reason why I bring it up in this article is that there are multiple alternative ways it can be built, with different efficiencies in terms of memory operations. In general, a sparse table can be built in $O(n \log n)$ time in dynamic programming fashion by iterating in the order of increasing $i$ or $k$ and applying the following identity:
 
 $$
 t[k][i] = \min(t[k-1][i], t[k-1][i+2^{k-1}])
