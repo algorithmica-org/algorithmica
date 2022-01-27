@@ -14,7 +14,7 @@ From this perspective, each type of memory has a few important characteristics:
 - *total size* $M$;
 - *block size* $B$; 
 - *latency*, that is, how much time it takes to fetch one byte;
-- *bandwidth*, which may be higher than just the block size times latency, meaning that IO operations can "overlap";
+- *bandwidth*, which may be higher than just the block size times latency, meaning that I/O operations can "overlap";
 - *cost* in the amortized sense, including the price for the chip, its energy requirements, maintenance, and so on.
 
 Here is an approximate comparison table for commodity hardware in 2021:

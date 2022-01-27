@@ -3,7 +3,7 @@ title: External Memory Model
 weight: 3
 ---
 
-To reason about the performance of memory-bound algorithms, we need to develop a cost model that is more sensitive to expensive block IO operations but is not too rigorous to still be useful.
+To reason about the performance of memory-bound algorithms, we need to develop a cost model that is more sensitive to expensive block I/O operations but is not too rigorous to still be useful.
 
 ### Cache-Aware Model
 
