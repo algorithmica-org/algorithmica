@@ -3,18 +3,18 @@ title: Cache-Oblivious Algorithms
 weight: 7
 ---
 
-In the context of cache hierarchies, there are two types of efficient [external memory](../external) algorithms:
+In the context of the [external memory model](../model), there are two types of efficient algorithms:
 
 - *Cache-aware* algorithms that are efficient for *known* $B$ and $M$.
 - *Cache-oblivious* algorithms that are efficient for *any* $B$ and $M$.
 
-For example, external merge sort is cache-aware, but not cache-oblivious: we need to know memory characteristics of the system, namely the ratio of available memory to the block size, to find the right $k$ to do k-way merge sort.
+For example, [external merge sorting](../sorting) is a cache-aware, but not cache-oblivious algorithm: we need to know the memory characteristics of the system, namely the ratio of available memory to the block size, to find the right $k$ to perform $k$-way merge sort.
 
-Cache-oblivious algorithms are interesting because they automatically become optimal for all memory levels in the cache hierarchy, and not just the one for which they were specifically tuned. In this article we will consider some of their applications in matrix calculations.
+Cache-oblivious algorithms are interesting because they automatically become optimal for all memory levels in the cache hierarchy, and not just the one for which they were specifically tuned. In this article, we consider some of their applications in matrix calculations.
 
-## Matrix Transpose
+## Matrix Transposition
 
-Assume we have a square matrix $A$ of size $N \times N$ and we need to transpose it. The naive by-definition approach would go something like this:
+Assume we have a square matrix $A$ of size $N \times N$, and we need to transpose it. The naive by-definition approach would go something like this:
 
 ```cpp
 for (int i = 0; i < n; i++)
@@ -24,11 +24,11 @@ for (int i = 0; i < n; i++)
 
 Here we used a single pointer to the beginning of the memory region instead of a 2d array to be more explicit about its memory operations.
 
-The I/O complexity of this code is $O(N^2)$ because the writes are not sequential. If you try to swap the iteration variables it is going to be the the other way around, but the result will be the same.
+The I/O complexity of this code is $O(N^2)$ because the writes are not sequential. If you try to swap the iteration variables, it will be the other way around, but the result is going to be the same.
 
 ### Algorithm
 
-The *cache-oblivious* way relies on the following block matrix identity:
+The *cache-oblivious* algorithm relies on the following block matrix identity:
 
 $$
 \begin{pmatrix}
@@ -47,7 +47,7 @@ It lets us solve the problem recursively using a divide-and-conquer approach:
 2. Transpose each one recursively.
 3. Combine results by swapping the corner result matrices.
 
-Implementing D&C on matrices is a bit more complex than on arrays, but the main idea is the same. Instead of copying submatrices explicitly, we want to use "views" into them, and also switch to the naive method when the data starts fitting in L1 cache (or pick something small like $32 \times 32$ if you don't know it in advance). We also need to carefully handle the case when we have odd $n$ and thus can't split the matrix into 4 equal submatrices.
+Implementing D&C on matrices is a bit more complex than on arrays, but the main idea is the same. Instead of copying submatrices explicitly, we want to use "views" into them, and also switch to the naive method when the data starts fitting in the L1 cache (or pick something small like $32 \times 32$ if you don't know it in advance). We also need to carefully handle the case when we have odd $n$ and thus can't split the matrix into 4 equal submatrices.
 
 ```cpp
 void transpose(int *a, int n, int N) {
@@ -96,9 +96,9 @@ for (int i = 0; i < n; i++)
             c[i * n + j] += a[i * n + k] * b[k * n + j];
 ```
 
-It needs to access $O(N^3)$ blocks in total as each scalar multiplication needs a new block read.
+It needs to access $O(N^3)$ blocks in total as each scalar multiplication needs a separate block read.
 
-Many people know that one good optimization is to transpose transpose $B$ first:
+One well-known optimization is to transpose $B$ first:
 
 ```cpp
 for (int i = 0; i < n; i++)
@@ -112,13 +112,13 @@ for (int i = 0; i < n; i++)
             c[i * n + j] += a[i * n + k] * b[j * n + k]; // <- note the indices
 ```
 
-Regardless of whether the transpose is done naively or with the cache-oblivious method we just developed, the matrix multiplication with one of the matrices transposed would work in $O(N^3/B + N^2)$ as all memory accesses are now sequential.
+Whether the transpose is done naively or with the cache-oblivious method we previously developed, the matrix multiplication with one of the matrices transposed would work in $O(N^3/B + N^2)$ as all memory accesses are now sequential.
 
-It seems like we can't do better, but turns out we can.
+It seems like we can't do better, but it turns out we can.
 
 ### Algorithm
 
-Cache-oblivious matrix multiplication involves essentially the same trick. We need to divide the data until it fits into lowest cache (i. e. $N^2 \leq M$). For matrix multiplication, this equates to using this formula:
+Cache-oblivious matrix multiplication relies on essentially the same trick as the transposition. We need to divide the data until it fits into lowest cache (i. e. $N^2 \leq M$). For matrix multiplication, this equates to using this formula:
 
 $$
 \begin{pmatrix}
@@ -133,7 +133,7 @@ A_{21} B_{11} + A_{22} B_{21} & A_{21} B_{12} + A_{22} B_{22}\\
 \end{pmatrix}
 $$
 
-It is slightly harder to implement though, as we now have 8 recursive matrix multiplications:
+It is slightly harder to implement though because we now have a total of 8 recursive matrix multiplications:
 
 ```cpp
 void matmul(const float *a, const float *b, float *c, int n, int N) {
@@ -198,11 +198,11 @@ $$
 T(N) = O\left(\frac{(\sqrt{M})^2}{B} \cdot \left(\frac{N}{\sqrt M}\right)^3\right) = O\left(\frac{N^3}{B\sqrt{M}}\right)
 $$
 
-This is better than just $O(\frac{N^3}{B})$ by quite a lot.
+This is better than just $O(\frac{N^3}{B})$ and by quite a lot.
 
 ### Strassen Algorithm
 
-In a spirit similar to the Karatsuba algorithm, matrix multiplication can be decomposed in a way that involves 7 matrix multiplications of size $\frac{n}{2}$, and master theorem tells us the such divide-and-conquer algorithm would work in $O(n^{\log_2 7}) \approx O(n^{2.81})$ time and a similar asymptotic in external memory model.
+In a spirit similar to the Karatsuba algorithm, matrix multiplication can be decomposed in a way that involves 7 matrix multiplications of size $\frac{n}{2}$, and the master theorem tells us that such divide-and-conquer algorithm would work in $O(n^{\log_2 7}) \approx O(n^{2.81})$ time and a similar asymptotic in the external memory model.
 
 This technique, known as the Strassen algorithm, similarly splits each matrix into 4:
 
@@ -221,7 +221,7 @@ B_{21} & B_{22} \\
 \end{pmatrix}
 $$
 
-It then computes intermediate products of the $\frac{N}{2} \times \frac{N}{2}$ matrices and combines them to get matrix $C$:
+But then it computes intermediate products of the $\frac{N}{2} \times \frac{N}{2}$ matrices and combines them to get matrix $C$:
 
 $$
 \begin{aligned}
@@ -237,10 +237,10 @@ $$
 
 You can verify these formulas with simple substitution if you feel like it.
 
-As far as we know, none of the mainstream optimized linear algebra libraries use the Strassen algorithm, although there are some prototype implementations that become efficient for matrices larger than 4000 or so.
+As far as I know, none of the mainstream optimized linear algebra libraries use the Strassen algorithm, although there are some prototype implementations that are efficient for matrices larger than 4000 or so.
 
 This technique can and actually has been extended multiple times to reduce the asymptotic even further by considering more submatrix products. As of 2020, current world record is $O(n^{2.3728596})$. Whether you can multiply matrices in $O(n^2)$ or at least $O(n^2 \log^k n)$ time is an open problem.
 
 ## Further Reading
 
-[Cache-Oblivious Algorithms and Data Structures](https://erikdemaine.org/papers/BRICS2002/paper.pdf) by Erik Demaine.
+For a solid theoretical viewpoint, consider reading [Cache-Oblivious Algorithms and Data Structures](https://erikdemaine.org/papers/BRICS2002/paper.pdf) by Erik Demaine.
