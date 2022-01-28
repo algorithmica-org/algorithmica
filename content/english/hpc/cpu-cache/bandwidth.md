@@ -1,7 +1,12 @@
 ---
 title: Memory Bandwidth
-weight: 2
+weight: 1
 ---
+
+- In-between CPU registers and RAM, there is a hierarchy of *caches* that exist to speed up access to frequently used data: "lower" layers are faster, but more expensive and therefore smaller in size.
+
+- Caching is done transparently; when there isn't enough space to fit a new cache line, the least recently used one automatically gets evicted to the next, slower layer of cache hierarchy. The programmer can't control this process explicitly.
+
 
 For many algorithms, memory bandwidth is the most important characteristic of the cache system. Coincidentally, it is also the easiest to measure.
 
@@ -26,6 +31,9 @@ All CPU cache layers are placed on the same microchip as the processor, so bandw
 ![](../img/boost.svg)
 
 To reduce noise, we will run all the remaining benchmarks at plain 2GHz — but the lesson to retain here is that the relative performance of different approaches or decisions between algorithm designs may depend on the clock frequency — unless when we are working with datasets that either fit in cache entirely.
+
+Caches are physically a part of CPU. Accessing them takes a fixed amount of time in CPU cycles, so their real access time is proportional to the clock rate. On the contrary, RAM is a separate chip with its own clock rate. Its latencies are therefore better measured in nanoseconds, and not cycles.
+
 
 <!-- TODO: measure frequency-boosted latency also and move to a separate section -->
 

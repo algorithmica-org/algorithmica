@@ -3,7 +3,14 @@ title: Cache Associativity
 weight: 8
 ---
 
-If you looked carefully, you could notice patterns while inspecting the dots below the graph in the previous experiment. These are not just noise: certain step sizes indeed perform much worse than their neighbors.
+- Since implementing "find the oldest among million cache lines" in hardware is unfeasible, each cache layer is split in a number of small "sets", each covering a certain subset of memory locations. *Associativity* is the size of these sets, or, in other terms, how many different "cells" of cache each data location can be mapped to. Higher associativity allows more efficient utilization of cache.
+
+
+If you looked carefully, you could notice patterns while inspecting the dots below the graph in the [previous experiment](../paging):
+
+![](../img/strides-hugepages.svg)
+
+These are not just noise: certain step sizes indeed perform much worse than their neighbors.
 
 For example, the stride of 256 corresponding to this loop:
 
@@ -26,6 +33,8 @@ This is not just a single specific bad value: it is the same for all indices tha
 ![](../img/strides-two.svg)
 
 This effect is due to a feature called *cache associativity*, and an interesting artifact of how CPU caches are implemented in hardware.
+
+### Hardware Caching
 
 When studying memory theoretically using the external memory model, we discussed different ways one can [implement caching policies](/hpc/memory/locality/) in software, and went into detail on particular case of a simple but effective strategy, LRU, which required some non-trivial data manipulation. In the context of hardware, such scheme is called *fully associative cache*.
 

@@ -1,7 +1,10 @@
 ---
 title: Cache Lines
-weight: 4
+weight: 3
 ---
+
+- The CPU cache system operates on *cache lines*, which is the basic unit of data transfer between the CPU and the RAM. The size of a cache line is 64 bytes on most architectures, meaning that all main memory is divided into blocks of 64 bytes, and whenever you request (read or write) a single byte, you are also fetching all its 63 cache line neighbors whether your want them or not.
+
 
 The most important feature of the memory system is that it deals with cache lines, and not individual bytes.
 
@@ -26,3 +29,5 @@ When we change the step parameter to 8, the graphs equalize:
 ![](../img/strided2.svg)
 
 The important lesson is to count the number of cache lines to fetch when analyzing memory-bound algorithms, and not the total count of memory accesses. This becomes increasingly important with larger problem sizes.
+
+![](../img/permutation-padded.svg)

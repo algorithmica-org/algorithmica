@@ -1,6 +1,6 @@
 ---
 title: Memory Latency
-weight: 1
+weight: 2
 ---
 
 Despite bandwidth — how many data one can load — is a more complicated concept, it is much easier to observe and measure than latency — how much time it takes to load one cache line.
