@@ -3,33 +3,38 @@ title: RAM & CPU Caches
 weight: 9
 ---
 
-In the previous chapter, we studied computer memory from theoretical standpoint, using the [external memory model](../external-memory) to estimate performance of memory-bound algorithms.
+In the [previous chapter](../external-memory), we studied computer memory from a theoretical standpoint, using the [external memory model](../external-memory/model) to estimate the performance of memory-bound algorithms.
 
-While it is more or less accurate for computations involving HDDs and network storage, where in-memory arithmetic is negligibly fast compared to external I/O operations, it becomes erroneous on lower levels in the cache hierarchy, where the costs of these operations become comparable.
+While it is more or less accurate for computations involving HDDs and network storage, where in-memory arithmetic is negligibly fast compared to the external I/O operations, it is too imprecise for lower levels in the cache hierarchy, where the costs of these operations become comparable.
+
+To perform more fine-grained optimization of in-memory algorithms, we have to start taking into account the many specific details of the CPU cache system. And instead of studying loads of boring Intel documents with dry specs and theoretically achievable limits, we will estimate these parameters experimentally by running numerous small benchmark programs with access patterns that resemble the ones that often occur in practical code.
+
+
+<!--
 
 At this level, we can no longer simply ignore either all arithmetic or memory operations. To perform more fine-grained optimization of realistic programs, we need to know the cost of memory accesses on real systems and in real units — in cycles and nanoseconds — along with many other intricacies of the RAM and CPU cache system.
 
-To do so, instead of digging ourselves in Intel spec sheets filled with theoretically possible performance metrics, we will estimate these parameters experimentally: by running small benchmark programs that perform access patterns that may realistically occur in real code.
+-->
 
-### System Setup
+### Experimental Setup
 
-As before, I will be running these experiments on [Ryzen 7 4700U](https://en.wikichip.org/wiki/amd/ryzen_7/4700u), which is a "Zen 2" CPU whose cache-related specs are as follows:
+As before, I will be running all experiments on Ryzen 7 4700U, which is a "Zen 2" CPU with the following main cache-related specs:
 
-- 8 physical cores (without hyper-threading) clocked at 2GHz[^boost];
-- 512K of 8-way set associative L1 cache, half of which is instruction cache — meaning 32K per core;
-- 4M of 8-way set associative L2 cache, or 512K per core;
-- 8M of 16-way set associative L3 cache, *shared* between 8 cores (4M actually);
-- 16G of DDR4 RAM @ 2667MHz.
+- 8 physical cores (without hyper-threading) clocked at 2GHz (and 4.1GHz in boost mode — [which we disable](/hpc/profiling/noise));
+- 256K of 8-way set associative L1 data cache or 32K per core;
+- 4M of 8-way set associative L2 cache or 512K per core;
+- 8M of 16-way set associative L3 cache, [shared](sharing) between 8 cores;
+- 16GB (2x8G) of DDR4 RAM @ 2667MHz.
 
-[^boost]: Although the CPU can be clocked at 4.1GHz in boost mode, we will perform most experiments at 2GHz to reduce noise — so keep in mind that in realistic applications the numbers can be multiplied by 2.
+You can compare it with your own hardware by running `dmidecode -t cache` or `lshw -class memory` on Linux or by installing [CPU-Z](https://en.wikipedia.org/wiki/CPU-Z) on Windows. You can also find additional details about the CPU on [WikiChip](https://en.wikichip.org/wiki/amd/ryzen_7/4700u) and [7-CPU](https://www.7-cpu.com/cpu/Zen2.html).
 
-You can compare it with your own hardware by running `dmidecode -t cache` or `lshw -class memory` on Linux or just looking it up on WikiChip.
+<!--
 
-Due to difficulties in [refraining compiler from cheating](..//hpc/analyzing-performance/profiling/), the code snippets in this article are be slightly simplified for exposition purposes. Check the [code repository](https://github.com/sslotin/amh-code/tree/main/cpu-cache) if you want to reproduce them yourself.
+Although the CPU can be clocked at 4.1GHz in boost mode, we will perform most experiments at 2GHz to reduce noise — so keep in mind that in realistic applications the numbers can be multiplied by 2.
 
-I am not going to turn off frequency boosting or silence other programs while doing these benchmarks. The goal is to get realistic values, like when optimizing a video game.
+-->
 
-There are more thorough [measurements for Zen 2](https://www.7-cpu.com/cpu/Zen2.html).
+Due to difficulties in [refraining the compiler from cheating](/hpc/profiling/noise/), the code snippets in this article are slightly simplified for exposition purposes. Check the [code repository](https://github.com/sslotin/amh-code/tree/main/cpu-cache) if you want to reproduce them yourself.
 
 <!--
 

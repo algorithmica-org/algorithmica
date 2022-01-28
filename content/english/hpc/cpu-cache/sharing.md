@@ -1,5 +1,5 @@
 ---
-title: Memory Sharing
+title: Cache and Memory Sharing
 weight: 4
 ---
 
