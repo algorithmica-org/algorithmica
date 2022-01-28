@@ -6,9 +6,7 @@ weight: 8
 - Since implementing "find the oldest among million cache lines" in hardware is unfeasible, each cache layer is split in a number of small "sets", each covering a certain subset of memory locations. *Associativity* is the size of these sets, or, in other terms, how many different "cells" of cache each data location can be mapped to. Higher associativity allows more efficient utilization of cache.
 
 
-If you looked carefully, you could notice patterns while inspecting the dots below the graph in the [previous experiment](../paging):
-
-![](../img/strides-hugepages.svg)
+If you looked carefully, you could notice patterns while inspecting the dots below the graph in the [previous experiment](../paging).
 
 These are not just noise: certain step sizes indeed perform much worse than their neighbors.
 

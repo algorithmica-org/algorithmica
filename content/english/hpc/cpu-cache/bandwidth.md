@@ -3,14 +3,18 @@ title: Memory Bandwidth
 weight: 1
 ---
 
-- In-between CPU registers and RAM, there is a hierarchy of *caches* that exist to speed up access to frequently used data: "lower" layers are faster, but more expensive and therefore smaller in size.
+On the data path between the CPU registers and the RAM, there is a hierarchy of *caches* that exist to speed up access to frequently used data: the layers closer to the processor are are faster, but also smaller in size. The word "faster" here means two things:
+
+- The time between the moment when a read (or write) is initiated and the moment when it is (latency).
+- The number of 
 
 - Caching is done transparently; when there isn't enough space to fit a new cache line, the least recently used one automatically gets evicted to the next, slower layer of cache hierarchy. The programmer can't control this process explicitly.
 
+-->
 
-For many algorithms, memory bandwidth is the most important characteristic of the cache system. Coincidentally, it is also the easiest to measure.
+For many algorithms, *memory bandwidth* is the most important characteristic of the cache system. And at the same time, it is also the easiest to measure.
 
-For our benchmark, let's create an array and linearly iterate over it $K$ times, incrementing its values:
+For our experiment, we create an array and iterate over it $K$ times incrementing its values:
 
 ```cpp
 int a[N];
@@ -26,6 +30,27 @@ Changing $N$ and adjusting $K$ so that the total number of cells accessed remain
 
 You can clearly see the sizes of the cache layers on this graph. When the whole array fits into the lowest layer of cache, the program is bottlenecked by CPU rather than L1 cache bandwidth. As the the array becomes larger, overhead becomes smaller, and the performance approaches this theoretical maximum. But then it drops: first to ~12 GFLOPS when it exceeds L1 cache, and then gradually to about 2.1 GFLOPS when it can no longer fit in L3.
 
+### Directional Access
+
+Only read:
+
+```c++
+for (int i = 0; i < N; i++)
+    s += a[i];
+```
+
+Only write:
+
+```c++
+// same as memset(a, 0, sizeof a);
+for (int i = 0; i < N; i++)
+    a[i] = 0;
+```
+
+![](../img/directional.svg)
+
+### Frequency Scaling
+
 All CPU cache layers are placed on the same microchip as the processor, so bandwidth, latency, all its other characteristics scale with the clock frequency. RAM, on the other side, lives on its own clock, and its characteristics remain constant. This can be seen on these graphs if we run the same benchmark while turning frequency boost on:
 
 ![](../img/boost.svg)
@@ -33,19 +58,3 @@ All CPU cache layers are placed on the same microchip as the processor, so bandw
 To reduce noise, we will run all the remaining benchmarks at plain 2GHz — but the lesson to retain here is that the relative performance of different approaches or decisions between algorithm designs may depend on the clock frequency — unless when we are working with datasets that either fit in cache entirely.
 
 Caches are physically a part of CPU. Accessing them takes a fixed amount of time in CPU cycles, so their real access time is proportional to the clock rate. On the contrary, RAM is a separate chip with its own clock rate. Its latencies are therefore better measured in nanoseconds, and not cycles.
-
-
-<!-- TODO: measure frequency-boosted latency also and move to a separate section -->
-
-**Exercise: theoretical peak performance.** By the way, assuming infinite bandwidth, what would the throughput of that loop be? How to verify that the 14 GFLOPS figure is the CPU limit and not L1 peak bandwidth? For that we need to look a bit closer at how the processor will execute the loop.
-
-Incrementing an array can be done with SIMD; when compiled, it uses just two operations per 8 elements — performing the read-fused addition and writing the result back:
-
-```asm
-vpaddd  ymm0, ymm1, YMMWORD PTR [rax]
-vmovdqa YMMWORD PTR [rax], ymm0
-```
-
-This computation is bottlenecked by the write, which has a throughput of 1. This means that we can theoretically increment and write back 8 values per cycle on average, yielding the performance of 2 GHz × 8 = 16 GFLOPS (or 32.8 in boost mode), which is fairly close to what we observed.
-
-On all modern architectures, you can typically assume that you won't ever be bottlenecked by the throughput of L1 cache, but rather by the read/write execution ports or the arithmetic. In these extreme cases, it may be beneficial to store some data in registers without touching any of the memory, which we will cover later in the book.
