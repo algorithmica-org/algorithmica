@@ -26,7 +26,7 @@ As before, I will be running all experiments on Ryzen 7 4700U, which is a "Zen 2
 - 8M of 16-way set associative L3 cache, [shared](sharing) between 8 cores;
 - 16GB (2x8G) of DDR4 RAM @ 2667MHz.
 
-You can compare it with your own hardware by running `dmidecode -t cache` or `lshw -class memory` on Linux or by installing [CPU-Z](https://en.wikipedia.org/wiki/CPU-Z) on Windows. You can also find additional details about the CPU on [WikiChip](https://en.wikichip.org/wiki/amd/ryzen_7/4700u) and [7-CPU](https://www.7-cpu.com/cpu/Zen2.html).
+You can compare it with your own hardware by running `dmidecode -t cache` or `lshw -class memory` on Linux or by installing [CPU-Z](https://en.wikipedia.org/wiki/CPU-Z) on Windows. You can also find additional details about the CPU on [WikiChip](https://en.wikichip.org/wiki/amd/ryzen_7/4700u) and [7-CPU](https://www.7-cpu.com/cpu/Zen2.html). Not all conclusions will generalize to every CPU platform in existence.
 
 <!--
 
@@ -35,6 +35,10 @@ Although the CPU can be clocked at 4.1GHz in boost mode, we will perform most ex
 -->
 
 Due to difficulties in [refraining the compiler from cheating](/hpc/profiling/noise/), the code snippets in this article are slightly simplified for exposition purposes. Check the [code repository](https://github.com/sslotin/amh-code/tree/main/cpu-cache) if you want to reproduce them yourself.
+
+### Acknowledgements
+
+This chapter is inspired by "[Gallery of Processor Cache Effects](http://igoro.com/archive/gallery-of-processor-cache-effects/)" by Igor Ostrovsky and "[What Every Programmer Should Know About Memory](https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)" by Ulrich Drepper, both of which can serve as good accompanying readings.
 
 <!--
 
@@ -68,12 +72,6 @@ But in some cases the specifics start to matter. In set-associative cache, there
 Unfortunately, this happens quite often, as we programmers love using powers of two for our algorithms and data structures.
 
 Fortunately, this is easy to fix: just don't use powers of two. Not necessarily for the algorithm, but at least for the memory layout.
-
-## Further Reading
-
-This article is inspired by "[Gallery of Processor Cache Effects](http://igoro.com/archive/gallery-of-processor-cache-effects/)" by Igor Ostrovsky.
-
-For a more a comprehensive read, consider "[What Every Programmer Should Know About Memory](https://people.freebsd.org/~lstewart/articles/cpumemory.pdf)" by Ulrich Drepper.
 
 More fundamental [academic paper](https://www2.eecs.berkeley.edu/Pubs/TechRpts/1993/CSD-93-767.pdf) by Rafael Saavedra and Alan Smith.
 
