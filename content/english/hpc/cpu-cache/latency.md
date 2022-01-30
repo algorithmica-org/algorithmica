@@ -3,18 +3,19 @@ title: Memory Latency
 weight: 2
 ---
 
-Despite bandwidth — how many data one can load — is a more complicated concept, it is much easier to observe and measure than latency — how much time it takes to load one cache line.
+Despite that [bandwidth](../bandwidth) is a more complicated concept, it is much easier to observe and measure than latency: you can simply execute a long series of independent read or write queries, and the scheduler, having access to them in advance, reorders and overlaps them, hiding their latency and maximizing the total throughput.
 
-Measuring memory bandwidth is easy because the CPU can simply queue up multiple iterations of data-parallel loops like the one above. The scheduler gets access to the needed memory locations far in advance and can dispatch read requests in a way that will overlap all memory operations, hiding the latency.
-
-To measure latency, we need to design an experiment where the CPU can't cheat by knowing the memory location in advance. We can do this like this: generate a random permutation of size $n$ that corresponds a full cycle, and then repeatedly follow the permutation.
+To measure *latency*, we need to design an experiment where the CPU can't cheat by knowing the memory locations we are going to request in advance. One way to ensure this is to generate a random permutation of size $N$ that corresponds to a full cycle, and then repeatedly follow the permutation:
 
 ```cpp
 int p[N], q[N];
 
+// generating a random permutation
 iota(p, p + N, 0);
 random_shuffle(p, p + N);
 
+// this permutation may contain multiple cycles,
+// so instead we use it to construct another permutation with a single cycle
 int k = p[N - 1];
 for (int i = 0; i < N; i++)
     k = q[k] = p[i];
@@ -24,30 +25,58 @@ for (int t = 0; t < K; t++)
         k = q[k];
 ```
 
-This performance anti-pattern is known as *pointer chasing*, and it very frequent in software, especially written in high-level languages. Iterating an array this way is considerably slower.
+Compared to linear iteration, it is *much* slower — by multiple orders of magnitude — to visit all elements of an array this way. Not only does it make [SIMD](/hpc/simd) impossible, but it also [stalls the pipeline](/hpc/pipelining), creating a large traffic jam of instructions, all waiting for a single piece of data to be fetched from the memory.
 
-![](../img/permutation-latency.svg)
-
-When speaking of latency, it makes more sense to use cycles or nanoseconds rather than bandwidth units. So we will replace this graph with its reciprocal:
+This performance anti-pattern is known as *pointer chasing*, and it is very frequent in data structures, especially those written high-level languages that use lots of heap-allocated objects and pointers to them necessary for dynamic typing.
 
 ![](../img/latency-throughput.svg)
 
-It is generally *much* slower — by multiple orders of magnitude — to iterate an array this way. Not only because it makes SIMD practically impossible, but also because it stalls the pipeline a lot.
+When talking about latency, it makes more sense to use cycles or nanoseconds rather than throughput units. So we will replace this graph with its reciprocal:
 
-### Latency of RAM and TLB
+![](../img/permutation-latency.svg)
 
-Similar to bandwidth, the latency of CPU cache scales with its clock frequency, while the RAM lives on its own fixed-frequency clock, and its performance is therefore usually measured in nanoseconds. We can observe this difference if we change the frequency by turning turbo boost on.
+Note that the cliffs on both graphs aren't as distinctive as they were for the bandwidth. This is because we still have some chance of hitting the previous layer of cache even if the array can't fit into it entirely. More formally, there are $k$ levels in the cache hierarchy with sizes $s_i$ and latencies $l_i$, then their expected latency will be
+
+$$
+E[L] = \frac{
+      s_1 \cdot l_1
+    + (s_2 - s_1) \cdot l_2
+%    + (s_3 - s_2) \cdot l_3
+    + \ldots
+    + (N - s_k) \cdot l_{RAM}
+    }{N}
+$$
+
+instead of just being equal to the slowest access.
+
+Since sizes and latencies typically differ by almost an order of magnitude. When we increase the size of the array. So the graph of reciprocal latency should roughly look like if it was composed of a few transposed and scaled hyperbolas.
+
+we aren't exactly measuring latency in this experiment.
+
+$$
+E[L] = \frac{N \cdot l_{last} - C}{N} = l_{last} - \frac{C}{N}
+$$
+
+$$
+\frac{1}{l_{last} - \frac{C}{N}}
+= \frac{N}{N \cdot l_{last} - C}
+$$
+
+<!--
+
+E[L] \approx \frac{s_{k} \cdot l_{k} + (N - s_k) \cdot l_{k+1}}{N}
+= l_{k+1} - \frac{s_k \cdot (l_{k+1} - l_k)}{N} 
+
+-->
+
+### Frequency Scaling
+
+Similar to bandwidth, the latency of all CPU caches proportionally scales with its clock frequency, while the RAM does not. We can also observe this difference if we change the frequency by turning turbo boost on.
 
 ![](../img/permutation-boost.svg)
 
-The graph starts making a bit more sense if we look at the relative speedup instead.
+The graph starts making a more sense if we plot it as a relative speedup.
 
 ![](../img/permutation-boost-speedup.svg)
 
-You would expect 2x rates for array sizes that fit into CPU cache entirely, but then roughly equal for arrays stored in RAM. But this is not quite what is happening: there is a small, fixed-latency delay on lower clocked run even for RAM accesses. This happens because the CPU first checks its cache before dispatching a read query to the main memory — to save RAM bandwidth for other processes that potentially need it.
-
-Actually, TLB misses may stall memory reads for the same reason. The TLB cache is called "lookaside" because the lookup can happen independently from normal data cache lookups. L1 and L2 caches on the other side are private to the core, and so they can store virtual addresses and be queried concurrently with TLB — after fetching a cache line, its tag is used to restore the physical address, which is then checked against the concurrently fetched TLB entry. This trick does not work for shared memory however, because their bandwidth is limited, and dispatching read queries there for no reason is not a good idea in general. So we can observe a similar effect in L3 and RAM reads when the page does not fit L1 TLB and L2 TLB respectively.
-
-For sparse reads, it often makes sense to increase page size, which improves the latency.
-
-It is possible, but quite tedious to also construct an experiment actually measuring all this — so you will have to take my word on that one.
+You would expect 2x rates for array sizes that fit into CPU cache entirely, but then roughly equal for arrays stored in RAM. But this is not quite what is happening: there is a small, fixed-latency delay on lower clocked run even for RAM accesses. This happens because the CPU first has to check its cache before dispatching a read query to the main memory — to save RAM bandwidth for other processes that potentially need it.

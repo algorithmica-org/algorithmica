@@ -31,3 +31,21 @@ When we change the step parameter to 8, the graphs equalize:
 The important lesson is to count the number of cache lines to fetch when analyzing memory-bound algorithms, and not the total count of memory accesses. This becomes increasingly important with larger problem sizes.
 
 ![](../img/permutation-padded.svg)
+
+### Other Blocks
+
+Pages
+
+RAM rows. 3-4 nanosecond increase.
+
+
+<!--
+
+Actually, TLB misses may stall memory reads for the same reason. The TLB cache is called "lookaside" because the lookup can happen independently from normal data cache lookups. L1 and L2 caches on the other side are private to the core, and so they can store virtual addresses and be queried concurrently with TLB — after fetching a cache line, its tag is used to restore the physical address, which is then checked against the concurrently fetched TLB entry. This trick does not work for shared memory however, because their bandwidth is limited, and dispatching read queries there for no reason is not a good idea in general. So we can observe a similar effect in L3 and RAM reads when the page does not fit L1 TLB and L2 TLB respectively.
+
+For sparse reads, it often makes sense to increase page size, which improves the latency.
+
+It is possible, but quite tedious to also construct an experiment actually measuring all this — so you will have to take my word on that one.
+
+-->
+
