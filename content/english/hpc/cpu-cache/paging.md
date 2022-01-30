@@ -37,3 +37,25 @@ This flattens the curve:
 Typical size of a page is 4KB, but it can be up to 1G or so for large databases, but enabling it by default is not a good idea as scenarios when we have a VPS with 256M or RAM and more than 256 processes are not uncommon.
 
 Typical page sizes are 4K, 2M and 1G (e. g. allowing for 256K, 128M, 64G memory regions to be stored in a 64-entry L1 TLB respectively).
+
+You can only request if it has alignment.
+
+```c++
+#include <sys/mman.h>
+
+void *ptr = std::aligned_alloc(page_size, array_size);
+madvise(pre, array_size, MADV_HUGEPAGE);
+```
+
+On Windows, this operation is fused:
+
+```c++
+#include "memoryapi.h"
+
+void *ptr = VirtualAlloc(NULL, array_size,
+                         MEM_RESERVE | MEM_COMMIT | MEM_LARGE_PAGES, PAGE_READWRITE);
+```
+
+In both cases, `array_size` should be a multiple of `page_size`.
+
+![](../img/permutation-hugepages.svg)
