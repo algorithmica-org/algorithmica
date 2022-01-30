@@ -32,7 +32,7 @@ struct padded_int {
     int padding[15];
 };
 
-alignas(64) padded_int q[N / 16];
+padded_int q[N / 16];
 
 // constructing a cycle from a random permutation
 // ...

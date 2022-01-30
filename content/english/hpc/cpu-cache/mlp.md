@@ -1,7 +1,9 @@
 ---
 title: Memory-Level Parallelism
-weight: 3
+weight: 4
 ---
+
+The reason why bandwidth benchmark works is because you can simply execute a long series of independent read or write queries, and the scheduler, having access to them in advance, reorders and overlaps them, hiding their latency and maximizing the total throughput.
 
 - Memory requests can overlap in time: while you wait for a read request to complete, you can sand a few others, which will be executed concurrently. In some contexts that allow for many concurrent I/O operations it therefore makes more sense to talk abound memory *bandwidth* than *latency*.
 
