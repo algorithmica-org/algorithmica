@@ -35,7 +35,11 @@ When talking about latency, it makes more sense to use cycles or nanoseconds rat
 
 ![](../img/permutation-latency.svg)
 
-Note that the cliffs on both graphs aren't as distinctive as they were for the bandwidth. This is because we still have some chance of hitting the previous layer of cache even if the array can't fit into it entirely. More formally, if there are $k$ levels in the cache hierarchy with sizes $s_i$ and latencies $l_i$, then, instead of being equal to the slowest access, their expected latency will be:
+Note that the cliffs on both graphs aren't as distinctive as they were for the bandwidth. This is because we still have some chance of hitting the previous layer of cache even if the array can't fit into it entirely.
+
+### Theoretical Latency
+
+More formally, if there are $k$ levels in the cache hierarchy with sizes $s_i$ and latencies $l_i$, then, instead of being equal to the slowest access, their expected latency will be:
 
 $$
 E[L] = \frac{
