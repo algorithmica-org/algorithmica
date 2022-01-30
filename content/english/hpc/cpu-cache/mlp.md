@@ -3,9 +3,18 @@ title: Memory-Level Parallelism
 weight: 4
 ---
 
+The fundamental reason why [linear iteration](../bandwidth) is so much faster than [pointer jumping](../latency) is that the CPU knows which memory locations it needs to fetch first and sends the corresponding memory requests far in advance, successfully hiding the latencies of these individual requests.
+
+Exploring this idea further, the memory system supports a large but finite number of concurrent I/O operations. To find this limit, we can modify our pointer chasing benchmark
+
+<!--
+
 The reason why bandwidth benchmark works is because you can simply execute a long series of independent read or write queries, and the scheduler, having access to them in advance, reorders and overlaps them, hiding their latency and maximizing the total throughput.
 
-- Memory requests can overlap in time: while you wait for a read request to complete, you can sand a few others, which will be executed concurrently. In some contexts that allow for many concurrent I/O operations it therefore makes more sense to talk abound memory *bandwidth* than *latency*.
+Memory requests can overlap in time: while you wait for a read request to complete, you can sand a few others, which will be executed concurrently. In some contexts that allow for many concurrent I/O operations it therefore makes more sense to talk abound memory *bandwidth* than *latency*.
+
+-->
+
 
 ```c++
 const int M = N / D;
@@ -85,6 +94,6 @@ int q[D][M];
 
 ![](../img/aos-soa.svg)
 
-Running a bit forward: the boosts at powers of two for AoS are due to SIMD, and dips in SoA are due to cache associativity.
+Running a bit forward: the spikes at powers of two for AoS are due to SIMD, and dips in SoA are due to cache associativity.
 
-<!-- TODO: aos, but padded -->
+![](../img/aos-soa-padded.svg)
