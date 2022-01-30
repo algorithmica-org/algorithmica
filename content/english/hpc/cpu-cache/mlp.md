@@ -96,4 +96,21 @@ int q[D][M];
 
 Running a bit forward: the spikes at powers of two for AoS are due to SIMD, and dips in SoA are due to cache associativity.
 
+### RAM-Specific Timings
+
 ![](../img/aos-soa-padded.svg)
+
+```c++
+struct padded_int {
+    int val;
+    int padding[15];
+};
+
+padded_int q[M][D];
+```
+
+The rest of the core is the same: the only difference is that they require a separate cache line access.
+
+This is only specific to RAM: on array sizes that fit in cache, the benchmark is actually worse because the [cache sharing is worse](../cache-lines).
+
+RAM timings.

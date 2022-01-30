@@ -92,4 +92,4 @@ The graph starts making more sense if we plot it as a relative speedup.
 
 You would expect 2x rates for array sizes that fit into CPU cache entirely, but then roughly equal for arrays stored in RAM. But this is not quite what is happening: there is a small, fixed-latency delay on lower clocked run even for RAM accesses. This happens because the CPU first has to check its cache before dispatching a read query to the main memory — to save RAM bandwidth for other processes that potentially need it.
 
-Memory latency is also slightly affected by some details of the virtual memory implementation and RAM-specific timings, which we will discuss [later](../paging).
+Memory latency is also slightly affected by some details of the [virtual memory implementation](../paging) and [RAM-specific timings](../mlp), which we will discuss later.
