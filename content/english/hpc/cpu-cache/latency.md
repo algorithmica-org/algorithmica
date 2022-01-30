@@ -5,7 +5,7 @@ weight: 2
 
 Despite that [bandwidth](../bandwidth) is a more complicated concept, it is much easier to observe and measure than latency: you can simply execute a long series of independent read or write queries, and the scheduler, having access to them in advance, reorders and overlaps them, hiding their latency and maximizing the total throughput.
 
-To measure *latency*, we need to design an experiment where the CPU can't cheat by knowing the memory locations we are going to request in advance. One way to ensure this is to generate a random permutation of size $N$ that corresponds to a full cycle, and then repeatedly follow the permutation:
+To measure *latency*, we need to design an experiment where the CPU can't cheat by knowing the memory locations we will request in advance. One way to ensure this is to generate a random permutation of size $N$ that corresponds to a cycle and then repeatedly follow the permutation:
 
 ```cpp
 int p[N], q[N];
@@ -31,11 +31,11 @@ This performance anti-pattern is known as *pointer chasing*, and it is very freq
 
 ![](../img/latency-throughput.svg)
 
-When talking about latency, it makes more sense to use cycles or nanoseconds rather than throughput units. So we will replace this graph with its reciprocal:
+When talking about latency, it makes more sense to use cycles or nanoseconds rather than throughput units, so we replace this graph with its reciprocal:
 
 ![](../img/permutation-latency.svg)
 
-Note that the cliffs on both graphs aren't as distinctive as they were for the bandwidth. This is because we still have some chance of hitting the previous layer of cache even if the array can't fit into it entirely. More formally, there are $k$ levels in the cache hierarchy with sizes $s_i$ and latencies $l_i$, then their expected latency will be
+Note that the cliffs on both graphs aren't as distinctive as they were for the bandwidth. This is because we still have some chance of hitting the previous layer of cache even if the array can't fit into it entirely. More formally, if there are $k$ levels in the cache hierarchy with sizes $s_i$ and latencies $l_i$, then, instead of being equal to the slowest access, their expected latency will be:
 
 $$
 E[L] = \frac{
@@ -47,20 +47,27 @@ E[L] = \frac{
     }{N}
 $$
 
-instead of just being equal to the slowest access.
-
-Since sizes and latencies typically differ by almost an order of magnitude. When we increase the size of the array. So the graph of reciprocal latency should roughly look like if it was composed of a few transposed and scaled hyperbolas.
-
-we aren't exactly measuring latency in this experiment.
+If we abstract away from all that happens before the slowest cache layer, we can reduce the formula to just this:
 
 $$
 E[L] = \frac{N \cdot l_{last} - C}{N} = l_{last} - \frac{C}{N}
 $$
 
+As $N$ increases, the expected latency slowly approaches $l_{last}$, and if you squint hard enough, the graph of the throughput (reciprocal latency) should roughly look like if it is composed of a few transposed and scaled hyperbolas:
+
 $$
-\frac{1}{l_{last} - \frac{C}{N}}
-= \frac{N}{N \cdot l_{last} - C}
+\begin{aligned}
+E[L]^{-1} &= \frac{1}{l_{last} - \frac{C}{N}}
+\\        &= \frac{N}{N \cdot l_{last} - C}
+\\        &= \frac{1}{l_{last}} \cdot \frac{N + \frac{C}{l_{last}} - \frac{C}{l_{last}}}{N - \frac{C}{l_{last}}}
+\\        &= \frac{1}{l_{last}} \cdot \left(\frac{1}{N \cdot \frac{l_{last}}{C} - 1} + 1\right)
+\\        &= \frac{1}{k \cdot (x - x_0)} + y_0
+\end{aligned}
 $$
+
+To get the actual latency numbers, we can iteratively apply the first formula to deduce $l_1$, then $l_2$, and so on. Or just look at the values right before the cliff — they should be within 10-15% of the true latency.
+
+There are more direct ways to measure latency, including the use of [non-temporal reads](../bandwidth), but this benchmark is more representable of practical access patterns.
 
 <!--
 
@@ -75,8 +82,10 @@ Similar to bandwidth, the latency of all CPU caches proportionally scales with i
 
 ![](../img/permutation-boost.svg)
 
-The graph starts making a more sense if we plot it as a relative speedup.
+The graph starts making more sense if we plot it as a relative speedup.
 
 ![](../img/permutation-boost-speedup.svg)
 
 You would expect 2x rates for array sizes that fit into CPU cache entirely, but then roughly equal for arrays stored in RAM. But this is not quite what is happening: there is a small, fixed-latency delay on lower clocked run even for RAM accesses. This happens because the CPU first has to check its cache before dispatching a read query to the main memory — to save RAM bandwidth for other processes that potentially need it.
+
+Memory latency is also slightly affected by some details of the virtual memory implementation and RAM-specific timings, which we will discuss [later](../paging).
