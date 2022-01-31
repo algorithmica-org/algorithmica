@@ -1,6 +1,6 @@
 ---
 title: Data Alignment
-weight: 9
+weight: 4
 ---
 
 The fact that the memory is split into cache lines has huge implications on data structure layout. If you need to retrieve a certain atomic object, such as a 32-bit integer, you want to have it all located in a single cache line: both because hardware stitching results together takes precious transistor space and because retrieving 2 cache lines is slow and increases memory bandwidth. The "natural" alignment of `int` is 4 bytes.

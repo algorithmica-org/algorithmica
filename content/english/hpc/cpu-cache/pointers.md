@@ -1,6 +1,6 @@
 ---
 title: Pointer Alternatives
-weight: 12
+weight: 6
 ---
 
 

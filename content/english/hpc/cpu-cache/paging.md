@@ -1,6 +1,6 @@
 ---
 title: Memory Paging
-weight: 7
+weight: 8
 ---
 
 - There are other types of cache inside CPUs that are used for things other than data. The most important for us are *instruction cache* (I-cache), which is used to speed up the fetching of machine code from memory, and *translation lookaside buffer* (TLB), which is used to store physical locations of virtual memory pages, which is instrumental to the efficiency of virtual memory.

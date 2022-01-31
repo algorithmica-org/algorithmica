@@ -79,26 +79,30 @@ Planned table of contents:
  7.6. Hashing
  7.7. Random Number Generation
 8. External Memory
- 8.1. External Sorting
- 8.2. List Ranking
- 8.3. Eviction Policies
- 8.4. Data Locality
- 8.5. Cache Blocking
- 8.6. Cache-Oblivious Algorithms
-(8.7. B-Trees)
-(8.8. Sublinear Algorithms)
+ 8.1. Memory Hierarchy
+ 8.2. Virtual Memory
+ 8.3. External Memory Model
+ 8.4. External Sorting
+ 8.5. List Ranking
+ 8.6. Eviction Policies
+ 8.7. Cache-Oblivious Algorithms
+ 8.8. Spacial and Temporal Locality
+(8.9. B-Trees)
+(8.10. Sublinear Algorithms)
 9. RAM & CPU Caches
  9.1. Memory Bandwidth
- 9.2. Cache Lines and Memory Alignment
- 9.3. Bit Fields and Packing
- 9.4. Memory Paging
- 9.5. Cache Associativity
- 9.6. Memory Latency
- 9.7. Memory-Level Parallelism
- 9.8. Prefetching
- 9.9. Pointers and Their Alternatives
-(9.10. Memory Management)
-(9.11. memcpy and memset)
+ 9.2. Memory Latency
+ 9.3. Cache Lines
+ 9.4. Data Alignment
+ 9.5. Structure Packing
+ 9.6. Pointer Alternatives
+ 9.7. Cache Associativity
+ 9.8. Memory Paging
+ 9.9. Memory-Level Parallelism
+ 9.10. Hardware Prefetching
+ 9.11. Software Prefetching
+ 9.12. AoS and SoA
+(9.13. Memory Management)
 10. SIMD Parallelism
  10.1. Using SIMD in C/C++
  10.2. Reductions

@@ -1,6 +1,6 @@
 ---
 title: Cache Associativity
-weight: 8
+weight: 7
 ---
 
 - Since implementing "find the oldest among million cache lines" in hardware is unfeasible, each cache layer is split in a number of small "sets", each covering a certain subset of memory locations. *Associativity* is the size of these sets, or, in other terms, how many different "cells" of cache each data location can be mapped to. Higher associativity allows more efficient utilization of cache.

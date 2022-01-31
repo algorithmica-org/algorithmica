@@ -1,6 +1,6 @@
 ---
 title: Memory Sharing
-weight: 4
+weight: 3
 ---
 
 Starting at some level of the hierarchy, the cache becomes *shared* between different cores. This reduces the total die area and lets you add more cores on a single chip but also poses some "noisy neighbor" problems as it limits the effective cache size and bandwidth available to a single execution thread.

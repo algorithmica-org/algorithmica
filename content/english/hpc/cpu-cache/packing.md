@@ -1,6 +1,6 @@
 ---
-title: Data Packing
-weight: 10
+title: Structure Packing
+weight: 5
 ---
 
 If you know what you are doing, you can turn disable padding and instead pack you data structure as tight as possible. This is done
