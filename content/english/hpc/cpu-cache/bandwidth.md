@@ -95,6 +95,12 @@ Non-temporal memory reads or writes are a way to tell the CPU that we won't be n
 
 On the one hand, if the array is small enough to fit into the cache, and we actually access it some short time after, this has a negative effect because we have to read entirely it from the RAM (or, in this case, we have to *write* it into the RAM instead of using a locally cached version). And on the other, this prevents read-backs and lets us use the memory bus more efficiently.
 
-In fact, the performance increase in the case of the RAM is even more than 2x. My theory here is that it is because the memory controller doesn't have to switch modes this way and also because the instruction sequence becomes simpler, and the CPU can handle more pending memory operations — after all, a [single core can't saturate the memory bandwidth](../sharing).
+In fact, the performance increase in the case of the RAM is even more than 2x and faster than the read-only benchmark. The best explanation I have is that it is because:
+
+- the memory controller doesn't have to switch the bus between read and write modes this way;
+- the instruction sequence becomes simpler, allowing for more pending memory instructions;
+- and, perhaps most importantly, the cache system can simply "fire and forget" non-temporal write requests, while for reads it needs to remember what to do with the data once it arrives — similar to connection handles in networking software.
+
+Also, for these reasons, a single CPU core usually [can't fully saturate the memory bandwidth](../sharing).
 
 The same technique generalizes to `memcpy`: it also just moves 32-byte blocks with SIMD load/store instructions, and it can be similarly made non-temporal, increasing the throughput twofold for large arrays. There is also a non-temporal load instruction (`_mm256_stream_load_si256`) for when you want to *read* without polluting cache (e. g. when you don't need the original array after a `memcpy`, but will need some data that you had accessed before calling it).
