@@ -27,3 +27,62 @@ Usually it isn't that hard to rewrite a small program so that it is more straigh
 Object-oriented and especially functional languages have some very hard-to-pierce abstractions like these. For this reason, people often prefer to write performance critical software (interpreters, runtimes, databases) in a style closer to C rather than higher-level languages.
 
 Thick-bearded C/assembly programmers.
+
+### Memory
+
+Pointer chasing.
+
+```c++
+typedef vector< vector<int> > matrix;
+matrix a(n, vector<int>(n, 0));
+
+int val = a[i][j];
+```
+
+This is up tow twice as slow: you first need to fetch 
+
+```c++
+int a = new int[n * n];
+memset(a, 0, 4 * n* n);
+
+int val = a[i * n + j];
+```
+
+You can write a wrapper is you really want an abstraction:
+
+```c++
+template<typename T>
+struct Matrix {
+    int x, y, n, N;
+    T* data;
+    T* operator[](int i) { return data + (x + i) * N + y; }
+};
+```
+
+For example, the [cache-oblivious transposition](/hpc/external-memory/oblivious) would go like this:
+
+```c++
+Matrix<T> subset(int _x, int _y, int _n) { return {_n, _x, _y, N, data}; }
+
+Matrix<T> transpose() {
+    if (n <= 32) {
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < i; j++)
+                swap((*this)[j][i], (*this)[i][j]);
+    } else {
+        auto A = subset(x, y, n / 2).transpose();
+        auto B = subset(x + n / 2, y, n / 2).transpose();
+        auto C = subset(x, y + n / 2, n / 2).transpose();
+        auto D = subset(x + n / 2, y + n / 2, n / 2).transpose();
+        for (int i = 0; i < n; i++)
+            for (int j = 0; j < n; j++)
+                swap(B[i][j], C[i][j]);
+    }
+
+    return *this;
+}
+```
+
+I personally prefer to write low-level code, because it is easier to optimize.
+
+It is cleaner? Don't think so.
