@@ -85,4 +85,4 @@ It now runs in 4ns, and produces the following graph:
 
 If you zoom close enough ([the graph is an svg](../img/permutation-bf-custom.svg)), you'll see that the pointers win on very small arrays, then starting from around the L2-L3 cache boundary our custom bit fields take over, and for very large arrays it doesn't matter because we never hit cache anyway.
 
-This isn't something that can give you a 5x improvement, but it's still something to try when all the other resources are exhausted.
+This isn't a kind of optimization that can give you a 5x improvement, but it's still something to try when all the other resources are exhausted.
