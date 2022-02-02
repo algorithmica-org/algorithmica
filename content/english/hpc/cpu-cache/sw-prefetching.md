@@ -47,6 +47,6 @@ Managing issues such as integer overflow, we can cut latency down arbitrarily cl
 
 ![](../img/sw-prefetch-others.svg)
 
-<!--
-Instruction Cache. Unrolling loops. Aligning. No-op.
--->
+Hardware prefetching activates and deactivates automatically. Software isn't and will block the pipeline.
+
+Prefetching can be to particular levels.

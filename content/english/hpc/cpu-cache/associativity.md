@@ -67,3 +67,11 @@ This issue arises with remarkable frequency in all types of algorithms that love
 Inside these sets, cache operates simply as LRU. Instead of storing time, you just store counters: the later an element was accessed, the lower its counter is. In hardware, you need to maintain $n$ counters of $\log_2 n$ bits each. When a cell is accessed, its counter becomes $(n-1)$ (maximum possible), and the others that are larger need to be decremented by one. Then to kick out an element you need to find the counter with zero and replace it, and then decrement everyone else's counters.
 
 Cost is you need to store more of them (1 more bit per element), and that you need more energy to update all of them. So the practical trade-off is to limit these groups.
+
+Unfortunately, we use power of two array sizes all the time:
+
+- it is easy to calculate modulo a power of two
+- it is easy to calculate the jump value
+- sometime we use divide-and-conquer algorithms, which rely on splitting tasks in two
+
+Fortunately, the solution is usually just to add some arbitrary number to the array size. Although sometimes this is much less trivial.

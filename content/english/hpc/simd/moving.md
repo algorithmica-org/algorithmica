@@ -49,8 +49,14 @@ For allocating an array dynamically, we can use `std::aligned_alloc` which takes
 
 On most modern architectures, the `loadu` / `storeu` intrinsics should be equally as fast as `load` / `store` given that in both cases the blocks only intersect one cache line. The advantage of the latter is that they can act as free assertions that all reads and writes are aligned. It is worth noting that the GCC vector extensions always assume aligned memory reads and writes. Memory alignment issues is also one of the reasons why compilers can't always autovectorize efficiently.
 
+<!--
+
 ### Register Aliasing
 
 MMX was originally used the integer (64-bit mantissa) part of a 80-bit float.
 
+Gather, scatter, non-temporal load and store
 
+Extracting and broadcasting
+
+-->
