@@ -12,3 +12,7 @@ Masking is the most widely used technique for data manipulation, but there are m
 - AVX512 has similar "scatter" instructions that write data non-sequentially, using either indices or [a mask](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=compress&expand=4754,4479&techs=AVX_512). You can very efficiently "filter" an array this way using a predicate.
 
 The last two, gather and scatter, turn SIMD into proper parallel programming model, where most operations can be executed independently in terms of their memory locations. This is a huge deal: many AVX512-specific algorithms have been developed recently owning to these new instructions, and not just having twice as many SIMD lanes.
+
+<!-- array queries with gather -->
+<!-- popcnt with pshufb -->
+<!-- diy filter: maskmov with permute -->
