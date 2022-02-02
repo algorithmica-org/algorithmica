@@ -65,7 +65,7 @@ If we implemented set-associative cache in software, we would compute some hash 
 Instead, the hardware uses the lazy approach. It takes the memory address that needs to be accessed and splits it into three parts — from lower bits to higher:
 
 - *offset* — the index of the word within a 64B cache line ($\log_2 64 = 6$ bits);
-- *index* — the index of the cache line itself (the next $12$ bits as there are $2^{12}$ cache lines in the L3 cache);
+- *index* — the index of the cache line set (the next $12$ bits as there are $2^{12}$ cache lines in the L3 cache);
 - *tag* — the rest of the memory address to tell the memory blocks stored in the cache lines apart.
 
 In other words, all memory addresses with the same "middle" part map to the same set.
@@ -78,7 +78,7 @@ This makes the cache system simpler and cheaper to implement, but also makes it 
 
 Now, where were we? Oh, yes: the reason why iteration with strides of 256 causes such a terrible slowdown.
 
-When we jump over 256 integers, the pointer always increments by $1024 = 2^{10}$, and the last 10 bits remain the same. Since the cache system uses the lower 6 bits for the offset and the next 12 for the cache line index, we are essentially using just $2^{12 - (10 - 6)} = 2^8$ different cache lines in the L3 cache instead of $2^{12}$, which has the effect of shrinking our L3 cache by a factor of $2^4 = 16$. The array stops fitting into the L3 cache ($N=2^21$) spills into the order-of-magnitude slower RAM, which causes the performance to decrease.
+When we jump over 256 integers, the pointer always increments by $1024 = 2^{10}$, and the last 10 bits remain the same. Since the cache system uses the lower 6 bits for the offset and the next 12 for the cache line index, we are essentially using just $2^{12 - (10 - 6)} = 2^8$ different sets in the L3 cache instead of $2^{12}$, which has the effect of shrinking our L3 cache by a factor of $2^4 = 16$. The array stops fitting into the L3 cache ($N=2^21$) spills into the order-of-magnitude slower RAM, which causes the performance to decrease.
 
 <!--
 
