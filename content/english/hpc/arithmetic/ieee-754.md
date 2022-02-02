@@ -66,7 +66,7 @@ There is a way to gracefully handle corner cases like these: hardware interrupts
 
 This is a complex mechanism that deserves an article of its own, but since this is a book about performance, the only thing you need to know is that they are quite slow and not desirable in real-time systems such as navigating rockets.
 
-### NaNs and Infinities
+### NaNs, Zeros and Infinities
 
 Floating-point arithmetic often deals with noisy, real-world data, and exceptions there are much more common than in the integer case. For this reason, the default behavior is different. Instead of crashing, the result is substituted with a special value without interrupting the executing, unless the programmer explicitly wants to.
 
@@ -83,9 +83,11 @@ $$
 What happens if we, say, divide a value by zero? Should it be a negative or a positive infinity? This case is actually unambiguous because, somewhat less intuitively, there are also two zeros: a positive and a negative one.
 
 $$
-    \frac{1}{+0} = +∞
+          \frac{1}{+0} = +∞
 \;\;\;\;  \frac{1}{-0} = -∞
 $$
+
+Fun fact: `x + 0.0` can't be folded to `x`, but `x + (-0.0)` can, so the negative zero is a better initializer value than the positive zero as it is more likely to be optimized away by the compiler. The reason why `+0.0` doesn't work is that IEEE says that `+0.0 + -0.0 == +0.0`, so it will give a wrong answer for `x = -0.0`. The presence of two zeros frequently causes headaches like this — good news that you can pass `-fno-signed-zeros` to the compiler if you want to disable this behavior.
 
 Zeros are encoded by setting all bits to zero, except for the sign bit in the negative case. Infinities are encoded by setting all their exponent bits to one and all mantissa bits to zero, with the sign bit distinguishing between positive and negative infinity.
 
