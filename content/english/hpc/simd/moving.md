@@ -55,7 +55,7 @@ On most modern architectures, the `loadu` / `storeu` intrinsics should be equall
 
 MMX was originally used the integer (64-bit mantissa) part of a 80-bit float.
 
-Gather, scatter, non-temporal load and store
+(Gather, scatter?), non-temporal load and store
 
 Extracting and broadcasting
 

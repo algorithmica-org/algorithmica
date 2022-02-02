@@ -50,7 +50,7 @@ Planned table of contents:
  4.1. Stages of Compilation
  4.2. Flags and Targets
  4.3. Situational Optimizations
- 4.4. Contracts Programming
+ 4.4. Contract Programming
  4.5. Non-Zero-Cost Abstractions
  4.6. Compile-Time Computation
  4.7. Arithmetic Optimizations
@@ -61,6 +61,7 @@ Planned table of contents:
  5.3. Program Simulation
  5.4. Machine Code Analyzers
  5.5. Benchmarking
+ 5.6. Getting Accurate Results
 6. Arithmetic
  6.1. Floating-Point Numbers
  6.2. Interval Arithmetic
@@ -89,26 +90,28 @@ Planned table of contents:
  8.8. Spacial and Temporal Locality
 (8.9. B-Trees)
 (8.10. Sublinear Algorithms)
+(9.13. Memory Management)
 9. RAM & CPU Caches
  9.1. Memory Bandwidth
  9.2. Memory Latency
  9.3. Cache Lines
- 9.4. Data Alignment
- 9.5. Structure Packing
- 9.6. Pointer Alternatives
- 9.7. Cache Associativity
- 9.8. Memory Paging
- 9.9. Memory-Level Parallelism
- 9.10. Hardware Prefetching
- 9.11. Software Prefetching
- 9.12. AoS and SoA
-(9.13. Memory Management)
+ 9.4. Memory Sharing
+ 9.5. Data Alignment
+ 9.6. Structure Packing
+ 9.7. Pointer Alternatives
+ 9.8. Cache Associativity
+ 9.9. Memory Paging
+ 9.10. Memory-Level Parallelism
+ 9.11. Hardware Prefetching
+ 9.12. Software Prefetching
+ 9.13. AoS and SoA
 10. SIMD Parallelism
- 10.1. Using SIMD in C/C++
- 10.2. Reductions
- 10.3. Auto-Vectorization
- 10.4. Data Twiddling
- 10.5. SSE & AVX Cookbook
+ 10.1. Intrinsics and Vector Types
+ 10.2. Loading and Writing Data
+ 10.3. Sums and Other Reductions
+ 10.4. Masking and Blending
+ 10.5. In-Register Shuffles
+ 10.6. Auto-Vectorization
 11. Algorithm Case Studies
  11.1. Binary GCD
 (11.2. Prime Number Sieves)
