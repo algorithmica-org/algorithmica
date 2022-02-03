@@ -1,6 +1,6 @@
 ---
 title: Data Alignment
-weight: 4
+weight: 8
 ---
 
 The fact that the memory is partitioned into 64B [cache lines](../cache-lines) makes it difficult to operate on data words that cross a cache line boundary. When you need to retrieve some primitive type, such as a 32-bit integer, you really want to have it located on a single cache line — both because retrieving two cache lines requires more memory bandwidth and stitching the results in hardware requires precious transistor space.

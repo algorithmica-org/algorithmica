@@ -1,6 +1,6 @@
 ---
 title: Memory Paging
-weight: 8
+weight: 12
 ---
 
 Consider [yet again](../associativity) the strided incrementing loop:

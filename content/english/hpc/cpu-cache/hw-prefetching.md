@@ -1,6 +1,6 @@
 ---
 title: Hardware Prefetching
-weight: 10
+weight: 6
 ---
 
 - Taking advantage of this free concurrency, it is often beneficial to *prefetch* data that you will likely be accessing soon, if you know its location. You can do this explicitly by using a separate instruction or just by accessing any byte in its cache line, but the most frequent patterns, such as linearly iterating forward or backward over an array, prefetching is already handled by hardware.

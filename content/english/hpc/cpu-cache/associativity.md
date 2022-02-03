@@ -1,6 +1,6 @@
 ---
 title: Cache Associativity
-weight: 7
+weight: 11
 ---
 
 Consider a [strided incrementing loop](../cache-lines) over an array of size $N=2^{21}$ with a fixed step size of 256:

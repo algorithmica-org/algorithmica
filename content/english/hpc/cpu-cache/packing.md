@@ -1,6 +1,6 @@
 ---
 title: Structure Packing
-weight: 5
+weight: 9
 ---
 
 If you know what you are doing, you can disable [structure padding](../alignment) and pack your data as tight as possible.

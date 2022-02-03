@@ -1,6 +1,6 @@
 ---
 title: Software Prefetching
-weight: 11
+weight: 7
 ---
 
 Sometimes the hardware can't figure out what to prefetch next by itself, and in this case, we need to point it explicitly.

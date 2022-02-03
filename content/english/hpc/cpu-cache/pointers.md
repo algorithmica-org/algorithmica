@@ -1,6 +1,6 @@
 ---
 title: Pointer Alternatives
-weight: 6
+weight: 10
 ---
 
 In the [pointer chasing benchmark](../latency), for simplicity, we didn't use actual pointers, but integer indices relative to a base address:
