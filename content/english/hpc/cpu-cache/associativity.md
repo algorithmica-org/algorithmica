@@ -26,7 +26,7 @@ But the right answer is very counterintuitive: the second loop is faster — and
 
 This isn't just a single bad step size. The performance degrades for all indices that are multiples of large powers of two:
 
-![](../img/strides-small.svg)
+![The array size is normalized so that the total number of iterations is constant](../img/strides-small.svg)
 
 There is no vectorization or anything, and the two loops produce the same assembly except for the step size. This effect is due only to the memory system, in particular to a feature called *cache associativity* which is a peculiar artifact of how CPU caches are implemented in hardware.
 

@@ -19,7 +19,7 @@ Virtual memory gives each process the impression that it fully controls a contig
 
 To achieve this, the memory address space is divided into *pages* (typically 4KB in size), which are the base units of memory that the programs can request from the operating system. The memory system maintains a special hardware data structure called the *page table*, which contains the mappings of virtual page addresses to the physical ones. When a process accesses data using its virtual memory address, the memory system calculates its page number (by right-shifting it by $12$ if $4096=2^{12}$ is the page size), looks up in the page table that its physical address is, and forwards the read or write request to where that data is actually stored.
 
-Since the address translation needs to be done for each memory request, and the number of memory pages itself may be large (e. g. 16G RAM / 4K page size = 4M pages), address translation poses a difficult problem in itself. One way to speed it up is to use a special cache for the page table itself called *translation lookaside buffer* (TLB), and the other is to increase the page size so that the total number of memory pages is made smaller at the cost of reduced granularity.
+Since the address translation needs to be done for each memory request, and the number of memory pages itself may be large (e. g. 16G RAM / 4K page size = 4M pages), address translation poses a difficult problem in itself. One way to speed it up is to use a special cache for the page table itself called *translation lookaside buffer* (TLB), and the other is to [increase the page size](/hpc/cpu-cache/paging) so that the total number of memory pages is made smaller at the cost of reduced granularity.
 
 <!--
 
