@@ -3,7 +3,9 @@ title: Memory-Level Parallelism
 weight: 9
 ---
 
-On perfectly pipelined systems, it would be equal to the latency-bandwidth product. But this isn't quite true: we measured the latency of the RAM to be around 150ns, and its peak bandwidth to be around 40 GB/s, which if we just divided
+On perfectly pipelined systems, it would be equal to the latency-bandwidth product. But this isn't quite true: we measured the latency of the RAM to be around 150ns, and its peak bandwidth to be around 40 GB/s, which if we just divided.
+
+![](../img/latency-bandwidth.svg)
 
 The fundamental reason why [linear iteration](../bandwidth) is so much faster than [pointer jumping](../latency) is that the CPU knows which memory locations it needs to fetch first and sends the corresponding memory requests far in advance, successfully hiding the latencies of these individual requests.
 
