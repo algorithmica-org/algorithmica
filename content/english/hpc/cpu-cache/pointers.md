@@ -54,7 +54,7 @@ You need to go [through some trouble](https://askubuntu.com/questions/91909/trou
 
 ### Bit Fields
 
-The fact that on larger problem sizes the performance is bottlenecked by memory rather than CPU lets us try something even more strange: we can use less than 4 bytes for storing indices. This can be done with [bit fields](../packing#bit-fields):
+The fact that on larger problem sizes the performance is bottlenecked by memory rather than CPU lets us try something even more strange: we can use less than 4 bytes for storing indices. This can be done with [bit fields](../alignment#bit-fields):
 
 ```cpp
 struct __attribute__ ((packed)) node { int idx : 24; };
