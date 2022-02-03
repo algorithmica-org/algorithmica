@@ -5,20 +5,17 @@ weight: 5
 
 Memory requests can overlap in time: while you wait for a read request to complete, you can sand a few others, which will be executed concurrently with it. This is the reason why [linear iteration](../bandwidth) is so much faster than [pointer jumping](../latency): the CPU knows which memory locations it needs to fetch next and sends memory requests far ahead of time.
 
-On perfectly pipelined systems, it would be equal to the latency-bandwidth product. But this isn't quite true: we measured the latency of the RAM to be around 150ns, and its peak bandwidth to be around 40 GB/s, which if we just divided.
+The number of concurrent memory operations is large but limited, and it is different for different types of memory. When designing algorithms and especially data structures, you may want to know this number, as it limits the amount of parallelism your computation can achieve.
+
+To find this limit theoretically for a specific memory type, you can multiply its latency (time to fetch a cache line) by its bandwidth (number of cache lines fetched per second), which gives you the average number of memory operations in progress:
 
 ![](../img/latency-bandwidth.svg)
 
-Exploring this idea further, the memory system supports a large but finite number of concurrent I/O operations. To find this limit, we can modify our pointer chasing benchmark
+The latency of the L1/L2 caches is small, so there is no need for a long pipeline of pending requests, but larger memory types can sustain up to 25-40 concurrent read operations.
 
-<!--
+### Direct Experiment
 
-The reason why bandwidth benchmark works is because you can simply execute a long series of independent read or write queries, and the scheduler, having access to them in advance, reorders and overlaps them, hiding their latency and maximizing the total throughput.
-
-In some contexts that allow for many concurrent I/O operations it therefore makes more sense to talk abound memory *bandwidth* than *latency*.
-
--->
-
+Let's try to measure available memory parallelism more directly by modifying our pointer chasing benchmark so that we loop around $D$ separate cycles in parallel instead of just one: 
 
 ```c++
 const int M = N / D;
@@ -37,9 +34,11 @@ for (int i = 0; i < M; i++)
         k[d] = q[d][k[d]];
 ```
 
+Fixing the sum of the cycle lengths constant at a few select sizes and trying different $D$, we get slightly different results:
+
 ![](../img/permutation-mlp.svg)
 
-There is a conflict over registers:
+The L2 cache run is limited by ~6 concurrent operations, as predicted, but larger memory types all max out between 13 and 17. You can't make use of more memory lanes as there is a conflict over logical registers. When the number of lanes is fewer than the number of registers, you can issue just one read instruction per lane:
 
 ```nasm
 dec     edx
@@ -50,7 +49,11 @@ movsx   rax, DWORD PTR q[3145728+rax*4]
 jne     .L9
 ```
 
+But when it is over ~15, you have to use temporary memory storage:
+
 ```nasm
 mov     edx, DWORD PTR q[0+rdx*4]
 mov     DWORD PTR [rbp-128+rax*4], edx
 ```
+
+You don't always get to the maximum possible level of memory parallelism, but for most applications, a dozen concurrent requests are more than enough.
