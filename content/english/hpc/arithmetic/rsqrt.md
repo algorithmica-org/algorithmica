@@ -37,7 +37,7 @@ float Q_rsqrt(float number) {
 
 We will go through what it does step by step, but first, we need to take a small detour.
 
-### Calculating Approximate Logarithm
+### Approximate Logarithm
 
 Before computers (or at least affordable calculators) became an everyday thing, people computed multiplication and related operations using logarithm tables — by looking up the logarithms of $a$ and $b$, adding them, and then finding the inverse logarithm of the result.
 
@@ -51,9 +51,9 @@ $$
 \log \frac{1}{\sqrt x} = - \frac{1}{2} \log x
 $$
 
-The fast inverse square root is based on this identity, and so it needs to calculate the logarithm of $x$ very quickly. Turns out, it can be approximated by just reinterpreting a 32-bit `float` as integer.
+The fast inverse square root is based on this identity, and so it needs to calculate the logarithm of $x$ very quickly. Turns out, it can be approximated by just reinterpreting a 32-bit `float` as an integer.
 
-[Recall](../float), floating-point numbers sequentially store the sign bit (equal to zero for positive values, which is our case), exponent $e_x$ and mantissa $m_x$, which corresponds to
+[Recall](../float) that floating-point numbers sequentially store the sign bit (equal to zero for positive values, which is our case), exponent $e_x$ and mantissa $m_x$, which corresponds to
 
 $$
 x = 2^{e_x} \cdot (1 + m_x)
@@ -65,13 +65,13 @@ $$
 \log_2 x = e_x + \log_2 (1 + m_x)
 $$
 
-Since $m_x \in [0, 1)$, the logarithm on the right hand side can be approximated by
+Since $m_x \in [0, 1)$, the logarithm on the right-hand side can be approximated by
 
 $$
 \log_2 (1 + m_x) \approx m_x
 $$
 
-The approximation is exact at both ends of the intervals, but to account for average case we need to shift it by a small constant $\sigma$, therefore
+The approximation is exact at both ends of the intervals, but to account for the average case we need to shift it by a small constant $\sigma$, therefore
 
 $$
 \log_2 x = e_x + \log_2 (1 + m_x) \approx e_x + m_x + \sigma
@@ -87,7 +87,7 @@ I_x &= L(e_x + B + m_x)
 \end{aligned}
 $$
 
-When you tune $\sigma$ to minimize them mean square error, this results in a surprisingly accurate approximation.
+When you tune $\sigma$ to minimize the mean square error, this results in a surprisingly accurate approximation.
 
 ![](../img/approx.svg)
 
@@ -126,7 +126,7 @@ We reinterpret `y` as an integer in the first line, and then it plug into the fo
 
 ### Iterating with Newton's Method
 
-What we have next is a couple hand-coded iterations of Newton's method with $f(y) = \frac{1}{y^2} - x$ and a very good initial value. It's update rule is
+What we have next is a couple hand-coded iterations of Newton's method with $f(y) = \frac{1}{y^2} - x$ and a very good initial value. Its update rule is
 
 $$
 f'(y) = - \frac{2}{y^3} \implies y_{i+1} = y_{i} (\frac{3}{2} - \frac{x}{2} y_i^2) = \frac{y_i (3 - x y_i^2)}{2}
@@ -141,6 +141,6 @@ y  = y * ( threehalfs - ( x2 * y * y ) );
 
 The initial approximation is so good that just one iteration was enough for game development purposes. It falls within 99.8% of the correct answer after just the first iteration and can be reiterated further to improve accuracy — which is what is done in the hardware: [the x86 instruction](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,3009,5135,4870,4870,4872,4875,833,879,874,849,848,6715,4845,6046,3853,288,6570,6527,6527,90,7307,6385,5993&text=rsqrt&techs=AVX,AVX2) does a few of them and guarantees a relative error of no more than $1.5 \times 2^{-12}$.
 
-## Further Reading
+### Further Reading
 
 [Wikipedia article of fast inverse square root](https://en.wikipedia.org/wiki/Fast_inverse_square_root#Floating-point_representation).
