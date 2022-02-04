@@ -99,7 +99,7 @@ $$
 
 Cool. Now, where were we? Oh, yes, we wanted to calculate the inverse square root.
 
-### Approximating Result
+### Approximating the Result
 
 To calculate $y = \frac{1}{\sqrt x}$ using the identity $\log_2 y = - \frac{1}{2} \log_2 x$, we can plug it into our approximation formula and get
 
@@ -132,7 +132,7 @@ $$
 f'(y) = - \frac{2}{y^3} \implies y_{i+1} = y_{i} (\frac{3}{2} - \frac{x}{2} y_i^2) = \frac{y_i (3 - x y_i^2)}{2}
 $$
 
-which is written in code as
+which is written in the code as
 
 ```cpp
 x2 = number * 0.5F;
