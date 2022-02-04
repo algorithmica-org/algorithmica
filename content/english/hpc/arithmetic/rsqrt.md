@@ -115,7 +115,7 @@ $$
 I_y \approx \frac{3}{2} L (B - \sigma) - \frac{1}{2} I_x
 $$
 
-It turns out, we don't even need to calculate logarithm in the first place: the formula above is just a constant minus the half of integer reinterpretation of $x$. It is written in the code as:
+It turns out, we don't even need to calculate the logarithm in the first place: the formula above is just a constant minus half the integer reinterpretation of $x$. It is written in the code as:
 
 ```cpp
 i = * ( long * ) &y;
@@ -143,4 +143,4 @@ The initial approximation is so good that just one iteration was enough for game
 
 ### Further Reading
 
-[Wikipedia article of fast inverse square root](https://en.wikipedia.org/wiki/Fast_inverse_square_root#Floating-point_representation).
+[Wikipedia article on fast inverse square root](https://en.wikipedia.org/wiki/Fast_inverse_square_root#Floating-point_representation).
