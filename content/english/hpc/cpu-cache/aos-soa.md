@@ -7,6 +7,8 @@ It is often beneficial to group together the data you need to fetch at the same 
 
 To demonstrate the potential effect of doing this, we modify the [pointer chasing](../latency) benchmark so that the next pointer is computed using not one, but a variable number of fields ($D$).
 
+### Experiment
+
 The first approach will locate these fields together as the rows of a two-dimensional array. We will refer to this variant as *array of structures* (AoS):
 
 ```c++
@@ -48,15 +50,11 @@ By analogy, we call this variant *structure of arrays* (SoA). Obviously, for lar
 
 The performance of both variants grows linearly with $D$, but AoS needs to fetch up to 16 times fewer total cache lines as the data is stored sequentially. Even when $D=64$, the additional time it takes to process the other 63 values is less than the latency of the first fetch.
 
-You can also see the spikes at the powers of two. AoS performs slightly better because it can compute [horizontal xor-sum](/hpc/simd/reduction) faster with SIMD. In contrast, SoA performs much worse, but this isn't about $D$ being a power of two, but about $\lfloor N / D \rfloor$, the size of the second dimension, being a power of two, which in turn causes a pretty complicated [cache associativity](../associativity) effect.
+You can also see the spikes at the powers of two. AoS performs slightly better because it can compute [horizontal xor-sum](/hpc/simd/reduction) faster with SIMD. In contrast, SoA performs much worse, but this isn't about $D$, but about $\lfloor N / D \rfloor$, the size of the second dimension, being a large power of two: this causes a pretty complicated [cache associativity](../associativity) effect which we will come back to later.
 
-Even though $N=2^{23}$ and the array is too big to fit into the L3 cache, to process some number of elements from different cache lines in parallel, you still need to store them somewhere temporarily — you can't simply use registers as there aren't enough of them. When `N / D` is a power of two and we are iterating over the array `q[D][N / D]` along the first index, all memory addresses will map to the same cache line, making many of them be re-fetched from upper layers of cache.
+### Padded AoS
 
-### RAM-Specific Timings
-
-Let's do the same with the [padded int](../cache-lines)
-
-Теперь мы добавили паддинг в AoS так, что каждый элемент теперь окружен 15 какими-то бесполезными элементами, а в остальном они все так же используются для подсчета ксор-суммы D чисел:
+As long as we are fetching the same number of cache lines, it doesn't matter where they are located, right? Let's test it and switch to [padded integers](../cache-lines) in the AoS code:
 
 ```c++
 struct padded_int {
@@ -68,36 +66,37 @@ const int M = N / D / 16;
 padded_int q[M][D];
 ```
 
-
-4D. На уровне RAM интереснее. Казалось бы, AoS-padded должна работать так же, как SoA: мы и там, и там загружаем 63 кэш-линий. Однако здесь играет роль то, как работает сама RAM.
-
-Все данные в ней физически хранятся в виде двумерного массива конденсаторов, разделенного на строки и столбцы. Чтобы прочитать ячейку из него, нужно выполнить одно, два или три действия:
-
-1. Прочитать содержимое строки в специальный временный буфер (row buffer).
-2. Выбрать и собственно прочитать (или записать) в нем нужную ячейку.
-3. И, опционально, записать данные из буфера обратно в строку массива — потому что чтение разрежает конденсаторы, и их нужно зарядить обратно. Этот шаг нужно делать только в том случае, если следующий доступ в память относится к какой-то другой строке.
-
-Эти три шага занимают примерно одинаковое время. В AoS-padded все элементы хотя и распологаются в разных кэш-линиях, но эти линии соседние, и они с большой вероятностью окажутся в одной строчке в RAM, и первый и третий шаг можно проигнорировать. Поэтому суммарно все эти запросы отработают за втрое меньшее время (плюс задержка одного чтения)
-
-![](../img/ram.png)
-
-4C: когда мы падим инты, но оставляем суммарный размер массива таким же, ничего с точки зрения запросов к памяти и вычислений меняться не должно. Единственый нюанс: с паженными интами не происходит случайного шеринга кэша, как с обычными (когда мы загружаем какой-то инт, его соседи по кэш-линии тоже попадают в кэш), поэтому есть небольшое замедление.
+Other than that, we are still calculating the xor-sum of $D$ padded integers. We fetch exactly $D$ cache lines, but this time sequentially. The running time shouldn't be different from SoA, but this isn't what happens:
 
 ![](../img/aos-soa-padded.svg)
 
+The running time is about ⅓ lower for $D=63$, but this only applies to arrays that exceed the L3 cache. If we fix $D$ and change $N$, it becomes clear that the padded version actually performs slightly worse on smaller arrays because there less random [cache sharing](../cache-lines):
+
 ![](../img/aos-soa-padded-n.svg)
 
-The rest of the core is the same: the only difference is that they require a separate cache line access.
+As the performance on smaller arrays sizes is not affected, this clearly has something to do with how RAM works.
 
-This is only specific to RAM: on array sizes that fit in cache, the benchmark is actually worse because the [cache sharing is worse](../cache-lines).
+### RAM-Specific Timings
 
-RAM timings.
+From the performance analysis point of view, all data in RAM is physically stored in a two-dimensional array of tiny capacitor cells, which is split in rows and columns. To read or write any cell, you need to perform one, two, or three actions:
+
+1. Read the contents of a row in a *row buffer*, which temporarily discharges the capacitors. 
+2. Read or write a specific column in this buffer.
+3. Write the contents of a row buffer back into the capacitors, so that the data is preserved, and the row buffer can be used for other memory accesses.
+
+Here is the punchline: you don't have to perform steps 1 and 3 between two memory accesses that correspond to the same row — you can just use the row buffer as a temporary cache. These three actions take roughly the same time, so this optimization makes long sequences of row-local accesses run thrice as fast compared to dispersed access patterns.
+
+![](../img/ram.png)
+
+The size of the row differs depending on the hardware, but it is usually somewhere between 1024 and 8192 bytes. So even though the padded AoS benchmark places each element in its own cache line, they are still very likely to be on the same RAM row, and the whole read sequence runs in roughly ⅓ of the time plus the latency of the first memory access.
+
+### Temporary Storage
+
+Let's discuss the spikes in the graphs in more detail.
 
 This isn't about $D$ being equal to 64 but about $\lfloor \frac{N}{D} \rfloor$ being a large power of two.
 
-TODO fix D and change N
-
-### Temporary Storage Contention
+Even though $N=2^{23}$ and the array is too big to fit into the L3 cache, to process some number of elements from different cache lines in parallel, you still need to store them somewhere temporarily — you can't simply use registers as there aren't enough of them. When `N / D` is a power of two and we are iterating over the array `q[D][N / D]` along the first index, all memory addresses will map to the same cache line, making many of them be re-fetched from upper layers of cache.
 
 We can turn on hugepages, and they make it 10 times worse (notice the logarithmic scale):
 
