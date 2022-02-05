@@ -69,7 +69,11 @@ test    eax, eax
 je      .L9
 ```
 
+All at around 13 GFLOPS, and the compiler can handle vectorization by itself. Let's move on to more complex examples that can't be auto-vectorized.
+
 ### Searching
+
+4.4:
 
 ```c++
 int find(int x) {
@@ -79,6 +83,8 @@ int find(int x) {
     return -1;
 }
 ```
+
+19.63, ~5 times faster:
 
 ```c++
 int find(int needle) {
@@ -95,6 +101,8 @@ int find(int needle) {
     return -1;
 }
 ```
+
+A slightly faster alternative:
 
 ```c++
 int find(int needle) {
@@ -115,6 +123,8 @@ int find(int needle) {
 
 ### Counting Values
 
+15 GFLOPS:
+
 ```c++
 int count(int needle) {
     int cnt = 0;
@@ -122,8 +132,9 @@ int count(int needle) {
         cnt += (a[i] == needle);
     return cnt;
 }
-
 ```
+
+Also 15 GFLOPS:
 
 ```c++
 const reg ones = _mm256_set1_epi32(1);
@@ -144,6 +155,8 @@ int count(int needle) {
 
 ```
 
+The trick that the compiler couldn't find is to notice that all ones is minus one. So we can use it as the negative count, achieving 22 GFLOPS:
+
 ```c++
 int count(int needle) {
     reg x = _mm256_set1_epi32(needle);
@@ -163,9 +176,4 @@ int count(int needle) {
 
     return -hsum(s1);
 }
-
 ```
-
-<!-- some example of maskmov (searching for a value) -->
-<!-- count of a specific value -->
-

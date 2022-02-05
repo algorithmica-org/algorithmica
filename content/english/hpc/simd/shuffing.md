@@ -21,8 +21,9 @@ int filter() {
 }
 ```
 
-```c++
+6-7x faster:
 
+```c++
 struct Precalc {
     alignas(64) int permutation[256][8];
 
@@ -112,6 +113,8 @@ int popcnt() {
     return res;
 }
 ```
+
+7.5-8 GFLOPS:
 
 ```c++
 const reg lookup = _mm256_setr_epi8(
