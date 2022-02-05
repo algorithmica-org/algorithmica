@@ -49,14 +49,51 @@ For allocating an array dynamically, we can use `std::aligned_alloc` which takes
 
 On most modern architectures, the `loadu` / `storeu` intrinsics should be equally as fast as `load` / `store` given that in both cases the blocks only intersect one cache line. The advantage of the latter is that they can act as free assertions that all reads and writes are aligned. It is worth noting that the GCC vector extensions always assume aligned memory reads and writes. Memory alignment issues is also one of the reasons why compilers can't always autovectorize efficiently.
 
-<!--
+non-temporal load and store
 
-### Register Aliasing
+### Aliasing and Broadcasts
+
+Register Aliasing
 
 MMX was originally used the integer (64-bit mantissa) part of a 80-bit float.
 
-(Gather, scatter?), non-temporal load and store
-
 Extracting and broadcasting
 
--->
+```nasm
+mov          eax, 42
+vmovd        xmm0, eax
+vpbroadcastd ymm0, xmm0
+```
+
+You can [broadcast](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#expand=6331,5160,588&techs=AVX,AVX2&text=broadcast) a single value to a vector from a register or a memory location.
+
+### Non-Blocked Reads
+
+Since AVX2, you can use "gather" instructions that load data non-sequentially using arbitrary array indices. These don't work 8 times faster though and are usually limited by memory rather than CPU, but they are still helpful for stuff like sparse linear algebra.
+
+![](../img/gather-scatter.png)
+
+AVX512 has similar "scatter" instructions that write data non-sequentially, using either indices or [a mask](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=compress&expand=4754,4479&techs=AVX_512). You can very efficiently "filter" an array this way using a predicate.
+
+```c++
+int a[N], q[Q];
+
+for (int i = 0; i < Q; i++)
+    checksum += a[q[i]];
+```
+
+```c++
+reg s = _mm256_setzero_si256();
+
+for (int i = 0; i < Q; i += 8) {
+    reg idx = _mm256_load_si256( (reg*) &q[i] );
+    reg x = _mm256_i32gather_epi32(a, idx, 4);
+    s = _mm256_add_epi32(s, x);
+}
+```
+
+Maybe move it to shuffling anyway?
+
+![](../img/gather.svg)
+
+The last two, gather and scatter, turn SIMD into proper parallel programming model, where most operations can be executed independently in terms of their memory locations. This is a huge deal: many AVX512-specific algorithms have been developed recently owning to these new instructions, and not just having twice as many SIMD lanes.

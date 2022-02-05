@@ -14,74 +14,158 @@ While using the elementwise instructions is easy, the largest challenge with SIM
 
 SIMD has no easy way to do branching, because the control flow should be the same for all elements in a vector. To overcome this limitation, we can "mask" operations that should only be performed on a subset of elements, in a way similar to how a [conditional move](/hpc/analyzing-performance/assembly) is executed.
 
-Consider the following problem: for some reason, we need to raise $10^8$ random integers to some random powers.
-
 ```c++
-const int n = 1e8;
-alignas(32) unsigned bases[n], results[n], powers[n];
+for (int i = 0; i < N; i++)
+    a[i] = rand() % 100;
+
+for (int i = 0; i < N; i++)
+    s += (a[i] < 50 ? a[i] : 0);
 ```
 
-In SSE/AVX, [doing modular reduction](/hpc/arithmetic/integer) is even more complicated than in the scalar case (e. g. SSE has no integer division in the first place), so we will perform all operations modulo $2^{32}$ by naturally overflowing an `unsigned int`.
-
-We'd normally do it by exponentiation by squaring:
-
 ```c++
-void binpow_simple() {
-    for (int i = 0; i < n; i++) {
-        unsigned a = bases[i], p = powers[i];
+const reg c = _mm256_set1_epi32(49);
+const reg z = _mm256_setzero_si256();
+reg s = _mm256_setzero_si256();
 
-        unsigned res = 1;
-        while (p > 0) {
-            if (p & 1)
-                res = (res * a);
-            a = (a * a);
-            p >>= 1;
-        }
-
-        results[i] = res;
-    }
+for (int i = 0; i < N; i += 8) {
+    reg x = _mm256_load_si256( (reg*) &a[i] );
+    reg mask = _mm256_cmpgt_epi32(x, c);
+    x = _mm256_blendv_epi8(x, z, mask);
+    s = _mm256_add_epi32(s, x);
 }
 ```
 
-This code runs in 9.47 seconds.
-
-To vectorize it, we can first split the arrays `a` and `p` into groups of 8 elements, and then run exponentiation by squaring on them for 32 iterations (the maximum for any 32-bit power), masking the elements that need to be squared:
-
 ```c++
-typedef __m256i reg;
+const reg c = _mm256_set1_epi32(50);
+reg s = _mm256_setzero_si256();
 
-void binpow_simd() {
-    const reg ones = _mm256_set_epi32(1, 1, 1, 1, 1, 1, 1, 1);
-    for (int i = 0; i < n; i += 8) {
-        reg a = _mm256_load_si256((__m256i*) &bases[i]);
-        reg p = _mm256_load_si256((__m256i*) &powers[i]);
-        reg res = ones;
-
-        // in fact, there will not be a cycle here:
-        // the compiler should unroll it in 32 separate blocks of operations
-        for (int l = 0; l < 32; l++) {
-            // instead of explicit branching, calculate a "multiplier" for every element:
-            // it is either 1 or a, depending on the lowest bit of p
-            
-            // masks of elements that should be multiplied by a:
-            reg mask = _mm256_cmpeq_epi32(_mm256_and_si256(p, ones), ones);
-            // now we blend a vector of ones and a vector of a using this mask:
-            reg mul = _mm256_blendv_epi8(ones, a, mask);
-            // res *= mul:
-            res = _mm256_mullo_epi32(res, mul);
-            // a *= a:
-            a = _mm256_mullo_epi32(a, a);
-            // p >>= 1:
-            p = _mm256_srli_epi32(p, 1);
-        }
-
-        _mm256_store_si256((__m256i*) &results[i], res);
-    }
+for (int i = 0; i < N; i += 8) {
+    reg x = _mm256_load_si256( (reg*) &a[i] );
+    reg mask = _mm256_cmpgt_epi32(c, x);
+    x = _mm256_and_si256(x, mask);
+    s = _mm256_add_epi32(s, x);
 }
 ```
 
-This implementation now works in 0.7 seconds, or 13.5 times faster, and there is still ample room for improvement.
+```c++
+vec *v = (vec*) a;
+vec s = {};
 
-<!-- (a[i] < 50) loop from /hpc/pipelining/branchless/ -->
+for (int i = 0; i < N / 8; i++)
+    s += (v[i] < 50 ? v[i] : 0);
+```
+
+
+```nasm
+vpcmpeqd        ymm0, ymm1, YMMWORD PTR a[0+rdx*4]
+vptest  ymm0, ymm0
+je      .L2
+```
+
+```nasm
+vpcmpeqd        ymm0, ymm1, YMMWORD PTR a[0+rdx*4]
+vmovmskps       eax, ymm0
+test    eax, eax
+je      .L9
+```
+
+### Searching
+
+```c++
+int find(int x) {
+    for (int i = 0; i < N; i++)
+        if (a[i] == x)
+            return i;
+    return -1;
+}
+```
+
+```c++
+int find(int needle) {
+    reg x = _mm256_set1_epi32(needle);
+
+    for (int i = 0; i < N; i += 8) {
+        reg y = _mm256_load_si256( (reg*) &a[i] );
+        reg m = _mm256_cmpeq_epi32(x, y);
+        int mask = _mm256_movemask_ps((__m256) m);
+        if (mask != 0)
+            return i + __builtin_ctz(mask);
+    }
+
+    return -1;
+}
+```
+
+```c++
+int find(int needle) {
+    reg x = _mm256_set1_epi32(needle);
+
+    for (int i = 0; i < N; i += 8) {
+        reg y = _mm256_load_si256( (reg*) &a[i] );
+        reg m = _mm256_cmpeq_epi32(x, y);
+        if (!_mm256_testz_si256(m, m)) {
+            int mask = _mm256_movemask_ps((__m256) m);
+            return i + __builtin_ctz(mask);
+        }
+    }
+
+    return -1;
+}
+```
+
+### Counting Values
+
+```c++
+int count(int needle) {
+    int cnt = 0;
+    for (int i = 0; i < N; i++)
+        cnt += (a[i] == needle);
+    return cnt;
+}
+
+```
+
+```c++
+const reg ones = _mm256_set1_epi32(1);
+
+int count(int needle) {
+    reg x = _mm256_set1_epi32(needle);
+    reg s = _mm256_setzero_si256();
+
+    for (int i = 0; i < N; i += 8) {
+        reg y = _mm256_load_si256( (reg*) &a[i] );
+        reg m = _mm256_cmpeq_epi32(x, y);
+        m = _mm256_and_si256(m, ones);
+        s = _mm256_add_epi32(s, m);
+    }
+
+    return hsum(s);
+}
+
+```
+
+```c++
+int count(int needle) {
+    reg x = _mm256_set1_epi32(needle);
+    reg s1 = _mm256_setzero_si256();
+    reg s2 = _mm256_setzero_si256();
+
+    for (int i = 0; i < N; i += 16) {
+        reg y1 = _mm256_load_si256( (reg*) &a[i] );
+        reg y2 = _mm256_load_si256( (reg*) &a[i + 8] );
+        reg m1 = _mm256_cmpeq_epi32(x, y1);
+        reg m2 = _mm256_cmpeq_epi32(x, y2);
+        s1 = _mm256_add_epi32(s1, m1);
+        s2 = _mm256_add_epi32(s2, m2);
+    }
+
+    s1 = _mm256_add_epi32(s1, s2);
+
+    return -hsum(s1);
+}
+
+```
 
 <!-- some example of maskmov (searching for a value) -->
+<!-- count of a specific value -->
+
