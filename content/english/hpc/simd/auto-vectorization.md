@@ -48,3 +48,8 @@ for (int i = 0; i < n; i++)
 There are [many other ways](https://software.intel.com/sites/default/files/m/4/8/8/2/a/31848-CompilerAutovectorizationGuide.pdf) of hinting compiler what we meant exactly, but in especially complex cases — when inside the loop there are a lot of branches or some functions are called — it is easier to go down to the intrinsics level and write it yourself.
 
 `std::assume_aligned`, specifiers. This is useful for SIMD instructions that need memory alignment guarantees
+
+
+First of all, it is very useful to check if vectorization happened the way you intended by [compiling it to assembly](/hpc/compilation/stages) and taking a close look at the emitted instructions that start with "v".
+
+Also, if you specify the `-fopt-info-vec-optimized` flag, then the compiler will directly indicate where auto-vectorization is happening and what SIMD width is being used. If you swap `optimized` for `missed` or `all`, you may also get reasons why it is not happening in other places.

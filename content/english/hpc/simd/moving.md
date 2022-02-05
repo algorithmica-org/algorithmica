@@ -67,6 +67,25 @@ vpbroadcastd ymm0, xmm0
 
 You can [broadcast](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#expand=6331,5160,588&techs=AVX,AVX2&text=broadcast) a single value to a vector from a register or a memory location.
 
+Also, some of the intrinsics are not direct instructions, but short sequences of instructions. One example is the `extract` group of instructions, which are used to get individual elements out of vectors (e. g. `_mm256_extract_epi32(x, 0)` returns the first element out of 8-integer vector); it is quite slow (~5 cycles) to move data between "normal" and SIMD registers in general.
+
+### Tips
+
+When using SIMD manually, it helps to print out contents of vector registers for debug purposes. You can do so by converting a vector variable into an array and then into a bitset:
+
+```c++
+template<typename T>
+void print(T var) {
+    unsigned *val = (unsigned*) &var;
+    for (int i = 0; i < 4; i++)
+        cout << bitset<32>(val[i]) << " ";
+    cout << endl;
+}
+```
+
+In this particular case, it outputs 4 groups of 32 bits of a 128-bit wide vector.
+
+
 ### Non-Blocked Reads
 
 Since AVX2, you can use "gather" instructions that load data non-sequentially using arbitrary array indices. These don't work 8 times faster though and are usually limited by memory rather than CPU, but they are still helpful for stuff like sparse linear algebra.

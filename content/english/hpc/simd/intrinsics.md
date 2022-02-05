@@ -6,15 +6,15 @@ weight: 1
 
 The most low-level way to use SIMD is to use the assembly vector instructions directly — they aren't different from their scalar equivalents at all — but we are not going to do that. Instead, we will use *intrinsic* functions mapping to these instructions that are available in modern C/C++ compilers.
 
-In this section, we will go through the basics of their syntax, and in the rest of this chapter we will use them extensively to do things that are actually interesting.
+In this section, we will go through the basics of their syntax, and in the rest of this chapter, we will use them extensively to do things that are actually interesting.
 
 ## Setup
 
 To use x86 intrinsics, we need to do a little groundwork.
 
-First, we need to determine which extensions are supported by the hardware. On Linux, you can call `cat /proc/cpuinfo`, and on other platforms you'd better go to [WikiChip](https://en.wikichip.org/wiki/WikiChip) and look it up there using the name of the CPU. In either case, there should be a `flags` section that lists the codes of all supported vector extensions.
+First, we need to determine which extensions are supported by the hardware. On Linux, you can call `cat /proc/cpuinfo`, and on other platforms, you'd better go to [WikiChip](https://en.wikichip.org/wiki/WikiChip) and look it up there using the name of the CPU. In either case, there should be a `flags` section that lists the codes of all supported vector extensions.
 
-There is also a special [CPUID](https://en.wikipedia.org/wiki/CPUID) assembly instruction that lets you query various information about the CPU, including the support of particular vector extensions. It is primarily used to get such information in runtime in order to avoid distributing a separate binary for each microarchitecture. Its output information is returned very densely in the form of feature masks, so compilers provide built-in methods to make sense of it. Here is an example:
+There is also a special [CPUID](https://en.wikipedia.org/wiki/CPUID) assembly instruction that lets you query various information about the CPU, including the support of particular vector extensions. It is primarily used to get such information in runtime and avoid distributing a separate binary for each microarchitecture. Its output information is returned very densely in the form of feature masks, so compilers provide built-in methods to make sense of it. Here is an example:
 
 ```c++
 #include <iostream>
@@ -31,9 +31,9 @@ int main() {
 }
 ```
 
-Second, we need to include a header file that contains the subset of intrinsics we need. Similar to `<bits/stdc++.h>` in GCC, there is `<x86intrin.h>` header that contains all of them, so we will just use that.
+Second, we need to include a header file that contains the subset of intrinsics we need. Similar to `<bits/stdc++.h>` in GCC, there is the `<x86intrin.h>` header that contains all of them, so we will just use that.
 
-And last, we need to tell the compiler that the target CPU actually supports these extensions. This can be done either with `#pragma GCC target(...)` [as we did before](../), or with `-march=...` flag in the compiler options. If you are compiling and running the code on the same machine, you can set `-march=native` to auto-detect the microarchitecture.
+And last, we need to [tell the compiler](/hpc/compilation/flags) that the target CPU actually supports these extensions. This can be done either with `#pragma GCC target(...)` [as we did before](../), or with the `-march=...` flag in the compiler options. If you are compiling and running the code on the same machine, you can set `-march=native` to auto-detect the microarchitecture.
 
 In all further code examples, assume that they begin with these lines:
 
@@ -47,9 +47,9 @@ In all further code examples, assume that they begin with these lines:
 using namespace std;
 ```
 
-We will focus on AVX2 and the previous SIMD extensions in this chapter, which should be available on 95% of all desktop and server computers, although the general principles transfer on AVX512, Arm Neon and other SIMD architectures just as well.
+We will focus on AVX2 and the previous SIMD extensions in this chapter, which should be available on 95% of all desktop and server computers, although the general principles transfer on AVX512, Arm Neon, and other SIMD architectures just as well.
 
-## SIMD Registers
+### SIMD Registers
 
 The most notable distinction between SIMD extensions is the support for wider registers:
 
@@ -69,7 +69,7 @@ C/C++ compilers implement special *vector types* that refer to the data stored i
 
 Registers themselves can hold data of any kind: these types are only used for type checking. To convert a variable to another type, you can do it the same way you would convert any other type, and it won't cost you anything.
 
-## SIMD Intrinsics
+### SIMD Intrinsics
 
 *Intrinsics* are just C-style functions that do something with these vector data types, usually by simply calling the associated assembly instruction.
 
@@ -95,17 +95,14 @@ for (int i = 0; i < 100; i += 4) {
 
 The main challenge of using SIMD is getting the data into contiguous fixed-sized blocks suitable for loading into registers. In the code above, we may in general have a problem if the length of the array is not divisible by the block size. There are two common solutions to this:
 
-1. We can "overshoot" by iterating over the last incomplete segment either way. To make sure sure we don't segfault by trying to read from or write to a memory region we don't own, we need to pad the arrays to the nearest block size (typically with some "neutral" element, e. g. zero).
+1. We can "overshoot" by iterating over the last incomplete segment either way. To make sure we don't segfault by trying to read from or write to a memory region we don't own, we need to pad the arrays to the nearest block size (typically with some "neutral" element, e. g. zero).
 2. Make one iteration less and write a little loop in the end that calculates the remainder normally (with scalar operations).
 
-Humans prefer #1, because it is simpler and results in less code. Compilers prefer #2, because they don't really have another legal option.
+Humans prefer #1 because it is simpler and results in less code, and compilers prefer #2 because they don't really have another legal option.
 
 ### Instruction References
 
-are all generated by cats walking on keyboards.
-If I'm wrong, explain this: punpcklqdq
-
-Most SIMD intrinsics follow a naming convention similar to `_mm<size>_<action>_<type>`, and are relatively self-explanatory once you get used to the assembly naming conventions.
+Most SIMD intrinsics follow a naming convention similar to `_mm<size>_<action>_<type>` and correspond to a single similar-looking assembly instruction. Their become relatively self-explanatory once you get used to the assembly naming conventions, although sometimes it does seem like their names were generated by cats walking on keyboards (explain this: [punpcklqdq](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,3009,4870,4870,4872,4875,833,879,874,849,848,6715,4845,6046,3853,288,6570,6527,6527,90,7307,6385,5993,2692,6946,6949,5456,6938,5456,1021,3007,514,518,4875,7253,7183,3892,5135,5260,5259,6385,3915,4027,3873,7401&techs=AVX,AVX2&text=punpcklqdq)).
 
 Here are a few more examples, just so that you get the gist of it:
 
@@ -120,9 +117,7 @@ As you may have guessed, there is a combinatorially very large number of intrins
 
 The Intel reference is useful when you know that a specific instruction exists and just want to look up its name or performance info. When you don't know whether it exists, this [cheat sheet](https://db.in.tum.de/~finis/x86%20intrinsics%20cheat%20sheet%20v1.0.pdf) may do a better job.
 
-### Instruction Selection
-
-Note that compilers do not necessarily pick the exact instruction that you specify. Similar to the scalar `c = a + b` we [discussed before](/hpc/analyzing-performance/assembly), there is a fused vector addition instruction too, so instead of using 2+1+1=4 instructions per loop cycle, compiler [rewrites the code above](https://godbolt.org/z/dMz8E5Ye8) with blocks of 3 instructions like this:
+**Instruction selection.** Note that compilers do not necessarily pick the exact instruction that you specify. Similar to the scalar `c = a + b` we [discussed before](/hpc/analyzing-performance/assembly), there is a fused vector addition instruction too, so instead of using 2+1+1=4 instructions per loop cycle, compiler [rewrites the code above](https://godbolt.org/z/dMz8E5Ye8) with blocks of 3 instructions like this:
 
 ```nasm
 vmovapd ymm1, YMMWORD PTR a[rax]
@@ -130,17 +125,25 @@ vaddpd  ymm0, ymm1, YMMWORD PTR b[rax]
 vmovapd YMMWORD PTR c[rax], ymm0
 ```
 
-Also, some of the intrinsics are not direct instructions, but short sequences of instructions. One example is the `extract` group of instructions, which are used to get individual elements out of vectors (e. g. `_mm256_extract_epi32(x, 0)` returns the first element out of 8-integer vector); it is quite slow (~5 cycles) to move data between "normal" and SIMD registers in general.
+Sometimes, although quite rarely, this compiler interference makes things worse, so it is always a good idea to [check the assembly](/hpc/compilation/stages) and take a closer look at the emitted vector instructions (they usually start with a "v").
 
-## GCC Vector Extensions
+Also, some of the intrinsics don't map to a single instruction but a short sequence of them (as a convenient shortcut).
 
-If you feel like the design of C intrinsics is terrible, you are not alone. I've spent hundreds of hours writing SIMD code and reading the Intel Intrinsics Guide, and I still can't remember whether I need to type `_mm256` or `__m256`.
+<!--
+
+For example, the group of `extract` intrinsics that are used to get individual elements out of vectors: e. g. `_mm256_extract_epi32(x, 0)` returns the first element out of 8-integer vector. t is quite slow (~5 cycles) to move data between "normal" and SIMD registers in general.
+
+-->
+
+### GCC Vector Extensions
+
+If you feel like the design of C intrinsics is terrible, you are not alone. are all generated by cats walking on keyboards. I've spent hundreds of hours writing SIMD code and reading the Intel Intrinsics Guide, and I still can't remember whether I need to type `_mm256` or `__m256`.
 
 Intrinsics are not only hard to use but also neither portable nor maintainable. In good software, you don't want to maintain different procedures for each CPU: you want to implement it just once, in an architecture-agnostic way.
 
 One day, compiler engineers from the GNU Project thought the same way and developed a way to define your own vector types that feel more like arrays with some operators overloaded to match the relevant instructions.
 
-In GCC, here is how you can define vector of 8 integers packed into a 256-bit (32-byte) register:
+In GCC, here is how you can define a vector of 8 integers packed into a 256-bit (32-byte) register:
 
 ```c++
 typedef int v8si __attribute__ (( vector_size(32) ));
@@ -179,23 +182,3 @@ for (int i = 0; i < 100/4; i++)
 ```
 
 As you can see, vector extensions are much cleaner compared to the nightmare we have with intrinsic functions. But some things that we may want to do are just not expressible with native C++ constructs, so we will still need intrinsics. Luckily, this is not an exclusive choice, because vector types support zero-cost conversion to the `_mm` types and back. We will, however, try to avoid doing so as much as possible and stick to vector extensions when we can.
-
-## Tips
-
-First of all, it is very useful to check if vectorization happened the way you intended by [compiling it to assembly](/hpc/analyzing-performance/compilation) and taking a close look at the emitted instructions that start with "v".
-
-Also, if you specify the `-fopt-info-vec-optimized` flag, then compiler will directly indicate where autovectorization is happening and what SIMD width is being used. If you swap `optimized` for `missed` or `all`, you may also get reasons why it is not happening in other places.
-
-When using SIMD manually, it helps to print out contents of vector registers for debug purposes. You can do so by converting a vector variable into an array and then into a bitset:
-
-```c++
-template<typename T>
-void print(T var) {
-    unsigned *val = (unsigned*) &var;
-    for (int i = 0; i < 4; i++)
-        cout << bitset<32>(val[i]) << " ";
-    cout << endl;
-}
-```
-
-In this particular case, it outputs 4 groups of 32 bits of a 128-bit wide vector.
