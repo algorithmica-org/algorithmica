@@ -12,6 +12,8 @@ While using the elementwise instructions is easy, the largest challenge with SIM
 
 ### Masking
 
+maskmov, maskstore
+
 SIMD has no easy way to do branching, because the control flow should be the same for all elements in a vector. To overcome this limitation, we can "mask" operations that should only be performed on a subset of elements, in a way similar to how a [conditional move](/hpc/analyzing-performance/assembly) is executed.
 
 ```c++

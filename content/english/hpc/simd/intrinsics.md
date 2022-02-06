@@ -127,7 +127,7 @@ vmovapd YMMWORD PTR c[rax], ymm0
 
 Sometimes, although quite rarely, this compiler interference makes things worse, so it is always a good idea to [check the assembly](/hpc/compilation/stages) and take a closer look at the emitted vector instructions (they usually start with a "v").
 
-Also, some of the intrinsics don't map to a single instruction but a short sequence of them (as a convenient shortcut).
+Also, some of the intrinsics don't map to a single instruction but a short sequence of them, as a convenient shortcut: [broadcasts and extracts](../moving#register-aliasing) are a notable example.
 
 <!--
 

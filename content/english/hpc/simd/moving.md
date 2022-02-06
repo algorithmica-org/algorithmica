@@ -4,7 +4,16 @@ aliases: [/hpc/simd/vectorization]
 weight: 2
 ---
 
-Operations of reading and writing the contents of a SIMD register into memory have two versions each: `load` / `loadu` and `store` / `storeu`. The letter "u" here stands for "unaligned". The difference is that the former ones only work correctly when the read / written block fits inside a single cache line (and crash otherwise), while the latter work either way, but with a slight performance penalty if the block crosses a cache line.
+If you took some time to study [the reference](https://software.intel.com/sites/landingpage/IntrinsicsGuide), you may have noticed that there are essentially two major groups of vector operations:
+
+1. Instructions that perform some elementwise operation (`+`, `*`, `<`, `acos`, etc.).
+2. Instructions that load, store, mask, shuffle, and generally move data around.
+
+While using the elementwise instructions is easy, the largest challenge with SIMD is getting the data in vector registers in the first place, with low enough overhead so that the whole endeavor is worthwhile.
+
+### Aligned Loads and Stores
+
+Operations of reading and writing the contents of a SIMD register into memory have two versions each: `load` / `loadu` and `store` / `storeu`. The letter "u" here stands for "unaligned". The difference is that the former ones only work correctly when the read / written block fits inside a single [cache line](/hpc/cpu-cache/cache-lines) (and crash otherwise), while the latter work either way, but with a slight performance penalty if the block crosses a cache line.
 
 Sometimes, especially when the "inner" operation is very lightweight, the performance difference becomes significant (at least because you need to fetch two cache lines instead of one). As an extreme example, this way of adding two arrays together:
 
@@ -30,11 +39,15 @@ for (int i = 0; i < n; i += 8) {
 
 In the first version, assuming that arrays `a`, `b` and `c` are all 64-byte *aligned* (the addresses of their first elements are divisible by 64, and so they start at the beginning of a cache line), roughly half of reads and writes will be "bad" because they cross a cache line boundary.
 
-### Data Alignment
+Note that the performance difference is caused by the cache system and not by the instructions themselves. On most modern architectures, the `loadu` / `storeu` intrinsics should be equally as fast as `load` / `store` given that in both cases the blocks only span one cache line. The advantage of the latter is that they can act as free run-time assertions that all reads and writes are aligned.
 
-By default, when you allocate an array, the only guarantee about its alignment you get is that none of its elements are split by a cache line. For an array of `int`, this means that it gets the alignment of 4 bytes (`sizeof int`), which lets you load exactly one cache line when reading any element.
+This makes it important to properly [align](/hpc/cpu-cache/alignment) arrays and other data on allocation, and it is also one of the reasons why compilers can't always [auto-vectorize](../auto-vectorization) efficiently. For most purposes, we only need to guarantee that any 32-byte SIMD block will not cross a cache line boundary, and we can specify this alignment with the `alignas` specifier:
 
-For our purposes, we want to guarantee that any (256-bit = 32-byte) SIMD block will not be split, so we need to specify the alignment of 32 bytes. For static arrays, we can do so with the `alignas` specifier:
+<!--
+
+By default, when you allocate an array, the only guarantee about its alignment you get is that none of its elements are split by a cache line. For an array of `int`, this means that it gets the alignment of 4 bytes (`sizeof int`), which lets you load exactly one cache line when reading any element. For our purposes, we want to guarantee that any (256-bit = 32-byte) SIMD block will not be split, so we need to specify the alignment of 32 bytes. For static arrays, we can do so with the `alignas` specifier:
+
+-->
 
 ```c++
 alignas(32) float a[n];
@@ -45,61 +58,113 @@ for (int i = 0; i < n; i += 8) {
 }
 ```
 
-For allocating an array dynamically, we can use `std::aligned_alloc` which takes the alignment value and the size of array in bytes, and returns a pointer to the allocated memory (just like `new` does), which should be explicitly deleted when no longer used.
+The [built-in vector types](../intrinsics) already have corresponding alignment requirements and assume aligned memory reads and writes — so you are always safe when allocating an array of `v8si`, but when converting it from `int*` you have to make sure it is aligned.
 
-On most modern architectures, the `loadu` / `storeu` intrinsics should be equally as fast as `load` / `store` given that in both cases the blocks only intersect one cache line. The advantage of the latter is that they can act as free assertions that all reads and writes are aligned. It is worth noting that the GCC vector extensions always assume aligned memory reads and writes. Memory alignment issues is also one of the reasons why compilers can't always autovectorize efficiently.
+Similar to the scalar case, many arithmetic instructions take memory addresses as operands — [vector addition](../intrinsics) is an example — although you can't explicitly use it as an intrinsic and have to rely on the compiler. There are also a few other instructions for reading a SIMD block from memory, notably the [non-temporal](/hpc/cpu-cache/bandwidth#bypassing-the-cache) load and store operations that don't lift accessed data in the cache hierarchy.
 
-non-temporal load and store
+### Register Aliasing
 
-### Aliasing and Broadcasts
+The first SIMD extension, MMX, started quite small. It only used 64-bit vectors, which were conveniently aliased to the mantissa part of a [80-bit float](/hpc/arithmetic/ieee-754) so that there is no need to introduce a separate set of registers. As the vector size grew with later extensions, the same [register aliasing](/hpc/architecture/assembly#instructions-and-registers) mechanism used in general-purpose registers was adopted for the vector registers to maintain backward compatibility: `xmm0` is the first half (128 bits) of `ymm0`, `xmm1` is the first half of `ymm1`, and so on.
 
-Register Aliasing
+This feature, combined with the fact that the vector registers are located in the FPU, makes moving data between them and the general-purpose registers slightly complicated.
 
-MMX was originally used the integer (64-bit mantissa) part of a 80-bit float.
+To **extract** a specific value from a vector, you can use `_mm256_extract_epi32` and similar intrinsics. It takes the index of the integer to be extracted as the second parameter and generates different instruction sequences depending on its value.
 
-Extracting and broadcasting
+If you need to extract the first element, it generates the `vmovd` instruction (for `xmm0`, the first half of the vector):
 
 ```nasm
+vmovd eax, xmm0
+```
+
+For other elements of an SSE vector, it generates possibly slightly slower `vpextrd`:
+
+```nasm
+vpextrd eax, xmm0, 1
+```
+
+To extract anything from the second half of an AVX vector, it first has to extract that second half, and then the scalar itself. For example, here is how it extracts the last (eighth) element,
+
+```nasm
+vextracti128 xmm0, ymm0, 0x1
+vpextrd      eax, xmm0, 3
+```
+
+There is a similar `_mm256_insert_epi32` intrinsic for overwriting specific elements:
+
+```nasm
+mov          eax, 42
+
+; v = _mm256_insert_epi32(v, 42, 0);
+vpinsrd xmm2, xmm0, eax, 0
+vinserti128     ymm0, ymm0, xmm2, 0x0
+
+; v = _mm256_insert_epi32(v, 42, 7);
+vextracti128 xmm1, ymm0, 0x1
+vpinsrd      xmm2, xmm1, eax, 3
+vinserti128  ymm0, ymm0, xmm2, 0x1
+```
+
+Takeaway: moving scalar data to and from vector registers is slow, especially when this isn't the first element.
+
+Instead of modifying just one element, you can also **broadcast** a single value into all its positions:
+
+```nasm
+; __m256i v = _mm256_set1_epi32(42);
 mov          eax, 42
 vmovd        xmm0, eax
 vpbroadcastd ymm0, xmm0
 ```
 
-You can [broadcast](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#expand=6331,5160,588&techs=AVX,AVX2&text=broadcast) a single value to a vector from a register or a memory location.
+This is a frequently used operation, so you can also use a memory location:
 
-Also, some of the intrinsics are not direct instructions, but short sequences of instructions. One example is the `extract` group of instructions, which are used to get individual elements out of vectors (e. g. `_mm256_extract_epi32(x, 0)` returns the first element out of 8-integer vector); it is quite slow (~5 cycles) to move data between "normal" and SIMD registers in general.
+```nasm
+; __m256 v = _mm256_broadcast_ss(&a[i]);
+vbroadcastss ymm0, DWORD PTR [rdi]
+```
 
-### Tips
-
-When using SIMD manually, it helps to print out contents of vector registers for debug purposes. You can do so by converting a vector variable into an array and then into a bitset:
+If you want to avoid all this complexity, you can just dump the vector in memory and read its values back as scalars:
 
 ```c++
-template<typename T>
-void print(T var) {
-    unsigned *val = (unsigned*) &var;
-    for (int i = 0; i < 4; i++)
-        cout << bitset<32>(val[i]) << " ";
+void print(__m256i v) {
+    auto t = (unsigned*) &v;
+    for (int i = 0; i < 8; i++)
+        cout << bitset<32>(t[i]) << " ";
     cout << endl;
 }
 ```
 
-In this particular case, it outputs 4 groups of 32 bits of a 128-bit wide vector.
+This may not be fast or technically legal (the C++ standard doesn't specify what happens when you cast data like this), but it is simple, and I frequently use this code to print out the contents of a vector during debugging.
 
+### Non-Contiguous Load
 
-### Non-Blocked Reads
+Later SIMD extensions added special "gather" and "scatter instructions that read/write data non-sequentially using arbitrary array indices. These don't work 8 times faster though and are usually limited by the memory rather than the CPU, but they are still helpful for certain applications such as sparse linear algebra.
 
-Since AVX2, you can use "gather" instructions that load data non-sequentially using arbitrary array indices. These don't work 8 times faster though and are usually limited by memory rather than CPU, but they are still helpful for stuff like sparse linear algebra.
+Gather is available since AVX2, and various scatter instructions are available since AVX512.
 
 ![](../img/gather-scatter.png)
 
-AVX512 has similar "scatter" instructions that write data non-sequentially, using either indices or [a mask](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=compress&expand=4754,4479&techs=AVX_512). You can very efficiently "filter" an array this way using a predicate.
+Let's see if they work faster than scalar reads. First, we create an array of size $N$ and $Q$ random read queries:
 
 ```c++
 int a[N], q[Q];
 
+for (int i = 0; i < N; i++)
+    a[i] = rand();
+
 for (int i = 0; i < Q; i++)
-    checksum += a[q[i]];
+    q[i] = rand() % N;
 ```
+
+In the scalar code, we add the elements specified by the queries to a checksum one by one:
+
+```c++
+int s = 0;
+
+for (int i = 0; i < Q; i++)
+    s += a[q[i]];
+```
+
+And in the SIMD code, we use the `gather` instruction to do that for 8 different indexes in parallel:
 
 ```c++
 reg s = _mm256_setzero_si256();
@@ -111,8 +176,10 @@ for (int i = 0; i < Q; i += 8) {
 }
 ```
 
-Maybe move it to shuffling anyway?
+They perform roughly the same, except when the array fits into the L1 cache:
 
 ![](../img/gather.svg)
 
-The last two, gather and scatter, turn SIMD into proper parallel programming model, where most operations can be executed independently in terms of their memory locations. This is a huge deal: many AVX512-specific algorithms have been developed recently owning to these new instructions, and not just having twice as many SIMD lanes.
+The purpose of `gather` and `scatter` is not to perform memory operations faster, but to get the data into registers to perform heavy computations on them. For anything costlier than just one addition, they are hugely favorable.
+
+The lack of (fast) gather and scatter instructions makes SIMD programming on CPUs very different from proper parallel computing environments that support independent memory access. You have to always engineer around it and employ various ways of organizing your data sequentially so that it be loaded into registers.
