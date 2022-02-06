@@ -3,32 +3,30 @@ title: Auto-Vectorization
 weight: 10
 ---
 
-Most often, SIMD is used for "embarrassingly parallel" computations: the ones where all you do is apply some elementwise function to all elements of an array and write it back somewhere else. In this setting, you don't even need to know how SIMD works: the compiler is perfectly capable of optimizing such loops by itself. All you need to know is that such optimization exists and yields a 5-10x speedup.
+SIMD-parallelism is most often used for *embarrassingly parallel* computations: the kinds where all you do is apply some elementwise function to all elements of an array and write it back somewhere else. In this setting, you don't even need to know how SIMD works: the compiler is perfectly capable of optimizing such loops by itself — you just need to be aware that such optimization exists and that it usually yields a 5-10x speedup.
 
-But most computations are not like that, and even the loops that seem straightforward to vectorize are often not optimized because of some tricky technical nuances. In this section, we will discuss how to assist the compiler in vectorization and walk through some more complicated patterns of using SIMD.
+Doing nothing and relying on auto-vectorization is actually the preferred way of using SIMD. Whenever you can, you should always stick with the scalar code for its simplicity and maintainability. But often even the loops that seem straightforward to vectorize are not optimized because of some technical nuances. [As in many other cases](/hpc/compilation/contracts), the compiler may need some additional input from the programmer as he may know a bit more about the problem than what can be inferred from static analysis.
 
-## Assisting Autovectorization
+### Potential Problems
 
-Of course, the preferred way of using SIMD is by the means of autovectorization. Whenever you can, you should always stick with the scalar code for its simplicity and maintainability. But, [as in many other cases](/hpc/analyzing-performance/compilation), compiler often needs some additional input from the programmer, who may know a little bit more about the problem.
-
-Consider the "a+b" example:
+Consider the "a + b" example:
 
 ```c++
-void sum(int a[], int b[], int c[], int n) {
+void sum(int *a, int *b, int *c, int n) {
     for (int i = 0; i < n; i++)
         c[i] = a[i] + b[i];
 }
 ```
 
-This function can't be replaced with the vectorized variant automatically. Why?
+Let's step into a compiler's shoes and think about what can go wrong when this loop is vectorized.
 
-First, vectorization here is not always technically correct. Assuming that `a[]` and `c[]` intersect in a way that their beginnings differ by a single position — because who knows, maybe the programmer wanted to calculate the Fibonacci sequence through a convolution this way. In this case, the data in the SIMD blocks will intersect, and the observed behavior will differ from the one in the scalar case.
+**Array size.** If the array size is unknown beforehand, it may be that it is too small for vectorization to be beneficial in the first place. Even if it is sufficiently large, we need to insert an additional check for the remainder of the loop to process it scalar, which would cost us a branch.
 
-Second, we don't know anything about the alignment of these arrays, and we can lose some performance here by using unaligned instructions.
+To eliminate these runtime checks, use array sizes that are compile-time constants, and preferably pad arrays to the nearest multiple of the SIMD block size.
 
-On high (`-O3`) levels of optimization, when the compiler suspects that the function may be used for large cycles, it generates two implementation variants — a SIMDized and a "safe" one — and inserts runtime checks to choose between the two.
+**Memory aliasing.** Even when array size issues are out of the question, vectorizing this loop is not always technically correct. For example, the arrays `a` and `c` can intersect in a way that their beginnings differ by a single position — because who knows, maybe the programmer wanted to calculate the Fibonacci sequence through a convolution this way. In this case, the data in the SIMD blocks will intersect and the observed behavior will differ from the one in the scalar case.
 
-To avoid these runtime checks, we can tell compiler that we are sure that nothing will break. One way to do this is using the `__restrict__` keyword:
+When the compiler can't prove that the function may be used for intersecting arrays, it has to generate two implementation variants — a vectorized and a "safe" one — and insert runtime checks to choose between the two. To avoid them, we can tell the compiler that we are that no memory is aliased by adding the `__restrict__` keyword:
 
 ```cpp
 void add(int * __restrict__ a, const int * __restrict__ b, int n) {
@@ -37,7 +35,7 @@ void add(int * __restrict__ a, const int * __restrict__ b, int n) {
 }
 ```
 
-The other, specific to SIMD, is the "ignore vector dependencies" pragma, which is the way to tell compiler that we are sure there are no dependencies between the loop iterations:
+The other way, specific to SIMD, is the "ignore vector dependencies" pragma. It is a general way to inform the compiler that there are no dependencies between the loop iterations:
 
 ```c++
 #pragma GCC ivdep
@@ -45,11 +43,12 @@ for (int i = 0; i < n; i++)
     // ...
 ```
 
+**Alignment.** The compiler also doesn't know anything about the alignment of these arrays and has to either process some elements at the beginning of these arrays before starting the vectorized section or potentially lose some performance by using [unaligned memory accesses](../moving).
+
+To help the compiler eliminate this corner case, we can use the `alignas` specifier on static arrays and the `std::assume_aligned` function to mark pointers aligned.
+
+**Checking if vectorization happened.**  In either case, it is useful to check if the compiler vectorized the loop the way you intended. You can either [compiling it to assembly](/hpc/compilation/stages) and look for blocks for instructions that start with a "v" or add the `-fopt-info-vec-optimized` compiler flag so that the compiler indicates where auto-vectorization is happening and what SIMD width is being used. If you swap `optimized` for `missed` or `all`, you may also get some reasoning behind why it is not happening in other places.
+
+---
+
 There are [many other ways](https://software.intel.com/sites/default/files/m/4/8/8/2/a/31848-CompilerAutovectorizationGuide.pdf) of hinting compiler what we meant exactly, but in especially complex cases — when inside the loop there are a lot of branches or some functions are called — it is easier to go down to the intrinsics level and write it yourself.
-
-`std::assume_aligned`, specifiers. This is useful for SIMD instructions that need memory alignment guarantees
-
-
-First of all, it is very useful to check if vectorization happened the way you intended by [compiling it to assembly](/hpc/compilation/stages) and taking a close look at the emitted instructions that start with "v".
-
-Also, if you specify the `-fopt-info-vec-optimized` flag, then the compiler will directly indicate where auto-vectorization is happening and what SIMD width is being used. If you swap `optimized` for `missed` or `all`, you may also get reasons why it is not happening in other places.
