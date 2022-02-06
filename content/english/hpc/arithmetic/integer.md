@@ -74,7 +74,7 @@ Integers come in different sizes, but all function roughly the same.
 
 | Bits | Bytes | Signed C type | Unsigned C type      | Assembly |
 |-----:|-------|---------------|----------------------|----------|
-|    8 | 1     | `signed char` | `char`               | `byte`   |
+|    8 | 1     | `char`        | `unsigned char`      | `byte`   |
 |   16 | 2     | `short`       | `unsigned short`     | `word`   |
 |   32 | 4     | `int`         | `unsigned int`       | `dword`  |
 |   64 | 8     | `long long`   | `unsigned long long` | `qword`  |
