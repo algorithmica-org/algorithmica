@@ -106,6 +106,14 @@ vinserti128  ymm0, ymm0, xmm2, 0x1
 
 Takeaway: moving scalar data to and from vector registers is slow, especially when this isn't the first element.
 
+If you need to populate not just one element but the entire vector, you can use the `_mm256_setr_epi32` intrinsic:
+
+```c++
+__m256 iota = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+```
+
+The "r" here stands for "reversed" — from [the CPU point of view](/hpc/arithmetic/integer#integer-types), not for humans. There is also the `_mm256_set_epi32` (without "r") that fills the values from the opposite direction. Both are mostly used to create compile-time constants that are then fetched into the register with a block load. If your use case is filling a vector with zeros, use the `_mm256_setzero_si256` instead: it `xor`-s the register with itself.
+
 Instead of modifying just one element, you can also **broadcast** a single value into all its positions:
 
 ```nasm
