@@ -5,7 +5,7 @@ weight: 6
 
 [Masking](../masking) lets you apply operations to only a subset of vector elements. It is a very effective and frequently used data manipulation technique, but in many cases, you need to perform more advanced operations that involve permuting values inside a vector register instead of just blending them with other vectors.
 
-The problem is that adding a separate element-shuffling instruction for each possible use case in hardware is unfeasible. What we can do though is to add just one general permutation instruction that takes the indices of a permutation and produce these indices using precomputed lookup tables.
+The problem is that adding a separate element-shuffling instruction for each possible use case in hardware is unfeasible. What we can do though is to add just one general permutation instruction that takes the indices of a permutation and produces these indices using precomputed lookup tables.
 
 This general idea is perhaps too abstract, so let's jump straight to the examples.
 
@@ -82,9 +82,9 @@ int popcnt() {
 }
 ```
 
-It now processes around 2 bytes per cycles, rising to ~2.7 if we switch to 16-bit words (`unsigned short`).
+It now processes around 2 bytes per cycle, rising to ~2.7 if we switch to 16-bit words (`unsigned short`).
 
-This solution is still very slow compared the `popcnt` instruction, but now it can be vectorized. Instead of trying to speed it up through [gather](../moving#non-contiguous-load) instructions, we will go for another approach: make the lookup table small enough to fit inside a register and then use a special [pshufb](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=pshuf&techs=AVX,AVX2&expand=6331) instruction to look up its values in parallel.
+This solution is still very slow compared to the `popcnt` instruction, but now it can be vectorized. Instead of trying to speed it up through [gather](../moving#non-contiguous-load) instructions, we will go for another approach: make the lookup table small enough to fit inside a register and then use a special [pshufb](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=pshuf&techs=AVX,AVX2&expand=6331) instruction to look up its values in parallel.
 
 The original `pshufb` introduced in 128-bit SSE3 takes two registers: the lookup table containing 16 byte values and a vector of 16 4-bit indices (0 to 15), specifying which bytes to pick for each position. In 256-bit AVX2, instead of a 32-byte lookup table with awkward 5-bit indices, we have an instruction that independently the same shuffling operation over two 128-bit lanes.
 
@@ -148,7 +148,9 @@ The `pshufb` instruction is so instrumental in some SIMD algorithms that [Wojcie
 
 ### Permutations and Lookup Tables
 
-One very important data processing primitive is the `filter`. It takes an array as input and writes out only the elements that satisfy a given predicate. In a single-threaded scalar case, it is trivially implemented by maintaining a counter that is incremented on each write:
+Our last major example in this chapter is the `filter`. It is a very important data processing primitive that takes an array as input and writes out only the elements that satisfy a given predicate (in their original order).
+
+In a single-threaded scalar case, it is trivially implemented by maintaining a counter that is incremented on each write:
 
 ```c++
 int a[N], b[N];
@@ -164,17 +166,18 @@ int filter() {
 }
 ```
 
-To vectorize it, we will use the `_mm256_permutevar8x32_epi32` intrinsic. It takes a vector of values and a vector of indices, and selects them correspondingly. It doesn't really permute but selects the values.
+To vectorize it, we will use the `_mm256_permutevar8x32_epi32` intrinsic. It takes a vector of values and individually selects them with a vector of indices. Despite the name, it doesn't *permute* values but just *copies* them to form a new vector: duplicates in the result are allowed.
 
-The general idea:
-- to calculate the predicate (perform the comparison and get the mask),
-- use `movemask` to get a scalar 8-bit mask,
-- then use a lookup use this instruction
-- permute so that values are in the beginning
-- write to the buffer only the element that satisfy the predicate (and maybe some garbage later)
-- move pointer (by the popcnt of movemask)
+The general idea of our algorithm is as follows:
 
-6-7x faster:
+- calculate the predicate on a vector of data — in this case, this means performing the comparisons to get the mask;
+- use the `movemask` instruction to get a scalar 8-bit mask;
+- use this mask to index a lookup table that returns a permutation moving the elements that satisfy the predicate to the beginning of the vector (in their original order);
+- use the `_mm256_permutevar8x32_epi32` intrinsic to permute the values;
+- write the whole permuted vector to the buffer — it may have some trailing garbage, but its prefix is correct;
+- calculate the population count of the scalar mask and move the buffer pointer by that amount.
+
+First, we need to precompute the permutations:
 
 ```c++
 struct Precalc {
@@ -193,7 +196,7 @@ struct Precalc {
 constexpr Precalc T;
 ```
 
-You can [permute](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=permute&techs=AVX,AVX2&expand=6331,5160) data inside a register almost arbitrarily.
+Then we can implement the algorithm itself:
 
 ```c++
 const reg p = _mm256_set1_epi32(P);
@@ -218,8 +221,8 @@ int filter() {
 }
 ```
 
-It also doesn't depend on the value of `P`:
+The vectorized version takes some work to implement, but it is 6-7x faster than the scalar one (the speedup is slightly less for either low or high values of `P` as the [branch becomes predictable](/hpc/pipelining/branching)).
 
 ![](../img/filter.svg)
 
-AVX512 has similar "scatter" instructions that write data non-sequentially, using either indices or [a mask](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=compress&expand=4754,4479&techs=AVX_512). You can very efficiently "filter" an array this way using a predicate.
+This operation is considerably faster on AVX-512: it has a special "[compress](_mm512_mask_compress_epi32)" instruction that takes a vector of data and a mask and writes its unmasked elements contiguously. It makes a huge difference in algorithms that rely on various filtering subroutines.
