@@ -69,7 +69,7 @@ for (int i = 0; i < N; i += 8) {
 
 This loop performs slightly faster because on this particular CPU, the vector `and` take one cycle less than `blend`.
 
-There are several other instructions that support masks as inputs, most notably:
+Several other instructions support masks as inputs, most notably:
 
 - The `_mm256_blend_epi32` intrinsic is a `blend` that takes an 8-bit integer mask instead of a vector (which is why it doesn't have `v` at the end).
 - The `_mm256_maskload_epi32` and `_mm256_maskstore_epi32` intrinsics that load/store a SIMD block from memory and `and` it with a mask in one go.
@@ -88,7 +88,7 @@ All these versions work at around 13 GFLOPS as this example is so simple that th
 
 ### Searching
 
-In the next example, we need find a specific value in an array and return its position:
+In the next example, we need to find a specific value in an array and return its position:
 
 ```c++
 const int N = (1<<12);
@@ -112,7 +112,7 @@ for (int t = 0; t < K; t++)
     checksum ^= find(rand() % N);
 ```
 
-The scalar versions gives ~4 GFLOPS of performance. This number includes the elements we haven't had to process, so divide this number by two in your head (the expected fraction of the elements we have to check).
+The scalar version gives ~4 GFLOPS of performance. This number includes the elements we haven't had to process, so divide this number by two in your head (the expected fraction of the elements we have to check).
 
 To vectorize it, we need to compare a vector of its elements with the searched value for equality, producing a mask, and then somehow check if this mask is zero. If it isn't, the needed element is somewhere within this block of 8.
 
@@ -134,7 +134,7 @@ int find(int needle) {
 }
 ```
 
-This version gives ~20 GFLOPS, or about 5 times faster than the scalar one. It only uses 3 instructions in the hot loop:
+This version gives ~20 GFLOPS or about 5 times faster than the scalar one. It only uses 3 instructions in the hot loop:
 
 ```nasm
 vpcmpeqd  ymm0, ymm1, YMMWORD PTR a[0+rdx*4]
@@ -205,7 +205,7 @@ int count(int needle) {
 }
 ```
 
-Both implementations yield ~15 GFLOPS: the compiler is able to vectorize the first one by itself.
+Both implementations yield ~15 GFLOPS: the compiler can vectorize the first one all by itself.
 
 But a trick that the compiler can't find is to notice that the mask of all ones is [minus one](/hpc/arithmetic/integer) when reinterpreted as an integer. So we can skip the and-the-lowest-bit part and use the mask itself, and then just negate the final result:
 
@@ -247,4 +247,6 @@ int count(int needle) {
 }
 ```
 
-It now it gives ~22 GFLOPS of performance, which is as high as it can get.
+It now gives ~22 GFLOPS of performance, which is as high as it can get.
+
+<!-- TODO: ILP first, -1 second -->
