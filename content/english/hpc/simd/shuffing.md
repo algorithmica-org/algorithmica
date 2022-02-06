@@ -3,15 +3,19 @@ title: In-Register Shuffles
 weight: 6
 ---
 
-Masking is the most widely used technique for data manipulation, but there are many other handy SIMD features that we will later use in this chapter:
+[Masking](../masking) lets you apply operations to only a subset of vector elements. It is a very effective and frequently used data manipulation technique, but in many cases, you need to perform more advanced operations that involve permuting values inside a vector register instead of just blending them with other vectors.
+
+The problem is that adding a separate element-shuffling instruction for each possible use case in hardware is unfeasible. What we can do though is to add just one general permutation instruction that takes the indices of a permutation and produce these indices using precomputed lookup tables.
+
+This general idea is perhaps too abstract, so let's jump straight to examples.
 
 ### Permutations and Lookup Tables
 
-AVX512 has similar "scatter" instructions that write data non-sequentially, using either indices or [a mask](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=compress&expand=4754,4479&techs=AVX_512). You can very efficiently "filter" an array this way using a predicate.
-
-You can [permute](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=permute&techs=AVX,AVX2&expand=6331,5160) data inside a register almost arbitrarily.
+One very important data processing primitive is the `filter`. It takes an array as input and writes out only the elements that satisfy a given predicate. In a single-threaded scalar case, it is trivially implemented by maintaining a counter that is incremented on each write:
 
 ```c++
+int a[N], b[N];
+
 int filter() {
     int k = 0;
 
@@ -22,6 +26,16 @@ int filter() {
     return k;
 }
 ```
+
+To vectorize it, we will use the `_mm256_permutevar8x32_epi32` intrinsic. It takes a vector of values and a vector of indices, and selects them correspondingly. It doesn't really permute but selects the values.
+
+The general idea:
+- to calculate the predicate (perform the comparison and get the mask),
+- use `movemask` to get a scalar 8-bit mask,
+- then use a lookup use this instruction
+- permute so that values are in the beginning
+- write to the buffer only the element that satisfy the predicate (and maybe some garbage later)
+- move pointer (by the popcnt of movemask)
 
 6-7x faster:
 
@@ -40,7 +54,11 @@ struct Precalc {
 };
 
 constexpr Precalc T;
+```
 
+You can [permute](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=permute&techs=AVX,AVX2&expand=6331,5160) data inside a register almost arbitrarily.
+
+```c++
 const reg p = _mm256_set1_epi32(P);
 
 int filter() {
@@ -61,10 +79,13 @@ int filter() {
 
     return k;
 }
-
 ```
 
+It also doesn't depend on the value of `P`:
+
 ![](../img/filter.svg)
+
+AVX512 has similar "scatter" instructions that write data non-sequentially, using either indices or [a mask](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=compress&expand=4754,4479&techs=AVX_512). You can very efficiently "filter" an array this way using a predicate.
 
 ### Shuffles and Popcount
 
@@ -170,6 +191,6 @@ int popcnt() {
 
 Another way is through gather, but that is too slow.
 
-https://github.com/WojciechMula/sse-popcount
+### Acknowledgements
 
-https://arxiv.org/pdf/1611.07612.pdf for the state-of-the-art.
+Check out [Wojciech Muła's github repository](https://github.com/WojciechMula/sse-popcount) with different vectorized popcount implementations and his [latest paper](https://arxiv.org/pdf/1611.07612.pdf) for the detailed explanation of state-of-the-art.
