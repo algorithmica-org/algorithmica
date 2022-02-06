@@ -249,4 +249,7 @@ int count(int needle) {
 
 It now gives ~22 GFLOPS of performance, which is as high as it can get.
 
+When adapting this code for shorter data types, keep in mind that the accumulator may overflow. To work around this, add another accumulator of larger size and regularly stop the loop to add the values in the local accumulator to it and then reset the local accumulator. For example, for 8-bit integers, this means creating another inner loop that does $\lfloor \frac{256-1}{8} \rfloor = 15$ iterations.
+ 
+<!-- TODO: 8-bit example -->
 <!-- TODO: ILP first, -1 second -->
