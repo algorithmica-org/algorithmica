@@ -9,10 +9,10 @@ weight: 2
 
 ```cpp
 void selection_sort(int *a, int n) {
-    for (i = 0; i < n - 1; i++)
-        for (j = i + 1; j < n; j++)
-            if (a[i] > a[j])
-                swap(a[j], a[i]);
+    for (int k = 0; k < n - 1; k++)
+        for (j = k + 1; j < n; j++)
+            if (a[k] > a[j])
+                swap(a[j], a[k]);
 }
 ```
 
