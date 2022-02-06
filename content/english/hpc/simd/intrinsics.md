@@ -67,7 +67,7 @@ C/C++ compilers implement special *vector types* that refer to the data stored i
 - 256-bit `__m256`, `__m256d`, `__m256i`;
 - 512-bit `__m512`, `__m512d`, `__m512i`.
 
-Registers themselves can hold data of any kind: these types are only used for type checking. To convert a variable to another type, you can do it the same way you would convert any other type, and it won't cost you anything.
+Registers themselves can hold data of any kind: these types are only used for type checking. You can convert a vector variable to another vector type the same way you would normally convert any other type, and it won't cost you anything.
 
 ### SIMD Intrinsics
 
@@ -113,7 +113,9 @@ Here are a few more examples, just so that you get the gist of it:
 - `_mm256_cmpeq_epi32`: compare 8+8 packed `int`s and return a mask that contains ones for equal element pairs.
 - `_mm256_blendv_ps`: pick elements from one of two vectors according to a mask.
 
-As you may have guessed, there is a combinatorially very large number of intrinsics. A very helpful reference for x86 SIMD intrinsics is the [Intel Intrinsics Guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/), which has groupings by categories and extensions, descriptions, pseudocode, associated assembly instructions, and their latency and throughput on Intel microarchitectures. You may want to bookmark that page.
+As you may have guessed, there is a combinatorially very large number of intrinsics. For some reason, there are some operations that are agnostic to the type of data stored in registers, but only take a specific vector type (usually 32-bit float) — you can just have to convert to and from it to use that intrinsic. To simplify the examples in this chapter, we will mostly work with 32-bit integers (`epi32`) in 256-bit AVX2 registers.
+
+A very helpful reference for x86 SIMD intrinsics is the [Intel Intrinsics Guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/), which has groupings by categories and extensions, descriptions, pseudocode, associated assembly instructions, and their latency and throughput on Intel microarchitectures. You may want to bookmark that page.
 
 The Intel reference is useful when you know that a specific instruction exists and just want to look up its name or performance info. When you don't know whether it exists, this [cheat sheet](https://db.in.tum.de/~finis/x86%20intrinsics%20cheat%20sheet%20v1.0.pdf) may do a better job.
 
