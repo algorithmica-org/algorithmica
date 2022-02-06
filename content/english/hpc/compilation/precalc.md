@@ -21,7 +21,7 @@ constexpr int fibonacci(int n) {
 static_assert(fibonacci(10) == 55);
 ```
 
-These functions have some restrictions like that they only call other `constexpr` functions and can't do memory allocation, but otherwise they are executed "as is".
+These functions have some restrictions like that they only call other `constexpr` functions and can't do memory allocation, but otherwise, they are executed "as is".
 
 Note that while they don't cost anything during the run-time, they still increase compilation time, so at least remotely care about their efficiency and don't put something NP-complete in them:
 
@@ -54,14 +54,14 @@ constexpr Precalc P;
 static_assert(P.isqrt[42] == 6);
 ```
 
-Note that when you call `constexpr` functions using non-constants, they compiler may or may not compute them during compile-time:
+Note that when you call `constexpr` functions while passing non-constants, the compiler may or may not compute them during compile-time:
 
 ```c++
 for (int i = 0; i < 100; i++)
     cout << fibonacci(i) << endl;
 ```
 
-In this example, even though technically we perform a constant number of iterations and call `fibonacci` with parameters known at compile-time, they are technically not compile-time constants. It's up to the compiler whether to optimize this loop or not, and for heavy computations, it often choses not to.
+In this example, even though technically we perform a constant number of iterations and call `fibonacci` with parameters known at compile-time, they are technically not compile-time constants. It's up to the compiler whether to optimize this loop or not — and for heavy computations, it often chooses not to.
 
 <!--
 
