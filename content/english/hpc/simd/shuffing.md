@@ -7,7 +7,144 @@ weight: 6
 
 The problem is that adding a separate element-shuffling instruction for each possible use case in hardware is unfeasible. What we can do though is to add just one general permutation instruction that takes the indices of a permutation and produce these indices using precomputed lookup tables.
 
-This general idea is perhaps too abstract, so let's jump straight to examples.
+This general idea is perhaps too abstract, so let's jump straight to the examples.
+
+### Shuffles and Popcount
+
+*Population count*, also known as the *Hamming weight*, is the count of `1` bits in a binary string.
+
+It is a frequently used operation, so there is a separate instruction on x86 that computes the population count of a word:
+
+```c++
+const int N = (1<<12);
+int a[N];
+
+int popcnt() {
+    int res = 0;
+    for (int i = 0; i < N; i++)
+        res += __builtin_popcount(a[i]);
+    return res;
+}
+```
+
+It also supports 64-bit integers, improving the total throughput twofold:
+
+```c++
+int popcnt_ll() {
+    long long *b = (long long*) a;
+    int res = 0;
+    for (int i = 0; i < N / 2; i++)
+        res += __builtin_popcountl(b[i]);
+    return res;
+}
+```
+
+The only two instructions required are load-fused popcount and addition. They both have a high throughput, so the code processes about $8+8=16$ bytes per cycle as it is limited by the decode width of 4 on this CPU.
+
+These instructions were added to x86 CPUs around 2008 with SSE4. Let's temporarily go back in time before vectorization even became a thing and try to implement popcount by other means.
+
+The naive way is to go through the binary string bit by bit: 
+
+```c++
+__attribute__ (( optimize("no-tree-vectorize") ))
+int popcnt() {
+    int res = 0;
+    for (int i = 0; i < N; i++)
+        for (int l = 0; l < 32; l++)
+            res += (a[i] >> l & 1);
+    return res;
+}
+```
+
+As anticipated, it works just slightly faster than ⅛-th of a byte per cycle — at around 0.2.
+
+We can try to process in bytes instead of individual bits by [precomputing](/hpc/compilation/precalc) a small 256-element *lookup table* that contains the population counts of individual bytes and then query it while iterating over raw bytes of the array:
+
+```c++
+struct Precalc {
+    alignas(64) char counts[256];
+
+    constexpr Precalc() : counts{} {
+        for (int m = 0; m < 256; m++)
+            for (int i = 0; i < 8; i++)
+                counts[m] += (m >> i & 1);
+    }
+};
+
+constexpr Precalc P;
+
+int popcnt() {
+    auto b = (unsigned char*) a; // careful: plain "char" is signed
+    int res = 0;
+    for (int i = 0; i < 4 * N; i++)
+        res += P.counts[b[i]];
+    return res;
+}
+```
+
+It now processes around 2 bytes per cycles, rising to ~2.7 if we switch to 16-bit words (`unsigned short`).
+
+This solution is still very slow compared the `popcnt` instruction, but now it can be vectorized. Instead of trying to speed it up through [gather](../moving#non-contiguous-load) instructions, we will go for another approach: make the lookup table small enough to fit inside a register and then use a special [pshufb](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=pshuf&techs=AVX,AVX2&expand=6331) instruction to look up its values in parallel.
+
+The original `pshufb` introduced in 128-bit SSE3 takes two registers: the lookup table containing 16 byte values and a vector of 16 4-bit indices (0 to 15), specifying which bytes to pick for each position. In 256-bit AVX2, instead of a 32-byte lookup table with awkward 5-bit indices, we have an instruction that independently the same shuffling operation over two 128-bit lanes.
+
+So, for our use case, we create a 16-byte lookup table with population counts for each nibble (half-byte), repeated twice:
+
+```c++
+const reg lookup = _mm256_setr_epi8(
+    /* 0 */ 0, /* 1 */ 1, /* 2 */ 1, /* 3 */ 2,
+    /* 4 */ 1, /* 5 */ 2, /* 6 */ 2, /* 7 */ 3,
+    /* 8 */ 1, /* 9 */ 2, /* a */ 2, /* b */ 3,
+    /* c */ 2, /* d */ 3, /* e */ 3, /* f */ 4,
+
+    /* 0 */ 0, /* 1 */ 1, /* 2 */ 1, /* 3 */ 2,
+    /* 4 */ 1, /* 5 */ 2, /* 6 */ 2, /* 7 */ 3,
+    /* 8 */ 1, /* 9 */ 2, /* a */ 2, /* b */ 3,
+    /* c */ 2, /* d */ 3, /* e */ 3, /* f */ 4
+);
+```
+
+Now, to compute the population count of a vector, we split each of its bytes into the lower and higher nibbles and then use this lookup table to retrieve their counts. The only thing left is to carefully sum them up:
+
+```c++
+const reg low_mask = _mm256_set1_epi8(0x0f);
+
+int popcnt() {
+    int k = 0;
+
+    reg t = _mm256_setzero_si256();
+
+    for (; k + 15 < N; k += 15) {
+        reg s = _mm256_setzero_si256();
+        
+        for (int i = 0; i < 15; i += 8) {
+            reg x = _mm256_load_si256( (reg*) &a[k + i] );
+            
+            reg l = _mm256_and_si256(x, low_mask);
+            reg h = _mm256_and_si256(_mm256_srli_epi16(x, 4), low_mask);
+
+            reg pl = _mm256_shuffle_epi8(lookup, l);
+            reg ph = _mm256_shuffle_epi8(lookup, h);
+
+            s = _mm256_add_epi8(s, pl);
+            s = _mm256_add_epi8(s, ph);
+        }
+
+        t = _mm256_add_epi64(t, _mm256_sad_epu8(s, _mm256_setzero_si256()));
+    }
+
+    int res = hsum(t);
+
+    while (k < N)
+        res += __builtin_popcount(a[k++]);
+
+    return res;
+}
+```
+
+This code processes around 30 bytes per cycle. Theoretically, the inner loop could do 32, but we have to stop it every 15 iterations because the 8-bit counters can overflow. 
+
+The `pshufb` instruction is so instrumental in some SIMD algorithms that [Wojciech Muła](http://0x80.pl/) — the guy who came up with this algorithm — took it as his [Twitter handle](https://twitter.com/pshufb). You can calculate population counts even faster: check out his [github repository](https://github.com/WojciechMula/sse-popcount) with different vectorized popcount implementations and his [recent paper](https://arxiv.org/pdf/1611.07612.pdf) for a detailed explanation of the state-of-the-art.
 
 ### Permutations and Lookup Tables
 
@@ -86,111 +223,3 @@ It also doesn't depend on the value of `P`:
 ![](../img/filter.svg)
 
 AVX512 has similar "scatter" instructions that write data non-sequentially, using either indices or [a mask](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=compress&expand=4754,4479&techs=AVX_512). You can very efficiently "filter" an array this way using a predicate.
-
-### Shuffles and Popcount
-
-We can create tiny lookup tables with [pshufb](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=pshuf&techs=AVX,AVX2&expand=6331) instruction. This is useful when you have some logic that isn't implemented in SSE, and this operation is so instrumental in some algorithms that [Wojciech Muła](http://0x80.pl/) — the guy who came up with a half of the algorithms described in this chapter — took it as his [Twitter handle](https://twitter.com/pshufb).
-
-2 GFLOPS:
-
-```c++
-int popcnt() {
-    int res = 0;
-    for (int i = 0; i < N; i++)
-        res += __builtin_popcount(a[i]);
-    return res;
-}
-```
-
-4 GFLOPS:
-
-```c++
-int popcnt() {
-    long long *b = (long long*) a;
-    int res = 0;
-    for (int i = 0; i < N / 2; i++)
-        res += __builtin_popcountl(b[i]);
-    return res;
-}
-```
-
-0.49 GFLOPS (0.66 when switching to 16-bit and unsigned short).
-
-```c++
-struct Precalc {
-    alignas(64) char counts[256];
-
-    constexpr Precalc() : counts{} {
-        for (int i = 0; i < 256; i++)
-            counts[i] = __builtin_popcount(i);
-    }
-};
-
-constexpr Precalc P;
-
-int popcnt() {
-    auto b = (unsigned char*) a; // char is signed by default
-    int res = 0;
-    for (int i = 0; i < 4 * N; i++)
-        res += P.counts[b[i]];
-    return res;
-}
-```
-
-7.5-8 GFLOPS:
-
-```c++
-const reg lookup = _mm256_setr_epi8(
-    /* 0 */ 0, /* 1 */ 1, /* 2 */ 1, /* 3 */ 2,
-    /* 4 */ 1, /* 5 */ 2, /* 6 */ 2, /* 7 */ 3,
-    /* 8 */ 1, /* 9 */ 2, /* a */ 2, /* b */ 3,
-    /* c */ 2, /* d */ 3, /* e */ 3, /* f */ 4,
-
-    /* 0 */ 0, /* 1 */ 1, /* 2 */ 1, /* 3 */ 2,
-    /* 4 */ 1, /* 5 */ 2, /* 6 */ 2, /* 7 */ 3,
-    /* 8 */ 1, /* 9 */ 2, /* a */ 2, /* b */ 3,
-    /* c */ 2, /* d */ 3, /* e */ 3, /* f */ 4
-);
-
-const reg low_mask = _mm256_set1_epi8(0x0f);
-
-const int block_size = (255 / 8) * 8;
-
-int popcnt() {
-    int k = 0;
-
-    reg t = _mm256_setzero_si256();
-
-    for (; k + block_size < N; k += block_size) {
-        reg s = _mm256_setzero_si256();
-        
-        for (int i = 0; i < block_size; i += 8) {
-            reg x = _mm256_load_si256( (reg*) &a[k + i] );
-            
-            reg l = _mm256_and_si256(x, low_mask);
-            reg h = _mm256_and_si256(_mm256_srli_epi16(x, 4), low_mask);
-
-            reg pl = _mm256_shuffle_epi8(lookup, l);
-            reg ph = _mm256_shuffle_epi8(lookup, h);
-
-            s = _mm256_add_epi8(s, pl);
-            s = _mm256_add_epi8(s, ph);
-        }
-
-        t = _mm256_add_epi64(t, _mm256_sad_epu8(s, _mm256_setzero_si256()));
-    }
-
-    int res = hsum(t);
-
-    while (k < N)
-        res += __builtin_popcount(a[k++]);
-
-    return res;
-}
-```
-
-Another way is through gather, but that is too slow.
-
-### Acknowledgements
-
-Check out [Wojciech Muła's github repository](https://github.com/WojciechMula/sse-popcount) with different vectorized popcount implementations and his [latest paper](https://arxiv.org/pdf/1611.07612.pdf) for the detailed explanation of state-of-the-art.
