@@ -1,51 +1,69 @@
 ---
-title: Compile-Time Computation
+title: Precomputation
 weight: 8
-draft: true
 ---
 
-### Precalculation
+When compilers can infer that a certain variable does not depend on any user-provided data, they can compute its value during compile-time and turn it into a constant by embedding it into the generated machine code.
 
-A compiler can compute constants on its own, but it doesn't *have to*.
+This optimization helps performance a lot, but it is not a part of the C++ standard, so compilers don't *have to* do that. When a compile-time computation is either hard to implement or time-intensive, they have a full legal right to pass on that opportunity.
+
+### Constant Expressions
+
+In modern C++, you can mark a function as `constexpr`, and if it is called by passing constants, its value is guaranteed to be computed during compile-time:
 
 ```c++
-const int b = 4, B = (1 << b);
-
-// is it tight enough?
-constexpr int round(int k) {
-    return k / B * B; // (k & ~(B - 1));
+constexpr int fibonacci(int n) {
+    if (n <= 2)
+        return 1;
+    return fibonacci(n - 1) + fibonacci(n - 2);
 }
 
-constexpr int height(int m) {
-    return (m == 0 ? 0 : height(m / B) + 1);
-}
+static_assert(fibonacci(10) == 55);
+```
 
-constexpr int offset(int h) {
-    int res = 0;
-    int m = N;
-    while (h--) {
-        res += round(m) + B;
-        m /= B;
+These functions have some restrictions like that they only call other `constexpr` functions and can't do memory allocation, but otherwise they are executed "as is".
+
+Note that while they don't cost anything during the run-time, they still increase compilation time, so at least remotely care about their efficiency and don't put something NP-complete in them:
+
+```c++
+constexpr int fibonacci(int n) {
+    int a = 1, b = 1;
+    while (n--) {
+        int c = a + b;
+        a = b;
+        b = c;
     }
-    return res;
+    return b;
 }
+```
 
-constexpr int h = height(N);
-alignas(64) int t[offset(h)];
-//int t[N * B / (B - 1)]; // +1?
+There used to be much more limitations in earlier C++ standards, like you could not use any sort of state inside them and had to rely on recursion, so the whole process felt more like Haskell programming rather than C++. Since C++17, you can even compute static arrays using the imperative style, which is useful for precomputing lookup tables:
 
-struct Meta {
-    alignas(64) int mask[B][B];
+```c++
+struct Precalc {
+    int isqrt[1000];
 
-    constexpr Meta() : mask{} {
-        for (int k = 0; k < B; k++)
-            for (int i = 0; i < B; i++)
-                mask[k][i] = (i > k ? -1 : 0);
+    constexpr Meta() : reciprocal{} {
+        for (int i = 0; i < 1000; i++)
+            reciprocal[i] = int(sqrt(i));
     }
 };
 
-constexpr Meta T;
+constexpr Precalc P;
+
+static_assert(P.isqrt[42] == 6);
 ```
+
+Note that when you call `constexpr` functions using non-constants, they compiler may or may not compute them during compile-time:
+
+```c++
+for (int i = 0; i < 100; i++)
+    cout << fibonacci(i) << endl;
+```
+
+In this example, even though technically we perform a constant number of iterations and call `fibonacci` with parameters known at compile-time, they are technically not compile-time constants. It's up to the compiler whether to optimize this loop or not, and for heavy computations, it often choses not to.
+
+<!--
 
 ### Code Generation
 
@@ -58,3 +76,5 @@ For example, CUDA and OpenCL are mostly C, and have no support for metaprogrammi
 At some point (and perhaps to this day), these languages had no way to unroll loops, so people would write a [jinja template](https://jinja.palletsprojects.com/en/3.0.x/), call the thing from Python, and then compile.
 
 It is not uncommon to use a templating engine to generate code. For example, CUDA (a GPU programming language) has no loop unrolling
+
+-->
