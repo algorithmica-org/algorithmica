@@ -104,7 +104,7 @@ This 75% threshold is commonly used by the compilers as a heuristic for determin
 - We can use [compiler-specific intrinsics](/hpc/compilation/situational) to hint the likeliness of branches: `__builtin_expect_with_probability` in GCC and `__builtin_unpredictable` in Clang.
 - We can rewrite branchy code using the ternary operator or various arithmetic tricks, which acts as sort of an implicit contract between programmers and compilers: if the programmer wrote the code this way, then it was probably meant to be branchless.
 
-The "right way" is to use branching hints, but unfortunately, the support for them is lacking. Right now [these hints seem to be lost](https://bugs.llvm.org/show_bug.cgi?id=40027) by the time the compiler back-end decides whether a `cmov` is more beneficial. Currently, there is no good way of forcing the compiler to generate branch-free code, so sometimes the best hope is to just write a small snippet in assembly.
+The "right way" is to use branching hints, but unfortunately, the support for them is lacking. Right now [these hints seem to be lost](https://bugs.llvm.org/show_bug.cgi?id=40027) by the time the compiler back-end decides whether a `cmov` is more beneficial. There is [some progress](https://discourse.llvm.org/t/rfc-cmov-vs-branch-optimization/6040) towards making it possible, but currently, there is no good way of forcing the compiler to generate branch-free code, so sometimes the best hope is to just write a small snippet in assembly.
 
 <!--
 
@@ -227,7 +227,7 @@ for (int i = 0; i < N; i++)
 
 It now works in ~0.3 per element, which is mainly [bottlenecked by the memory](/hpc/cpu-cache/bandwidth).
 
-The compiler is usually able to vectorize any loop that doesn't have branches or dependencies between the iterations — and some specific deviations from that, such as [reductions](/hpc/simd/reduction) or simple loops that contain just one if-without-else. Vectorization of anything more complex is a very nontrivial problem, which may involve various techniques such as [masking](/hpc/simd/masking) and [in-register permutations](/hpc/simd/permutation).
+The compiler is usually able to vectorize any loop that doesn't have branches or dependencies between the iterations — and some specific deviations from that, such as [reductions](/hpc/simd/reduction) or simple loops that contain just one if-without-else. Vectorization of anything more complex is a very nontrivial problem, which may involve various techniques such as [masking](/hpc/simd/masking) and [in-register permutations](/hpc/simd/shuffling).
 
 <!--
 
