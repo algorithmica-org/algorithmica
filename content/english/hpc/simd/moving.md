@@ -68,7 +68,9 @@ The first SIMD extension, MMX, started quite small. It only used 64-bit vectors,
 
 This feature, combined with the fact that the vector registers are located in the FPU, makes moving data between them and the general-purpose registers slightly complicated.
 
-To **extract** a specific value from a vector, you can use `_mm256_extract_epi32` and similar intrinsics. It takes the index of the integer to be extracted as the second parameter and generates different instruction sequences depending on its value.
+### Extract and Insert
+
+To *extract* a specific value from a vector, you can use `_mm256_extract_epi32` and similar intrinsics. It takes the index of the integer to be extracted as the second parameter and generates different instruction sequences depending on its value.
 
 If you need to extract the first element, it generates the `vmovd` instruction (for `xmm0`, the first half of the vector):
 
@@ -106,6 +108,8 @@ vinserti128  ymm0, ymm0, xmm2, 0x1
 
 Takeaway: moving scalar data to and from vector registers is slow, especially when this isn't the first element.
 
+### Making Constants
+
 If you need to populate not just one element but the entire vector, you can use the `_mm256_setr_epi32` intrinsic:
 
 ```c++
@@ -114,7 +118,16 @@ __m256 iota = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
 
 The "r" here stands for "reversed" — from [the CPU point of view](/hpc/arithmetic/integer#integer-types), not for humans. There is also the `_mm256_set_epi32` (without "r") that fills the values from the opposite direction. Both are mostly used to create compile-time constants that are then fetched into the register with a block load. If your use case is filling a vector with zeros, use the `_mm256_setzero_si256` instead: it `xor`-s the register with itself.
 
-Instead of modifying just one element, you can also **broadcast** a single value into all its positions:
+In built-in vector types, you can just use normal braced initialization:
+
+```c++
+vec zero = {};
+vec iota = {0, 1, 2, 3, 4, 5, 6, 7};
+```
+
+### Broadcast
+
+Instead of modifying just one element, you can also *broadcast* a single value into all its positions:
 
 ```nasm
 ; __m256i v = _mm256_set1_epi32(42);
@@ -130,6 +143,14 @@ This is a frequently used operation, so you can also use a memory location:
 vbroadcastss ymm0, DWORD PTR [rdi]
 ```
 
+When using built-in vector types, you can create a zero vector and add a scalar to it:
+
+```c++
+vec v = 42 + vec{};
+```
+
+### Mapping to Arrays
+
 If you want to avoid all this complexity, you can just dump the vector in memory and read its values back as scalars:
 
 ```c++
@@ -142,6 +163,8 @@ void print(__m256i v) {
 ```
 
 This may not be fast or technically legal (the C++ standard doesn't specify what happens when you cast data like this), but it is simple, and I frequently use this code to print out the contents of a vector during debugging.
+
+<!-- vector types syntax -->
 
 ### Non-Contiguous Load
 
