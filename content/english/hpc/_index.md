@@ -96,15 +96,13 @@ Planned table of contents:
  9.2. Memory Latency
  9.3. Cache Lines
  9.4. Memory Sharing
- 9.5. Data Alignment
- 9.6. Structure Packing
- 9.7. Pointer Alternatives
- 9.8. Cache Associativity
- 9.9. Memory Paging
- 9.10. Memory-Level Parallelism
- 9.11. Hardware Prefetching
- 9.12. Software Prefetching
- 9.13. AoS and SoA
+ 9.5. Memory-Level Parallelism
+ 9.6. Prefetching
+ 9.7. Alignment and Packing
+ 9.8. Pointer Alternatives
+ 9.9. Cache Associativity
+ 9.10. Memory Paging
+ 9.11. AoS and SoA
 10. SIMD Parallelism
  10.1. Intrinsics and Vector Types
  10.2. Loading and Writing Data
@@ -139,13 +137,14 @@ Planned table of contents:
 Among cool things that we will speed up:
 
 - 2x faster GCD (compared to `std::gcd`)
-- 5x faster binary search (compared to `std::lower_bound`)
+- 8-15x faster binary search (compared to `std::lower_bound`)
 - 7x faster segment trees
 - 5x faster hash tables (compared to `std::unordered_map`)
 - ~~?x faster popcount~~
 - 2x faster parsing series of integers (compared to `scanf`)
 - ?x faster sorting (compared to `std::sort`)
 - 2x faster sum (compared to `std::accumulate`)
+- 10x faster array searching (compared to `std::find`)
 - 100x faster matrix multiplication (compared to "for-for-for")
 - optimal word-size integer factorization (~0.4ms per 60-bit integer)
 - optimal Karatsuba Algorithm
@@ -175,6 +174,7 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Peter Cordes](https://stackoverflow.com/users/224132/peter-cordes)
 - [Geoff Langdale](https://branchfree.org/)
 - [Matt Kulukundis](https://twitter.com/JuvHarlequinKFM)
+- [Georg Sauthoff](https://gms.tf/)
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
 - [Creel](https://www.youtube.com/c/WhatsACreel)
 
