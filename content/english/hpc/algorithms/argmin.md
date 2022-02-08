@@ -4,6 +4,20 @@ weight: 7
 draft: true
 ---
 
+Harmonic series:
+
+$$
+\frac{1}{2} + \frac{1}{3} + \frac{1}{4} + \ldots + \frac{1}{n} = O(\ln(n))
+$$
+
+To take a minimum value, 
+
+It needs 5 for 100, 7 for 1000, and just 14 for $10^14$.
+
+SIMD extensions have a convenient `_mm256_min_epi32` that works in one cycle, so computing a mini
+
+Finding the *value* of a minimum 
+
 We create an array of *random* integers.
 
 ```c++
@@ -90,12 +104,22 @@ int argmin(int *a, int n) {
 ```
 
 ```c++
-typedef __m256i reg;
+const int B = 8;
+typedef int vec __attribute__ (( vector_size(4 * B) ));
+
+vec min(vec x, vec y) {
+    return (x < y ? x : y);
+}
+
+int mask(vec x) {
+    return _mm256_movemask_epi8((__m256i) x);
+}
 
 int argmin(int *a, int n) {
+    vec *v = (vec*) a;
+    
     int m = INT_MAX, k = 0;
-    vec p, t;
-    t = p = m + vec{};
+    vec p = m + vec{};
 
     for (int i = 0; i < n / B; i++) {
         t = min(t, v[i]);
@@ -128,7 +152,7 @@ int argmin() {
         t0 = min(t0, v[i]);
         t1 = min(t1, v[i + 1]);
         vec t = min(t0, t1);
-        int mask = _mm256_movemask_epi8((__m256i) (p == t));
+        int mask = mask(((__m256i) (p == t));
         if (mask != -1) { [[unlikely]]
             for (int j = B * i; j < B * i + 2 * B; j++)
                 if (a[j] < m)
@@ -141,13 +165,21 @@ int argmin() {
 }
 ```
 
+It drops to about 1.4 GFLOPS — almost 10 times as slow, although still on the level of scalar code.
+
 ```
 std 0.28 0.28
 simple 1.58 1.94
-cmov 1.43 1.93
-hint 2.26 1.49
-index 4.36 4.36
-simdmin-single 9.26 0.53
-simdmin 14.22 1.37
-simdmin-testz 13.51 1.41
+cmov 1.44 1.94
+hint 2.26 1.5
+index 4.38 4.38
+simdmin-single 9.36 0.54
+simdmin 14.65 1.41
+simdmin-testz 13.59 1.41
 ```
+
+### Acknowledgements
+
+http://0x80.pl/notesen/2018-10-03-simd-index-of-min.html
+
+https://stackoverflow.com/questions/9795529/how-to-find-the-horizontal-maximum-in-a-256-bit-avx-vector Norbert P. and Peter Cordes 
