@@ -113,7 +113,9 @@ Here are a few more examples, just so that you get the gist of it:
 - `_mm256_cmpeq_epi32`: compare 8+8 packed `int`s and return a mask that contains ones for equal element pairs.
 - `_mm256_blendv_ps`: pick elements from one of two vectors according to a mask.
 
-As you may have guessed, there is a combinatorially very large number of intrinsics. For some reason, there are some operations that are agnostic to the type of data stored in registers, but only take a specific vector type (usually 32-bit float) — you can just have to convert to and from it to use that intrinsic. To simplify the examples in this chapter, we will mostly work with 32-bit integers (`epi32`) in 256-bit AVX2 registers.
+As you may have guessed, there is a combinatorially very large number of intrinsics, and in addition to that, some instructions also have immediate values — so their intrinsics require compile-time constant parameters: for example, the floating-point comparison instruction [has 32 different modifiers](https://stackoverflow.com/questions/16988199/how-to-choose-avx-compare-predicate-variants).
+
+For some reason, there are some operations that are agnostic to the type of data stored in registers, but only take a specific vector type (usually 32-bit float) — you just have to convert to and from it to use that intrinsic. To simplify the examples in this chapter, we will mostly work with 32-bit integers (`epi32`) in 256-bit AVX2 registers.
 
 A very helpful reference for x86 SIMD intrinsics is the [Intel Intrinsics Guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/), which has groupings by categories and extensions, descriptions, pseudocode, associated assembly instructions, and their latency and throughput on Intel microarchitectures. You may want to bookmark that page.
 
