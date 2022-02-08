@@ -88,7 +88,7 @@ All these versions work at around 13 GFLOPS as this example is so simple that th
 
 ### Searching
 
-In the next example, we need to find a specific value in an array and return its position:
+In the next example, we need to find a specific value in an array and return its position (aka `std::find`):
 
 ```c++
 const int N = (1<<12);
@@ -170,7 +170,101 @@ vptest   ymm0, ymm0
 je       loop
 ```
 
-This doesn't improve performance much on this particular architecture as the `movemask` wasn't the bottleneck.
+This doesn't improve performance much because both both `vptest` and `vmovmskps` have a throughput of one and will bottleneck the computation regardless of anything else we do in the loop.
+
+To work around this limitation, we can iterate in blocks of 16 elements and combine the results of independent comparisons of two 256-bit AVX2 registers using a bitwise `or`:
+
+```c++
+int find(int needle) {
+    reg x = _mm256_set1_epi32(needle);
+
+    for (int i = 0; i < N; i += 16) {
+        reg y1 = _mm256_load_si256( (reg*) &a[i] );
+        reg y2 = _mm256_load_si256( (reg*) &a[i + 8] );
+        reg m1 = _mm256_cmpeq_epi32(x, y1);
+        reg m2 = _mm256_cmpeq_epi32(x, y2);
+        reg m = _mm256_or_si256(m1, m2);
+        if (!_mm256_testz_si256(m, m)) {
+            int mask = (_mm256_movemask_ps((__m256) m2) << 8)
+                     +  _mm256_movemask_ps((__m256) m1);
+            return i + __builtin_ctz(mask);
+        }
+    }
+
+    return -1;
+}
+```
+
+With this obstacle removed, the performance now peaks at ~34 GFLOPS. But why not 40? Shouldn't it be twice as fast?
+
+Here is how one iteration of the loop looks in assembly:
+
+```nasm
+vpcmpeqd ymm2, ymm1, YMMWORD PTR a[0+rdx*4]
+vpcmpeqd ymm3, ymm1, YMMWORD PTR a[32+rdx*4]
+vpor     ymm0, ymm3, ymm2
+vptest   ymm0, ymm0
+je       loop
+```
+
+Every iteration, we need to execute 5 instructions. While the throughputs of all relevant execution ports allow to do that in one cycle on average, we can't do that because the decode width of this particular CPU (Zen 2) is 4. Therefore, the performance is limited by ⅘ of what it could have been.
+
+<!--
+
+To process the CPU (Zen 2) can only process 4. Here is the relevant part of the [llvm-mca report](/hpc/profiling/mca):
+
+vpcmpeqd 013
+vpcmpeqd 013
+vpor 0123
+vptest 2
+
+[7]    [8]    [9]    [10]   Instructions:
+0.46   0.09    -     0.45   vpcmpeqd	ymm2, ymm1, ymmword ptr [4*rdx + a]
+0.40   0.09   0.22   0.29   vpcmpeqd	ymm3, ymm1, ymmword ptr [4*rdx + a+32]
+0.34   0.11   0.08   0.47   vpor	ymm0, ymm3, ymm2
+ -     1.00   1.00    -     vptest	ymm0, ymm0
+
+-->
+
+To mitigate this, we can once again double the number of SIMD blocks we process on each iteration:
+
+```c++
+unsigned get_mask(reg m) {
+    return _mm256_movemask_ps((__m256) m);
+}
+
+reg cmp(reg x, int *p) {
+    reg y = _mm256_load_si256( (reg*) p );
+    return _mm256_cmpeq_epi32(x, y);
+}
+
+int find(int needle) {
+    reg x = _mm256_set1_epi32(needle);
+
+    for (int i = 0; i < N; i += 32) {
+        reg m1 = cmp(x, &a[i]);
+        reg m2 = cmp(x, &a[i + 8]);
+        reg m3 = cmp(x, &a[i + 16]);
+        reg m4 = cmp(x, &a[i + 24]);
+        reg m12 = _mm256_or_si256(m1, m2);
+        reg m34 = _mm256_or_si256(m3, m4);
+        reg m = _mm256_or_si256(m12, m34);
+        if (!_mm256_testz_si256(m, m)) {
+            unsigned mask = (get_mask(m4) << 24)
+                          + (get_mask(m3) << 16)
+                          + (get_mask(m2) << 8)
+                          +  get_mask(m1);
+            return i + __builtin_ctz(mask);
+        }
+    }
+
+    return -1;
+}
+```
+
+It now shows the throughput of 43 GFLOPS — or about 10x faster than the original scalar implementation.
+
+Extending it to 64 values per cycle doesn't help: small arrays suffer from the overhead of all these additional `movemask`-s when we hit the condition, and larger arrays are bottlenecked by [memory bandwidth](/hpc/cpu-cache/bandwidth) anyway.
 
 ### Counting Values
 
