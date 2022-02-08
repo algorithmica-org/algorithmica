@@ -70,6 +70,8 @@ int hsum(__m256i x) {
 
 There are [other similar instructions](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#techs=AVX,AVX2&ig_expand=3037,3009,5135,4870,4870,4872,4875,833,879,874,849,848,6715,4845&text=horizontal), e. g. for integer multiplication or calculating absolute differences between adjacent elements (used in image processing).
 
+There is also one specific instruction, `_mm_minpos_epu16`, that calculates the horizontal minimum and its index among eight 16-bit integers. This is the only horizontal reduction that works in one go: all others are computed in multiple steps.
+
 ### Instruction-Level Parallelism
 
 Our implementation matches what the compiler produces automatically, but it is actually [suboptimal](/hpc/pipelining/throughput): when we use just one accumulator, we have to wait one cycle between the loop iterations for vector addition to complete, while its throughput is 2 on this microarchitecture.
