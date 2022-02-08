@@ -157,8 +157,8 @@ If you want to avoid all this complexity, you can just dump the vector in memory
 void print(__m256i v) {
     auto t = (unsigned*) &v;
     for (int i = 0; i < 8; i++)
-        cout << bitset<32>(t[i]) << " ";
-    cout << endl;
+        std::cout << std::bitset<32>(t[i]) << " ";
+    std::cout << std::endl;
 }
 ```
 
