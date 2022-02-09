@@ -226,3 +226,13 @@ The vectorized version takes some work to implement, but it is 6-7x faster than 
 ![](../img/filter.svg)
 
 This operation is considerably faster on AVX-512: it has a special "[compress](_mm512_mask_compress_epi32)" instruction that takes a vector of data and a mask and writes its unmasked elements contiguously. It makes a huge difference in algorithms that rely on various filtering subroutines.
+
+<!--
+
+You can use either registers or fetch them from memory. There are some others that use immediates (compile-time constant too?)
+
+_mm256_permute2x128_si256 — swaps lines
+_mm256_slli_si256 srli
+_mm256_permute_ps uses a mask
+
+-->
