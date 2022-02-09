@@ -5,7 +5,7 @@ weight: 7
 
 Computing the *minimum* of an array [easily vectorizable](/hpc/simd/reduction), as it is not different from any other reduction: in AVX2, you just need to use a convenient `_mm256_min_epi32` intrinsic as the inner operation. It computes the minimum of two 8-element vectors in one cycle — even faster than in the scalar case, which requires at least a comparison and a conditional move.
 
-Finding the *index* of that minimum element (*argmin*) is much harder, but it is still possible to vectorize very efficiently. In this section, we design an algorithm that computes the argmin (almost) at the speed of computing the minimum: ~15x faster than the naive scalar approach and ~5x faster than the [previous state-of-the-art](http://0x80.pl/notesen/2018-10-03-simd-index-of-min.html).
+Finding the *index* of that minimum element (*argmin*) is much harder, but it is still possible to vectorize very efficiently. In this section, we design an algorithm that computes the argmin (almost) at the speed of computing the minimum: ~15x faster than the naive scalar approach and ~2.5x faster than the [previous state-of-the-art](http://0x80.pl/notesen/2018-10-03-simd-index-of-min.html).
 
 ### Baseline
 
@@ -55,37 +55,48 @@ The problem with vectorizing the scalar implementation is that there is a depend
 When we have the consecutive elements and their indices in vectors, we can process them in parallel using [predication](/hpc/pipelining/branchless):
 
 ```c++
-typedef int vec __attribute__ (( vector_size(32) ));
+typedef __m256i reg;
 
 int argmin(int *a, int n) {
-    vec *v = (vec*) a;
-    
-    vec cur = {0, 1, 2, 3, 4, 5, 6, 7}; // indices on the current iteration
-    vec min = INT_MAX + vec{};          // the current minimum for each slice
-    vec idx;                            // its index (argmin) for each slice
+    reg cur = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7); // indices on the current iteration
+    reg min = _mm256_set1_epi32(INT_MAX);// the current minimum for each slice
+    reg idx = _mm256_setzero_si256();                    // its index (argmin) for each slice
 
-    for (int i = 0; i < n / 8; i++) {
-        vec mask = (v[i] < min);   // find the slices where the minimum updated
-        min = (mask ? v[i] : min); // update the minimum
-        idx = (mask ? cur : idx);  // update the indices
-        cur += 8;                  // increment the current indices
+    for (int i = 0; i < n; i += 8) {
+        // load a new SIMD block
+        reg x = _mm256_load_si256((reg*) &a[i]);
+        // find the slices where the minimum is updated
+        reg mask = _mm256_cmpgt_epi32(min, x);
+        // update the indices
+        idx = _mm256_blendv_epi8(idx, cur, mask);
+        // update the minimum (can also similarly use a "blend" here, but min is faster)
+        min = _mm256_min_epi32(x, min);
+        // update the current indices
+        const reg eight = _mm256_set1_epi32(8);
+        cur = _mm256_add_epi32(cur, eight);       // 
+        // can also use a "blend" here, but min is faster
     }
-    
-    // find the argmin in the "min" array: 
 
-    int k = 0, m = min[0];
+    // find the argmin in the "min" register and return its real index
+
+    int min_arr[8], idx_arr[8];
+    
+    _mm256_storeu_si256((reg*) min_arr, min);
+    _mm256_storeu_si256((reg*) idx_arr, idx);
+
+    int k = 0, m = min_arr[0];
 
     for (int i = 1; i < 8; i++)
-        if (min[i] < m)
-            m = min[k = i];
+        if (min_arr[i] < m)
+            m = min_arr[k = i];
 
-    return idx[k]; // return its real index
+    return idx_arr[k];
 }
 ```
 
-It works at around 4 GFLOPS. There is still some inter-dependency between the iterations, so we can optimize it by considering more than 8 elements per iteration and taking advantage of the [instruction-level parallelism](/hpc/simd/reduction#instruction-level-parallelism).
+It works at around 8-8.5 GFLOPS. There is still some inter-dependency between the iterations, so we can optimize it by considering more than 8 elements per iteration and taking advantage of the [instruction-level parallelism](/hpc/simd/reduction#instruction-level-parallelism).
 
-It would help performance a lot, but it won't let us approach the speed of computing the minimum (~24 GFLOPS) as there is another bottleneck. On each iteration, we need a load, vector comparison, two blends, and a vector addition — that is 5 instructions in total to process 8 elements. Since the decode width of this CPU (Zen 2) is just 4, the performance will still be limited by ⅘ × 8 × 2 = 12.8 GFLOPS even if we get rid of all the other bottlenecks.
+This would help performance a lot, but not enough to match the speed of computing the minimum (~24 GFLOPS) because there is another bottleneck. On each iteration, we need a load-fused comparison, a load-fused minimum, a blend, and an addition — that is 4 instructions in total to process 8 elements. Since the decode width of this CPU (Zen 2) is just 4, the performance will still be limited by 8 × 2 = 16 GFLOPS even if we somehow got rid of all the other bottlenecks.
 
 Instead, we will switch to another approach that requires fewer instructions per element.
 
@@ -122,8 +133,6 @@ Here is the idea: if we are only updating the minimum a dozen or so times during
 To implement it with SIMD, all we need to do on each iteration is a vector load, a comparison, and a test-if-zero:
 
 ```c++
-typedef __m256i reg;
-
 int argmin(int *a, int n) {
     int min = INT_MAX, idx = 0;
     
@@ -267,7 +276,7 @@ algorithm    rand   decr   reason for the performance difference
 std          0.28   0.28   
 scalar       1.54   1.89   efficient branch prediction
 + hinted     1.95   0.75   wrong hint
-index        4.08   4.17
+index        8.17   8.12
 simd         8.51   1.65   scalar-based argmin on each iteration
 + ilp        10.22  1.74   ^ same
 + optimized  22.44  2.70   ^ same, but faster because there are less inter-dependencies
@@ -282,6 +291,8 @@ There are also still some minor things to optimize, but the potential improvemen
 ### Acknowledgements
 
 The first, index-based SIMD algorithm was [originally designed](http://0x80.pl/notesen/2018-10-03-simd-index-of-min.html) by Wojciech Muła in 2018.
+
+Thanks to Zach Wegner for [pointing out](https://twitter.com/zwegner/status/1491520929138151425) that the performance of the Muła's algorithm is improved when implemented manually using intrinsics (I originally used the [GCC vector types](/hpc/simd/intrinsics/#gcc-vector-extensions)).
 
 <!--
 
