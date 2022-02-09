@@ -43,7 +43,7 @@ There used to be much more limitations in earlier C++ standards, like you could 
 struct Precalc {
     int isqrt[1000];
 
-    constexpr Meta() : reciprocal{} {
+    constexpr Precalc() : reciprocal{} {
         for (int i = 0; i < 1000; i++)
             reciprocal[i] = int(sqrt(i));
     }
