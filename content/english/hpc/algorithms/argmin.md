@@ -5,7 +5,7 @@ weight: 7
 
 Computing the *minimum* of an array [easily vectorizable](/hpc/simd/reduction), as it is not different from any other reduction: in AVX2, you just need to use a convenient `_mm256_min_epi32` intrinsic as the inner operation. It computes the minimum of two 8-element vectors in one cycle — even faster than in the scalar case, which requires at least a comparison and a conditional move.
 
-Finding the index of that minimum element (*argmin*) is much harder, but it is still possible to compute very fast.
+Finding the *index* of that minimum element (*argmin*) is much harder, but it is still possible to vectorize very efficiently. In this section, we design an algorithm that computes the argmin (almost) at the speed of computing the minimum: ~15x faster than the naive scalar approach and ~5x faster than the [previous state-of-the-art](http://0x80.pl/notesen/2018-10-03-simd-index-of-min.html).
 
 ### Baseline
 
@@ -19,7 +19,7 @@ for (int i = 0; i < N; i++)
     a[i] = rand();
 ```
 
-For the sake of exposition, we assume that $N$ is a power of two.
+For the sake of exposition, we assume that $N$ is a power of two, and run all our experiments for $N=2^{13}$ so that the [memory bandwidth](/hpc/cpu-cache/bandwidth) is not a concern.
 
 To implement argmin in the scalar case, we just need to maintain the index instead of the minimum value:
 
@@ -35,7 +35,7 @@ int argmin(int *a, int n) {
 }
 ```
 
-It works in around 1.5 GFLOPS — meaning 1.5 values per cycle processed on average.
+It works at around 1.5 GFLOPS — meaning $1.5 \cdot 10^9$ values per second  processed on average, or about 0.75 values per cycle (the CPU is clocked at 2GHz).
 
 Let's compare it to `std::min_element`:
 
@@ -46,13 +46,13 @@ int argmin(int *a, int n) {
 }
 ```
 
-When using the version from GCC, it gives 0.28 GFLOPS — apparently, the compiler couldn't pierce through all the abstractions. Another reminder to never use STL.
+The version from GCC gives ~0.28 GFLOPS — apparently, the compiler couldn't pierce through all the abstractions. Another reminder to never use STL.
 
 ### Vector of Indices
 
-The problem with vectorizing the scalar implementation is that there is a dependency between iterations. When we optimized [array sum](/hpc/simd/reduction), we faced the same problem, and we solved it by splitting the array into 8 slices, each representing a subset of its indices with the same remainder modulo 8.
+The problem with vectorizing the scalar implementation is that there is a dependency between consequent iterations. When we optimized [array sum](/hpc/simd/reduction), we faced the same problem, and we solved it by splitting the array into 8 slices, each representing a subset of its indices with the same remainder modulo 8. We can apply the same trick here, except that we also have to take array indices into account.
 
-We can apply the same trick here, except that we also have to take array indices into account. When we have both the consecutive data and indices in vectors, we can process them in parallel using [predication](/hpc/pipelining/branchless) like this:
+When we have the consecutive elements and their indices in vectors, we can process them in parallel using [predication](/hpc/pipelining/branchless):
 
 ```c++
 typedef int vec __attribute__ (( vector_size(32) ));
@@ -83,7 +83,9 @@ int argmin(int *a, int n) {
 }
 ```
 
-It works in around 4 GFLOPS. There is still some inter-dependency between the iterations, so we can optimize it by considering more than 8 elements per iteration and taking advantage of the [instruction-level parallelism](/hpc/simd/reduction#instruction-level-parallelism). But it won't improve the performance by a lot: on each iteration, we need a load, vector comparison, two blends, and a vector addition — that is 5 instructions in total to process 8 elements. Since the decode width of this CPU (Zen 2) is just 4, the performance will still be limited by ⅘ × 8 = 6.4 GFLOPS even if we get rid of the other bottlenecks.
+It works at around 4 GFLOPS. There is still some inter-dependency between the iterations, so we can optimize it by considering more than 8 elements per iteration and taking advantage of the [instruction-level parallelism](/hpc/simd/reduction#instruction-level-parallelism).
+
+It would help performance a lot, but it won't let us approach the speed of computing the minimum (~24 GFLOPS) as there is another bottleneck. On each iteration, we need a load, vector comparison, two blends, and a vector addition — that is 5 instructions in total to process 8 elements. Since the decode width of this CPU (Zen 2) is just 4, the performance will still be limited by ⅘ × 8 × 2 = 12.8 GFLOPS even if we get rid of all the other bottlenecks.
 
 Instead, we will switch to another approach that requires fewer instructions per element.
 
@@ -91,7 +93,7 @@ Instead, we will switch to another approach that requires fewer instructions per
 
 When we run the scalar version, how often do we update the minimum?
 
-Intuition tells that, if all the values are drawn independently at random, then the event when the next element is less than all the previous ones shouldn't be frequent. More formally, the expected number of times the `a[i] < a[k]` condition is satisfied equals the sum of the harmonic series:
+Intuition tells us that, if all the values are drawn independently at random, then the event when the next element is less than all the previous ones shouldn't be frequent. More precisely, it equals the reciprocal of the number of processed elements. Therefore, the expected number of times the `a[i] < a[k]` condition is satisfied equals the sum of the harmonic series:
 
 $$
 \frac{1}{2} + \frac{1}{3} + \frac{1}{4} + \ldots + \frac{1}{n} = O(\ln(n))
@@ -113,7 +115,7 @@ int argmin(int *a, int n) {
 }
 ```
 
-The compiler [optimized the machine layout](/hpc/architecture/layout), and the CPU is now able to execute the loop at around 2 GFLOPS — a slight but sizeable improvement from 1.5 GFLOPS of the non-hinted loop.
+The compiler [optimized the machine code layout](/hpc/architecture/layout), and the CPU is now able to execute the loop at around 2 GFLOPS — a slight but sizeable improvement from 1.5 GFLOPS of the non-hinted loop.
 
 Here is the idea: if we are only updating the minimum a dozen or so times during the entire computation, we can ditch all the vector-blending and index updating and just maintain the minimum and regularly check if it has changed. Inside this check, we can use however slow method of updating the argmin we want because it will only be called a few times. 
 
@@ -170,7 +172,7 @@ int argmin(int *a, int n) {
 This version works in ~10 GFLOPS. To remove the other obstacles, we can do two things:
 
 - Increase the block size to 32 elements to allow for more instruction-level parallelism.
-- Optimize the local argmin: instead of calculating its exact location, we can just save the index of the block, and then come back at the end and find it just once. This lets us only compute the minimum on each positive check and broadcast it to a vector, which is simpler and much faster.
+- Optimize the local argmin: instead of calculating its exact location, we can just save the index of the block and then come back at the end and find it just once. This lets us only compute the minimum on each positive check and broadcast it to a vector, which is simpler and much faster.
 
 With these two optimizations implemented, the performance increases to a whopping ~22 GFLOPS:
 
@@ -205,11 +207,11 @@ int argmin(int *a, int n) {
 }
 ```
 
-This is almost as high as it can get — only computing the minimum itself works at around 24-25 GFLOPS.
+This is almost as high as it can get as just computing the minimum itself works at around 24-25 GFLOPS.
 
-The only problem of all these branch-happy SIMD implementations is that they rely on the minimum being updated very infrequently. This is true for random input distributions, but not in the worst case. If we fill the array with the decreasing numbers, the performance of the last implementation drops to about 2.7 GFLOPS — almost 10 times as slow (although still faster than the scalar code because we only calculate the minimum on each block).
+The only problem of all these branch-happy SIMD implementations is that they rely on the minimum being updated very infrequently. This is true for random input distributions, but not in the worst case. If we fill the array with a sequence of decreasing numbers, the performance of the last implementation drops to about 2.7 GFLOPS — almost 10 times as slow (although still faster than the scalar code because we only calculate the minimum on each block).
 
-One way to fix this is to do the same thing that the quicksort-like randomized algorithms do: just randomize the input yourself and iterate over the array in random order. This lets you avoid this worst-case penalty, but it is tricky to implement due to RNG- and [memory](/hpc/cpu-cache/prefetching)-related issues. There is a simpler solution.
+One way to fix this is to do the same thing that the quicksort-like randomized algorithms do: just shuffle the input yourself and iterate over the array in random order. This lets you avoid this worst-case penalty, but it is tricky to implement due to RNG- and [memory](/hpc/cpu-cache/prefetching)-related issues. There is a simpler solution.
 
 ### Find the Minimum, Then Find the Index
 
@@ -223,9 +225,9 @@ int argmin(int *a, int n) {
 }
 ```
 
-If we implement the two subroutines optimally (check the linked articles), the performance will be ~18 GFLOPS for random arrays and ~12 GFLOPS for decreasing arrays — which makes sense as we are expected to read the array 1.5 and 2 times respectively. This isn't that bad by itself — at least we avoid the 10x worst-case performance penalty — but the problem is that this penalized performance also translates to larger arrays when we are bottlenecked by the [memory bandwidth](/hpc/cpu-cache/bandwidth) rather than the CPU.
+If we implement the two subroutines optimally (check the linked articles), the performance will be ~18 GFLOPS for random arrays and ~12 GFLOPS for decreasing arrays — which makes sense as we are expected to read the array 1.5 and 2 times respectively. This isn't that bad by itself — at least we avoid the 10x worst-case performance penalty — but the problem is that this penalized performance also translates to larger arrays, when we are bottlenecked by the [memory bandwidth](/hpc/cpu-cache/bandwidth) rather than compute.
 
-Luckily, we already know how to fix it. We can split the array into blocks of fixed size $B$ and compute the minimums on these blocks while also maintaining the global minimum. When the minimum on a new block is lower than the global minimum, we update it and also remember the block number of there the global minimum currently is. After we've processed the whole array, we just return to that block and process $B$ elements to find the argmin.
+Luckily, we already know how to fix it. We can split the array into blocks of fixed size $B$ and compute the minima on these blocks while also maintaining the global minimum. When the minimum on a new block is lower than the global minimum, we update it and also remember the block number of where the global minimum currently is. After we've processed the entire array, we just return to that block and scan through its $B$ elements to find the argmin.
 
 This way we only process $(N + B)$ elements and don't have to sacrifice neither ½ nor ⅓ of the performance:
 
@@ -251,9 +253,9 @@ int argmin(int *a, int n) {
 }
 ```
 
-This final implementation in~22 and ~19 GFLOPS for random and decreasing arrays respectively.
+This results for the final implementation are ~22 and ~19 GFLOPS for random and decreasing arrays respectively.
 
-The full implementation, including both `min()` and `find()`, is about 100 lines long. If you want, you [take a look at it](https://github.com/sslotin/amh-code/blob/main/argmin/combined.cc), although it's far from production-grade.
+The full implementation, including both `min()` and `find()`, is about 100 lines long. [Take a look](https://github.com/sslotin/amh-code/blob/main/argmin/combined.cc) if you want, although it is still far from being production-grade.
 
 ### Summary
 
@@ -275,7 +277,7 @@ min+find     18.21  12.92  find() has to scan the entire array
 
 Take these results with a grain of salt: the measurements are [quite noisy](/hpc/profiling/noise), they were done for just for two input distributions, for a specific array size ($N=2^{13}$, the size of the L1 cache), for a specific architecture (Zen 2), and for a specific and slightly outdated compiler (GCC 9.2) — the compiler optimizations were also very fragile to little changes in the benchmarking code.
 
-There are also still some minor things to optimize, but the potential improvement is less than 10% so I didn't bother. One day I may pluck up courage, optimize the algorithm to the theoretical limit, handle the non-divisible-by-block-size array sizes and non-aligned memory cases, and then re-run the benchmarks properly on many architectures and with p-values and such. If someone does it before me, please [ping me back](http://sereja.me/).
+There are also still some minor things to optimize, but the potential improvement is less than 10% so I didn't bother. One day I may pluck up the courage, optimize the algorithm to the theoretical limit, handle the non-divisible-by-block-size array sizes and non-aligned memory cases, and then re-run the benchmarks properly on many architectures, with p-values and such. In case someone does it before me, please [ping me back](http://sereja.me/).
 
 ### Acknowledgements
 
