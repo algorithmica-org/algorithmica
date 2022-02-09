@@ -58,9 +58,12 @@ When we have the consecutive elements and their indices in vectors, we can proce
 typedef __m256i reg;
 
 int argmin(int *a, int n) {
-    reg cur = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7); // indices on the current iteration
-    reg min = _mm256_set1_epi32(INT_MAX);// the current minimum for each slice
-    reg idx = _mm256_setzero_si256();                    // its index (argmin) for each slice
+    // indices on the current iteration
+    reg cur = _mm256_setr_epi32(0, 1, 2, 3, 4, 5, 6, 7);
+    // the current minimum for each slice
+    reg min = _mm256_set1_epi32(INT_MAX);
+    // its index (argmin) for each slice
+    reg idx = _mm256_setzero_si256();
 
     for (int i = 0; i < n; i += 8) {
         // load a new SIMD block
@@ -293,9 +296,3 @@ There are also still some minor things to optimize, but the potential improvemen
 The first, index-based SIMD algorithm was [originally designed](http://0x80.pl/notesen/2018-10-03-simd-index-of-min.html) by Wojciech Muła in 2018.
 
 Thanks to Zach Wegner for [pointing out](https://twitter.com/zwegner/status/1491520929138151425) that the performance of the Muła's algorithm is improved when implemented manually using intrinsics (I originally used the [GCC vector types](/hpc/simd/intrinsics/#gcc-vector-extensions)).
-
-<!--
-
-https://stackoverflow.com/questions/9795529/how-to-find-the-horizontal-maximum-in-a-256-bit-avx-vector Norbert P. and Peter Cordes 
-
--->
