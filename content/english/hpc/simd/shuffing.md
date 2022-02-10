@@ -235,4 +235,6 @@ _mm256_permute2x128_si256 — swaps lines
 _mm256_slli_si256 srli
 _mm256_permute_ps uses a mask
 
+https://stackoverflow.com/questions/9795529/how-to-find-the-horizontal-maximum-in-a-256-bit-avx-vector Norbert P. and Peter Cordes 
+
 -->

@@ -78,7 +78,7 @@ This makes the cache system simpler and cheaper to implement, but also makes it 
 
 Now, where were we? Oh, yes: the reason why iteration with strides of 256 causes such a terrible slowdown.
 
-When we jump over 256 integers, the pointer always increments by $1024 = 2^{10}$, and the last 10 bits remain the same. Since the cache system uses the lower 6 bits for the offset and the next 12 for the cache line index, we are essentially using just $2^{12 - (10 - 6)} = 2^8$ different sets in the L3 cache instead of $2^{12}$, which has the effect of shrinking our L3 cache by a factor of $2^4 = 16$. The array stops fitting into the L3 cache ($N=2^21$) spills into the order-of-magnitude slower RAM, which causes the performance to decrease.
+When we jump over 256 integers, the pointer always increments by $1024 = 2^{10}$, and the last 10 bits remain the same. Since the cache system uses the lower 6 bits for the offset and the next 12 for the cache line index, we are essentially using just $2^{12 - (10 - 6)} = 2^8$ different sets in the L3 cache instead of $2^{12}$, which has the effect of shrinking our L3 cache by a factor of $2^4 = 16$. The array stops fitting into the L3 cache ($N=2^{21}$) spills into the order-of-magnitude slower RAM, which causes the performance to decrease.
 
 <!--
 
