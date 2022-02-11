@@ -246,6 +246,7 @@ This way we only process $(N + B)$ elements and don't have to sacrifice neither 
 ```c++
 const int B = 256;
 
+// returns the minimum and its first block
 pair<int, int> approx_argmin(int *a, int n) {
     int res = INT_MAX, idx = 0;
     for (int i = 0; i < n; i += B) {
@@ -259,7 +260,7 @@ pair<int, int> approx_argmin(int *a, int n) {
 }
 
 int argmin(int *a, int n) {
-    auto [needle, base] = approx_argmin(a, n); // returns the first block of
+    auto [needle, base] = approx_argmin(a, n);
     int idx = find(a + base, B, needle);
     return base + idx;
 }
