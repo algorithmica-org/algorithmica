@@ -288,7 +288,7 @@ min+find     18.21  12.92  find() has to scan the entire array
 + blocked    22.23  19.29  we still have an optional horizontal minimum every B elements
 ```
 
-Take these results with a grain of salt: the measurements are [quite noisy](/hpc/profiling/noise), they were done for just for two input distributions, for a specific array size ($N=2^{13}$, the size of the L1 cache), for a specific architecture (Zen 2), and for a specific and slightly outdated compiler (GCC 9.2) — the compiler optimizations were also very fragile to little changes in the benchmarking code.
+Take these results with a grain of salt: the measurements are [quite noisy](/hpc/profiling/noise), they were done for just for two input distributions, for a specific array size ($N=2^{13}$, the size of the L1 cache), for a specific architecture (Zen 2), and for a specific and slightly outdated compiler (GCC 9.3) — the compiler optimizations were also very fragile to little changes in the benchmarking code.
 
 There are also still some minor things to optimize, but the potential improvement is less than 10% so I didn't bother. One day I may pluck up the courage, optimize the algorithm to the theoretical limit, handle the non-divisible-by-block-size array sizes and non-aligned memory cases, and then re-run the benchmarks properly on many architectures, with p-values and such. In case someone does it before me, please [ping me back](http://sereja.me/).
 
