@@ -231,16 +231,17 @@ The total speedup we were able to achieve is between $\frac{4.2}{1.5} \approx 2.
 
 The speedup may be higher for lower-precision data compared to the scalar code, as it is pretty much limited to executing one iteration per cycle regardless of the operand size, but it is still sort of "meh" when compared to some [other SIMD-based algorithms](../argmin). This is largely because there isn't a full-register byte shift in AVX that would allow the `accumulate` stage to proceed twice as fast, let alone a dedicated prefix sum instruction.
 
-There is this professor at CMU, [Guy Blelloch](https://www.cs.cmu.edu/~blelloch/), who [advocated](https://www.cs.cmu.edu/~blelloch/papers/sc90.pdf) for a dedicated prefix sum hardware back in the 90s when [vector processors](https://en.wikipedia.org/wiki/Vector_processor) were still a thing. Prefix sums are very important for parallel applications, and the hardware is becoming increasingly more parallel, so maybe the CPU manufacturers will revitalize this idea and make prefix sum calculations slightly easier.
+### Other Relevant Work
+
+You can read [this paper from Columbia](http://www.adms-conf.org/2020-camera-ready/ADMS20_05.pdf) that focuses on the multi-core setting and AVX-512 (which [sort of](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,4870,6715,4845,3853,90,7307,5993,2692,6946,6949,5456,6938,5456,1021,3007,514,518,7253,7183,3892,5135,5260,3915,4027,3873,7401,4376,4229,151,2324,2310,2324,591,4075,6130,4875,6385,5259,6385,6250,1395,7253,6452,7492,4669,4669,7253,1039,1029,4669,4707,7253,7242,848,879,848,7251,4275,879,874,849,833,6046,7250,4870,4872,4875,849,849,5144,4875,4787,4787,4787,3016,3018,5227,7359,7335,7392,4787,5259,5230,5230,5223,6438,488,483,6165,6570,6554,289,6792,6554,5230,6385,5260,5259,289,288,3037,3009,590,604,633,5230,5259,6554,6554,5259,6547,6554,3841,5214,5229,5260,5259,7335,5259,519,1029,515,3009,3009,3013,3011,515,6527,652,6527,6554,288&text=_mm512_alignr_epi32&techs=AVX_512) has a fast 512-bit register byte shift) and [this StackOverflow question](https://stackoverflow.com/questions/10587598/simd-prefix-sum-on-intel-cpu) for a more general discussion.
+
+Most of what I've described in this article was already known. To the best of my knowledge, my contribution here is the interleaving technique, which is responsible for a modest ~20% performance increase. There probably are ways to improve it further, but not by a lot.
+
+There is also this professor at CMU, [Guy Blelloch](https://www.cs.cmu.edu/~blelloch/), who [advocated](https://www.cs.cmu.edu/~blelloch/papers/sc90.pdf) for a dedicated prefix sum hardware back in the 90s when [vector processors](https://en.wikipedia.org/wiki/Vector_processor) were still a thing. Prefix sums are very important for parallel applications, and the hardware is becoming increasingly more parallel, so maybe, in the future, the CPU manufacturers will revitalize this idea and make prefix sum calculations slightly easier.
+
 
 <!--
 
 There are ways to do it with permutations, but it would kill the performance of the prefix stage.
-
-### Other Relevant Work
-
-Luckily, parallel. You can read [paper](http://www.adms-conf.org/2020-camera-ready/ADMS20_05.pdf) (AVX-512 which has — sort of — ) and [this StackOverflow discussion](https://stackoverflow.com/questions/10587598/simd-prefix-sum-on-intel-cpu) for a more general overview.
-
-Most of what I described is already known. To the best of my knowledge, the contributions of this article is the interleaving technique, which is only responsible for a ~20% performance increase.
 
 -->
