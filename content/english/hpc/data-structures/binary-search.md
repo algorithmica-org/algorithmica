@@ -1,7 +1,38 @@
 ---
-title: Binary Search
+title: Searching in Sorted Arrays
 weight: 1
 ---
+
+![](../img/search-std.svg)
+
+![](../img/search-branchless.svg)
+
+![](../img/search-branchless-prefetch.svg)
+
+---
+
+![](../img/search-eytzinger.svg)
+
+![](../img/search-eytzinger-prefetch.svg)
+
+![](../img/search-eytzinger-small.svg)
+
+![](../img/search-eytzinger-branchless.svg)
+
+---
+
+![](../img/search-btree.svg)
+![](../img/search-btree-hugepages.svg)
+![](../img/search-btree-optimized.svg)
+
+---
+
+![](../img/search-bplus.svg)
+![](../img/search-relative.svg)
+![](../img/search-relative-latency.svg)
+![](../img/search-bplus-other.svg)
+![](../img/search-latency-bplus.svg)
+![](../img/search-all.svg)
 
 The most fascinating showcases of performance engineering are not intricate 5-10% speed improvements of some databases, but multifold optimizations of some basic algorithms you can find in a textbook — the ones that are so simple that it would never even occur to try to optimize them. These kinds of optimizations are simple and instructive, and can very much be adopted elsewhere. Yet, with remarkable periodicity, these can be optimized to ridiculous levels of performance.
 
@@ -9,77 +40,83 @@ In this article, we will focus on such an algorithm — binary search — and si
 
 - The first one uses what is known as *Eytzinger layout*, which is also a popular layout for other structures such as binary heaps. Our minimalistic implementation is only ~15 lines.
 - The second one is its generalization based on *B-tree layout*, which is more bulky. Although it uses SIMD, which technically disqualifies it from being binary search.
+- Novel structure based called S-tree based on
 
-A brief review of [CPU cache system](../cpu-cache) is strongly advised.
+GCC sucked on all benchmarks, so we will be using Clang (10) exclusively. The CPU is a Zen 2, although the results should be transferrable to other platforms, including most Arm-based chips.
 
-## Why Binary Search is Slow
+## Binary Search
 
-Before jumping to optimized variants, let's briefly discuss the reasons why the textbook binary search is slow in the first place.
+Already sorted array `t` of size `n`.
 
-Here is the standard way of searching for the first element not less than $x$ in a sorted array of $n$ integers:
-
-```cpp
+```c++
 int lower_bound(int x) {
     int l = 0, r = n - 1;
     while (l < r) {
-        int t = (l + r) / 2;
-        if (a[t] >= x)
-            r = t;
+        int m = (l + r) / 2;
+        if (t[m] >= x)
+            r = m;
         else
-            l = t + 1;
+            l = m + 1;
     }
-    return a[l];
+    return t[l];
 }
 ```
 
-Find the middle element of the search range, compare to $x$, cut the range in half. Beautiful in its simplicity.
+This is actually how `std::lower_bound` from  works. Implementations from both [Clang](https://github.com/llvm-mirror/libcxx/blob/78d6a7767ed57b50122a161b91f59f19c9bd0d19/include/algorithm#L4169) and [GCC](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023) use this metaprogramming monstrosity:
 
-This is actually how `std::lower_bound` from [libstdc++](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023) works:
-
-Metaprogramming monstrosity.
-
-```cpp
-template <typename _ForwardIterator,
-          typename _Tp,
-          typename _Compare>
-_ForwardIterator __lower_bound(_ForwardIterator __first, _ForwardIterator __last,
-                               const _Tp& __val, _Compare __comp) {
-    typedef typename iterator_traits<_ForwardIterator>::difference_type _DistanceType;
-    _DistanceType __len = std::distance(__first, __last);
-
-    while (__len > 0) {
-        _DistanceType __half = __len >> 1;
-        _ForwardIterator __middle = __first;
-        std::advance(__middle, __half);
-        if (__comp(__middle, __val)) {
-            __first = __middle;
-            ++__first;
-            __len = __len - __half - 1;
+```c++
+template <class _Compare, class _ForwardIterator, class _Tp>
+_LIBCPP_CONSTEXPR_AFTER_CXX17 _ForwardIterator
+__lower_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __value_, _Compare __comp)
+{
+    typedef typename iterator_traits<_ForwardIterator>::difference_type difference_type;
+    difference_type __len = _VSTD::distance(__first, __last);
+    while (__len != 0)
+    {
+        difference_type __l2 = _VSTD::__half_positive(__len);
+        _ForwardIterator __m = __first;
+        _VSTD::advance(__m, __l2);
+        if (__comp(*__m, __value_))
+        {
+            __first = ++__m;
+            __len -= __l2 + 1;
         }
         else
-            __len = __half;
+            __len = __l2;
     }
     return __first;
 }
 ```
 
-If compiler is successful in piercing through the abstractions, it compiles to roughly the same machine code.
+If compiler is successful in piercing through the abstractions, it compiles to roughly the same machine code and yields roughly the same performance.
 
-### Spacial Locality
+We change the compiler for GCC (9.3). For some reason, it doesn't work.
 
-* First ~10 queries may be cached (frequently accessed: temporal locality)
-* Last 3-4 queries may be cached (may be in the same cache line: data locality)
-* But that's it. Maybe store elements in a more cache-friendly way?
+```c++
+int lower_bound(int x) {
+    int *base = t, len = n;
+    while (len > 1) {
+        int half = len / 2;
+        base = (base[half] < x ? &base[half] : base);
+        len -= half;
+    }
+    return *(base + (*base < x));
+}
+```
 
-![](../img/binary-search.png)
-
-### Temporal Locality
-
-When we find lower bound of $x$ in a sorted array by binary searching, the main problem is that its memory accesses pattern is neither temporary nor spatially local. 
-
-For example, element $\lfloor \frac n 2 \rfloor$ is accessed very often (every search) and element $\lfloor \frac n 2 \rfloor + 1$ is not, while they are probably occupying the same cache line. In general, only the first 3-5 reads are temporary local and only the last 3-4 reads are spatially local, and the rest are just random memory accesses.
-
-![](../img/binary-heat.png)
+```c++
+int lower_bound(int x) {
+    int *base = t, len = n;
+    while (len > 1) {
+        int half = len / 2;
+        __builtin_prefetch(&base[(len - half) / 2]);
+        __builtin_prefetch(&base[half + (len - half) / 2]);
+        base = (base[half] < x ? &base[half] : base);
+        len -= half;
+    }
+    return *(base + (*base < x));
+}
+```
 
 ### Branching
 
@@ -134,6 +171,437 @@ If array is large enough—usually around the point where it stops fitting in ca
 So, to sum up: ideally, we'd want some layout that is both blocks, and higher-order blocks to be placed in groups, and also to be capable.
 
 We can overcome this by enumerating and permuting array elements in a more cache-friendly way. The numeration we will use is actually half a millennium old, and chances are you already know it.
+
+## Why Binary Search is Slow
+
+Before jumping to optimized variants, let's briefly discuss the reasons why the textbook binary search is slow in the first place.
+
+Here is the standard way of searching for the first element not less than $x$ in a sorted array of $n$ integers:
+
+```cpp
+int lower_bound(int x) {
+    int l = 0, r = n - 1;
+    while (l < r) {
+        int t = (l + r) / 2;
+        if (a[t] >= x)
+            r = t;
+        else
+            l = t + 1;
+    }
+    return a[l];
+}
+```
+
+Find the middle element of the search range, compare to $x$, cut the range in half. Beautiful in its simplicity.
+
+### Spacial Locality
+
+* First ~10 queries may be cached (frequently accessed: temporal locality)
+* Last 3-4 queries may be cached (may be in the same cache line: data locality)
+* But that's it. Maybe store elements in a more cache-friendly way?
+
+![](../img/binary-search.png)
+
+### Temporal Locality
+
+When we find lower bound of $x$ in a sorted array by binary searching, the main problem is that its memory accesses pattern is neither temporary nor spatially local. 
+
+For example, element $\lfloor \frac n 2 \rfloor$ is accessed very often (every search) and element $\lfloor \frac n 2 \rfloor + 1$ is not, while they are probably occupying the same cache line. In general, only the first 3-5 reads are temporary local and only the last 3-4 reads are spatially local, and the rest are just random memory accesses.
+
+![](../img/binary-heat.png)
+
+## Eytzinger Layout
+
+```c++
+void eytzinger(int k = 1) {
+    static int i = 0;
+    if (k <= n) {
+        eytzinger(2 * k);
+        t[k] = _a[i++];
+        eytzinger(2 * k + 1);
+    }
+}
+
+int lower_bound(int x) {
+    int k = 1;
+    while (k <= n)
+        k = 2 * k + (t[k] < x);
+    k >>= __builtin_ffs(~k);
+    return t[k];
+}
+```
+
+
+```c++
+t[0] = -1; // an element that is less than X
+iters = std::__lg(n + 1);
+```
+
+```c++
+int lower_bound(int x) {
+    int k = 1;
+    for (int i = 0; i < iters; i++)
+        k = 2 * k + (t[k] < x);
+    int *loc = (k <= n ? t + k : t);
+    k = 2 * k + (*loc < x);
+    k >>= __builtin_ffs(~k);
+    return t[k];
+}
+```
+
+```c++
+t = (int*) std::aligned_alloc(64, 4 * (n + 1));
+
+int lower_bound(int x) {
+    int k = 1;
+    while (k <= n) {
+        __builtin_prefetch(t + k * B);
+        k = 2 * k + (t[k] < x);
+    }
+    k >>= __builtin_ffs(~k);
+    return t[k];
+}
+```
+
+```c++
+__builtin_prefetch(t + k * B * 2);
+```
+
+## B-Tree Layout
+
+```c++
+typedef __m256i reg;
+
+const int B = 16;
+const int INF = std::numeric_limits<int>::max();
+
+int n;
+int nblocks;
+int *_a;
+int (*btree)[B];
+
+int go(int k, int i) { return k * (B + 1) + i + 1; }
+
+void build(int k = 0) {
+    static int t = 0;
+    if (k < nblocks) {
+        for (int i = 0; i < B; i++) {
+            build(go(k, i));
+            btree[k][i] = (t < n ? _a[t++] : INF);
+        }
+        build(go(k, B));
+    }
+}
+
+void prepare(int *a, int _n) {
+    n = _n;
+    nblocks = (n + B - 1) / B;
+    _a = a;
+    btree = (int(*)[16]) std::aligned_alloc(64, 64 * nblocks);
+    build();
+}
+
+int cmp(reg x_vec, int* y_ptr) {
+    reg y_vec = _mm256_load_si256((reg*) y_ptr);
+    reg mask = _mm256_cmpgt_epi32(x_vec, y_vec);
+    return _mm256_movemask_ps((__m256) mask);
+}
+
+int lower_bound(int x) {
+    int k = 0, res = INF;
+    reg x_vec = _mm256_set1_epi32(x);
+    while (k < nblocks) {
+        int mask = ~(
+            cmp(x_vec, &btree[k][0]) +
+            (cmp(x_vec, &btree[k][8]) << 8)
+        );
+        int i = __builtin_ffs(mask) - 1;
+        if (i < B)
+            res = btree[k][i];
+        k = go(k, i);
+    }
+    return res;
+}
+```
+
+```c++
+btree = (int(*)[16]) std::aligned_alloc(2 * 1024 * 1024, 64 * nblocks);
+madvise(btree, 64 * nblocks, MADV_HUGEPAGE);
+```
+
+```c++
+constexpr std::pair<int, int> precalc(int n) {
+    int s = 0, // total size
+        l = B, // size of next layer
+        h = 0; // height so far
+    while (s + l - B < n) {
+        s += l;
+        l *= (B + 1);
+        h++;
+    }
+    int r = (n - s + B - 1) / B; // remaining blocks on last layer
+    return {h, s / B + (r + B) / (B + 1) * (B + 1)};
+}
+
+const int height = precalc(N).first, nblocks = precalc(N).second;
+int *_a, (*btree)[B];
+```
+
+```c++
+void permute(int *node) {
+    const reg perm_mask = _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4); // todo: setr
+    reg* middle = (reg*) (node + 4);
+    reg x = _mm256_loadu_si256(middle);
+    x = _mm256_permutevar8x32_epi32(x, perm_mask);
+    _mm256_storeu_si256(middle, x);
+}
+```
+
+You call `permute(btree[k])` after you've done with constructing a node.
+
+```c++
+unsigned rank(reg x_vec, int* y_ptr) {
+    reg a = _mm256_load_si256((reg*) y_ptr);
+    reg b = _mm256_load_si256((reg*) (y_ptr + 8));
+
+    reg ca = _mm256_cmpgt_epi32(a, x_vec);
+    reg cb = _mm256_cmpgt_epi32(b, x_vec);
+
+    reg c = _mm256_packs_epi32(ca, cb);
+    int mask = _mm256_movemask_epi8(c);
+
+    return __tzcnt_u32(mask) >> 1;    
+}
+```
+
+```c++
+const int translate[17] = {
+    0, 1, 2, 3,
+    8, 9, 10, 11,
+    4, 5, 6, 7,
+    12, 13, 14, 15,
+    0
+};
+
+void update(int &res, int* node, unsigned i) {
+    int val = node[translate[i]];
+    res = (i < B ? val : res);
+}
+```
+
+```c++
+int lower_bound(int x) {
+    int k = 0, res = INF;
+    reg x_vec = _mm256_set1_epi32(x - 1);
+    for (int h = 0; h < height - 1; h++) {
+        int *node = btree[k];
+        unsigned i = rank(x_vec, node);
+        k = k * (B + 1) + 1; // remove + 1?
+        if (h > 3)
+            __builtin_prefetch(&btree[go(k, 0)]);
+        update(res, node, i);
+        k += i;
+    }
+    unsigned i = rank(x_vec, btree[k]);
+    update(res, btree[k], i);
+    int k2 = go(k, i);
+    if (height > 4)
+        __builtin_prefetch(&btree[go(k, 0)]);
+    if (go(k, 0) < nblocks) {
+        unsigned i = rank(x_vec, btree[k2]);
+        update(res, btree[k2], i);
+    }
+    return res;
+}
+```
+
+## B+ Tree Layout
+
+```c++
+constexpr int blocks(int n) {
+    return (n + B - 1) / B;
+}
+
+constexpr int prev_keys(int n) {
+    return (blocks(n) + B) / (B + 1) * B;
+}
+
+constexpr int height(int n) {
+    return (n <= B ? 1 : height(prev_keys(n)) + 1);
+}
+
+constexpr int offset(int h) {
+    int k = 0, n = N;
+    while (h--) {
+        k += blocks(n) * B;
+        n = prev_keys(n);
+    }
+    return k;
+}
+
+const int H = height(N), S = offset(H);
+
+int *btree;
+
+void permute(int *node) {
+    const reg perm_mask = _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4);
+    reg* middle = (reg*) (node + 4);
+    reg x = _mm256_loadu_si256(middle);
+    x = _mm256_permutevar8x32_epi32(x, perm_mask);
+    _mm256_storeu_si256(middle, x);
+}
+
+void prepare(int *a, int n) {
+    const int P = 1 << 21, T = (4 * S + P - 1) / P * P;
+    btree = (int*) std::aligned_alloc(P, T);
+    madvise(btree, T, MADV_HUGEPAGE);
+
+    for (int i = N; i < S; i++)
+        btree[i] = INF;
+
+    memcpy(btree, a, 4 * N);
+    
+    for (int h = 1; h < H; h++) {
+        for (int i = 0; i < offset(h + 1) - offset(h); i++) {
+            int k = i / B,
+                j = i - k * B;
+            k = k * (B + 1) + j + 1; // compare right
+            // and then always to the left
+            for (int l = 0; l < h - 1; l++)
+                k *= (B + 1);
+            btree[offset(h) + i] = (k * B < N ? btree[k * B] : INF);
+        }
+    }
+
+    for (int i = offset(1); i < S; i += B)
+        permute(btree + i);
+}
+
+unsigned direct_rank(reg x, int* y) {
+    reg a = _mm256_load_si256((reg*) y);
+    reg b = _mm256_load_si256((reg*) (y + 8));
+
+    reg ca = _mm256_cmpgt_epi32(a, x);
+    reg cb = _mm256_cmpgt_epi32(b, x);
+
+    int mb = _mm256_movemask_ps((__m256) cb);
+    int ma = _mm256_movemask_ps((__m256) ca);
+    
+    unsigned mask = (1 << 16);
+    mask |= mb << 8;
+    mask |= ma;
+
+    return __tzcnt_u32(mask);
+}
+
+unsigned permuted_rank(reg x, int* y) {
+    reg a = _mm256_load_si256((reg*) y);
+    reg b = _mm256_load_si256((reg*) (y + 8));
+
+    reg ca = _mm256_cmpgt_epi32(a, x);
+    reg cb = _mm256_cmpgt_epi32(b, x);
+
+    reg c = _mm256_packs_epi32(ca, cb);
+    unsigned mask = _mm256_movemask_epi8(c);
+
+    return __tzcnt_u32(mask)/* >> 1*/;
+}
+
+int lower_bound(int _x) {
+    unsigned k = 0;
+    reg x = _mm256_set1_epi32(_x - 1);
+    for (int h = H - 1; h > 0; h--) {
+        unsigned i = permuted_rank(x, btree + offset(h) + k);
+        
+        //k /= B;
+        //k *= (B + 1) * B;
+        // k += (i << 3);
+        
+        k = k * (B + 1) + (i << 3);
+        
+        //if (N > (1 << 21) && h == 1)
+        //    __builtin_prefetch(btree + k);
+        
+        //k += (i << 3);
+    }
+    unsigned i = direct_rank(x, btree + k);
+    return btree[k + i];
+}
+```
+
+### Comparisons
+
+
+### Measuring Actual Latency
+
+```c++
+int last = 0;
+
+for (int i = 0; i < m; i++) {
+    last = lower_bound(q[i] ^ last);
+    checksum ^= last;
+}
+```
+
+```c++
+for (int i = 0; i < m; i++)
+    checksum ^= lower_bound(q[i]);
+```
+
+### Modifications
+
+```c++
+void permute32(int *node) {
+    // a b c d 1 2 3 4 -> (a c) (b d) (1 3) (2 4) -> (a c) (1 3) (b d) (2 4)
+    reg x = _mm256_load_si256((reg*) (node + 8));
+    reg y = _mm256_load_si256((reg*) (node + 16));
+    _mm256_storeu_si256((reg*) (node + 8), y);
+    _mm256_storeu_si256((reg*) (node + 16), x);
+    permute16(node);
+    permute16(node + 16);
+}
+```
+
+```c++
+unsigned cmp(reg x, int *node) {
+    reg y = _mm256_load_si256((reg*) node);
+    reg mask = _mm256_cmpgt_epi32(y, x);
+    return _mm256_movemask_ps((__m256) mask);
+}
+
+unsigned rank32(reg x, int *node) {
+    unsigned mask = cmp(x, node)
+                  | (cmp(x, node + 8) << 8)
+                  | (cmp(x, node + 16) << 16)
+                  | (cmp(x, node + 24) << 24);
+```
+
+```c++
+unsigned permuted_rank32(reg x, int *node) {
+    reg a = _mm256_load_si256((reg*) node);
+    reg b = _mm256_load_si256((reg*) (node + 8));
+    reg c = _mm256_load_si256((reg*) (node + 16));
+    reg d = _mm256_load_si256((reg*) (node + 24));
+
+    reg ca = _mm256_cmpgt_epi32(a, x);
+    reg cb = _mm256_cmpgt_epi32(b, x);
+    reg cc = _mm256_cmpgt_epi32(c, x);
+    reg cd = _mm256_cmpgt_epi32(d, x);
+
+    reg cab = _mm256_packs_epi32(ca, cb);
+    reg ccd = _mm256_packs_epi32(cc, cd);
+    reg cabcd = _mm256_packs_epi16(cab, ccd);
+    unsigned mask = _mm256_movemask_epi8(cabcd);
+
+    return __tzcnt_u32(mask);
+}
+```
+
+_mm256_stream_load_si256 — on just the last iteration.
+
+---
+
+
 
 ## Eytzinger Layout
 
@@ -335,7 +803,7 @@ They are widely used for indexing in databases, especially those that operate on
 
 To perform static binary searches, one can implement a B-tree in an implicit way, i. e. without actually storing any pointers and spending only $O(1)$ additional memory, and $k$ could be made equal to the cache line size so that each node request fetches exactly one cache line.
 
-![](../img/btree.png)
+![](../img/b-tree.png)
 
 Turns out, they have the same rate of growth but sligtly larger compute-tied constant. While the latter is explainable (our while loop only has like 5 instructions; can't outpace that), the former is surprising.
 
@@ -450,21 +918,20 @@ This worked [particularly well](https://finance.yahoo.com/quote/NVDA/) for paral
 Modern hardware can do [lots of stuff](https://software.intel.com/sites/landingpage/IntrinsicsGuide) under this paradigm, leveraging *data-level parallelism*. For example, the simplest thing you can do on modern Intel CPUs is to:
 
 1. load 256-bit block of ints (which is $\frac{256}{32} = 8$ ints),
-
 2. load another 256-bit block of ints,
-
 3. add them together,
-
 4. write the result somewhere else
 
 …and this whole transaction costs the same as loading and adding just two ints—which means we can do 8 times more work. Magic!
 
-So, as we promised before, we will perform all $16$ comparisons to compute the index of the right child node, but we leverage SIMD instructions to do it efficiently. Just to clarify—we want to do something like this:
+So, as we promised before, we will perform all $16$ comparisons to compute the index of the right child node, but we leverage SIMD instructions to do it efficiently. Just to clarify — we want to do something like this:
 
 ```cpp
 int mask = (1 << B);
+
 for (int i = 0; i < B; i++)
     mask |= (btree[k][i] >= x) << i;
+
 int i = __builtin_ffs(mask) - 1;
 // now i is the number of the correct child node
 ```
@@ -476,11 +943,8 @@ Actually, compiler quite often produces very optimized code that leverages these
 The algorithm we will implement:
 
 1. Somewhere before the main loop, convert $x$ to a vector of $8$ copies of $x$.
-
 2. Load the keys stored in node into another 256-bit vector.
-
 3. Compare these two vectors. This returns a 256-bit mask in which pairs that compared "greater than" are marked with ones.
-
 4. Create a 8-bit mask out of that and return it. Then you can feed it to `__builtin_ffs`.
 
 This is how it looks using C++ intrinsics, which are basically built-in wrappers for raw assembly instructions:
@@ -562,4 +1026,14 @@ Note that this implementation is very specific to the architecture. Older CPUs a
 
 ## Acknowledgements
 
-This tutorial is loosely based on a [46-page paper](https://arxiv.org/pdf/1509.05053.pdf) by Paul-Virak Khuong and Pat Morin "Array layouts for comparison-based searching".
+The first half of the article is loosely based on "[Array Layouts for Comparison-Based Searching](https://arxiv.org/pdf/1509.05053.pdf)" by Paul-Virak Khuong and Pat Morin. It is 46 pages long, and discusses the scalar binary searches in more details, so check it out if you're interested in other approaches.
+
+This [StackOverflow answer](https://stackoverflow.com/questions/20616605/using-simd-avx-sse-for-tree-traversal) by Cory Nelson is where I took the permuted SIMD routine.
+
+The more you think about the name. "S-tree" and "S+ tree" respectively. There is a an obscure data structures in computer vision. We even have more claim to it than Boer had on B-tree: it is succinct, simd, my name, my surname.
+
+<!--
+
+I stole some pictures from blogs and I can't find the originals.
+
+-->

@@ -5,3 +5,7 @@ draft: true
 ---
 
 Optimizing data structures is different from optimizing algorithms. It is harder. Each new aspect multiplies the design complexity. A lot more attention needs to be attached to memory and latency-bandwidth trade-offs.
+
+Defining the benchmarks is [harder](/hpc/profiling/noise/).
+
+A brief review of the [CPU cache system](/hpc/cpu-cache) is strongly advised.
