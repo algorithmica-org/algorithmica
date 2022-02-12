@@ -3,26 +3,32 @@ title: Searching in Sorted Arrays
 weight: 1
 ---
 
-The most fascinating showcases of performance engineering are not intricate 5-10% speed improvements of some databases, but multifold optimizations of some basic algorithms you can find in a textbook — the ones that are so simple that it would never even occur to try to optimize them. These kinds of optimizations are simple and instructive, and can very much be adopted elsewhere. Yet, with remarkable periodicity, these can be optimized to ridiculous levels of performance.
+While improving the speed of user-facing applications is the end goal of performance engineering, people don't really get excited over 5-10% improvements in some databases. Yes, this is what software engineers are paid for, but these types of optimizations tend to be too intricate and specific to the system to be generalizable to other software.
 
-In this article, we will focus on such an algorithm — binary search — and significantly improve its efficiency by rearranging elements of a sorted array in a more cache-friendly way. We will develop two versions, each achieving 4-7x speedup over the standard `std::lower_bound`, depending on the cache level and available memory bandwidth:
+Rather, the most fascinating showcases of performance engineering are multifold optimizations of textbook algorithms. The kinds that everybody knows, and are so deemed simple that it would never occur to try to optimize them to begin with. These types of optimizations are simple and instructive, and can very much be adopted elsewhere. And they are surprisingly not as rare as you'd think.
 
-- The first one uses what is known as *Eytzinger layout*, which is also a popular layout for other structures such as binary heaps. Our minimalistic implementation is only ~15 lines.
-- The second one is its generalization based on *B-tree layout*, which is more bulky. Although it uses SIMD, which technically disqualifies it from being binary search.
-- Novel structure based called S-tree based on
+<!-- Yet, with remarkable periodicity, these can be optimized to ridiculous levels of performance. -->
 
-GCC sucked on all benchmarks, so we will be using Clang (10) exclusively. The CPU is a Zen 2, although the results should be transferrable to other platforms, including most Arm-based chips.
+In this article, we focus on such fundamental algorithm — binary search — and implement several algorithms that significantly improve on its performance:
 
+- *Branchless* binary search that is up to 3x faster on *small* arrays and can act as a drop-in replacement to `std::lower_bound`.
+- *Eytzinger* binary search that rearranges the elements of a sorted array in a cache-friendly way of is also 3x faster on small array and 2x faster on RAM-backed arrays.
+- *S-tree*: an approach based on the implicit (pointer-free) B-layout accelerated with SIMD operations to perform search efficiently while using less memory bandwidth and is ~8x faster on small arrays and 5x faster on large arrays.
+- *S+ tree*: an approach similarly based on the B+ layout and achieves up to 15x faster for small arrays and ~7x faster on large arrays. Uses 6-7% of the array memory.
 
-This is a follow up on a [previous article](https://algorithmica.org/en/eytzinger) about using Eytzinger memory layout to speed up binary search. Here we use implicit (pointerless) B-trees accelerated with SIMD operations to perform search efficiently while using less memory bandwidth.
+The last two approaches use SIMD, which technically disqualifies it from being binary search. This is technically not a drop-in replacement, since it requires some preprocessing, but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing. But otherwise they are effectively drop-in replacements to `std::lower_bound`.
 
-It performs slightly worse on array sizes that fit lower layers of cache, but in low-bandwidth environments it can be up to 3x faster (or 7x faster than `std::lower_bound`).
+It performs slightly worse on array sizes that fit lower layers of cache, but in low-bandwidth environments it can be up to 3x faster (or 7x faster than `std::lower_bound`). GCC sucked on all benchmarks, so we will mostly be using Clang 10. The CPU is a Zen 2, although the results should be transferrable to other platforms, including most Arm-based chips.
+
+This is a large article, which will turn into a multi-hour read. If you feel comfortable reading [intrinsic](/hpc/simd/intrinsics)-heavy code without any context whatsoever, you can skim through the first four implementation and jump straight to the last section.
 
 ## Binary Search
 
 Already sorted array `t` of size `n`.
 
 We are going ot create an array named `a` into array named `t`.
+
+Here is the standard way of searching for the first element not less than $x$ in a sorted array of $n$ integers:
 
 ```c++
 int lower_bound(int x) {
@@ -68,6 +74,17 @@ __lower_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __va
 
 If compiler is successful in piercing through the abstractions, it compiles to roughly the same machine code and yields roughly the same performance.
 
+
+Before jumping to optimized variants, let's briefly discuss the reasons why the textbook binary search is slow in the first place.
+
+If you [run this code with perf](/hpc/analyzing-performance/profiling/), you can see that it spends most of its time waiting for a comparison to complete, which in turn is waiting for one of its operands to be fetched from memory. Contains an "if" that is impossible to predict better than a coin flip.
+
+
+### Branching
+
+It's not illegal: ternary operator is replaced with something like `CMOV` 
+
+
 We change the compiler for GCC (9.3). For some reason, it doesn't work.
 
 ```c++
@@ -81,6 +98,8 @@ int lower_bound(int x) {
     return *(base + (*base < x));
 }
 ```
+
+![](../img/search-branchless.svg)
 
 ```c++
 int lower_bound(int x) {
@@ -96,49 +115,7 @@ int lower_bound(int x) {
 }
 ```
 
-### Branching
-
-If you [run this code with perf](/hpc/analyzing-performance/profiling/), you can see that it spends most of its time waiting for a comparison to complete, which in turn is waiting for one of its operands to be fetched from memory.
-
-To give an idea, the following code is only ~5% slower for $n \approx 10^6$:
-
-```cpp
-int slightly_slower_lower_bound(int x) {
-    int l = 0, r = n - 1;
-    while (l < r) {
-        volatile int s = 0; // volatile to prevent compiler from cutting this code out
-        for (int i = 0; i < 10; i++)
-            s += i;
-        int t = (l + r) / 2;
-        if (a[t] >= x)
-            r = t;
-        else
-            l = t + 1;
-    }
-    return a[l];
-}
-```
-
-Contains an "if" that is impossible to predict better than a coin flip.
-
-It's not illegal: ternary operator is replaced with something like `CMOV` 
-
-<!--
-int lower_bound(int x) {
-    int base = 0, len = n;
-    while (len > 1) {
-        int half = len / 2;
-        base = (a[base + half] >= x ? base : base + half);
-        len -= half;
-    }
-    return a[base];
-}
--->
-
-![](../img/search-branchless.svg)
-
 ![](../img/search-branchless-prefetch.svg)
-
 
 But this is not the largest problem. The real problem is that it waits for its operands, and the results still can't be predicted.
 
@@ -150,16 +127,11 @@ IMAGE HERE
 
 If array is large enough—usually around the point where it stops fitting in cache and fetches become significantly slower—the running time of binary search becomes dominated by memory fetches.
 
-
 So, to sum up: ideally, we'd want some layout that is both blocks, and higher-order blocks to be placed in groups, and also to be capable.
 
 We can overcome this by enumerating and permuting array elements in a more cache-friendly way. The numeration we will use is actually half a millennium old, and chances are you already know it.
 
 ## Why Binary Search is Slow
-
-Before jumping to optimized variants, let's briefly discuss the reasons why the textbook binary search is slow in the first place.
-
-Here is the standard way of searching for the first element not less than $x$ in a sorted array of $n$ integers:
 
 ```cpp
 int lower_bound(int x) {
@@ -177,15 +149,13 @@ int lower_bound(int x) {
 
 Find the middle element of the search range, compare to $x$, cut the range in half. Beautiful in its simplicity.
 
-### Spacial Locality
+### Data Locality
 
-* First ~10 queries may be cached (frequently accessed: temporal locality)
-* Last 3-4 queries may be cached (may be in the same cache line: data locality)
-* But that's it. Maybe store elements in a more cache-friendly way?
+First ~10 queries may be cached (frequently accessed: temporal locality)
+Last 3-4 queries may be cached (may be in the same cache line: data locality)
+But that's it. Maybe store elements in a more cache-friendly way?
 
 ![](../img/binary-search.png)
-
-### Temporal Locality
 
 When we find lower bound of $x$ in a sorted array by binary searching, the main problem is that its memory accesses pattern is neither temporary nor spatially local. 
 
