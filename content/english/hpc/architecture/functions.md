@@ -249,7 +249,7 @@ To make our `factorial` function tail-recursive, we can pass a "current product"
 ```cpp
 int factorial(int n, int p = 1) {
     if (n == 0)
-        return 1;
+        return p;
     return factorial(n - 1, p * n);
 }
 ```
