@@ -1,6 +1,7 @@
 ---
 title: Assembly Language
 weight: 1
+published: true
 ---
 
 CPUs are controlled with *machine language*, which is just a stream of binary-encoded instructions that specify
@@ -36,7 +37,7 @@ Assembly is very simple in the sense that it doesn't have many syntactical const
 - The `[reg]` syntax is used for "dereferencing" a pointer stored in a register, and on x86 you need to prefix it with size information (`DWORD` here means 32 bit).
 - The `;` sign is used for line comments, similar to `#` and `//` in other languages.
 
-Assembly a very minimal language because it needs to be. It reflects the machine language as closely as possible, up to the point where there is almost 1:1 correspondence between machine code and assembly. In fact, you can turn any compiled program back into its assembly form using a process called *disassembly*[^disassembly] — although everything non-essential like comments will not be preserved.
+Assembly is a very minimal language because it needs to be. It reflects the machine language as closely as possible, up to the point where there is almost 1:1 correspondence between machine code and assembly. In fact, you can turn any compiled program back into its assembly form using a process called *disassembly*[^disassembly] — although everything non-essential like comments will not be preserved.
 
 [^disassembly]: On Linux, to disassemble a compiled program, you can call `objdump -d {path-to-binary}`.
 
