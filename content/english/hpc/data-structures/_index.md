@@ -4,8 +4,8 @@ weight: 12
 draft: true
 ---
 
-Optimizing data structures is different from optimizing algorithms. It is harder. Each new aspect multiplies the design complexity. A lot more attention needs to be attached to memory and latency-bandwidth trade-offs.
+Optimizing data structures is different from optimizing [algorithms](/hpc/algorithms) as data structure problems have more dimensions: you may be optimizing for *throughput*, for *latency*, for *memory usage*, or any combination of those — and this complexity blows up exponentially when you need to process *multiple* query types and consider multiple query distributions.
 
-Defining the benchmarks is [harder](/hpc/profiling/noise/).
+This makes simply [defining benchmarks](/hpc/profiling/noise/) much harder, let alone the actual implementations. In this chapter, we will try to navigate all this complexity and learn how to design efficient data structures with extensive case studies.
 
 A brief review of the [CPU cache system](/hpc/cpu-cache) is strongly advised.
