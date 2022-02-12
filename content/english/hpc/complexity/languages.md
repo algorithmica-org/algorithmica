@@ -1,7 +1,9 @@
 ---
 title: Programming Languages
-aliases: [/hpc/analyzing-performance]
+aliases:
+  - /hpc/analyzing-performance
 weight: 2
+published: true
 ---
 
 If you are reading this book, then somewhere on your computer science journey you had a moment when you first started to care about the efficiency of your code.
@@ -92,7 +94,7 @@ This is not surprising if you consider the things that Python needs to do to fig
 - looks up its type, figures out that it's a `float`, and fetches the method implementing `*` operator;
 - does the same things for `b` and `c` and finally add-assigns the result to `c[i][j]`.
 
-Granted, the interpreters of widely-used languages such as Python are well-optimized, and they can skip through some of these steps on repeated execution of the same code. Buy still, some quite significant overhead is unavoidable due to the language design. If we get rid of all this type checking and pointer chasing, perhaps we can get cycles per multiplication ratio closer to 1, or whatever the "cost" of native multiplication is?
+Granted, the interpreters of widely-used languages such as Python are well-optimized, and they can skip through some of these steps on repeated execution of the same code. But still, some quite significant overhead is unavoidable due to the language design. If we get rid of all this type checking and pointer chasing, perhaps we can get cycles per multiplication ratio closer to 1, or whatever the "cost" of native multiplication is?
 
 ### Managed Languages
 
