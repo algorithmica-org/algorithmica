@@ -5,7 +5,7 @@ weight: 7
 
 Computing the *minimum* of an array [easily vectorizable](/hpc/simd/reduction), as it is not different from any other reduction: in AVX2, you just need to use a convenient `_mm256_min_epi32` intrinsic as the inner operation. It computes the minimum of two 8-element vectors in one cycle — even faster than in the scalar case, which requires at least a comparison and a conditional move.
 
-Finding the *index* of that minimum element (*argmin*) is much harder, but it is still possible to vectorize very efficiently. In this section, we design an algorithm that computes the argmin (almost) at the speed of computing the minimum: ~15x faster than the naive scalar approach and ~2.5x faster than the [previous state-of-the-art](http://0x80.pl/notesen/2018-10-03-simd-index-of-min.html).
+Finding the *index* of that minimum element (*argmin*) is much harder, but it is still possible to vectorize very efficiently. In this section, we design an algorithm that computes the argmin (almost) at the speed of computing the minimum and ~15x faster than the naive scalar approach.
 
 ### Scalar Baseline
 
@@ -336,3 +336,5 @@ Thanks to Zach Wegner for [pointing out](https://twitter.com/zwegner/status/1491
 Thanks to Alexander Monakov for [being meticulous](https://twitter.com/_monoid/status/1491827976438231049) and pushing me to investigate the STL version.
 
 -->
+
+After publication, I've discovered that [Marshall Lochbaum](https://www.aplwiki.com/wiki/Marshall_Lochbaum), the creator of [BQN](https://mlochbaum.github.io/BQN/), designed a [very similar algorithm](https://forums.dyalog.com/viewtopic.php?f=13&t=1579&sid=e2cbd69817a17a6e7b1f76c677b1f69e#p6239) while he was working on Dyalog APL in 2019. Pay more attention to the world of array programming languages!

@@ -176,6 +176,7 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Geoff Langdale](https://branchfree.org/)
 - [Matt Kulukundis](https://twitter.com/JuvHarlequinKFM)
 - [Georg Sauthoff](https://gms.tf/)
+- [Marshall Lochbaum](https://mlochbaum.github.io/publications.html)
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
 - [Creel](https://www.youtube.com/c/WhatsACreel)
 
