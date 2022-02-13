@@ -7,7 +7,7 @@ Computing the *minimum* of an array [easily vectorizable](/hpc/simd/reduction), 
 
 Finding the *index* of that minimum element (*argmin*) is much harder, but it is still possible to vectorize very efficiently. In this section, we design an algorithm that computes the argmin (almost) at the speed of computing the minimum: ~15x faster than the naive scalar approach and ~2.5x faster than the [previous state-of-the-art](http://0x80.pl/notesen/2018-10-03-simd-index-of-min.html).
 
-### Baseline
+### Scalar Baseline
 
 For our benchmark, we create an array of random 32-bit integers, and then repeatedly try to find the index of the minimum among them (the first one if it isn't unique):
 
@@ -45,6 +45,39 @@ int argmin(int *a, int n) {
     return k;
 }
 ```
+
+<!--
+
+https://github.com/llvm-mirror/libcxx/blob/78d6a7767ed57b50122a161b91f59f19c9bd0d19/include/algorithm#L2489
+
+https://github.com/gcc-mirror/gcc/blob/16e2427f50c208dfe07d07f18009969502c25dc8/libstdc%2B%2B-v3/include/bits/stl_algo.h#L5606
+
+```nasm
+lea	r8, 24[rdx]	# __first,
+mov	r11d, DWORD PTR [rax]
+cmp	DWORD PTR 12[rdx], r11d
+cmovl	rax, r10	# __result,, __result, __first
+```
+
+```nasm
+cmp	eax, r12d	# prephitmp_103, _108	
+jle	.L36	#,	
+mov	eax, r12d	# prephitmp_103, _108	
+mov	ecx, ebp	# k, ivtmp.29	
+.L36:	
+lea	rdx, 4[r8]	# ivtmp.29,	
+```
+
+```nasm
+cmp	eax, r12d	# prephitmp_103, _108	
+jle	.L36	#,	
+mov	eax, r12d	# prephitmp_103, _108	
+mov	ecx, ebp	# k, ivtmp.29	
+.L36:	
+lea	rdx, 4[r8]	# ivtmp.29,	
+```
+
+-->
 
 The version from GCC gives ~0.28 GFLOPS — apparently, the compiler couldn't pierce through all the abstractions. Another reminder to never use STL.
 
