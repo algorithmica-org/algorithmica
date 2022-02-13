@@ -330,3 +330,9 @@ There are also still some minor things to optimize, but the potential improvemen
 The first, index-based SIMD algorithm was [originally designed](http://0x80.pl/notesen/2018-10-03-simd-index-of-min.html) by Wojciech Muła in 2018.
 
 Thanks to Zach Wegner for [pointing out](https://twitter.com/zwegner/status/1491520929138151425) that the performance of the Muła's algorithm is improved when implemented manually using intrinsics (I originally used the [GCC vector types](/hpc/simd/intrinsics/#gcc-vector-extensions)).
+
+<!--
+
+Thanks to Alexander Monakov for [being meticulous](https://twitter.com/_monoid/status/1491827976438231049) and pushing me to investigate the STL version.
+
+-->
