@@ -17,7 +17,7 @@ for (int i = 0; i < N; i += 257)
     a[i]++;
 ```
 
-Which one will be faster to finish? There are several considerations:
+Which one will be faster to finish? There are several considerations that come to mind:
 
 - At first, you think that there shouldn't be much difference, or maybe that the second loop is $\frac{257}{256}$ times faster or so because it does fewer iterations in total.
 - Then you recall that 256 is a nice round number, which may have something to do with [SIMD](/hpc/simd) or the memory system, so maybe the first one is faster.
@@ -28,7 +28,7 @@ This isn't just a single bad step size. The performance degrades for all indices
 
 ![The array size is normalized so that the total number of iterations is constant](../img/strides-small.svg)
 
-There is no vectorization or anything, and the two loops produce the same assembly except for the step size. This effect is due only to the memory system, in particular to a feature called *cache associativity* which is a peculiar artifact of how CPU caches are implemented in hardware.
+There is no vectorization or anything, and the two loops produce the same assembly except for the step size. This effect is due only to the memory system, in particular to a feature called *cache associativity*, which is a peculiar artifact of how CPU caches are implemented in hardware.
 
 ### Hardware Caches
 
@@ -38,15 +38,15 @@ In the context of hardware, such scheme is called *fully associative cache*: we 
 
 ![Fully associative cache](../img/cache1.png)
 
-The problem with fully associative cache is that implementing the "find the oldest cache line among millions" operation is hard in software and simply unfeasible in hardware. You can make a fully associative cache that has 16 entries or so, but managing hundreds of cache lines already becomes either prohibitively expensive or so slow that it's not worth it.
+The problem with fully associative cache is that implementing the "find the oldest cache line among millions" operation is pretty hard to do in software and just unfeasible in hardware. You can make a fully associative cache that has 16 entries or so, but managing hundreds of cache lines already becomes either prohibitively expensive or so slow that it's not worth it.
 
 We can resort to another, much simpler approach: just map each block of 64 bytes in RAM to a single cache line which it can occupy. Say, if we have 4096 blocks in memory and 64 cache lines for them, then each cache line at any time stores the contents of one of $\frac{4096}{64} = 64$ different blocks.
 
 ![Direct-mapped cache](../img/cache2.png)
 
-A direct-mapped cache is easy to implement, and it doesn't require storing any additional meta-information associated with a cache line except its tag (the actual memory location of a cached block). The disadvantage is that the entries can be kicked out too quickly — for example, when bouncing between two addresses that map to the same cache line — leading to lower overall cache utilization.
+A direct-mapped cache is easy to implement doesn't require storing any additional meta-information associated with a cache line except its tag (the actual memory location of a cached block). The disadvantage is that the entries can be kicked out too quickly — for example, when bouncing between two addresses that map to the same cache line — leading to lower overall cache utilization.
 
-For that reason, we settle for something in-between direct-mapped and fully associative caches: the *set-associative cache*. It splits the address space into equal groups which separately act as small fully-associative caches.
+For that reason, we settle for something in-between direct-mapped and fully associative caches: the *set-associative cache*. It splits the address space into equal groups, which separately act as small fully-associative caches.
 
 ![Set-associative cache (2-way associative)](../img/cache3.png)
 
@@ -66,13 +66,13 @@ Instead, the hardware uses the lazy approach. It takes the memory address that n
 
 - *offset* — the index of the word within a 64B cache line ($\log_2 64 = 6$ bits);
 - *index* — the index of the cache line set (the next $12$ bits as there are $2^{12}$ cache lines in the L3 cache);
-- *tag* — the rest of the memory address to tell the memory blocks stored in the cache lines apart.
+- *tag* — the rest of the memory address, which is used to tell the memory blocks stored in the cache lines apart.
 
 In other words, all memory addresses with the same "middle" part map to the same set.
 
-![Address composition for a 64-entry 2-way set associative cache](../img/address.png)
+![Address composition for a 64-entry 2-way set-associative cache](../img/address.png)
 
-This makes the cache system simpler and cheaper to implement, but also makes it susceptible to certain access patterns.
+This makes the cache system simpler and cheaper to implement but also susceptible to certain bad access patterns.
 
 ### Pathological Mappings
 
