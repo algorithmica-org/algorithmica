@@ -54,6 +54,7 @@ Now, to compute these prefix sums locally, we are going to use another parallel 
 
 ```c++
 for (int l = 0; l < logn; l++)
+    // (atomically and in parallel):
     for (int i = (1 << l); i < n; i++)
         a[i] += a[i - (1 << l)];
 ```
