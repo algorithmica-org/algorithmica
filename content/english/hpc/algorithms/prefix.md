@@ -40,7 +40,7 @@ loop:
     jne     loop
 ```
 
-After [unrolling](/hpc/architecture/loops) the loop, just two instructions effectively remain: the fused read-add and the write-back of the result. Theoretically, these should work at 2 GFLOPS (1 element per CPU cycle), but because the memory system has to constantly [switch](/hpc/cpu-cache/bandwidth#directional-access) between reading and writing, the actual performance is between 1.2 and 1.6 GFLOPS, depending on the array size.
+After [unrolling](/hpc/architecture/loops) the loop, just two instructions effectively remain: the fused read-add and the write-back of the result. Theoretically, these should work at 2 GFLOPS (1 element per CPU cycle, by the virtue of [superscalar processing](/hpc/pipelining)), but since the memory system has to constantly [switch](/hpc/cpu-cache/bandwidth#directional-access) between reading and writing, the actual performance is between 1.2 and 1.6 GFLOPS, depending on the array size.
 
 ### Vectorization
 
@@ -217,13 +217,13 @@ void prefix(int *a, int n) {
 }
 ```
 
-This has more benefits: the loop progresses at a constant speed, reducing the pressure on the memory system, and the scheduler sees the instructions of both subroutines, allowing it to be more efficient at assigning instruction to execution ports.
+This has more benefits: the loop progresses at a constant speed, reducing the pressure on the memory system, and the scheduler sees the instructions of both subroutines, allowing it to be more efficient at assigning instruction to execution ports — sort of like hyper-threading, but in code.
 
-For these reasons the performance improves even on small arrays:
+For these reasons, the performance improves even on small arrays:
 
 ![](../img/prefix-interleaved.svg)
 
-Finally, combining it with prefetching improves the performance even more:
+And finally, it doesn't seem that we are bottlenecked by the [memory read port](/hpc/pipelining/tables/) or the [decode width](/hpc/architecture/layout/#cpu-front-end), so we can add prefetching for free, which improves the performance even more:
 
 ![](../img/prefix-interleaved-prefetch.svg)
 
