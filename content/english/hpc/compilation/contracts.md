@@ -153,7 +153,7 @@ Since each iteration of this loop is independent, it can be executed in parallel
 
 There may be a problem if the arrays `a` and `b` intersect. Consider the case when `b == a + 1`, that is, if `b` is a just a memory view of `a` starting from the second element. In this case, the next iteration depends on the previous one, and the only correct solution is execute the loop sequentially. The compiler has to check for such possibilities, even if the programmer knows they can't happen.
 
-This is why we have `const` and `restrict` keywords. The first one enforces that that we won't modify memory with the pointer variable, and the second is a way to tell compiler that the memory is guaranteed to be not aliased.
+This is why we have `const` and `restrict` keywords. The first one enforces that that we won't modify memory with the pointer variable, and the second is a way to tell compiler that the memory is guaranteed to not be aliased.
 
 ```cpp
 void add(int * __restrict__ a, const int * __restrict__ b, int n) {
