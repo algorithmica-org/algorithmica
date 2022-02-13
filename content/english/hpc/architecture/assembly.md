@@ -41,7 +41,7 @@ Assembly is a very minimal language because it needs to be. It reflects the mach
 
 [^disassembly]: On Linux, to disassemble a compiled program, you can call `objdump -d {path-to-binary}`.
 
-Note that the two snippets above are not just syntactically different. Both are optimized codes produced by a compiler, but the Arm version uses 4 instruction, while the x86 version uses 3. The `add eax, [rdi]` instruction is what's called *fused instruction* that does a load and an add in one go — this is one of the perks that the [CISC](../isa#risc-vs-cisc) approach can provide.
+Note that the two snippets above are not just syntactically different. Both are optimized codes produced by a compiler, but the Arm version uses 4 instructions, while the x86 version uses 3. The `add eax, [rdi]` instruction is what's called *fused instruction* that does a load and an add in one go — this is one of the perks that the [CISC](../isa#risc-vs-cisc) approach can provide.
 
 Since there are far more differences between the architectures than just this one, from here on and for the rest of the book we will only provide examples for x86, which is probably what most of our readers will optimize for, although many of the introduced concepts will be architecture-agnostic.
 
@@ -59,13 +59,13 @@ There are also 32-, 16-bit and 8-bit registers that have similar names (`rax` �
 
 These are just the *general-purpose* registers that you can, with [some exceptions](../functions), use however you like in most instructions. There is also a separate set of registers for [floating-point arithmetic](/hpc/arithmetic/float), a bunch of very wide registers used in [vector extensions](/hpc/simd), and a few special ones that are needed for [control flow](../jumps), but we'll get there in time.
 
-**Constants** are just integer or floating point values: `42`, `0x2a`, `3.14`, `6.02e23`. They are more commonly called *immediate values* because they are embedded right into the machine code. Because it may considerably increase the complexity of the instruction encoding, some instructions don't support immediate values, or allow just a fixed subset of them. In some cases you have to load a constant value into a register and then use it instead of an immediate value.
+**Constants** are just integer or floating-point values: `42`, `0x2a`, `3.14`, `6.02e23`. They are more commonly called *immediate values* because they are embedded right into the machine code. Because it may considerably increase the complexity of the instruction encoding, some instructions don't support immediate values or allow just a fixed subset of them. In some cases, you have to load a constant value into a register and then use it instead of an immediate value.
 
 Apart from numeric values, there are also string constants such as `hello` or `world\n` with their own little subset of operations, but that is a somewhat obscure corner of the assembly language that we are not going to explore here.
 
 ### Moving Data
 
-Some instructions may have the same mnemonic, but have different operand types, in which case they are considered distinct instructions as they may perform slightly different operations and take different time to execute. The `mov` instruction is a vivid example of that, as it comes in around 20 different forms, all related to moving data: either between the memory and registers or just between two registers. Despite the name, it doesn't *move* a value into a register, but *copies* it, preserving the original.
+Some instructions may have the same mnemonic, but have different operand types, in which case they are considered distinct instructions as they may perform slightly different operations and take different times to execute. The `mov` instruction is a vivid example of that, as it comes in around 20 different forms, all related to moving data: either between the memory and registers or just between two registers. Despite the name, it doesn't *move* a value into a register, but *copies* it, preserving the original.
 
 When used to copy data between two registers, the `mov` instruction instead performs *register renaming* internally — informs the CPU that the value referred by register X is actually stored in register Y — without causing any additional delay except for maybe reading and decoding the instruction itself. For the same reason, the `xchg` instruction that swaps two registers also doesn't cost anything.
 
@@ -89,7 +89,7 @@ Memory addressing is done with the `[]` operator, but it can do more than just r
 SIZE PTR [base + index * scale + displacement]
 ```
 
-where `displacement` needs to be an integer constant and `scale` can be either 2, 4, or 8. What it does is calculates the pointer `base + index * scale + displacement` and dereferences it.
+where `displacement` needs to be an integer constant and `scale` can be either 2, 4, or 8. What it does is calculate the pointer `base + index * scale + displacement` and dereferences it.
 
 <!-- You can use them in any order: the assembler will figure it out. -->
 
@@ -117,7 +117,7 @@ There are actually multiple *assemblers* (the programs that produce machine code
 
 These syntaxes are also sometimes called *GAS* and *NASM* respectively, by the names of the two primary assemblers that use them (*GNU Assembler* and *Netwide Assembler*).
 
-We used Intel syntax in this chapter and will continue to preferably use it for the rest of the book. For comparison, here is how the summation loop looks like in AT&T asm:
+We used Intel syntax in this chapter and will continue to preferably use it for the rest of the book. For comparison, here is what the summation loop looks like in AT&T asm:
 
 ```asm
 loop:
