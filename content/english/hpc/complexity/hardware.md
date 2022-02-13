@@ -27,7 +27,7 @@ Microchips are "printed" on a slice of crystalline silicon using a process calle
 Consider now the "hit it with photons" part. For that, we can use a system of lenses that projects a pattern onto a much smaller area, effectively making a tiny circuit with all the desired properties. This way, the optics of the 1970s were able to fit a few thousand transistors on the size of a fingernail, which gives microchips several key advantages that macro-world computers didn't have:
 
 - higher clock rates (that were previously limited by the speed of light);
-- ability to scale the production;
+- the ability to scale the production;
 - much lower material and power usage, translating to much lower cost per unit.
 
 Apart from these immediate benefits, photolithography enabled a clear path to improve performance further: you can just make lenses stronger, which in turn would create smaller, but functionally identical devices with relatively little effort.
@@ -68,11 +68,11 @@ The only way to mitigate this is to increase voltage; and to balance off power c
 
 It may come as a surprise, but the primary metric for modern CPUs is not the clock frequency, but rather "useful operations per joule", or, more practically put, "useful operations per dollar".
 
-Thermodynamically, a computer is just a very efficient device for converting electrical power into heat. This heat eventually needs to be removed, and it's not straightforward to do when you are working with a millimeter-scale crystal. There are physical limits of how much power you can consume and then dissipate.
+Thermodynamically, a computer is just a very efficient device for converting electrical power into heat. This heat eventually needs to be removed, and it's not straightforward to do when you are working with a millimeter-scale crystal. There are physical limits to how much power you can consume and then dissipate.
 
-Historically, the three main variables guiding microchip designs are power, performance and area (PPA), commonly defined in watts, hertz and nanometers. Until ~2005, cost, which was mainly a function of area, and performance, used to be the most important criteria. But as battery-driven mobile devices started replacing PCs, power quickly and firmly moved up on top of the list, followed by cost and performance.
+Historically, the three main variables guiding microchip designs are power, performance, and area (PPA), commonly defined in watts, hertz, and nanometers. Until ~2005, cost, which was mainly a function of area, and performance, used to be the most important criteria. But as battery-driven mobile devices started replacing PCs, power quickly and firmly moved up on top of the list, followed by cost and performance.
 
-Leakage: interfering magnetic fields make electrons move in the directions they are not supposed to and cause unnecessary heating. It isn't bad by itself: it mitigate it you need to increase the voltage, and it won't flick any bits. But the problem is that the smaller a circuit is, the harder it is to cope with this by isolating the wires. So modern chips keep the clock frequency at a level that won't cause overheat, although physically there aren't other reasons why they shouldn't.
+Leakage: interfering magnetic fields make electrons move in the directions they are not supposed to and cause unnecessary heating. It isn't bad by itself: to mitigate it you need to increase the voltage, and it won't flick any bits. But the problem is that the smaller a circuit is, the harder it is to cope with this by isolating the wires. So modern chips keep the clock frequency at a level that won't cause overheat, although physically there aren't other reasons why they shouldn't.
 
 -->
 
@@ -82,7 +82,7 @@ Dennard scaling has ended, but Moore's law is not dead yet.
 
 Clock rates plateaued, but the transistor count is still increasing, allowing for the creation of new, *parallel* hardware. Instead of chasing faster cycles, CPU designs started to focus on getting more useful things done in a single cycle. Instead of getting smaller, transistors have been changing shape.
 
-This resulted in increasingly complex architectures capable of doing dozens, hundreds, or even  thousands of different things every cycle.
+This resulted in increasingly complex architectures capable of doing dozens, hundreds, or even thousands of different things every cycle.
 
 ![Die shot of a Zen CPU core by AMD (~1,400,000,000 transistors)](../img/die-shot.jpg)
 

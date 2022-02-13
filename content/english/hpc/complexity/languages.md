@@ -34,12 +34,12 @@ These instructions — called *machine code* — are binary encoded, quirky and 
 
 -->
 
-On the lowest level, computers execute *machine code* consisting of binary-encoded *instructions* which are used to control the CPU. They are specific, quirky, and require a great deal of intellectual effort to work with, so one of the first things people did after creating computers was creating *programming languages*, which abstract away some details of how computers operate to simplify the process of programming.
+On the lowest level, computers execute *machine code* consisting of binary-encoded *instructions* which are used to control the CPU. They are specific, quirky, and require a great deal of intellectual effort to work with, so one of the first things people did after creating computers was create *programming languages*, which abstract away some details of how computers operate to simplify the process of programming.
 
 A programming language is fundamentally just an interface. Any program written in it is just a nicer higher-level representation which still at some point needs to be transformed into the machine code to be executed on the CPU — and there are several different means of doing that:
 
 - From a programmer's perspective, there are two types of languages: *compiled*, which pre-process before executing, and *interpreted*, which are executed during runtime using a separate program called *an interpreter*.
-- From a computer's perspective, there are also two types of languages: *native*, which directly execute machine code, and *managed*, which rely on some sort of *a runtime* to do it.
+- From a computer's perspective, there are also two types of languages: *native*, which directly execute machine code, and *managed*, which rely on some sort of *runtime* to do it.
 
 Since running machine code in an interpreter doesn't make sense, this makes a total of three types of languages:
 
@@ -84,7 +84,7 @@ print(duration)
 
 This code runs in 630 seconds. That's more than 10 minutes!
 
-Let's try to put this number in perspective. The CPU that ran it has a clock frequency of 1.4GHz, meaning that it does $1.4 \cdot 10^9$ cycles per second, totaling to almost $10^{15}$ for the entire computation, and about 880 cycles per each multiplication in the innermost loop.
+Let's try to put this number in perspective. The CPU that ran it has a clock frequency of 1.4GHz, meaning that it does $1.4 \cdot 10^9$ cycles per second, totaling to almost $10^{15}$ for the entire computation, and about 880 cycles per multiplication in the innermost loop.
 
 This is not surprising if you consider the things that Python needs to do to figure out what the programmer meant:
 
