@@ -22,13 +22,26 @@ It performs slightly worse on array sizes that fit lower layers of cache, but in
 
 This is a large article, which will turn into a multi-hour read. If you feel comfortable reading [intrinsic](/hpc/simd/intrinsics)-heavy code without any context whatsoever, you can skim through the first four implementation and jump straight to the last section.
 
+Build up understanding gradually, but you can skip them.
+
 ## Binary Search
+
+<!--
+
+For our benchmark, we create an array of random integers of size `n` and sort it. Then, each implementations can do some preprocessing:
+
+```c++
+void prepare(int *a, int n);
+int lower_bound(int x);
+```
 
 Already sorted array `t` of size `n`.
 
 We are going ot create an array named `a` into array named `t`.
 
-Here is the standard way of searching for the first element not less than $x$ in a sorted array of $n$ integers:
+-->
+
+Here is the standard way of searching for the first element not less than `x` in a sorted array `t` of `n` integers that you can find in any introductory computer science textbook:
 
 ```c++
 int lower_bound(int x) {
@@ -44,9 +57,11 @@ int lower_bound(int x) {
 }
 ```
 
-![](../img/search-std.svg)
+<!-- We maintain the indices of first and the last element that may be the answer, compare the element the middle to the key `x`, and then shrink the search interval by half depending how the comparison went. Beautiful in its simplicity. -->
 
-This is actually how `std::lower_bound` from  works. Implementations from both [Clang](https://github.com/llvm-mirror/libcxx/blob/78d6a7767ed57b50122a161b91f59f19c9bd0d19/include/algorithm#L4169) and [GCC](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023) use this metaprogramming monstrosity:
+Find the middle element of the search range, compare it to `x`, shrink the range in half. Beautiful in its simplicity.
+
+A similar approach is employed by `std::lower_bound`, except that it needs to be more generic to support containers with non-random-access iterators and thus uses the first element and the size of the search interval instead of the two of its ends. Implementations from both [Clang](https://github.com/llvm-mirror/libcxx/blob/78d6a7767ed57b50122a161b91f59f19c9bd0d19/include/algorithm#L4169) and [GCC](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023) use this metaprogramming monstrosity:
 
 ```c++
 template <class _Compare, class _ForwardIterator, class _Tp>
@@ -72,20 +87,50 @@ __lower_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __va
 }
 ```
 
-If compiler is successful in piercing through the abstractions, it compiles to roughly the same machine code and yields roughly the same performance.
+If compiler is successful in removing the abstractions, it compiles to roughly the same machine code and yields roughly the same performance, which [expectedly](/hpc/cpu-cache/latency) varies greatly with the array size:
+
+![](../img/search-std.svg)
+
+Since most people don't implement binary search by hand, we will use `std::lower_bound` from Clang as the baseline.
+
+### The Bottleneck
+
+Before jumping to the optimized implementations, let's briefly discuss why binary search is slow in the first place.
+
+If you run `std::lower_bound` with [perf](/hpc/profiling/events), you'll see that it spends most of its time on a [conditional jump](/hpc/architecture/loops) instruction:
+
+```nasm
+       │35:   mov    %rax,%rdx
+  0.52 │      sar    %rdx
+  0.33 │      lea    (%rsi,%rdx,4),%rcx
+  4.30 │      cmp    (%rcx),%edi
+ 65.39 │    ↓ jle    b0
+  0.07 │      sub    %rdx,%rax
+  9.32 │      lea    0x4(%rcx),%rsi
+  0.06 │      dec    %rax
+  1.37 │      test   %rax,%rax
+  1.11 │    ↑ jg     35
+```
+
+This [pipeline stall](/hpc/) stops the algorithm from progressing, and it is mainly caused by two [factors](/hpc/pipelining/hazards):
+
+- We suffer a *control hazard* because we have a branch that is impossible to predict, and the processor has to stop for 10-15 cycles to flush the pipeline.
+- We suffer a *data hazard* because we have to [wait](/hpc/cpu-cache/latency) for the preceding comparison to complete — which in turn waits for one of its operands to be fetched from the memory, which may take up to hundreds of cycles, depending on where in the cache hierarchy the data is located.
+
+Now, let's try to get rid of these obstacles one by one.
+
+## Removing Branches
+
+which in turn is waiting for one of its operands to be fetched from memory. Contains an "if" that is impossible to predict better than a coin flip.
 
 
 Before jumping to optimized variants, let's briefly discuss the reasons why the textbook binary search is slow in the first place.
 
-If you [run this code with perf](/hpc/analyzing-performance/profiling/), you can see that it spends most of its time waiting for a comparison to complete, which in turn is waiting for one of its operands to be fetched from memory. Contains an "if" that is impossible to predict better than a coin flip.
-
-
-### Branching
 
 It's not illegal: ternary operator is replaced with something like `CMOV` 
 
 
-We change the compiler for GCC (9.3). For some reason, it doesn't work.
+We change the compiler to GCC (9.3). For some reason, it doesn't work.
 
 ```c++
 int lower_bound(int x) {
@@ -131,7 +176,7 @@ So, to sum up: ideally, we'd want some layout that is both blocks, and higher-or
 
 We can overcome this by enumerating and permuting array elements in a more cache-friendly way. The numeration we will use is actually half a millennium old, and chances are you already know it.
 
-## Why Binary Search is Slow
+## Optimizing Layout
 
 ```cpp
 int lower_bound(int x) {
@@ -146,8 +191,6 @@ int lower_bound(int x) {
     return a[l];
 }
 ```
-
-Find the middle element of the search range, compare to $x$, cut the range in half. Beautiful in its simplicity.
 
 ### Data Locality
 
