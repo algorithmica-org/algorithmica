@@ -29,7 +29,7 @@ Planned table of contents:
  1.1. Modern Hardware
  1.2. Programming Languages
  1.3. Models of Computation
- 1.4. Levels of Optimization
+ 1.4. When to Optimize
 2. Computer Architecture
  1.1. Instruction Set Architectures
  1.2. Assembly Language
@@ -119,15 +119,16 @@ Planned table of contents:
  11.6. Fast Fourier Transform
  11.7. Number-Theoretic Transform
  11.8. Argmin with SIMD
- 11.9. Reading and Writing Integers
-(11.10. Reading and Writing Floats)
-(11.11. String Searching)
- 11.12. Sorting
- 11.13. Matrix Multiplication
+ 11.9. Prefix Sum with SIMD
+ 11.10. Reading and Writing Integers
+(11.11. Reading and Writing Floats)
+(11.12. String Searching)
+ 11.13. Sorting
+ 11.14. Matrix Multiplication
 12. Data Structure Case Studies
  12.1. Binary Search
- 12.2. Dynamic Prefix Sum
-(12.3. Ordered Trees)
+ 12.2. Segment Trees
+(12.3. B-Trees)
 (12.4. Range Minimum Query)
  12.5. Hash Tables
 (12.6. Bitmaps)
