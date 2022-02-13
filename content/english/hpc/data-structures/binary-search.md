@@ -169,11 +169,41 @@ We can also fetched ahead by more than one layer, but the number of fetches we w
 
 ## Optimizing the Layout
 
-But this is not the largest problem. The real problem is that it waits for its operands, and the results still can't be predicted.
+How good is the [data locality](/hpc/external-memory/locality/) of a binary search?
 
-The running time of this (or any) algorithm is not just the "cost" of all its arithmetic operations, but rather this cost *plus* the time spent waiting for data to be fetched from memory. Thus, depending on the algorithm and problem limitations, it can be CPU-bound or memory-bound, meaning that the running time is dominated by one of its components.
+- *Spatial locality* seems to be good for the last 3-4 requests that are likely to be on the same [cache line](/hpc/cpu-cache/cache-lines) — but all the previous requests require huge memory jumps.
+- *Temporal locality* seems to be good for the first dozen or so requests — there aren't that many different comparison sequences of this length, so we will be comparing against the same middle elements over and over, which are likely to be cached.
 
-If array is large enough—usually around the point where it stops fitting in cache and fetches become significantly slower—the running time of binary search becomes dominated by memory fetches.
+To illustrate how important the second type of cache sharing is, let's try:
+
+```c++
+int lower_bound(int x) {
+    int l = 0, r = n - 1;
+    while (l < r) {
+        int m = l + rand() % (r - l);
+        if (t[m] >= x)
+            r = m;
+        else
+            l = m + 1;
+    }
+    return t[l];
+}
+```
+
+The is around ~1.3x.[^limit]
+
+[^limit]: [algorithm](https://gist.github.com/sslotin/4b7193041b01e454615f50d237485c71). By the way, if someone who remembers calculus is reading this, try to find the limit of that.
+
+![](../img/search-random.svg)
+
+$2^{20}$ works in 360ns, while $(2^{20} + 123)$ works in ~300ns: a 20% difference.
+
+Another often neglected effect is that of cache associativity, which can adversely
+effect binary search when the the array length is a large power of 2. In a c-way associativecache, the top $\log(n / C)$ levels of the implicit search tree must all share the same c cache lines. If $\log(n/C) > c$, this effectively means that the cache effectively has size only c.
+
+But it isn't very efficient: in the same hot cache line that we store element $\lfloor n/2 \rfloor$, we also store the element $\lfloor n/2 \rfloor + 1$, which is the last element fetched.
+
+We use data points of $\lfloor 1.17^k \rfloor$ to swipe that issue under the rug.
 
 So, to sum up: ideally, we'd want some layout that is both blocks, and higher-order blocks to be placed in groups, and also to be capable.
 
@@ -247,7 +277,7 @@ Despite being recursive, this is actually a really fast implementation as all me
 
 Note that the first element is left unfilled and the whole array is essentially 1-shifted. This will actually turn out to be a huge performance booster.
 
-### Binary Search Implementation
+### Search Implementation
 
 We can now descend this array using only indices: we just start with $k=1$ and execute $k := 2k$ if we need to go left and $k := 2k + 1$ if we need to go right. We don't even need to store and recalculate binary search boundaries anymore.
 
@@ -308,9 +338,13 @@ __builtin_prefetch(t + k * B * 2);
 
 ### Removing the Last Branch
 
-Let's zoom in.
+The finishing touch. Did you notice the bumpiness of eytzinger search? This isn't random noise — let's zoom in:
 
 ![](../img/search-eytzinger-small.svg)
+
+There is a period of a power of two and The running time is ~10ns higher for.
+
+These 10ns are the mispredicted branches for arrays. The last branch, to be exact.
 
 ```c++
 t[0] = -1; // an element that is less than X
@@ -320,18 +354,26 @@ iters = std::__lg(n + 1);
 ```c++
 int lower_bound(int x) {
     int k = 1;
+
     for (int i = 0; i < iters; i++)
         k = 2 * k + (t[k] < x);
+
     int *loc = (k <= n ? t + k : t);
     k = 2 * k + (*loc < x);
+
     k >>= __builtin_ffs(~k);
+
     return t[k];
 }
 ```
 
+The graph is now smooth and almost doesn't lose to the branchless binary search on small arrays:
+
 ![](../img/search-eytzinger-branchless.svg)
 
-That was a detour.
+That was a small detour. Let's move on.
+
+The title of this article doesn't say "binary search". We aren't limited to fetching one element at a time and comparing it. We can do better.
 
 ## B-Tree Layout
 
