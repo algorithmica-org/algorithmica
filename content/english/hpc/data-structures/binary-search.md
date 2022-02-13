@@ -18,7 +18,7 @@ In this article, we focus on such fundamental algorithm — binary search — an
 
 The last two approaches use SIMD, which technically disqualifies it from being binary search. This is technically not a drop-in replacement, since it requires some preprocessing, but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing. But otherwise they are effectively drop-in replacements to `std::lower_bound`.
 
-It performs slightly worse on array sizes that fit lower layers of cache, but in low-bandwidth environments it can be up to 3x faster (or 7x faster than `std::lower_bound`). GCC sucked on all benchmarks, so we will mostly be using Clang 10. The CPU is a Zen 2, although the results should be transferrable to other platforms, including most Arm-based chips.
+It performs slightly worse on array sizes that fit lower layers of cache, but in low-bandwidth environments it can be up to 3x faster (or 7x faster than `std::lower_bound`). GCC sucked on all benchmarks, so we will mostly be using Clang (10.0). The CPU is a Zen 2, although the results should be transferrable to other platforms, including most Arm-based chips.
 
 This is a large article, which will turn into a multi-hour read. If you feel comfortable reading [intrinsic](/hpc/simd/intrinsics)-heavy code without any context whatsoever, you can skim through the first four implementation and jump straight to the last section.
 
@@ -114,23 +114,14 @@ If you run `std::lower_bound` with [perf](/hpc/profiling/events), you'll see tha
 
 This [pipeline stall](/hpc/) stops the algorithm from progressing, and it is mainly caused by two [factors](/hpc/pipelining/hazards):
 
-- We suffer a *control hazard* because we have a branch that is impossible to predict, and the processor has to stop for 10-15 cycles to flush the pipeline.
+- We suffer a *control hazard* because we have a branch that is impossible to predict (both queries and keys are uniformly random), and the processor has to flush the pipeline and halt for 10-15 cycles to fill it back.
 - We suffer a *data hazard* because we have to [wait](/hpc/cpu-cache/latency) for the preceding comparison to complete — which in turn waits for one of its operands to be fetched from the memory, which may take up to hundreds of cycles, depending on where in the cache hierarchy the data is located.
 
 Now, let's try to get rid of these obstacles one by one.
 
 ## Removing Branches
 
-which in turn is waiting for one of its operands to be fetched from memory. Contains an "if" that is impossible to predict better than a coin flip.
-
-
-Before jumping to optimized variants, let's briefly discuss the reasons why the textbook binary search is slow in the first place.
-
-
-It's not illegal: ternary operator is replaced with something like `CMOV` 
-
-
-We change the compiler to GCC (9.3). For some reason, it doesn't work.
+We can replace branching with [predication](/hpc/pipelining/branchless). For that, we need to adopt the STL approach and rewrite the loop using the the first element and the size of the search interval instead of its first and last element. This way we only need to update the first element of the search interval with a `cmov` instruction and halve its size on each iteration:
 
 ```c++
 int lower_bound(int x) {
@@ -144,7 +135,17 @@ int lower_bound(int x) {
 }
 ```
 
+Note that this loop is not always equivalent to the standard binary search — it always rounds *up* the size of the search interval, so it accesses slightly different elements and may perform one comparison more than what is needed. This is done to make the number of iterations constant and remove the need for branching completely, although it does require a weird `(*base < x)` check at the end.
+
+This trick is very fragile to compiler optimizations. It doesn't make a difference on Clang as for some reason, it replaces the ternary operator with a branch anyway. But it works fine on GCC (9.3), yielding a 2.5-3x improvement on small arrays:
+
 ![](../img/search-branchless.svg)
+
+One interesting detail is that it performs worse on large arrays. This is weird: the total delay is dominated by the RAM latency, and since it does roughly the same memory accesses, so it should be the same or slightly better.
+
+The real question you need to ask is not why the branchless implementation is worse, but why the branchy version is better. This happens because it [speculates](/hpc/pipelining/branching/) on one of the branches and starts fetching either the left or the right key before it is confirmed that it is the right one, which effectively acts as implicit [prefetching](/hpc/cpu-cache/prefetching).
+
+For the branchless implementation, this doesn't happen, as `cmov` is treated as every other instruction, and the branch predictor doesn't try to peek into its operands to predict the future. To compensate for this, we can prefetch the data explicitly:
 
 ```c++
 int lower_bound(int x) {
@@ -160,39 +161,23 @@ int lower_bound(int x) {
 }
 ```
 
+This makes the performance on large arrays roughly the same, although the graph still grows faster as the branchy version also prefetches "grandchildren", "grand-grandchildren", and so on — although the chance that the prediction is correct diminishes exponentially:
+
 ![](../img/search-branchless-prefetch.svg)
+
+We can also fetched ahead by more than one layer, but the number of fetches we would need will grow exponentially. Instead, we will try a different approach to optimize memory operations.
+
+## Optimizing the Layout
 
 But this is not the largest problem. The real problem is that it waits for its operands, and the results still can't be predicted.
 
 The running time of this (or any) algorithm is not just the "cost" of all its arithmetic operations, but rather this cost *plus* the time spent waiting for data to be fetched from memory. Thus, depending on the algorithm and problem limitations, it can be CPU-bound or memory-bound, meaning that the running time is dominated by one of its components.
-
-Can be fetched ahead, but there is only 50% chance we will get it right on the first layer, then 25% chance on second and so on. We could do 2, 4, 8 and so on fetches, but these would grow exponentially.
-
-IMAGE HERE
 
 If array is large enough—usually around the point where it stops fitting in cache and fetches become significantly slower—the running time of binary search becomes dominated by memory fetches.
 
 So, to sum up: ideally, we'd want some layout that is both blocks, and higher-order blocks to be placed in groups, and also to be capable.
 
 We can overcome this by enumerating and permuting array elements in a more cache-friendly way. The numeration we will use is actually half a millennium old, and chances are you already know it.
-
-## Optimizing Layout
-
-```cpp
-int lower_bound(int x) {
-    int l = 0, r = n - 1;
-    while (l < r) {
-        int t = (l + r) / 2;
-        if (a[t] >= x)
-            r = t;
-        else
-            l = t + 1;
-    }
-    return a[l];
-}
-```
-
-### Data Locality
 
 First ~10 queries may be cached (frequently accessed: temporal locality)
 Last 3-4 queries may be cached (may be in the same cache line: data locality)
@@ -206,7 +191,7 @@ For example, element $\lfloor \frac n 2 \rfloor$ is accessed very often (every s
 
 ![](../img/binary-heat.png)
 
-## Eytzinger Layout
+### Eytzinger Layout
 
 **Michaël Eytzinger** is a 16th century Austrian nobleman known for his work on genealogy, particularily for a system for numbering ancestors called *ahnentafel* (German for "ancestor table").
 
@@ -262,13 +247,13 @@ Despite being recursive, this is actually a really fast implementation as all me
 
 Note that the first element is left unfilled and the whole array is essentially 1-shifted. This will actually turn out to be a huge performance booster.
 
-## Binary search implementation
+### Binary Search Implementation
 
 We can now descend this array using only indices: we just start with $k=1$ and execute $k := 2k$ if we need to go left and $k := 2k + 1$ if we need to go right. We don't even need to store and recalculate binary search boundaries anymore.
 
 The only problem arises when we need to restore the index of the resulting element, as $k$ may end up not pointing to a leaf node. Here is an example of how that can happen:
 
-```python
+```
     array:  1 2 3 4 5 6 7 8
 eytzinger:  4 2 5 1 6 3 7 8
 1st range:  ---------------  k := 1
@@ -321,7 +306,7 @@ __builtin_prefetch(t + k * B * 2);
 
 ![](../img/search-eytzinger-prefetch.svg)
 
-### Last branch
+### Removing the Last Branch
 
 Let's zoom in.
 
