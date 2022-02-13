@@ -144,7 +144,7 @@ int popcnt() {
 
 This code processes around 30 bytes per cycle. Theoretically, the inner loop could do 32, but we have to stop it every 15 iterations because the 8-bit counters can overflow. 
 
-The `pshufb` instruction is so instrumental in some SIMD algorithms that [Wojciech Muła](http://0x80.pl/) — the guy who came up with this algorithm — took it as his [Twitter handle](https://twitter.com/pshufb). You can calculate population counts even faster: check out his [github repository](https://github.com/WojciechMula/sse-popcount) with different vectorized popcount implementations and his [recent paper](https://arxiv.org/pdf/1611.07612.pdf) for a detailed explanation of the state-of-the-art.
+The `pshufb` instruction is so instrumental in some SIMD algorithms that [Wojciech Muła](http://0x80.pl/) — the guy who came up with this algorithm — took it as his [Twitter handle](https://twitter.com/pshufb). You can calculate population counts even faster: check out his [GitHub repository](https://github.com/WojciechMula/sse-popcount) with different vectorized popcount implementations and his [recent paper](https://arxiv.org/pdf/1611.07612.pdf) for a detailed explanation of the state-of-the-art.
 
 ### Permutations and Lookup Tables
 
@@ -236,5 +236,9 @@ _mm256_slli_si256 srli
 _mm256_permute_ps uses a mask
 
 https://stackoverflow.com/questions/9795529/how-to-find-the-horizontal-maximum-in-a-256-bit-avx-vector Norbert P. and Peter Cordes 
+
+_MM_SHUFFLE
+
+https://stackoverflow.com/questions/37088449/macro-for-generating-immediates-for-avx-shuffle-intrinsics
 
 -->
