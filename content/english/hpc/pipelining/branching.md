@@ -66,7 +66,7 @@ Now, if we benchmark it for different values of `P`, we get an interesting-looki
 
 ![](../img/probabilities.svg)
 
-It's peak is at 50-55%, as expected: branch misprediction is the most expensive thing here. This graph is asymmetrical: it takes just ~1 cycle to only check conditions that are never satisfied (`P = 0`), and ~7 cycles for the sum if the branch is always taken (`P = 7`).
+It's peak is at 50-55%, as expected: branch misprediction is the most expensive thing here. This graph is asymmetrical: it takes just ~1 cycle to only check conditions that are never satisfied (`P = 0`), and ~7 cycles for the sum if the branch is always taken (`P = 100`).
 
 An interesting detail is that this graph is not unimodal: there is another local minimum at around 85-90%. We spend ~6.15 cycles per element there, or about 10-15% faster compared to when we always take the branch, accounting for the fact that we need to perform less additions. Branch misprediction stop affecting performance at this point, because it happens, not the whole instruction buffer is discarded, but only the operations that were speculatively scheduled. That 10-15% mispredict rate is the equilibrium point where we can see far enough in the pipeline not to stall, but save 10-15% on taking the cheaper ">=" branch.
 
