@@ -100,3 +100,5 @@ Performance issues caused by cache associativity effects arise with remarkable f
 - It is the smallest integer exponent, so using the sequence of increasing powers of two as problem sizes are a popular choice when benchmarking memory-bound algorithms. (Also, powers of ten are by transitivity divisible by a slightly lower power of two.)
 
 Luckily, such issues are more of an anomaly rather than serious problems. The solution is usually simple: avoid iterating in powers of two, make the last dimensions of multi-dimensional arrays a slightly different size, or use any other method to insert "holes" in the memory layout.
+
+<!-- seemingly random bijection, link to segment tree, to binary search -->
