@@ -214,59 +214,75 @@ So, ideally, we'd want a memory layout where hot elements are grouped with hot e
 
 ### Eytzinger Layout
 
-**Michaël Eytzinger** is a 16th century Austrian nobleman known for his work on genealogy, particularily for a system for numbering ancestors called *ahnentafel* (German for "ancestor table").
+**Michaël Eytzinger** is a 16th century Austrian nobleman known for his work on genealogy, particularly for a system for numbering ancestors called *ahnentafel* (German for "ancestor table").
 
 Ancestry mattered a lot back then, but writing down that data was expensive. *Ahnentafel* allows displaying a person's genealogy compactly, without wasting extra space by drawing diagrams.
 
 It lists a person's direct ancestors in a fixed sequence of ascent. First, the person theirself is listed as number 1, and then, recursively, for each person numbered $k$, their father is listed as $2k$ and their mother as $(2k+1)$.
 
-Here is the example for Paul I, the great-grandson of Peter I, the Great:
+Here is the example for [Paul I](https://en.wikipedia.org/wiki/Paul_I_of_Russia), the great-grandson of [Peter the Great](https://en.wikipedia.org/wiki/Peter_the_Great):
 
 1. Paul I
 2. Peter III (Paul's father)
-3. Catherine II (Paul's mother)
+3. [Catherine II](https://en.wikipedia.org/wiki/Catherine_the_Great) (Paul's mother)
 4. Charles Frederick (Peter's father, Paul's paternal grandfather)
 5. Anna Petrovna (Peter's mother, Paul's paternal grandmother)
 6. Christian August (Catherine's father, Paul's maternal grandfather)
 7. Johanna Elisabeth (Catherine's mother, Paul's maternal grandmother)
 
-Apart from being compact, it has some nice properties, like that all even-numbered persons are male and all odd-numbered (possibly apart from 1) are female.
+Apart from being compact, it has some nice properties, like that all even-numbered persons are male and all odd-numbered (possibly except for 1) are female. One can also find the number of a particular ancestor only knowing the genders of their descendants. For example, Peter the Great's bloodline is Paul I → Peter III → Anna Petrovna → Peter the Great, so his number should be $((1 \times 2) \times 2 + 1) \times 2 = 10$.
 
-One can also find the number of a particular ancestor only knowing the genders of their descendants. For example, Peter the Great's bloodline is Paul I → Peter III → Anna Petrovna → Peter the Great, so his number should be $((1 \times 2) \times 2 + 1) \times 2 = 10$.
+**In computer science**, this enumeration has been widely used for implicit (pointer-free) implementation of heaps, segment trees, and other binary tree structures, where instead of names it stores underlying array items.
 
-**In computer science**, this enumeration has been widely used for implicit (i. e. pointer-free) implementation of heaps, segment trees, and other binary tree structures, where instead of names it stores underlying array items.
-
-This is how this layout will look when applied to binary search:
+This is how this layout looks when applied to binary search:
 
 ![](../img/eytzinger.png)
 
-You can immediately see how its temporal locality is better (in fact, theoretically optimal) as the elements closer to the root are closer to the beginning of the array, and thus are more likely to be fetched from cache.
+When searching, we just need to start from the first element of the array, and on each iteration jump to either $2 k$ or $(2k + 1)$ depending on how the comparison went:
 
 ![](../img/eytzinger-search.png)
+
+You can immediately see how its temporal locality is better (and, in fact, theoretically optimal) as the elements closer to the root are closer to the beginning of the array, and thus are more likely to be fetched from cache.
+
 ![](../img/eytzinger-heat.png)
+
+Another way to look at it is that we write every even-indexed element to the end of the new array, then write every even-indexed element of the remaining ones right before them, and so on, until we place the root as the first element. 
 
 ### Construction
 
-Here is a function that constructs Eytzinger array by traversing the original search tree. 
-
-It takes two indexes $i$ and $k$—one in the original array and one in constructed—and recursively goes to two branches until a leaf node is reached, which could simply be checked by asserting $k \leq n$ as Eytzinger array should have same number of items.
+To construct the Eytzinger array, we could do this even-odd [filtering](/hpc/simd/shuffing/#permutations-and-lookup-tables) $O(\log n)$ times — and, perhaps, this is the fastest approach — but for brevity, we will instead build it by traversing the original search tree:
 
 ```c++
-int a[n], b[n + 1]; // <- change name
+int a[n], t[n + 1]; // the original sorted array and the eytzinger array we build
+//              ^ we need one element more because of one-based indexing
 
 void eytzinger(int k = 1) {
-    static int i = 0; // <- careful running it multiple times
+    static int i = 0; // <- careful running it on multiple arrays
     if (k <= n) {
         eytzinger(2 * k);
-        t[k] = _a[i++];
+        t[k] = a[i++];
         eytzinger(2 * k + 1);
     }
 }
 ```
 
-Despite being recursive, this is actually a really fast implementation as all memory reads are sequential.
+It seems complicated, but to assure its correctness, we only need three statements:
 
-Note that the first element is left unfilled and the whole array is essentially 1-shifted. This will actually turn out to be a huge performance booster.
+- `k <= n`: it writes exactly $n$ elements.
+- `i++`: the elements it writes are increasing elements from the original array. 
+- Before we write the element at node `k`, we write out all its preceding elements.
+
+<!--
+
+This function maintains two indexes `i` and `k`, corresponding to the current elements in the original and the Eytzinger array, and recursively goes to two .
+
+It takes two indexes $i$ and $k$—one in the original array and one in constructed—and recursively goes to two branches until a leaf node is reached, which could simply be checked by asserting $k \leq n$ as Eytzinger array should have same number of items.
+
+Despite being recursive, it is actually quite fast as all memory reads are sequential.
+
+-->
+
+Note that the Eytzinger array is one-indexed — later this will be important for performance. You can put in the zeroth element the value that you want returned if the lower bound doesn't exist (similar to `a.end()` for `std::lower_bound`).
 
 ### Search Implementation
 
