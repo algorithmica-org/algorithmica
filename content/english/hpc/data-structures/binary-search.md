@@ -13,10 +13,6 @@ In this article, we focus on such fundamental algorithm — binary search — an
 
 - *Branchless* binary search that is up to 3x faster on *small* arrays and can act as a drop-in replacement to `std::lower_bound`.
 - *Eytzinger* binary search that rearranges the elements of a sorted array in a cache-friendly way of is also 3x faster on small array and 2x faster on RAM-backed arrays.
-- *S-tree*: an approach based on the implicit (pointer-free) B-layout accelerated with SIMD operations to perform search efficiently while using less memory bandwidth and is ~8x faster on small arrays and 5x faster on large arrays.
-- *S+ tree*: an approach similarly based on the B+ layout and achieves up to 15x faster for small arrays and ~7x faster on large arrays. Uses 6-7% of the array memory.
-
-The last two approaches use SIMD, which technically disqualifies it from being binary search. This is technically not a drop-in replacement, since it requires some preprocessing, but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing. But otherwise they are effectively drop-in replacements to `std::lower_bound`.
 
 It performs slightly worse on array sizes that fit lower layers of cache, but in low-bandwidth environments it can be up to 3x faster (or 7x faster than `std::lower_bound`). GCC sucked on all benchmarks, so we will mostly be using Clang (10.0). The CPU is a Zen 2, although the results should be transferrable to other platforms, including most Arm-based chips.
 
@@ -419,6 +415,10 @@ But that was a small detour. Let's get back to optimizing for *large* arrays.
 The prefetching technique allows us to read up to 4 elements ahead, but it doesn't really come for free — we are effectively trading off excess memory [bandwidth](/hpc/cpu-cache/bandwidth) for reduced [latency](/hpc/cpu-cache/latency). If you run more than one instance at a time, or just any other memory-intensive computation in the background, it will significantly [affect](/hpc/cpu-cache/sharing) the performance of the benchmark.
 
 We can do better — instead of fetching 4 cache lines at a time, we could fetch 4 times *fewer* cache lines.
+
+Note that this method, while being great for single-threaded world, is unlikely to make its way into database and heavy multi-threaded applications, because it sacrifices bandwidth to achieve low latency.
+
+[Part 2](https://algorithmica.org/en/b-tree) explores efficient implementation of implicit static B-trees in bandwidth-constrained environment.
 
 ## Acknowledgements
 

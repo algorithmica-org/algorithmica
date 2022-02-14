@@ -4,11 +4,18 @@ weight: 2
 draft: true
 ---
 
+This is a follow up on the [previous article](../binary-search) about optimizing binary search. For more context, go there first.
+
+- *S-tree*: an approach based on the implicit (pointer-free) B-layout accelerated with SIMD operations to perform search efficiently while using less memory bandwidth and is ~8x faster on small arrays and 5x faster on large arrays.
+- *S+ tree*: an approach similarly based on the B+ layout and achieves up to 15x faster for small arrays and ~7x faster on large arrays. Uses 6-7% of the array memory.
+
+The last two approaches use SIMD, which technically disqualifies it from being binary search. This is technically not a drop-in replacement, since it requires some preprocessing, but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing. But otherwise they are effectively drop-in replacements to `std::lower_bound`.
+
+The more you think about the name. "S-tree" and "S+ tree" respectively. There is a an obscure data structures in computer vision. We even have more claim to it than Boer had on B-tree: it is succinct, static, simd, my name, my surname.
+
 ## B-Tree Layout
 
-Attentive readers could notice that the title of this article doesn't say "binary search".
-
-The title of this article doesn't say "binary search". We aren't limited to fetching one element at a time and comparing it.
+We aren't limited to fetching one element at a time and comparing it.
 
 B-trees are basically $(k+1)$-ary trees, meaning that they store $k$ elements in each node and choose between $(k+1)$ possible branches instead of 2.
 
@@ -16,9 +23,7 @@ They are widely used for indexing in databases, especially those that operate on
 
 To perform static binary searches, one can implement a B-tree in an implicit way, i. e. without actually storing any pointers and spending only $O(1)$ additional memory, and $k$ could be made equal to the cache line size so that each node request fetches exactly one cache line.
 
-![](../img/b-tree.png)
-
-Turns out, they have the same rate of growth but sligtly larger compute-tied constant. While the latter is explainable (our while loop only has like 5 instructions; can't outpace that), the former is surprising.
+![A B-tree of order 4](../img/b-tree.jpg)
 
 Let's assume that arithmetic costs nothing and do simple cache block analysis:
 
@@ -27,10 +32,6 @@ Let's assume that arithmetic costs nothing and do simple cache block analysis:
 * The B-tree makes $\frac{\log_{17} n}{\log_2 n} = \frac{\log n}{\log 17} \frac{\log 2}{\log n} = \frac{\log 2}{\log 17} \approx 0.245$ memory access per each request of binary search, i. e. it requests ~4 times less cache lines to fetch
 
 This explains why they have roughly the same slope.
-
-Note that this method, while being great for single-threaded world, is unlikely to make its way into database and heavy multi-threaded applications, because it sacrifices bandwidth to achieve low latency.
-
-[Part 2](https://algorithmica.org/en/b-tree) explores efficient implementation of implicit static B-trees in bandwidth-constrained environment.
 
 ### B-tree layout
 
@@ -462,9 +463,9 @@ However, they perform better:
 
 ![](../img/search-all.svg)
 
-This [StackOverflow answer](https://stackoverflow.com/questions/20616605/using-simd-avx-sse-for-tree-traversal) by Cory Nelson is where I took the permuted SIMD routine.
+### Acknowledgements
 
-The more you think about the name. "S-tree" and "S+ tree" respectively. There is a an obscure data structures in computer vision. We even have more claim to it than Boer had on B-tree: it is succinct, static, simd, my name, my surname.
+This [StackOverflow answer](https://stackoverflow.com/questions/20616605/using-simd-avx-sse-for-tree-traversal) by Cory Nelson is where I took the permuted SIMD routine.
 
 <!--
 
