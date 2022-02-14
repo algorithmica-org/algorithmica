@@ -95,8 +95,8 @@ along with a "tag" information which helps identify which block it is
 Performance issues caused by cache associativity effects arise with remarkable frequency in algorithms because, for multiple reasons, programmers just love using powers of two when indexing arrays:
 
 - It is easier to calculate the address for multi-dimensional array accesses if the last dimension is a power of two, as it only requires a binary shift instead of a multiplication.
-- It is easier to calculate modulo a power of two, as it can be done with a single bitwise AND.
+- It is easier to calculate modulo a power of two, as it can be done with a single bitwise "and".
 - It is convenient and often even necessary to use power-of-two problem sizes in divide-and-conquer algorithms.
-- It is the smallest integer exponent, so using the sequence of increasing powers of two as problem sizes are a popular choice when benchmarking memory-bound algorithms.
+- It is the smallest integer exponent, so using the sequence of increasing powers of two as problem sizes are a popular choice when benchmarking memory-bound algorithms. (Also, powers of ten are by transitivity divisible by a slightly lower power of two.)
 
 Luckily, such issues are more of an anomaly rather than serious problems. The solution is usually simple: avoid iterating in powers of two, make the last dimensions of multi-dimensional arrays a slightly different size, or use any other method to insert "holes" in the memory layout.
