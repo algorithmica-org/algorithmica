@@ -371,25 +371,25 @@ The performance on large arrays improves 3-4x from the previous version and ~2x 
 
 ![](../img/search-eytzinger-prefetch.svg)
 
-This trick allows us to overlap 4 requests at a time. We are trading off memory bandwidth for latency.
-
-Note that the last prefetch is not needed, and may be even outside of the memory region allocated for the program. On most modern CPUs, invalid prefetch instructions get converted into no-ops, but on some platforms this may cause a slowdown.
-
-Hardware prefetching will fetch its neighbours:
+What we essentially do is we hide the latency by prefetching 4 steps ahead; if the compute didn't matter, we would expect a ~4x speedup. We can also try to prefetch further than that, and we don't even have to use more prefetch instructions for that — we can request only the first cache line and rely on the hardware to prefetch its neighbors:
 
 ```c++
 __builtin_prefetch(t + k * 32);
 ```
 
+It may or may not improve actual performance — it heavily depends on the hardware.
+
+Also, note that the last few prefetch requests are actually not needed, and in fact, they may be even be outside of the memory region allocated for the program. On most modern CPUs, invalid prefetch instructions get converted into no-ops, so it isn't a problem, but on some platforms this may cause a slowdown, so it may make sense, for example, to split off the last ~4 iterations from the loop to try to remove them.
+
 ### Removing the Last Branch
 
-The finishing touch. Did you notice the bumpiness of eytzinger search? This isn't random noise — let's zoom in:
+Just the finishing touch. Did you notice the bumpiness of eytzinger search? This isn't random noise — let's zoom in:
 
 ![](../img/search-eytzinger-small.svg)
 
-There is a period of a power of two and The running time is ~10ns higher for.
+The latency is ~10ns higher for the array sizes in the form of $1.5 \cdot 2^k$. These are mispredicted branches from the loop itself — the last branch, to be exact. When the array size is far from a power of two, it is hard to predict whether the loop will make $\lfloor \log_2 n \rfloor$ or $\lfloor \log_2 n \rfloor + 1$ iterations, so we have a 50% change to suffer exactly one branch mispredict.
 
-These 10ns are the mispredicted branches for arrays. The last branch, to be exact.
+We can get rid of that last branch by always executing a constant minimum number of iterations and then using predication to optionally make the last comparison against some dummy element that is guaranteed to be less than $x$ and will be canceled:
 
 ```c++
 t[0] = -1; // an element that is less than x
@@ -414,11 +414,15 @@ The graph is now smooth and almost doesn't lose to the branchless binary search 
 
 ![](../img/search-eytzinger-branchless.svg)
 
-That was a small detour. Let's move on.
+But that was a small detour. Let's get back to optimizing for *large* arrays.
 
-The title of this article doesn't say "binary search". We aren't limited to fetching one element at a time and comparing it. We can do better.
+The prefetching technique allows us to read up to 4 elements ahead, but it doesn't really come for free — we are effectively trading off excess memory [bandwidth](/hpc/cpu-cache/bandwidth) for reduced [latency](/hpc/cpu-cache/latency). If you run more than one instance at a time, or just any other memory-intensive computation in the background, it will significantly [affect](/hpc/cpu-cache/sharing) the performance of the benchmark.
+
+We can do better — instead of fetching 4 cache lines at a time, we could fetch 4 times *fewer* cache lines.
 
 ## B-Tree Layout
+
+The title of this article doesn't say "binary search". We aren't limited to fetching one element at a time and comparing it.
 
 B-trees are basically $(k+1)$-ary trees, meaning that they store $k$ elements in each node and choose between $(k+1)$ possible branches instead of 2.
 
