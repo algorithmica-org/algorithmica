@@ -266,27 +266,25 @@ void eytzinger(int k = 1) {
 }
 ```
 
-It seems complicated, but to assure its correctness, we only need three statements:
+This function takes the current node number `k`, recursively writes out all elements to the left of the middle of the search interval, writes out the current element we'd compare against, and then recursively writes out all the elements on the right. It seems a bit complicated, but to convince ourselves that it works, we only need three observations:
 
-- `k <= n`: it writes exactly $n$ elements.
-- `i++`: the elements it writes are increasing elements from the original array. 
-- Before we write the element at node `k`, we write out all its preceding elements.
+- It writes exactly `n` elements, as we enter the body of `if` for each `k` from `1` to `n` just once.
+- It writes out sequential elements from the original array, as it increments the `i` pointer each time.
+- By the time we write the element at node `k`, we have already written all the elements to its left (exactly `i`).
 
-<!--
-
-This function maintains two indexes `i` and `k`, corresponding to the current elements in the original and the Eytzinger array, and recursively goes to two .
-
-It takes two indexes $i$ and $k$—one in the original array and one in constructed—and recursively goes to two branches until a leaf node is reached, which could simply be checked by asserting $k \leq n$ as Eytzinger array should have same number of items.
-
-Despite being recursive, it is actually quite fast as all memory reads are sequential.
-
--->
+Despite being recursive, it is actually quite fast as all the memory reads are sequential and the memory writes are only in $O(\log n)$ different memory blocks at a time.
 
 Note that the Eytzinger array is one-indexed — later this will be important for performance. You can put in the zeroth element the value that you want returned if the lower bound doesn't exist (similar to `a.end()` for `std::lower_bound`).
 
 ### Search Implementation
 
-We can now descend this array using only indices: we just start with $k=1$ and execute $k := 2k$ if we need to go left and $k := 2k + 1$ if we need to go right. We don't even need to store and recalculate binary search boundaries anymore.
+We can now descend this array using only indices: we just start with $k=1$ and execute $k := 2k$ if we need to go left and $k := 2k + 1$ if we need to go right. We don't even need to store and recalculate the search boundaries anymore. To avoid branching, we can just do this:
+
+```c++
+int k = 1;
+while (k <= n)
+    k = 2 * k + (t[k] < x);
+```
 
 The only problem arises when we need to restore the index of the resulting element, as $k$ may end up not pointing to a leaf node. Here is an example of how that can happen:
 
@@ -299,13 +297,11 @@ eytzinger:  4 2 5 1 6 3 7 8
 4th range:        -          k := 2*k + 1  (=11)
 ```
 
-Here we query array of $[1, …, 8]$ for the lower bound of $x=4$. We compare it against $4$, $2$ and $5$, and go left-right-right and end up with $k = 11$, which isn't even a valid array index.
+Here we query the array of $[1, …, 8]$ for the lower bound of $x=4$. We compare it against $4$, $2$, and $5$, go left-right-right, and end up with $k = 11$, which isn't even a valid array index.
 
-Note that, unless the answer is the last element of the array, we compare $x$ against it at some point, and after we learn that it is not less than $x$, we start comparing $x$ against elements to the left, and all these comparisons will evaluate true (i. e. leading to the right). Hence, the solution to restoring the resulting element is to cancel some number of right turns.
+The trick is to notice that, unless the answer is the last element of the array, we compare $x$ against it at some point, and after we've learned that it is not less than $x$, we start comparing $x$ against elements to the left, and all these comparisons evaluate true (i. e. leading to the right). Therefore, to restore the answer, we just need to "cancel" some number of right turns.
 
-This can be done in an elegant way by observing that the right turns are recorded in the binary notation of $k$ as 1-bits, and so we just need to find the number of trailing ones in the binary notation and right-shift $k$ by exactly that amount.
-
-To do this we can invert the number (`~x`) and call "find first set" instruction available on most systems. In GCC, the corresponding builtin is `__builtin_ffs`.
+This can be done in an elegant way by observing that the right turns are recorded in the binary representation of $k$ as 1-bits, and so we just need to find the number of trailing ones in the binary representation and right-shift $k$ by exactly that amount. To do this, we can invert the number (`~x`) and call the "find first set" instruction:
 
 ```c++
 int lower_bound(int x) {
@@ -317,19 +313,53 @@ int lower_bound(int x) {
 }
 ```
 
+We run it, and… well, it doesn't look *that* good:
+
 ![](../img/search-eytzinger.svg)
+
+The latency on smaller arrays is on par with the branchless binary search implementation — which isn't surprising as it is just two lines of code — but it starts taking off much sooner. This is because now we don't get the advantage of spatial locality: the last 3-4 elements we compare against are not in the same cache line anymore. Yes, the temporal locality is better, but it is enough compensation: the caching of the cold elements is still beneficial.
+
+But there is a way to make it profitable.
 
 ### Prefetching
 
-We could prefetch not just its 2 children.
+To hide memory latency, we can use software prefetching similar to how we did for branchless binary search. But instead of issuing two separate prefetch instructions for the left and right child nodes, we can notice that they are actually neighbors in the Eytzinger array: one has index $2 k$ and the other $(2k + 1)$, so they are likely in the same cache line, and we can use just one instruction.
+
+In fact, this observation extends to the grand-children of node $k$ — they are also stored sequentially: 
+
+```
+2 * 2 * k           = 4 * k
+2 * 2 * k + 1       = 4 * k + 1
+2 * (2 * k + 1)     = 4 * k + 2
+2 * (2 * k + 1) + 1 = 4 * k + 3
+```
+
+<!--
+\begin{aligned}
+   2 \cdot 2 \cdot k       &= 4 \cdot k
+\\ 2 \cdot 2 \cdot k + 1   &= 4 \cdot k + 1
+\\ 2 \cdot (2 \cdot k) + 1 &= 4 \cdot k + 2
+\\ 2 \cdot (2 \cdot k + 1) + 1 &= 4 \cdot k + 3
+\end{aligned}
+-->
+
+So their cache line can also be fetched with one instruction. Interesting… what if we continue this, and instead of fetching direct children, we fetch ahead as many descendants as we can cramp into one cache line? That would be $\frac{64}{4} = 16$ elements, our grand-grand-grandchildren with indices from $16k$ to $(16k + 15)$.
+
+Now, if we prefetch just one of these 16 elements, we will probably only get some but not all of them, as they may cross a cache line boundary. We can prefetch the first *and* the last element, but to get away with just one request, we can observe that the index of the first element, $16k$, is divisible by $16$ — and therefore its memory address will be the base address of the array plus something divisible by $16 \cdot 4 = 64$, the cache line size. If the array were to begin on a cache line, then these $16$ grand-gran-grandchildren elements will be guaranteed to be on a single cache line.
+
+Therefore, we just need to [align](/hpc/cpu-cache/alignment) the array:
 
 ```c++
 t = (int*) std::aligned_alloc(64, 4 * (n + 1));
+```
 
+And then prefetch the element indexed $16 k$ in the main loop:
+
+```c++
 int lower_bound(int x) {
     int k = 1;
     while (k <= n) {
-        __builtin_prefetch(t + k * B);
+        __builtin_prefetch(t + k * 16);
         k = 2 * k + (t[k] < x);
     }
     k >>= __builtin_ffs(~k);
@@ -337,15 +367,19 @@ int lower_bound(int x) {
 }
 ```
 
+The performance on large arrays improves 3-4x from the previous version and ~2x compared to `std::lower_bound`. Not bad for a just two more lines of code:
+
+![](../img/search-eytzinger-prefetch.svg)
+
+This trick allows us to overlap 4 requests at a time. We are trading off memory bandwidth for latency.
+
 Note that the last prefetch is not needed, and may be even outside of the memory region allocated for the program. On most modern CPUs, invalid prefetch instructions get converted into no-ops, but on some platforms this may cause a slowdown.
 
 Hardware prefetching will fetch its neighbours:
 
 ```c++
-__builtin_prefetch(t + k * B * 2);
+__builtin_prefetch(t + k * 32);
 ```
-
-![](../img/search-eytzinger-prefetch.svg)
 
 ### Removing the Last Branch
 
@@ -358,11 +392,9 @@ There is a period of a power of two and The running time is ~10ns higher for.
 These 10ns are the mispredicted branches for arrays. The last branch, to be exact.
 
 ```c++
-t[0] = -1; // an element that is less than X
+t[0] = -1; // an element that is less than x
 iters = std::__lg(n + 1);
-```
 
-```c++
 int lower_bound(int x) {
     int k = 1;
 
