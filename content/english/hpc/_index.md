@@ -127,12 +127,13 @@ Planned table of contents:
  11.14. Matrix Multiplication
 12. Data Structure Case Studies
  12.1. Binary Search
- 12.2. Segment Trees
-(12.3. B-Trees)
-(12.4. Range Minimum Query)
- 12.5. Hash Tables
-(12.6. Bitmaps)
-(12.7. Probabilistic Filters)
+ 12.2. Static B-Trees
+ 12.3. Segment Trees
+(12.4. Search Trees)
+(12.5. Range Minimum Query)
+ 12.6. Hash Tables
+(12.7. Bitmaps)
+(12.8. Probabilistic Filters)
 ```
 
 Among cool things that we will speed up:

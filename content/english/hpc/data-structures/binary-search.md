@@ -1,5 +1,5 @@
 ---
-title: Searching in Sorted Arrays
+title: Binary Search
 weight: 1
 ---
 
