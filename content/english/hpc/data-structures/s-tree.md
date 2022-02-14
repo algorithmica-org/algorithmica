@@ -463,6 +463,16 @@ However, they perform better:
 
 ![](../img/search-all.svg)
 
+It may or may not be beneficial to reverse the order in which layers are stored. I only implemented right-to-left because that was easier to code.
+
+My next priorities is to adapt it to segment trees, which I know how to do, and to B-trees, which I don't exactly know how to do. But comparing to `std::set` hints that there may be up to 30x improvements:
+
+![](../img/search-set-relative-all.svg)
+
+A ~15x improvement is definitely worth it — and the memory overhead is not large, as we only need to store pointers (indices, actually) for internal nodes. It may be higher, because we need to fetch two separate memory blocks, or lower, because we need to handle updates somehow. Either way, this will be an interesting optimization problem.
+
+The problem has more dimensions.
+
 ### Acknowledgements
 
 This [StackOverflow answer](https://stackoverflow.com/questions/20616605/using-simd-avx-sse-for-tree-traversal) by Cory Nelson is where I took the permuted SIMD routine.
