@@ -165,16 +165,20 @@ This makes the performance on large arrays roughly the same, although the graph 
 
 ![](../img/search-branchless-prefetch.svg)
 
-We can also fetched ahead by more than one layer, but the number of fetches we would need will grow exponentially. Instead, we will try a different approach to optimize memory operations.
+We can also fetch ahead by more than one layer, but the number of fetches we would need will grow exponentially. Instead, we will try a different approach to optimize memory operations.
 
 ## Optimizing the Layout
 
-How good is the [data locality](/hpc/external-memory/locality/) of a binary search?
+The memory requests we perform during binary search form a very specific access pattern:
+
+![](../img/binary-search.png)
+
+How likely it is that the elements on each request are cached? How good is their [data locality](/hpc/external-memory/locality/)?
 
 - *Spatial locality* seems to be good for the last 3-4 requests that are likely to be on the same [cache line](/hpc/cpu-cache/cache-lines) — but all the previous requests require huge memory jumps.
 - *Temporal locality* seems to be good for the first dozen or so requests — there aren't that many different comparison sequences of this length, so we will be comparing against the same middle elements over and over, which are likely to be cached.
 
-To illustrate how important the second type of cache sharing is, let's try:
+To illustrate how important the second type of cache sharing is, let's try to pick the element we will compare to on each iteration randomly among the elements of the search interval, instead of the middle one:
 
 ```c++
 int lower_bound(int x) {
@@ -190,36 +194,23 @@ int lower_bound(int x) {
 }
 ```
 
-The is around ~1.3x.[^limit]
+Theoretically[^limit], this randomized binary search is expected to do ~1.35x more comparisons than the normal one, but in practice, the running time goes ~6x on large arrays:
 
-[^limit]: [algorithm](https://gist.github.com/sslotin/4b7193041b01e454615f50d237485c71). By the way, if someone who remembers calculus is reading this, try to find the limit of that.
+[^limit]: I wrote an [small program](https://gist.github.com/sslotin/4b7193041b01e454615f50d237485c71) for calculating the expected number of comparisons required. By the way, if someone who remembers calculus is reading this, please try to find the limit of the ratio of the number of comparisons a random binary search and a normal one needs, and share how you did that. Although probably useless, it seems like an interesting problem.
 
 ![](../img/search-random.svg)
 
-$2^{20}$ works in 360ns, while $(2^{20} + 123)$ works in ~300ns: a 20% difference.
+This isn't just caused by the `rand()` call being slow: you can clearly see the point on the L2-L3 boundary where memory latency outweighs the random number generation and [modulo](/hpc/arithmetic/division). The performance degrades because all of the fetched elements are likely uncached, and not just some small suffix of them.
 
-Another often neglected effect is that of cache associativity, which can adversely
-effect binary search when the the array length is a large power of 2. In a c-way associativecache, the top $\log(n / C)$ levels of the implicit search tree must all share the same c cache lines. If $\log(n/C) > c$, this effectively means that the cache effectively has size only c.
+Another potential negative effect is that of [cache associativity](/hpc/cpu-cache/associativity). If the array size is a multiple of a large power of two, then the indices of these "hot" elements will also be divisible by some large powers of two and map to the same cache line, kicking each other out. For example, binary searching over arrays of size $2^{20}$ takes about ~360ns per query, while searching over arrays of size $(2^{20} + 123)$ takes ~300ns — a 20% difference. There are [ways](https://en.wikipedia.org/wiki/Fibonacci_search_technique) to fix this problem, but to not get distracted from more pressing matters, we are just going to ignore it: all array sizes we use are in the form of $\lfloor 1.17^k \rfloor$ for integer $k$ so that any cache side effects are unlikely.
 
-But it isn't very efficient: in the same hot cache line that we store element $\lfloor n/2 \rfloor$, we also store the element $\lfloor n/2 \rfloor + 1$, which is the last element fetched.
+The real problem with our memory layout is that it doesn't make the most efficient use of temporal locality because it groups hot and cold elements together. For example, we likely store the element $\lfloor n/2 \rfloor$, which we request the first thing on each query, in the same cache line with $\lfloor n/2 \rfloor + 1$, which we almost never request (sometimes literally never — if it is the first element in a search range of three, and it is indeed the lower bound, we just compare against the middle and deduce it has to be the first element without ever even fetching it).
 
-We use data points of $\lfloor 1.17^k \rfloor$ to swipe that issue under the rug.
-
-So, to sum up: ideally, we'd want some layout that is both blocks, and higher-order blocks to be placed in groups, and also to be capable.
-
-We can overcome this by enumerating and permuting array elements in a more cache-friendly way. The numeration we will use is actually half a millennium old, and chances are you already know it.
-
-First ~10 queries may be cached (frequently accessed: temporal locality)
-Last 3-4 queries may be cached (may be in the same cache line: data locality)
-But that's it. Maybe store elements in a more cache-friendly way?
-
-![](../img/binary-search.png)
-
-When we find lower bound of $x$ in a sorted array by binary searching, the main problem is that its memory accesses pattern is neither temporary nor spatially local. 
-
-For example, element $\lfloor \frac n 2 \rfloor$ is accessed very often (every search) and element $\lfloor \frac n 2 \rfloor + 1$ is not, while they are probably occupying the same cache line. In general, only the first 3-5 reads are temporary local and only the last 3-4 reads are spatially local, and the rest are just random memory accesses.
+Here is the heatmap visualizing the expected frequency of comparisons for a 31-element array:
 
 ![](../img/binary-heat.png)
+
+So, ideally, we'd want a memory layout where hot elements are grouped with hot elements, and cold elements are grouped with cold ones. And we can achieve this if we permute the elements of the array in a more cache-friendly way. The numeration we will use is actually half a millennium old, and chances are, you already know it.
 
 ### Eytzinger Layout
 
@@ -329,6 +320,10 @@ int lower_bound(int x) {
     return t[k];
 }
 ```
+
+Note that the last prefetch is not needed, and may be even outside of the memory region allocated for the program. On most modern CPUs, invalid prefetch instructions get converted into no-ops, but on some platforms this may cause a slowdown.
+
+Hardware prefetching will fetch its neighbours:
 
 ```c++
 __builtin_prefetch(t + k * B * 2);
