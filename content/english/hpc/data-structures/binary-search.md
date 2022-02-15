@@ -11,7 +11,7 @@ Instead, the most fascinating showcases of performance engineering are multifold
 
 In this article, we focus on such fundamental algorithm — *binary search* — and implement two of its variants that are, depending on the problem size, up to 4x faster than `std::lower_bound`, while being under just 15 lines of code.
 
-The first algorithm achieves that by removing [branches](/hpc/pipelining/branching), and the second optimizes the memory layout to achieve better [cache system](/hpc/cpu-cache) performance. This technically disqualifies it from being a drop-in replacement for `std::lower_bound` as it needs to permute the elements of the array before it can start answering queries — but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing.
+The first algorithm achieves that by removing [branches](/hpc/pipelining/branching), and the second also optimizes the memory layout to achieve better [cache system](/hpc/cpu-cache) performance. This technically disqualifies it from being a drop-in replacement for `std::lower_bound` as it needs to permute the elements of the array before it can start answering queries — but I can't recall a lot of scenarios where you obtain a sorted array but can't afford to spend linear time on preprocessing.
 
 <!--
 
