@@ -3,20 +3,24 @@ title: Binary Search
 weight: 1
 ---
 
-While improving the speed of user-facing applications is the end goal of performance engineering, people don't really get excited over 5-10% improvements in some databases. Yes, this is what software engineers are paid for, but these types of optimizations tend to be too intricate and specific to the system to be generalizable to other software.
+While improving the speed of user-facing applications is the end goal of performance engineering, people don't really get excited over 5-10% improvements in some databases. Yes, this is what software engineers are paid for, but these types of optimizations tend to be too intricate and system-specific to be readily generalized to other software.
 
-Rather, the most fascinating showcases of performance engineering are multifold optimizations of textbook algorithms. The kinds that everybody knows, and are so deemed simple that it would never occur to try to optimize them to begin with. These types of optimizations are simple and instructive, and can very much be adopted elsewhere. And they are surprisingly not as rare as you'd think.
+Instead, the most fascinating showcases of performance engineering are multifold optimizations of textbook algorithms: the kinds that everybody knows and deemed so simple that it would never even occur to try to optimize them in the first place. These optimizations are simple and instructive and can very much be adopted elsewhere. And they are surprisingly not as rare as you'd think.
 
 <!-- Yet, with remarkable periodicity, these can be optimized to ridiculous levels of performance. -->
 
-In this article, we focus on such fundamental algorithm — binary search — and implement several algorithms that significantly improve on its performance:
+In this article, we focus on such fundamental algorithm — *binary search* — and implement two of its variants that are up to 4x faster than `std::lower_bound`, depending on the problem size, while being under just 15 lines of code.
 
-- *Branchless* binary search that is up to 3x faster on *small* arrays and can act as a drop-in replacement to `std::lower_bound`.
-- *Eytzinger* binary search that rearranges the elements of a sorted array in a cache-friendly way of is also 3x faster on small array and 2x faster on RAM-backed arrays.
+The first algorithm achieves that by removing [branches](/hpc/pipelining/branching), and the second optimizes the memory layout to achieve better [cache system](/hpc/cpu-cache) performance. This technically disqualifies it from being a drop-in replacement for `std::lower_bound` as it needs to permute the elements of the array before it can start answering queries — but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing.
 
-This is technically not a drop-in replacement, since it requires some preprocessing, but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing.
+<!--
 
-The usual disclaimer: the CPU is a [Zen 2](https://www.7-cpu.com/cpu/Zen2.html) and the RAM is a [DDR4-2666](http://localhost:1313/hpc/cpu-cache/). The compiler we will be using by default is Clang 10. The results may be slightly different on other platforms.
+- *Branchless binary search* that is up to 3x faster on *small* arrays and can act as a drop-in replacement to `std::lower_bound`.
+- *Eytzinger binary search* that rearranges the elements of a sorted array in a cache-friendly way of is also 3x faster on small arrays and 2x faster on large arrays.
+
+-->
+
+The usual disclaimer: the CPU is a [Zen 2](https://www.7-cpu.com/cpu/Zen2.html), the RAM is a [DDR4-2666](http://localhost:1313/hpc/cpu-cache/), and the compiler we will be using by default is Clang 10. The performance on your machine may be different, so I highly encourage to [go and test it](https://godbolt.org/z/14rd5Pnve) for yourself.
 
 <!--
 
@@ -93,7 +97,7 @@ __lower_bound(_ForwardIterator __first, _ForwardIterator __last, const _Tp& __va
 }
 ```
 
-If compiler is successful in removing the abstractions, it compiles to roughly the same machine code and yields roughly the same performance, which [expectedly](/hpc/cpu-cache/latency) varies greatly with the array size:
+If the compiler is successful in removing the abstractions, it compiles to roughly the same machine code and yields roughly the same average latency, which [expectedly](/hpc/cpu-cache/latency) grows with the array size:
 
 ![](../img/search-std.svg)
 
@@ -118,16 +122,16 @@ If you run `std::lower_bound` with [perf](/hpc/profiling/events), you'll see tha
   1.11 │    ↑ jg     35
 ```
 
-This [pipeline stall](/hpc/) stops the algorithm from progressing, and it is mainly caused by two [factors](/hpc/pipelining/hazards):
+This [pipeline stall](/hpc/) stops the search from progressing, and it is mainly caused by two [factors](/hpc/pipelining/hazards):
 
-- We suffer a *control hazard* because we have a branch that is impossible to predict (both queries and keys are uniformly random), and the processor has to flush the pipeline and halt for 10-15 cycles to fill it back.
-- We suffer a *data hazard* because we have to [wait](/hpc/cpu-cache/latency) for the preceding comparison to complete — which in turn waits for one of its operands to be fetched from the memory, which may take up to hundreds of cycles, depending on where in the cache hierarchy the data is located.
+- We suffer a *control hazard* because we have a [branch](/hpc/pipelining/branching) that is impossible to predict (queries and keys are drawn independently at random), and the processor has to halt for 10-15 cycles to flush the pipeline and fill it back on each branch mispredict.
+- We suffer a *data hazard* because we have to wait for the preceding comparison to complete, which in turn waits for one of its operands to be fetched from the memory — and it [may take](/hpc/cpu-cache/latency) anywhere between 0 and 300 cycles, depending on where it is located.
 
 Now, let's try to get rid of these obstacles one by one.
 
 ## Removing Branches
 
-We can replace branching with [predication](/hpc/pipelining/branchless). For that, we need to adopt the STL approach and rewrite the loop using the the first element and the size of the search interval instead of its first and last element. This way we only need to update the first element of the search interval with a `cmov` instruction and halve its size on each iteration:
+We can replace branching with [predication](/hpc/pipelining/branchless). To do this, we need to adopt the STL approach and rewrite the loop using the first element and the size of the search interval — instead of its first and last element. This way we only need to update the first element of the search interval with a `cmov` instruction and halve its size on each iteration:
 
 ```c++
 int lower_bound(int x) {
@@ -141,17 +145,17 @@ int lower_bound(int x) {
 }
 ```
 
-Note that this loop is not always equivalent to the standard binary search — it always rounds *up* the size of the search interval, so it accesses slightly different elements and may perform one comparison more than what is needed. This is done to make the number of iterations constant and remove the need for branching completely, although it does require a weird `(*base < x)` check at the end.
+Note that this loop is not always equivalent to the standard binary search — it always rounds *up* the size of the search interval, so it accesses slightly different elements and may perform one comparison more than what is needed. We do this to make the number of iterations constant and remove the need for branching completely, although it does require an awkward `(*base < x)` check at the end.
 
-This trick is very fragile to compiler optimizations. It doesn't make a difference on Clang as for some reason, it replaces the ternary operator with a branch anyway. But it works fine on GCC (9.3), yielding a 2.5-3x improvement on small arrays:
+As typical for predication, this trick is very fragile to compiler optimizations. It doesn't make a difference on Clang — for some reason, it replaces the ternary operator with a branch anyway — but it works fine on GCC (9.3), yielding a 2.5-3x improvement on small arrays:
 
 ![](../img/search-branchless.svg)
 
-One interesting detail is that it performs worse on large arrays. This is weird: the total delay is dominated by the RAM latency, and since it does roughly the same memory accesses, so it should be the same or slightly better.
+One interesting detail is that it performs worse on large arrays. It seems weird: the total delay is dominated by the RAM latency, and since it does roughly the same memory accesses as the standard binary search, it should be roughly the same or even slightly better.
 
-The real question you need to ask is not why the branchless implementation is worse, but why the branchy version is better. This happens because it [speculates](/hpc/pipelining/branching/) on one of the branches and starts fetching either the left or the right key before it is confirmed that it is the right one, which effectively acts as implicit [prefetching](/hpc/cpu-cache/prefetching).
+The real question you need to ask is not why the branchless implementation is worse but why the branchy version is better. It happens because when you have branching, the CPU can [speculate](/hpc/pipelining/branching/) on one of the branches and start fetching either the left or the right key before it can even confirm that it is the right one — which effectively acts as implicit [prefetching](/hpc/cpu-cache/prefetching).
 
-For the branchless implementation, this doesn't happen, as `cmov` is treated as every other instruction, and the branch predictor doesn't try to peek into its operands to predict the future. To compensate for this, we can prefetch the data explicitly:
+For the branchless implementation, this doesn't happen, as `cmov` is treated as every other instruction, and the branch predictor doesn't try to peek into its operands to predict the future. To compensate for this, we can prefetch the data in software by explicitly requesting the left and right child key:
 
 ```c++
 int lower_bound(int x) {
@@ -167,11 +171,13 @@ int lower_bound(int x) {
 }
 ```
 
-This makes the performance on large arrays roughly the same, although the graph still grows faster as the branchy version also prefetches "grandchildren", "grand-grandchildren", and so on — although the chance that the prediction is correct diminishes exponentially:
+With prefetching, the performance on large arrays becomes roughly the same:
 
 ![](../img/search-branchless-prefetch.svg)
 
-We can also fetch ahead by more than one layer, but the number of fetches we would need will grow exponentially. Instead, we will try a different approach to optimize memory operations.
+The graph still grows faster as the branchy version also prefetches "grandchildren", "grand-grandchildren", and so on — although the usefulness of each new speculative read diminishes exponentially as the prediction is less and less likely to be correct.
+
+In the branchless version, we could also fetch ahead by more than one layer, but the number of fetches we'd need also grows exponentially. Instead, we will try a different approach to optimize memory operations.
 
 ## Optimizing the Layout
 
@@ -179,10 +185,10 @@ The memory requests we perform during binary search form a very specific access 
 
 ![](../img/binary-search.png)
 
-How likely it is that the elements on each request are cached? How good is their [data locality](/hpc/external-memory/locality/)?
+How likely is it that the elements on each request are cached? How good is their [data locality](/hpc/external-memory/locality/)?
 
-- *Spatial locality* seems to be good for the last 3-4 requests that are likely to be on the same [cache line](/hpc/cpu-cache/cache-lines) — but all the previous requests require huge memory jumps.
-- *Temporal locality* seems to be good for the first dozen or so requests — there aren't that many different comparison sequences of this length, so we will be comparing against the same middle elements over and over, which are likely to be cached.
+- *Spatial locality* seems to be okay for the last 3 to 4 requests that are likely to be on the same [cache line](/hpc/cpu-cache/cache-lines) — but all the previous requests require huge memory jumps.
+- *Temporal locality* seems to be okay for the first dozen or so requests — there aren't that many different comparison sequences of this length, so we will be comparing against the same middle elements over and over, which are likely to be cached.
 
 To illustrate how important the second type of cache sharing is, let's try to pick the element we will compare to on each iteration randomly among the elements of the search interval, instead of the middle one:
 
@@ -204,9 +210,9 @@ int lower_bound(int x) {
 
 ![](../img/search-random.svg)
 
-This isn't just caused by the `rand()` call being slow: you can clearly see the point on the L2-L3 boundary where memory latency outweighs the random number generation and [modulo](/hpc/arithmetic/division). The performance degrades because all of the fetched elements are likely uncached, and not just some small suffix of them.
+This isn't just caused by the `rand()` call being slow. You can clearly see the point on the L2-L3 boundary where memory latency outweighs the random number generation and [modulo](/hpc/arithmetic/division). The performance degrades because all of the fetched elements are unlikely to be cached and not just some small suffix of them.
 
-Another potential negative effect is that of [cache associativity](/hpc/cpu-cache/associativity). If the array size is a multiple of a large power of two, then the indices of these "hot" elements will also be divisible by some large powers of two and map to the same cache line, kicking each other out. For example, binary searching over arrays of size $2^{20}$ takes about ~360ns per query, while searching over arrays of size $(2^{20} + 123)$ takes ~300ns — a 20% difference. There are [ways](https://en.wikipedia.org/wiki/Fibonacci_search_technique) to fix this problem, but to not get distracted from more pressing matters, we are just going to ignore it: all array sizes we use are in the form of $\lfloor 1.17^k \rfloor$ for integer $k$ so that any cache side effects are unlikely.
+Another potential negative effect is that of [cache associativity](/hpc/cpu-cache/associativity). If the array size is a multiple of a large power of two, then the indices of these "hot" elements will also be divisible by some large powers of two and map to the same cache line, kicking each other out. For example, binary searching over arrays of size $2^{20}$ takes about ~360ns per query while searching over arrays of size $(2^{20} + 123)$ takes ~300ns — a 20% difference. There are [ways](https://en.wikipedia.org/wiki/Fibonacci_search_technique) to fix this problem, but to not get distracted from more pressing matters, we are just going to ignore it: all array sizes we use are in the form of $\lfloor 1.17^k \rfloor$ for integer $k$ so that any cache side effects are unlikely.
 
 The real problem with our memory layout is that it doesn't make the most efficient use of temporal locality because it groups hot and cold elements together. For example, we likely store the element $\lfloor n/2 \rfloor$, which we request the first thing on each query, in the same cache line with $\lfloor n/2 \rfloor + 1$, which we almost never request (sometimes literally never — if it is the first element in a search range of three, and it is indeed the lower bound, we just compare against the middle and deduce it has to be the first element without ever even fetching it).
 
@@ -214,15 +220,15 @@ Here is the heatmap visualizing the expected frequency of comparisons for a 31-e
 
 ![](../img/binary-heat.png)
 
-So, ideally, we'd want a memory layout where hot elements are grouped with hot elements, and cold elements are grouped with cold ones. And we can achieve this if we permute the elements of the array in a more cache-friendly way. The numeration we will use is actually half a millennium old, and chances are, you already know it.
+So, ideally, we'd want a memory layout where hot elements are grouped with hot elements, and cold elements are grouped with cold elements. And we can achieve this if we permute the array in a more cache-friendly way by renumbering them. The numeration we will use is actually half a millennium old, and chances are, you already know it.
 
 ### Eytzinger Layout
 
-**Michaël Eytzinger** is a 16th century Austrian nobleman known for his work on genealogy, particularly for a system for numbering ancestors called *ahnentafel* (German for "ancestor table").
+**Michaël Eytzinger** is a 16th-century Austrian nobleman known for his work on genealogy, particularly for a system for numbering ancestors called *ahnentafel* (German for "ancestor table").
 
 Ancestry mattered a lot back then, but writing down that data was expensive. *Ahnentafel* allows displaying a person's genealogy compactly, without wasting extra space by drawing diagrams.
 
-It lists a person's direct ancestors in a fixed sequence of ascent. First, the person theirself is listed as number 1, and then, recursively, for each person numbered $k$, their father is listed as $2k$ and their mother as $(2k+1)$.
+It lists a person's direct ancestors in a fixed sequence of ascent. First, the person themselves is listed as number 1, and then, recursively, for each person numbered $k$, their father is listed as $2k$ and their mother as $(2k+1)$.
 
 Here is the example for [Paul I](https://en.wikipedia.org/wiki/Paul_I_of_Russia), the great-grandson of [Peter the Great](https://en.wikipedia.org/wiki/Peter_the_Great):
 
@@ -236,17 +242,17 @@ Here is the example for [Paul I](https://en.wikipedia.org/wiki/Paul_I_of_Russia)
 
 Apart from being compact, it has some nice properties, like that all even-numbered persons are male and all odd-numbered (possibly except for 1) are female. One can also find the number of a particular ancestor only knowing the genders of their descendants. For example, Peter the Great's bloodline is Paul I → Peter III → Anna Petrovna → Peter the Great, so his number should be $((1 \times 2) \times 2 + 1) \times 2 = 10$.
 
-**In computer science**, this enumeration has been widely used for implicit (pointer-free) implementation of heaps, segment trees, and other binary tree structures, where instead of names it stores underlying array items.
+**In computer science**, this enumeration has been widely used for implicit (pointer-free) implementations of heaps, segment trees, and other binary tree structures — where instead of names, it stores underlying array items.
 
-This is how this layout looks when applied to binary search:
+Here is how this layout looks when applied to binary search:
 
 ![](../img/eytzinger.png)
 
-When searching, we just need to start from the first element of the array, and on each iteration jump to either $2 k$ or $(2k + 1)$ depending on how the comparison went:
+When searching in this layout, we just need to start from the first element of the array, and then on each iteration jump to either $2 k$ or $(2k + 1)$, depending on how the comparison went:
 
 ![](../img/eytzinger-search.png)
 
-You can immediately see how its temporal locality is better (and, in fact, theoretically optimal) as the elements closer to the root are closer to the beginning of the array, and thus are more likely to be fetched from cache.
+You can immediately see how its temporal locality is better (and, in fact, theoretically optimal) as the elements closer to the root are closer to the beginning of the array and thus are more likely to be fetched from the cache.
 
 ![](../img/eytzinger-heat.png)
 
@@ -272,17 +278,17 @@ void eytzinger(int k = 1) {
 
 This function takes the current node number `k`, recursively writes out all elements to the left of the middle of the search interval, writes out the current element we'd compare against, and then recursively writes out all the elements on the right. It seems a bit complicated, but to convince ourselves that it works, we only need three observations:
 
-- It writes exactly `n` elements, as we enter the body of `if` for each `k` from `1` to `n` just once.
-- It writes out sequential elements from the original array, as it increments the `i` pointer each time.
+- It writes exactly `n` elements as we enter the body of `if` for each `k` from `1` to `n` just once.
+- It writes out sequential elements from the original array as it increments the `i` pointer each time.
 - By the time we write the element at node `k`, we have already written all the elements to its left (exactly `i`).
 
-Despite being recursive, it is actually quite fast as all the memory reads are sequential and the memory writes are only in $O(\log n)$ different memory blocks at a time.
+Despite being recursive, it is actually quite fast as all the memory reads are sequential, and the memory writes are only in $O(\log n)$ different memory blocks at a time.
 
-Note that the Eytzinger array is one-indexed — later this will be important for performance. You can put in the zeroth element the value that you want returned if the lower bound doesn't exist (similar to `a.end()` for `std::lower_bound`).
+Note that the Eytzinger array is one-indexed — this will be important for performance later. You can put in the zeroth element the value that you want to be returned in the case when the lower bound doesn't exist (similar to `a.end()` for `std::lower_bound`).
 
 ### Search Implementation
 
-We can now descend this array using only indices: we just start with $k=1$ and execute $k := 2k$ if we need to go left and $k := 2k + 1$ if we need to go right. We don't even need to store and recalculate the search boundaries anymore. To avoid branching, we can just do this:
+We can now descend this array using only indices: we just start with $k=1$ and execute $k := 2k$ if we need to go left and $k := 2k + 1$ if we need to go right. We don't even need to store and recalculate the search boundaries anymore. This simplicity also lets us avoid branching:
 
 ```c++
 int k = 1;
@@ -305,7 +311,7 @@ Here we query the array of $[1, …, 8]$ for the lower bound of $x=4$. We compar
 
 The trick is to notice that, unless the answer is the last element of the array, we compare $x$ against it at some point, and after we've learned that it is not less than $x$, we start comparing $x$ against elements to the left, and all these comparisons evaluate true (i. e. leading to the right). Therefore, to restore the answer, we just need to "cancel" some number of right turns.
 
-This can be done in an elegant way by observing that the right turns are recorded in the binary representation of $k$ as 1-bits, and so we just need to find the number of trailing ones in the binary representation and right-shift $k$ by exactly that amount. To do this, we can invert the number (`~x`) and call the "find first set" instruction:
+This can be done in an elegant way by observing that the right turns are recorded in the binary representation of $k$ as 1-bits, and so we just need to find the number of trailing ones in the binary representation and right-shift $k$ by exactly that amount. To do this, we can invert the number (`~k`) and call the "find first set" instruction:
 
 ```c++
 int lower_bound(int x) {
@@ -321,15 +327,19 @@ We run it, and… well, it doesn't look *that* good:
 
 ![](../img/search-eytzinger.svg)
 
-The latency on smaller arrays is on par with the branchless binary search implementation — which isn't surprising as it is just two lines of code — but it starts taking off much sooner. This is because now we don't get the advantage of spatial locality: the last 3-4 elements we compare against are not in the same cache line anymore. Yes, the temporal locality is better, but it is enough compensation: the caching of the cold elements is still beneficial.
+The latency on smaller arrays is on par with the branchless binary search implementation — which isn't surprising as it is just two lines of code — but it starts taking off much sooner. The reason is that the Eytzinger binary search doesn't get the advantage of spatial locality: the last 3-4 elements we compare against are not in the same cache line anymore, and we have to fetch them separately.
 
-But there is a way to make it profitable.
+If you think about it deeper, you might object that the improved temporal locality should compensate for that. Before, we were using only about $\frac{1}{16}$-th of the cache line to store one hot element, and now we are using all of it, so the effective cache size is larger by a factor of 16, which lets us cover $\log_2 16 = 4$ more first requests.
+
+But if you think about it more, you understand that this isn’t enough compensation. Caching the other 15 elements wasn’t completely useless, and also, the hardware prefetcher could fetch the neighboring cache lines of our requests. If this was one of our last requests, the rest of what we will be reading will probably be cached elements. So actually, the last 6-7 accesses are likely to be cached, not 3-4.
+
+It seems like we did an overall stupid thing switching to this layout, but there is a way to make it worthwhile.
 
 ### Prefetching
 
-To hide memory latency, we can use software prefetching similar to how we did for branchless binary search. But instead of issuing two separate prefetch instructions for the left and right child nodes, we can notice that they are actually neighbors in the Eytzinger array: one has index $2 k$ and the other $(2k + 1)$, so they are likely in the same cache line, and we can use just one instruction.
+To hide the memory latency, we can use software prefetching similar to how we did for branchless binary search. But instead of issuing two separate prefetch instructions for the left and right child nodes, we can notice that they are neighbors in the Eytzinger array: one has index $2 k$ and the other $(2k + 1)$, so they are likely in the same cache line, and we can use just one instruction.
 
-In fact, this observation extends to the grand-children of node $k$ — they are also stored sequentially: 
+This observation extends to the grand-children of node $k$ — they are also stored sequentially: 
 
 ```
 2 * 2 * k           = 4 * k
@@ -347,17 +357,17 @@ In fact, this observation extends to the grand-children of node $k$ — they are
 \end{aligned}
 -->
 
-So their cache line can also be fetched with one instruction. Interesting… what if we continue this, and instead of fetching direct children, we fetch ahead as many descendants as we can cramp into one cache line? That would be $\frac{64}{4} = 16$ elements, our grand-grand-grandchildren with indices from $16k$ to $(16k + 15)$.
+Their cache line can also be fetched with one instruction. Interesting… what if we continue this, and instead of fetching direct children, we fetch ahead as many descendants as we can cramp into one cache line? That would be $\frac{64}{4} = 16$ elements, our grand-grand-grandchildren with indices from $16k$ to $(16k + 15)$.
 
-Now, if we prefetch just one of these 16 elements, we will probably only get some but not all of them, as they may cross a cache line boundary. We can prefetch the first *and* the last element, but to get away with just one request, we can observe that the index of the first element, $16k$, is divisible by $16$ — and therefore its memory address will be the base address of the array plus something divisible by $16 \cdot 4 = 64$, the cache line size. If the array were to begin on a cache line, then these $16$ grand-gran-grandchildren elements will be guaranteed to be on a single cache line.
+Now, if we prefetch just one of these 16 elements, we will probably only get some but not all of them, as they may cross a cache line boundary. We can prefetch the first *and* the last element, but to get away with just one memory request, we need to notice that the index of the first element, $16k$, is divisible by $16$, so its memory address will be the base address of the array plus something divisible by $16 \cdot 4 = 64$, the cache line size. If the array were to begin on a cache line, then these $16$ grand-gran-grandchildren elements will be guaranteed to be on a single cache line, which is just what we needed.
 
-Therefore, we just need to [align](/hpc/cpu-cache/alignment) the array:
+Therefore, we only need to [align](/hpc/cpu-cache/alignment) the array:
 
 ```c++
 t = (int*) std::aligned_alloc(64, 4 * (n + 1));
 ```
 
-And then prefetch the element indexed $16 k$ in the main loop:
+And then prefetch the element indexed $16 k$ on each iteration:
 
 ```c++
 int lower_bound(int x) {
@@ -371,23 +381,23 @@ int lower_bound(int x) {
 }
 ```
 
-The performance on large arrays improves 3-4x from the previous version and ~2x compared to `std::lower_bound`. Not bad for a just two more lines of code:
+The performance on large arrays improves 3-4x from the previous version and ~2x compared to `std::lower_bound`. Not bad for just two more lines of code:
 
 ![](../img/search-eytzinger-prefetch.svg)
 
-What we essentially do is we hide the latency by prefetching 4 steps ahead; if the compute didn't matter, we would expect a ~4x speedup. We can also try to prefetch further than that, and we don't even have to use more prefetch instructions for that — we can request only the first cache line and rely on the hardware to prefetch its neighbors:
+Essentially, what we do here is hide the latency by prefetching four steps ahead and overlapping memory requests. Theoretically, if the compute didn't matter, we would expect a ~4x speedup, but in reality, we get a somewhat more moderate speedup.
+
+We can also try to prefetch further than that four steps ahead, and we don't even have to use more than one prefetch instruction for that: we can try to request only the first cache line and rely on the hardware to prefetch its neighbors. This trick may or may not improve actual performance — depends on the hardware:
 
 ```c++
 __builtin_prefetch(t + k * 32);
 ```
 
-It may or may not improve actual performance — it heavily depends on the hardware.
+Also, note that the last few prefetch requests are actually not needed, and in fact, they may even be outside the memory region allocated for the program. On most modern CPUs, invalid prefetch instructions get converted into no-ops, so it isn't a problem, but on some platforms, this may cause a slowdown, so it may make sense, for example, to split off the last ~4 iterations from the loop to try to remove them.
 
-Also, note that the last few prefetch requests are actually not needed, and in fact, they may be even be outside of the memory region allocated for the program. On most modern CPUs, invalid prefetch instructions get converted into no-ops, so it isn't a problem, but on some platforms this may cause a slowdown, so it may make sense, for example, to split off the last ~4 iterations from the loop to try to remove them.
+This prefetching technique allows us to read up to four elements ahead, but it doesn't really come for free — we are effectively trading off excess memory [bandwidth](/hpc/cpu-cache/bandwidth) for reduced [latency](/hpc/cpu-cache/latency). If you run more than one instance at a time on separate hardware threads or just any other memory-intensive computation in the background, it will significantly [affect](/hpc/cpu-cache/sharing) the benchmark performance.
 
-The prefetching technique allows us to read up to 4 elements ahead, but it doesn't really come for free — we are effectively trading off excess memory [bandwidth](/hpc/cpu-cache/bandwidth) for reduced [latency](/hpc/cpu-cache/latency). If you run more than one instance at a time, or just any other memory-intensive computation in the background, it will significantly [affect](/hpc/cpu-cache/sharing) the performance of the benchmark.
-
-Note that this method, while being great for single-threaded world, is unlikely to make its way into database and heavy multi-threaded applications, because it sacrifices bandwidth to achieve low latency. We can do better — instead of fetching 4 cache lines at a time, we could fetch 4 times *fewer* cache lines, and in the next article we will explore that.
+But we can do better. Instead of fetching four cache lines at a time, we could fetch four times *fewer* cache lines. And in the next article, we will explore the approach.
 
 <!--
 
@@ -399,13 +409,13 @@ But that was a small detour. Let's get back to optimizing for *large* arrays.
 
 ### Removing the Last Branch
 
-Just the finishing touch. Did you notice the bumpiness of eytzinger search? This isn't random noise — let's zoom in:
+Just the finishing touch. Did you notice the bumpiness of the Eytzinger search? This isn't random noise — let's zoom in:
 
 ![](../img/search-eytzinger-small.svg)
 
-The latency is ~10ns higher for the array sizes in the form of $1.5 \cdot 2^k$. These are mispredicted branches from the loop itself — the last branch, to be exact. When the array size is far from a power of two, it is hard to predict whether the loop will make $\lfloor \log_2 n \rfloor$ or $\lfloor \log_2 n \rfloor + 1$ iterations, so we have a 50% change to suffer exactly one branch mispredict.
+The latency is ~10ns higher for the array sizes in the form of $1.5 \cdot 2^k$. These are mispredicted branches from the loop itself — the last branch, to be exact. When the array size is far from a power of two, it is hard to predict whether the loop will make $\lfloor \log_2 n \rfloor$ or $\lfloor \log_2 n \rfloor + 1$ iterations, so we have a 50% chance to suffer exactly one branch mispredict.
 
-We can get rid of that last branch by always executing a constant minimum number of iterations and then using predication to optionally make the last comparison against some dummy element that is guaranteed to be less than $x$ and will be canceled:
+We can get rid of that last branch by always executing a constant minimum number of iterations and then using predication to optionally make the last comparison against some dummy element — that is guaranteed to be less than $x$ so that its comparison will be canceled:
 
 ```c++
 t[0] = -1; // an element that is less than x
@@ -426,17 +436,17 @@ int lower_bound(int x) {
 }
 ```
 
-The graph is now smooth and almost doesn't lose to the branchless binary search on small arrays:
+The graph is now smooth, and on small arrays, it is just a couple of cycles slower than the branchless binary search:
 
 ![](../img/search-eytzinger-branchless.svg)
 
-It's interesting that now GCC doesn't replace this with `cmov`, but Clang does. 1-1.
+Interestingly, now GCC fails to replace the branch with `cmov`, but Clang doesn't. 1-1.
 
 ### Appendix: Random Binary Search
 
-By the way, finding the exact expected number of comparisons for random binary search is a probably useless but interesting math problem. Try solving it yourself first!
+By the way, finding the exact expected number of comparisons for random binary search is quite an interesting math problem in and of itself. Try solving it yourself first!
 
-The way to compute it *algorithmically* is through dynamic programming. If we denote $f_n$ as the expected number of comparisons to find a random lower bound on a search interval of size $n$, it can be calculated from previous $f_n$ by considering all the $(n - 1)$ possible splits:
+The way to compute it *algorithmically* is through dynamic programming. If we denote $f_n$ as the expected number of comparisons to find a random lower bound on a search interval of size $n$, it can be calculated from the previous $f_n$ by considering all the $(n - 1)$ possible splits:
 
 $$
 f_n = \sum_{l = 1}^{n - 1} \frac{1}{n-1} \cdot \left( f_l \cdot \frac{l}{n} + f_{n - l} \cdot \frac{n - l}{n} \right) + 1
@@ -521,11 +531,11 @@ $$
 \end{aligned}
 $$
 
-The last expression is double the harmonic series, which is well known to approximate $\ln n$ as $n \to \infty$. Therefore, the random binary search will perform $\frac{2 \ln n}{\log_2 n} = 2 \ln 2 \approx 1.386$ more comparisons compared to the normal one.
+The last expression is double the [harmonic series](https://en.wikipedia.org/wiki/Harmonic_series_(mathematics)), which is well known to approximate $\ln n$ as $n \to \infty$. Therefore, the random binary search will perform $\frac{2 \ln n}{\log_2 n} = 2 \ln 2 \approx 1.386$ more comparisons compared to the normal one.
 
 ### Acknowledgements
 
-The article is loosely based on "[Array Layouts for Comparison-Based Searching](https://arxiv.org/pdf/1509.05053.pdf)" by Paul-Virak Khuong and Pat Morin. It is 46 pages long, and discusses the scalar binary searches in more details, so check it out if you're interested in other approaches.
+The article is loosely based on "[Array Layouts for Comparison-Based Searching](https://arxiv.org/pdf/1509.05053.pdf)" by Paul-Virak Khuong and Pat Morin. It is 46 pages long and discusses these and many other approaches in more detail, so check it out if you’re interested.
 
 Thanks to Marshall Lochbaum for [providing](https://github.com/algorithmica-org/algorithmica/issues/57) the proof for the random binary search.
 
