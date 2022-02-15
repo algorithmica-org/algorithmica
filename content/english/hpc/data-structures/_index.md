@@ -1,7 +1,6 @@
 ---
 title: Data Structures Case Studies
 weight: 12
-draft: true
 ---
 
 Optimizing data structures is different from optimizing [algorithms](/hpc/algorithms) as data structure problems have more dimensions: you may be optimizing for *throughput*, for *latency*, for *memory usage*, or any combination of those — and this complexity blows up exponentially when you need to process *multiple* query types and consider multiple query distributions.
