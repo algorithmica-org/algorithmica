@@ -9,7 +9,7 @@ Instead, the most fascinating showcases of performance engineering are multifold
 
 <!-- Yet, with remarkable periodicity, these can be optimized to ridiculous levels of performance. -->
 
-In this article, we focus on such fundamental algorithm — *binary search* — and implement two of its variants that are up to 4x faster than `std::lower_bound`, depending on the problem size, while being under just 15 lines of code.
+In this article, we focus on such fundamental algorithm — *binary search* — and implement two of its variants that are, depending on the problem size, up to 4x faster than `std::lower_bound`, while being under just 15 lines of code.
 
 The first algorithm achieves that by removing [branches](/hpc/pipelining/branching), and the second optimizes the memory layout to achieve better [cache system](/hpc/cpu-cache) performance. This technically disqualifies it from being a drop-in replacement for `std::lower_bound` as it needs to permute the elements of the array before it can start answering queries — but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing.
 
@@ -535,8 +535,8 @@ The last expression is double the [harmonic series](https://en.wikipedia.org/wik
 
 ### Acknowledgements
 
-The article is loosely based on "[Array Layouts for Comparison-Based Searching](https://arxiv.org/pdf/1509.05053.pdf)" by Paul-Virak Khuong and Pat Morin. It is 46 pages long and discusses these and many other approaches in more detail, so check it out if you’re interested.
+The article is loosely based on "[Array Layouts for Comparison-Based Searching](https://arxiv.org/pdf/1509.05053.pdf)" by Paul-Virak Khuong and Pat Morin. It is 46 pages long and discusses these and many other (less successful) approaches in more detail. I highly recommend also checking it out — this is one of my favorite performance engineering papers.
 
-Thanks to Marshall Lochbaum for [providing](https://github.com/algorithmica-org/algorithmica/issues/57) the proof for the random binary search.
+Thanks to Marshall Lochbaum for [providing](https://github.com/algorithmica-org/algorithmica/issues/57) the proof for the random binary search. No way I could do it myself.
 
 I also stole these lovely layout visualizations from some blog a long time ago, but I don't remember the name of the blog and what license they had, and inverse image search doesn't find them anymore. If you don't sue me, thank you, whoever you are!
