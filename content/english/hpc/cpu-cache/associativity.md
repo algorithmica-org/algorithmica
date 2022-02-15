@@ -78,7 +78,7 @@ This makes the cache system simpler and cheaper to implement but also susceptibl
 
 Now, where were we? Oh, yes: the reason why iteration with strides of 256 causes such a terrible slowdown.
 
-When we jump over 256 integers, the pointer always increments by $1024 = 2^{10}$, and the last 10 bits remain the same. Since the cache system uses the lower 6 bits for the offset and the next 12 for the cache line index, we are essentially using just $2^{12 - (10 - 6)} = 2^8$ different sets in the L3 cache instead of $2^{12}$, which has the effect of shrinking our L3 cache by a factor of $2^4 = 16$. The array stops fitting into the L3 cache ($N=2^{21}$) spills into the order-of-magnitude slower RAM, which causes the performance to decrease.
+When we jump over 256 integers, the pointer always increments by $1024 = 2^{10}$, and the last 10 bits remain the same. Since the cache system uses the lower 6 bits for the offset and the next 12 for the cache line index, we are essentially using just $2^{12 - (10 - 6)} = 2^8$ different sets in the L3 cache instead of $2^{12}$, which has the effect of shrinking our L3 cache by a factor of $2^4 = 16$. The array stops fitting into the L3 cache ($N=2^{21}$) and spills into the order-of-magnitude slower RAM, which causes the performance to decrease.
 
 <!--
 
@@ -97,8 +97,11 @@ Performance issues caused by cache associativity effects arise with remarkable f
 - It is easier to calculate the address for multi-dimensional array accesses if the last dimension is a power of two, as it only requires a binary shift instead of a multiplication.
 - It is easier to calculate modulo a power of two, as it can be done with a single bitwise "and".
 - It is convenient and often even necessary to use power-of-two problem sizes in divide-and-conquer algorithms.
-- It is the smallest integer exponent, so using the sequence of increasing powers of two as problem sizes are a popular choice when benchmarking memory-bound algorithms. (Also, powers of ten are by transitivity divisible by a slightly lower power of two.)
+- It is the smallest integer exponent, so using the sequence of increasing powers of two as problem sizes are a popular choice when benchmarking memory-bound algorithms.
+- Also, more natural powers of ten are by transitivity divisible by a slightly lower power of two.
 
-Luckily, such issues are more of an anomaly rather than serious problems. The solution is usually simple: avoid iterating in powers of two, make the last dimensions of multi-dimensional arrays a slightly different size, or use any other method to insert "holes" in the memory layout.
+This especially often applies to implicit data structures that use a fixed memory layout. For example, binary searching over arrays of size $2^{20}$ takes about ~360ns per query while searching over arrays of size $(2^{20} + 123)$ takes ~300ns. When the array size is a multiple of a large power of two, then the indices of the elements that we request on the first dozen or so iterations will also be divisible by some large powers of two — and map to the same cache line, kicking each other out and causing a ~20% performance decrease.
+
+Luckily, such issues are more of an anomaly rather than serious problems. The solution is usually simple: avoid iterating in powers of two, make the last dimensions of multi-dimensional arrays a slightly different size or use any other method to insert "holes" in the memory layout, or create some seemingly random bijection between the array indices and the locations where the data is actually stored.
 
 <!-- seemingly random bijection, link to segment tree, to binary search -->
