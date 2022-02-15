@@ -465,7 +465,15 @@ However, they perform better:
 
 It may or may not be beneficial to reverse the order in which layers are stored. I only implemented right-to-left because that was easier to code.
 
+### As a Dynamic Tree
+
+When we compare S+ trees to `std::set` where we add the same elements and search for the same lower bounds (not counting the time it took to add them), the comparison is even more favorable:
+
+![](../img/search-set-relative.svg)
+
 My next priorities is to adapt it to segment trees, which I know how to do, and to B-trees, which I don't exactly know how to do. But comparing to `std::set` hints that there may be up to 30x improvements:
+
+`absl::btree_set`, the only widely-used B-tree implementation I know, is just slightly faster than binary search.
 
 ![](../img/search-set-relative-all.svg)
 
