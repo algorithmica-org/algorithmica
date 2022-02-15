@@ -190,9 +190,7 @@ int lower_bound(int x) {
 }
 ```
 
-Theoretically[^limit], this randomized binary search is expected to do ~1.35x more comparisons than the normal one, but in practice, the running time goes ~6x on large arrays:
-
-[^limit]: I wrote an [small program](https://gist.github.com/sslotin/4b7193041b01e454615f50d237485c71) for calculating the expected number of comparisons required. By the way, if someone who remembers calculus is reading this, please try to find the limit of the ratio of the number of comparisons a random binary search and a normal one needs, and share how you did that. Although probably useless, it seems like an interesting problem.
+[Theoretically](#appendix), this randomized binary search is expected to do $2 \cdot \ln 2 \approx 1.35$ times more comparisons than the normal one, but in practice, the running time goes ~6x on large arrays:
 
 ![](../img/search-random.svg)
 
@@ -420,6 +418,99 @@ Note that this method, while being great for single-threaded world, is unlikely 
 
 [Part 2](https://algorithmica.org/en/b-tree) explores efficient implementation of implicit static B-trees in bandwidth-constrained environment.
 
-## Acknowledgements
+### Appendix
+
+By the way, finding the exact expected number of comparisons for random binary search is a probably useless but interesting math problem. Try solving it yourself first!
+
+The way to compute it *algorithmically* is through dynamic programming. If we denote $f_n$ as the expected number of comparisons to find a random lower bound on a search interval of size $n$, it can be calculated from previous $f_n$ by considering all the $(n - 1)$ possible splits:
+
+$$
+f_n = \sum_{l = 1}^{n - 1} \frac{1}{n-1} \cdot \left( f_l \cdot \frac{l}{n} + f_{n - l} \cdot \frac{n - l}{n} \right) + 1
+$$
+
+Directly applying this formula gives us an $O(n^2)$ algorithm, but we can optimize it by rearranging the sum like this:
+
+$$
+\begin{aligned}
+f_n &= \sum_{i = 1}^{n - 1} \frac{ f_i \cdot i + f_{n - i} \cdot (n - i) }{ n \cdot (n - 1) } + 1
+\\  &= \frac{2}{n \cdot (n - 1)} \cdot \sum_{i = 1}^{n - 1} f_i \cdot i + 1
+\end{aligned}
+$$
+
+To update $f_n$, we only need to calculate the sum of $f_i \cdot i$ for all $i < n$. To do that, let's introduce two new variables:
+
+$$
+g_n = f_n \cdot n,
+\;\;
+s_n = \sum_{i=1}^{n} g_n
+$$
+
+Now they can be sequentially calculated as:
+
+$$
+\begin{aligned}
+g_n &= f_n \cdot n
+     = \frac{2}{n-1} \cdot \sum_{i = 1}^{n - 1} g_i + n
+     = \frac{2}{n - 1} \cdot s_{n - 1} + n
+\\ s_n &= s_{n - 1} + g_n
+\end{aligned}
+$$
+
+This way we get an $O(n)$ algorithm, but we can do even better. Let's substitute $g_n$ in the update formula for $s_n$:
+
+$$
+\begin{aligned}
+s_n &= s_{n - 1} + \frac{2}{n - 1} \cdot s_{n - 1} + n
+\\  &= (1 + \frac{2}{n - 1}) \cdot s_{n - 1} + n
+\\  &= \frac{n + 1}{n - 1} \cdot s_{n - 1} + n
+\end{aligned}
+$$
+
+<!-- todo: can we simplify the proof and get rid of r? -->
+
+The next trick is more complicated. We define $r_n$ like this:
+
+$$
+\begin{aligned}
+r_n &= \frac{s_n}{n}
+\\  &= \frac{1}{n} \cdot \left(\frac{n + 1}{n - 1} \cdot s_{n - 1} + n\right)
+\\  &= \frac{n + 1}{n} \cdot \frac{s_{n - 1}}{n - 1} + 1
+\\  &= \left(1 + \frac{1}{n}\right) \cdot r_{n - 1} + 1
+\end{aligned}
+$$
+
+We can substitute it into the formula we got for $g_n$ before:
+
+$$
+g_n = \frac{2}{n - 1} \cdot s_{n - 1} + n = 2 \cdot r_{n - 1} + n
+$$
+
+Recalling that $g_n = f_n \cdot n$, we can express $r_{n - 1}$ using $f_n$:
+
+$$
+f_n \cdot n = 2 \cdot r_{n - 1} + n
+\implies
+r_{n - 1} = \frac{(f_n - 1) \cdot n}{2}
+$$
+
+Final step. We've just expressed $r_n$ through $r_{n - 1}$ and $r_{n - 1}$ through $f_n$. This lets us express $f_{n + 1}$ through $f_n$:
+
+$$
+\begin{aligned}
+&&\quad r_n &= \left(1 + \frac{1}{n}\right) \cdot r_{n - 1} + 1
+\\ &\Rightarrow & \frac{(f_{n + 1} - 1) \cdot (n + 1)}{2} &= \left(1 + \frac{1}{n}\right) \cdot \frac{(f_n - 1) \cdot n}{2} + 1
+\\ &&&= \frac{n + 1}{2} \cdot (f_n - 1) + 1
+\\ &\Rightarrow & (f_{n + 1} - 1) &= (f_{n} - 1) + \frac{2}{n + 1}
+\\ &\Rightarrow &f_{n + 1} &= f_{n} + \frac{2}{n + 1}
+\\ &\Rightarrow &f_{n} &= f_{n - 1} + \frac{2}{n}
+\\ &\Rightarrow &f_{n} &= \sum_{k = 2}^{n} \frac{2}{k}
+\end{aligned}
+$$
+
+The last expression is double the harmonic series, which is well known to approximate $\ln n$ as $n \to \infty$. Therefore, the random binary search will perform $\frac{2 \ln n}{\log_2 n} = 2 \ln 2 \approx 1.386$ more comparisons compared to the normal one.
+
+### Acknowledgements
 
 The article is loosely based on "[Array Layouts for Comparison-Based Searching](https://arxiv.org/pdf/1509.05053.pdf)" by Paul-Virak Khuong and Pat Morin. It is 46 pages long, and discusses the scalar binary searches in more details, so check it out if you're interested in other approaches.
+
+Thanks to Marshall Lochbaum for [providing](https://github.com/algorithmica-org/algorithmica/issues/57) the proof for the random binary search.
