@@ -14,11 +14,21 @@ In this article, we focus on such fundamental algorithm — binary search — an
 - *Branchless* binary search that is up to 3x faster on *small* arrays and can act as a drop-in replacement to `std::lower_bound`.
 - *Eytzinger* binary search that rearranges the elements of a sorted array in a cache-friendly way of is also 3x faster on small array and 2x faster on RAM-backed arrays.
 
+This is technically not a drop-in replacement, since it requires some preprocessing, but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing.
+
+The usual disclaimer: the CPU is a [Zen 2](https://www.7-cpu.com/cpu/Zen2.html) and the RAM is a [DDR4-2666](http://localhost:1313/hpc/cpu-cache/). The compiler we will be using by default is Clang 10. The results may be slightly different on other platforms.
+
+<!--
+
 It performs slightly worse on array sizes that fit lower layers of cache, but in low-bandwidth environments it can be up to 3x faster (or 7x faster than `std::lower_bound`). GCC sucked on all benchmarks, so we will mostly be using Clang (10.0). The CPU is a Zen 2, although the results should be transferrable to other platforms, including most Arm-based chips.
+
+The CPU is a Zen 2, and as always, the results are a bit architecture dependant, although the results should be transferrable to other platforms, including most Arm-based chips.
 
 This is a large article, which will turn into a multi-hour read. If you feel comfortable reading [intrinsic](/hpc/simd/intrinsics)-heavy code without any context whatsoever, you can skim through the first four implementation and jump straight to the last section.
 
 Build up understanding gradually, but you can skip them.
+
+-->
 
 ## Binary Search
 
@@ -190,7 +200,7 @@ int lower_bound(int x) {
 }
 ```
 
-[Theoretically](#appendix), this randomized binary search is expected to do $2 \cdot \ln 2 \approx 1.35$ times more comparisons than the normal one, but in practice, the running time goes ~6x on large arrays:
+[Theoretically](#appendix-random-binary-search), this randomized binary search is expected to do 30-40% more comparisons than the normal one, but on a real computer, the running time goes ~6x on large arrays:
 
 ![](../img/search-random.svg)
 
@@ -375,6 +385,18 @@ It may or may not improve actual performance — it heavily depends on the hardw
 
 Also, note that the last few prefetch requests are actually not needed, and in fact, they may be even be outside of the memory region allocated for the program. On most modern CPUs, invalid prefetch instructions get converted into no-ops, so it isn't a problem, but on some platforms this may cause a slowdown, so it may make sense, for example, to split off the last ~4 iterations from the loop to try to remove them.
 
+The prefetching technique allows us to read up to 4 elements ahead, but it doesn't really come for free — we are effectively trading off excess memory [bandwidth](/hpc/cpu-cache/bandwidth) for reduced [latency](/hpc/cpu-cache/latency). If you run more than one instance at a time, or just any other memory-intensive computation in the background, it will significantly [affect](/hpc/cpu-cache/sharing) the performance of the benchmark.
+
+Note that this method, while being great for single-threaded world, is unlikely to make its way into database and heavy multi-threaded applications, because it sacrifices bandwidth to achieve low latency. We can do better — instead of fetching 4 cache lines at a time, we could fetch 4 times *fewer* cache lines, and in the next article we will explore that.
+
+<!--
+
+But that was a small detour. Let's get back to optimizing for *large* arrays.
+
+[Part 2](https://algorithmica.org/en/b-tree) explores efficient implementation of implicit static B-trees in bandwidth-constrained environment.
+
+-->
+
 ### Removing the Last Branch
 
 Just the finishing touch. Did you notice the bumpiness of eytzinger search? This isn't random noise — let's zoom in:
@@ -408,17 +430,9 @@ The graph is now smooth and almost doesn't lose to the branchless binary search 
 
 ![](../img/search-eytzinger-branchless.svg)
 
-But that was a small detour. Let's get back to optimizing for *large* arrays.
+It's interesting that now GCC doesn't replace this with `cmov`, but Clang does. 1-1.
 
-The prefetching technique allows us to read up to 4 elements ahead, but it doesn't really come for free — we are effectively trading off excess memory [bandwidth](/hpc/cpu-cache/bandwidth) for reduced [latency](/hpc/cpu-cache/latency). If you run more than one instance at a time, or just any other memory-intensive computation in the background, it will significantly [affect](/hpc/cpu-cache/sharing) the performance of the benchmark.
-
-We can do better — instead of fetching 4 cache lines at a time, we could fetch 4 times *fewer* cache lines.
-
-Note that this method, while being great for single-threaded world, is unlikely to make its way into database and heavy multi-threaded applications, because it sacrifices bandwidth to achieve low latency.
-
-[Part 2](https://algorithmica.org/en/b-tree) explores efficient implementation of implicit static B-trees in bandwidth-constrained environment.
-
-### Appendix
+### Appendix: Random Binary Search
 
 By the way, finding the exact expected number of comparisons for random binary search is a probably useless but interesting math problem. Try solving it yourself first!
 
@@ -514,3 +528,5 @@ The last expression is double the harmonic series, which is well known to approx
 The article is loosely based on "[Array Layouts for Comparison-Based Searching](https://arxiv.org/pdf/1509.05053.pdf)" by Paul-Virak Khuong and Pat Morin. It is 46 pages long, and discusses the scalar binary searches in more details, so check it out if you're interested in other approaches.
 
 Thanks to Marshall Lochbaum for [providing](https://github.com/algorithmica-org/algorithmica/issues/57) the proof for the random binary search.
+
+I also stole these lovely layout visualizations from some blog a long time ago, but I don't remember the name of the blog and what license they had, and inverse image search doesn't find them anymore. If you don't sue me, thank you, whoever you are!
