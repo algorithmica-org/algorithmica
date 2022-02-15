@@ -29,6 +29,8 @@ Therefore, the only correct answer to this question is "it depends" — primaril
 
 Such high variance of memory performance is caused by the fact that memory hardware doesn't follow the same [laws of silicon scaling](/hpc/complexity/hardware) as CPU chips do. Memory is still improving through other means, but if 50 years ago memory timings were roughly on the same scale with the instruction latencies, nowadays they lag far behind.
 
+![](img/memory-vs-compute.png)
+
 To be less of a limiting factor, modern memory systems are becoming increasingly [hierarchical](hierarchy), where the higher layers trade off some of their capacity for reduced latency. As these characteristics may change in the orders of magnitude between the layers — especially in the case of external memory types — it became crucial for many memory-intensive algorithms to optimize their I/O operations before anything else.
 
 This prompted the creation of a new cost model, called the *external memory model*, whose only primitive operations are block reads and writes, and everything else has zero cost as long as it only involves data stored in a limited-sized local memory. It spawned an exciting new field of *external memory algorithms*, which we will study in this chapter.
