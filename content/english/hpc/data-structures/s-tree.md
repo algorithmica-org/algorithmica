@@ -147,18 +147,43 @@ This implementation outperforms all previous binary search implementations by a 
 
 This is very good — but we can optimize it even further.
 
-### Optimizations
+### Optimization
 
-Enable [hugepages](/hpc/cpu-cache/paging):
+Before everything else, let's allocate the memory for the array on a [huge page](/hpc/cpu-cache/paging):
 
 ```c++
-btree = (int(*)[16]) std::aligned_alloc(2 * 1024 * 1024, 64 * nblocks);
-madvise(btree, 64 * nblocks, MADV_HUGEPAGE);
+const int P = 1 << 21;                        // page size in bytes (2MB)
+const int T = (64 * nblocks + P - 1) / P * P; // can only allocate whole number of pages
+btree = (int(*)[16]) std::aligned_alloc(P, T);
+madvise(btree, T, MADV_HUGEPAGE);
 ```
+
+This slightly improves the performance on larger array sizes:
 
 ![](../img/search-btree-hugepages.svg)
 
-Ideally, we'd need to also enable it for [previous implementations](../binary-search). But enabling it for previous implementation doesn't make a that much difference as they have one form of prefetching or another anyway.
+Ideally, we'd also need to enable hugepages for all [previous implementations](../binary-search) to make the comparison fair, but it doesn't matter that much because they all have some form of prefetching that alleviates this problem.
+
+With that settled, let's begin real optimization. First of all, we'd want to use compile-time constants instead of variables as much as possible because it lets the compiler embed them in the machine code, unroll loops, optimize arithmetic, and do all sorts of other nice stuff for us for free. Specifically, we want to know the tree height in advance:
+
+```c++
+constexpr int height(int n) {
+    // grow the tree until its size exceeds n elements
+    int s = 0, // total size so far
+        l = B, // size of the next layer
+        h = 0; // height so far
+    while (s + l - B < n) {
+        s += l;
+        l *= (B + 1);
+        h++;
+    }
+    return h;
+}
+
+const int H = height(N);
+```
+
+<!--
 
 ```c++
 constexpr std::pair<int, int> precalc(int n) {
@@ -170,13 +195,16 @@ constexpr std::pair<int, int> precalc(int n) {
         l *= (B + 1);
         h++;
     }
-    int r = (n - s + B - 1) / B; // remaining blocks on last layer
+    int r = (n - s + B - 1) / B; // remaining blocks on the last layer
     return {h, s / B + (r + B) / (B + 1) * (B + 1)};
 }
 
-const int height = precalc(N).first, nblocks = precalc(N).second;
-int *_a, (*btree)[B];
+const int [height, nblocks] = precalc(N);
 ```
+
+-->
+
+Next, we can find the local lower bound in nodes faster. Instead of calculating it separately for two 8-element blocks and merging masks, we can use one [packs](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,4870,6715,4845,3853,90,7307,5993,2692,6946,6949,5456,6938,5456,1021,3007,514,518,7253,7183,3892,5135,5260,3915,4027,3873,7401,4376,4229,151,2324,2310,2324,4075,6130,4875,6385,5259,6385,6250,1395,7253,6452,7492,4669,4669,7253,1039,1029,4669,4707,7253,7242,848,879,848,7251,4275,879,874,849,833,6046,7250,4870,4872,4875,849,849,5144,4875,4787,4787,4787,5227,7359,7335,7392,4787,5259,5230,5223,6438,488,483,6165,6570,6554,289,6792,6554,5230,6385,5260,5259,289,288,3037,3009,590,604,5230,5259,6554,6554,5259,6547,6554,3841,5214,5229,5260,5259,7335,5259,519,1029,515,3009,3009,3011,515,6527,652,6527,6554,288,3841,5230,5259,5230,5259,305,5259,591,633,633,5259,5230,5259,5259,3017,3018,3037,3018,3017,3016,3013,5144&text=_mm256_packs_epi32&techs=AVX,AVX2) instruction before the `movemask`:
 
 ```c++
 unsigned rank(reg x_vec, int* y_ptr) {
@@ -189,13 +217,14 @@ unsigned rank(reg x_vec, int* y_ptr) {
     reg c = _mm256_packs_epi32(ca, cb);
     int mask = _mm256_movemask_epi8(c);
 
-    return __tzcnt_u32(mask) >> 1;    
+    // we need to divide the result by two because we call movemask_epi8 on 16-bit masks:
+    return __tzcnt_u32(mask) >> 1;
 }
 ```
 
-`packs`
+This instruction converts 32-bit integers stored in two registers to 16-bit integers stored in one register — in our case, effectively joining the vector masks into one. Note that we've swapped the order of comparison — this lets us not invert the mask in the end, but we have to subtract one from the search key once in the beginning to make it correct (otherwise it works as `upper_bound`).
 
-Or 
+The problem is, it does this weird interleaving where the result is written in the `a1 b1 a2 b2` order instead of `a1 a2 b1 b2` that want. To correct this, we need to [permute](/hpc/simd/shuffling) the resulting vector, but instead of doing this during the query time, we can just permute every node during preprocessing:
 
 ```c++
 void permute(int *node) {
@@ -207,11 +236,9 @@ void permute(int *node) {
 }
 ```
 
-There are probably faster ways to swap middle elements, but we will leave it here.
+We just call `permute(&btree[k])` right after we are done with building a node. There are probably faster ways to swap middle elements, but we will leave it here, as the preprocessing time is not important for now.
 
-You call `permute(btree[k])` after you've done with constructing a node.
-
-There are ways to do this with bit-level trickery, but indexing a small lookup table turns out to be faster.
+This new SIMD routine is significantly faster because the extra `movemask` was slow and also blending the two masks took quite a few instructions. Unfortunately, we now can't just do the `res = btree[k][i]` update anymore because the elements are permuted. We can solve this problem with some bit-level trickery in terms of `i`, but indexing a small lookup table turns out to be faster and also doesn't require a new branch:
 
 ```c++
 const int translate[17] = {
@@ -228,33 +255,41 @@ void update(int &res, int* node, unsigned i) {
 }
 ```
 
+Stitching it all together (and leaving out some other minor optimizations):
+
 ```c++
 int lower_bound(int x) {
     int k = 0, res = INT_MAX;
     reg x_vec = _mm256_set1_epi32(x - 1);
-    for (int h = 0; h < height - 1; h++) {
-        int *node = btree[k];
-        unsigned i = rank(x_vec, node);
-        k = k * (B + 1) + 1; // remove + 1?
-        update(res, node, i);
-        k += i;
+    for (int h = 0; h < H - 1; h++) {
+        unsigned i = rank(x_vec, &btree[k]);
+        update(res, &btree[k], i);
+        k = go(k, i);
     }
-    unsigned i = rank(x_vec, btree[k]);
-    update(res, btree[k], i);
-    int k2 = go(k, i);
-    if (go(k, 0) < nblocks) {
+    // the last branch:
+    if (k < nblocks) {
         unsigned i = rank(x_vec, btree[k2]);
-        update(res, btree[k2], i);
+        update(res, &btree[k], i);
     }
     return res;
 }
 ```
 
-All that hard work is totally worth it:
+All this work saved us 20% or so:
 
 ![](../img/search-btree-optimized.svg)
 
+To progress further, we need to change the layout a little bit.
+
 ## B+ Tree Layout
+
+The `update` seems to be useless: 16 out of 17 times we can just read the element from the last block
+
+We want to get rid of branches completely — this means having a fixed-height tree. We also probably don't want to do the `update` as it turns out to be quite costly.
+
+B-tree layout
+
+We will explain the constexpr functions because this time it is important:
 
 ```c++
 constexpr int blocks(int n) {
@@ -368,6 +403,8 @@ int lower_bound(int _x) {
 }
 ```
 
+Helping the compiler out with pointer arithmetic.
+
 ![](../img/search-bplus.svg)
 
 Makes more sense to look at it as a relative speedup:
@@ -399,6 +436,10 @@ for (int i = 0; i < m; i++) {
 
 ### Modifications
 
+<!--
+
+Bloated:
+
 ```c++
 void permute32(int *node) {
     // a b c d 1 2 3 4 -> (a c) (b d) (1 3) (2 4) -> (a c) (1 3) (b d) (2 4)
@@ -409,23 +450,7 @@ void permute32(int *node) {
     permute16(node);
     permute16(node + 16);
 }
-```
 
-```c++
-unsigned cmp(reg x, int *node) {
-    reg y = _mm256_load_si256((reg*) node);
-    reg mask = _mm256_cmpgt_epi32(y, x);
-    return _mm256_movemask_ps((__m256) mask);
-}
-
-unsigned rank32(reg x, int *node) {
-    unsigned mask = cmp(x, node)
-                  | (cmp(x, node + 8) << 8)
-                  | (cmp(x, node + 16) << 16)
-                  | (cmp(x, node + 24) << 24);
-```
-
-```c++
 unsigned permuted_rank32(reg x, int *node) {
     reg a = _mm256_load_si256((reg*) node);
     reg b = _mm256_load_si256((reg*) (node + 8));
@@ -445,6 +470,16 @@ unsigned permuted_rank32(reg x, int *node) {
     return __tzcnt_u32(mask);
 }
 ```
+
+```c++
+unsigned rank32(reg x, int *node) {
+    unsigned mask = cmp(x, node)
+                  | (cmp(x, node + 8) << 8)
+                  | (cmp(x, node + 16) << 16)
+                  | (cmp(x, node + 24) << 24);
+```
+
+-->
 
 Another idea is to use cache more efficiently. For example, you can execute `_mm256_stream_load_si256` on just the last iteration.
 
