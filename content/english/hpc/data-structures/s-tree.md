@@ -122,13 +122,13 @@ int cmp(reg x_vec, int* y_ptr) {
 This function works for 8-element vectors, which is half our block / cache line size. To process the entire block, we need to call it twice and then combine the masks:
 
 ```c++
-int lower_bound(int x) {
+int lower_bound(int _x) {
     int k = 0, res = INT_MAX;
-    reg x_vec = _mm256_set1_epi32(x);
+    reg x = _mm256_set1_epi32(_x);
     while (k < nblocks) {
         int mask = ~(
-            cmp(x_vec, &btree[k][0]) +
-            (cmp(x_vec, &btree[k][8]) << 8)
+            cmp(x, &btree[k][0]) +
+            (cmp(x, &btree[k][8]) << 8)
         );
         int i = __builtin_ffs(mask) - 1;
         if (i < B)
@@ -165,6 +165,8 @@ This slightly improves the performance on larger array sizes:
 Ideally, we'd also need to enable hugepages for all [previous implementations](../binary-search) to make the comparison fair, but it doesn't matter that much because they all have some form of prefetching that alleviates this problem.
 
 With that settled, let's begin real optimization. First of all, we'd want to use compile-time constants instead of variables as much as possible because it lets the compiler embed them in the machine code, unroll loops, optimize arithmetic, and do all sorts of other nice stuff for us for free. Specifically, we want to know the tree height in advance:
+
+<!-- todo: maybe this can be computed simpler? -->
 
 ```c++
 constexpr int height(int n) {
@@ -207,12 +209,12 @@ const int [height, nblocks] = precalc(N);
 Next, we can find the local lower bound in nodes faster. Instead of calculating it separately for two 8-element blocks and merging masks, we can use one [packs](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,4870,6715,4845,3853,90,7307,5993,2692,6946,6949,5456,6938,5456,1021,3007,514,518,7253,7183,3892,5135,5260,3915,4027,3873,7401,4376,4229,151,2324,2310,2324,4075,6130,4875,6385,5259,6385,6250,1395,7253,6452,7492,4669,4669,7253,1039,1029,4669,4707,7253,7242,848,879,848,7251,4275,879,874,849,833,6046,7250,4870,4872,4875,849,849,5144,4875,4787,4787,4787,5227,7359,7335,7392,4787,5259,5230,5223,6438,488,483,6165,6570,6554,289,6792,6554,5230,6385,5260,5259,289,288,3037,3009,590,604,5230,5259,6554,6554,5259,6547,6554,3841,5214,5229,5260,5259,7335,5259,519,1029,515,3009,3009,3011,515,6527,652,6527,6554,288,3841,5230,5259,5230,5259,305,5259,591,633,633,5259,5230,5259,5259,3017,3018,3037,3018,3017,3016,3013,5144&text=_mm256_packs_epi32&techs=AVX,AVX2) instruction before the `movemask`:
 
 ```c++
-unsigned rank(reg x_vec, int* y_ptr) {
-    reg a = _mm256_load_si256((reg*) y_ptr);
-    reg b = _mm256_load_si256((reg*) (y_ptr + 8));
+unsigned rank(reg x, int* y) {
+    reg a = _mm256_load_si256((reg*) y);
+    reg b = _mm256_load_si256((reg*) (y + 8));
 
-    reg ca = _mm256_cmpgt_epi32(a, x_vec);
-    reg cb = _mm256_cmpgt_epi32(b, x_vec);
+    reg ca = _mm256_cmpgt_epi32(a, x);
+    reg cb = _mm256_cmpgt_epi32(b, x);
 
     reg c = _mm256_packs_epi32(ca, cb);
     int mask = _mm256_movemask_epi8(c);
@@ -258,17 +260,17 @@ void update(int &res, int* node, unsigned i) {
 Stitching it all together (and leaving out some other minor optimizations):
 
 ```c++
-int lower_bound(int x) {
+int lower_bound(int _x) {
     int k = 0, res = INT_MAX;
-    reg x_vec = _mm256_set1_epi32(x - 1);
+    reg x = _mm256_set1_epi32(_x - 1);
     for (int h = 0; h < H - 1; h++) {
-        unsigned i = rank(x_vec, &btree[k]);
+        unsigned i = rank(x, &btree[k]);
         update(res, &btree[k], i);
         k = go(k, i);
     }
     // the last branch:
     if (k < nblocks) {
-        unsigned i = rank(x_vec, btree[k2]);
+        unsigned i = rank(x, btree[k]);
         update(res, &btree[k], i);
     }
     return res;
@@ -314,22 +316,15 @@ constexpr int offset(int h) {
 }
 
 const int H = height(N), S = offset(H);
+```
 
+To be more explicit with pointer arithmetic, the tree is just a single array now:
+
+```c++
 int *btree;
+```
 
-void permute(int *node) {
-    const reg perm_mask = _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4);
-    reg* middle = (reg*) (node + 4);
-    reg x = _mm256_loadu_si256(middle);
-    x = _mm256_permutevar8x32_epi32(x, perm_mask);
-    _mm256_storeu_si256(middle, x);
-}
-
-void prepare(int *a, int n) {
-    const int P = 1 << 21, T = (4 * S + P - 1) / P * P;
-    btree = (int*) std::aligned_alloc(P, T);
-    madvise(btree, T, MADV_HUGEPAGE);
-
+```c++
     for (int i = N; i < S; i++)
         btree[i] = INT_MAX;
 
@@ -350,60 +345,22 @@ void prepare(int *a, int n) {
     for (int i = offset(1); i < S; i += B)
         permute(btree + i);
 }
+```
 
-unsigned direct_rank(reg x, int* y) {
-    reg a = _mm256_load_si256((reg*) y);
-    reg b = _mm256_load_si256((reg*) (y + 8));
-
-    reg ca = _mm256_cmpgt_epi32(a, x);
-    reg cb = _mm256_cmpgt_epi32(b, x);
-
-    int mb = _mm256_movemask_ps((__m256) cb);
-    int ma = _mm256_movemask_ps((__m256) ca);
-    
-    unsigned mask = (1 << 16);
-    mask |= mb << 8;
-    mask |= ma;
-
-    return __tzcnt_u32(mask);
-}
-
-unsigned permuted_rank(reg x, int* y) {
-    reg a = _mm256_load_si256((reg*) y);
-    reg b = _mm256_load_si256((reg*) (y + 8));
-
-    reg ca = _mm256_cmpgt_epi32(a, x);
-    reg cb = _mm256_cmpgt_epi32(b, x);
-
-    reg c = _mm256_packs_epi32(ca, cb);
-    unsigned mask = _mm256_movemask_epi8(c);
-
-    return __tzcnt_u32(mask)/* >> 1*/;
-}
-
+```c++
 int lower_bound(int _x) {
     unsigned k = 0;
     reg x = _mm256_set1_epi32(_x - 1);
     for (int h = H - 1; h > 0; h--) {
         unsigned i = permuted_rank(x, btree + offset(h) + k);
-        
-        //k /= B;
-        //k *= (B + 1) * B;
-        // k += (i << 3);
-        
-        k = k * (B + 1) + (i << 3);
-        
-        //if (N > (1 << 21) && h == 1)
-        //    __builtin_prefetch(btree + k);
-        
-        //k += (i << 3);
+        k = k * (B + 1) + i * B;
     }
     unsigned i = direct_rank(x, btree + k);
     return btree[k + i];
 }
 ```
 
-Helping the compiler out with pointer arithmetic.
+
 
 ![](../img/search-bplus.svg)
 
