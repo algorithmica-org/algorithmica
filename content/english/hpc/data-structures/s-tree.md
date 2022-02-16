@@ -48,48 +48,54 @@ B-trees were primarily developed for the purpose of managing on-disk databases, 
 
 ### Implicit B-Tree
 
-To perform static binary searches, one can implement a B-tree in an *implicit* way, i. e. without actually storing any pointers and spending only $O(1)$ additional memory, and $k$ could be made equal to the cache line size so that each node request fetches exactly one cache line.
+Storing and fetching pointers in a B-tree node wastes precious cache space and decreases performance, but they are essential for changing the tree structure on inserts and deletions. But when there are no updates, and the structure of a tree is *static*, we can get rid of the pointers, which makes the structure *implicit*.
 
-Normally, a B-tree node also stores $(B+1)$ pointers to its children, but we will only store keys and rely on pointer arithmetic, similar to the one used in Eytzinger array:
+One of the ways to achieve this is by generalizing the [Eytzinger numeration](../binary-search#eytzinger-layout) to $(B + 1)$-ary trees:
 
 - The root node is numbered $0$.
-- Node $k$ has $(B+1)$ child nodes numbered $\{k \cdot (B+1) + i\}$ for $i \in [1, B]$.
+- Node $k$ has $(B + 1)$ child nodes numbered $\\{k \cdot (B+1) + i\\}$ for $i \in [1, B]$.
 
-Keys are stored in a 2d array in non-decreasing order. If the length of the initial array is not a multiple of $B$, the last block is padded with the largest value if its data type.
-
-We call this particular layout "S-tree".
+This way we can only use $O(1)$ additional memory by allocating one large two-dimensional array of keys and relying on index arithmetic to locate children nodes in the tree:
 
 ```c++
 const int B = 16;
 
 int nblocks = (n + B - 1) / B;
 int btree[nblocks][B];
+
+int go(int k, int i) { return k * (B + 1) + i + 1; }
 ```
+
+<!-- todo: exact height -->
+
+This numeration automatically makes the B-tree complete or almost complete with the height of $\Theta(\log_{B + 1} n)$. If the length of the initial array is not a multiple of $B$, the last block is padded with the largest value of its data type.
 
 ### Construction
 
-We can construct B-tree similarly by traversing the search tree.
+We can construct B-tree similar to how we constructed the Eytzinger array — by traversing the search tree:
 
 ```c++
-int go(int k, int i) { return k * (B + 1) + i + 1; }
-
 void build(int k = 0) {
     static int t = 0;
     if (k < nblocks) {
         for (int i = 0; i < B; i++) {
             build(go(k, i));
-            btree[k][i] = (t < n ? _a[t++] : INT_MAX);
+            btree[k][i] = (t < n ? a[t++] : INT_MAX);
         }
         build(go(k, B));
     }
 }
 ```
 
-It is correct, because each value of initial array will be copied to a unique position in the resulting array, and the tree height is $\Theta(\log_{B+1} n)$, because $k$ is multiplied by $(B + 1)$ each time a child node is created.
+It is correct because each value of the initial array will be copied to a unique position in the resulting array, and the tree height is $\Theta(\log_{B+1} n)$ because $k$ is multiplied by $(B + 1)$ each time we descend into a child node.
 
-Note that this approach causes a slight imbalance: "lefter" children may have larger respective ranges.
+Note that this numeration causes a slight imbalance: left-er children may have larger subtrees, although this is only true for $O(\log_{B+1} n)$ parent nodes.
 
-So, as we promised before, we will perform all $16$ comparisons to compute the index of the right child node, but we leverage SIMD instructions to do it efficiently. Just to clarify — we want to do something like this:
+### Searches
+
+To find the lower bound, we need to fetch the $B$ keys in a node, find the first key $a_i$ not less than $x$, descend to the $i$-th child — and continue until we reach a leaf node. There is some variability in how to find that first key. For example, we could do a tiny internal binary search that makes $O(\log B)$ iterations, or maybe just compare each key sequentially in $O(B)$ time until we find the local lower bound, hopefully exiting from the loop a bit early.
+
+But we are not going to do that — because we can use [SIMD](/hpc/simd). It doesn't work well with branching, so essentially what we want to do is to compare against all $B$ elements regardless, compute a bit mask out of these comparisons, and then use the `ffs` instruction to find the bit corresponding to the first non-lesser element:
 
 ```cpp
 int mask = (1 << B);
@@ -101,33 +107,21 @@ int i = __builtin_ffs(mask) - 1;
 // now i is the number of the correct child node
 ```
 
-…but ~8 times faster.
-
-Actually, compilers quite often produce very optimized code that leverages these instructions for certain types of loops. This is called auto-vectorization, and this is the reason why a loop that sums up an array of `short`s is faster (theoretically by a factor of two) than the same loop for `int`s: you can fit more elements on the same 256-bit block. Sadly, this is not our case, as we have loop-carried dependencies.
-
-The algorithm we will implement:
-
-1. Somewhere before the main loop, convert $x$ to a vector of $8$ copies of $x$.
-2. Load the keys stored in node into another 256-bit vector.
-3. Compare these two vectors. This returns a 256-bit mask in which pairs that compared "greater than" are marked with ones.
-4. Create a 8-bit mask out of that and return it. Then you can feed it to `__builtin_ffs`.
-
-This is how it looks using C++ intrinsics, which are basically built-in wrappers for raw assembly instructions:
-
-
-After that, we call this function two times (because our node size / cache line happens to be 512 bits, which is twice as big) and blend these masks together with bitwise operations.
-
-
+Unfortunately, the compilers are not smart enough yet to auto-vectorize this code, so we need to manually use intrinsics:
 
 ```c++
 typedef __m256i reg;
 
 int cmp(reg x_vec, int* y_ptr) {
-    reg y_vec = _mm256_load_si256((reg*) y_ptr);
-    reg mask = _mm256_cmpgt_epi32(x_vec, y_vec);
-    return _mm256_movemask_ps((__m256) mask);
+    reg y_vec = _mm256_load_si256((reg*) y_ptr); // load 8 sorted elements
+    reg mask = _mm256_cmpgt_epi32(x_vec, y_vec); // compare against the key
+    return _mm256_movemask_ps((__m256) mask);    // extract the 8-bit mask
 }
+```
 
+This function works for 8-element vectors, which is half our block / cache line size. To process the entire block, we need to call it twice and then combine the masks:
+
+```c++
 int lower_bound(int x) {
     int k = 0, res = INT_MAX;
     reg x_vec = _mm256_set1_epi32(x);
@@ -145,13 +139,17 @@ int lower_bound(int x) {
 }
 ```
 
-Note that this implementation is very specific to the architecture. Older CPUs and CPUs on mobile devices don't have 256-bit wide registers and will crash (but they likely have 128-bit SIMD so the loop can still be split in 4 parts instead of 2), non-Intel CPUs have their own instruction sets for SIMD, and some computers even have different cache line size.
+To actually return the result, we'd want to just fetch `btree[k][i]` in the last node we visited, but the problem is that sometimes the local lower bound doesn't exist ($i \ge B$) because $x$ happens to be greater than all the keys in the node. In this case, we need to return the last local lower bound we actually encountered — hence we update the result as we descend down the tree using the `(i < B)` check.
+
+This implementation outperforms all previous binary search implementations by a huge margin:
 
 ![](../img/search-btree.svg)
 
+This is very good — but we can optimize it even further.
+
 ### Optimizations
 
-Enable huge pages:
+Enable [hugepages](/hpc/cpu-cache/paging):
 
 ```c++
 btree = (int(*)[16]) std::aligned_alloc(2 * 1024 * 1024, 64 * nblocks);
@@ -213,6 +211,7 @@ There are probably faster ways to swap middle elements, but we will leave it her
 
 You call `permute(btree[k])` after you've done with constructing a node.
 
+There are ways to do this with bit-level trickery, but indexing a small lookup table turns out to be faster.
 
 ```c++
 const int translate[17] = {
@@ -480,6 +479,10 @@ A ~15x improvement is definitely worth it — and the memory overhead is not lar
 That's it. This implementation should outperform even the [state-of-the-art indexes](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) used in high-performance databases, though it's mostly due to the fact that data structures used in real databases have to support fast updates while we don't.
 
 The problem has more dimensions.
+
+NEON would require some [trickery](https://github.com/WebAssembly/simd/issues/131)
+
+Note that this implementation is very specific to the architecture. Older CPUs and CPUs on mobile devices don't have 256-bit wide registers and will crash (but they likely have 128-bit SIMD so the loop can still be split in 4 parts instead of 2), non-Intel CPUs have their own instruction sets for SIMD, and some computers even have different cache line size.
 
 ### Acknowledgements
 
