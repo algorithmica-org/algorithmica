@@ -8,8 +8,8 @@ This article is a follow-up on the [previous one](../binary-search), where we op
 
 In this article, we generalize the techniques we developed for binary search to *static B-trees* and accelerate them further using [SIMD instructions](/hpc/simd). In particular, we develop two new implicit data structures:
 
-- The first one is based on the memory layout of a B-tree, and, depending on the array size, it is up to 8x faster than `std::lower_bound` while using the same space as the array and only requiring a permutation of its elements.
-- The second one is based on the memory layout of a B+ tree, and it is up to 15x faster that `std::lower_bound` while using just 6-7% more memory — or 6-7% **of** the memory if we keep the original sorted array.
+- The [first one](#b-tree-layout) is based on the memory layout of a B-tree, and, depending on the array size, it is up to 8x faster than `std::lower_bound` while using the same space as the array and only requiring a permutation of its elements.
+- The [second one](#b-tree-layout-1) is based on the memory layout of a B+ tree, and it is up to 15x faster that `std::lower_bound` while using just 6-7% more memory — or 6-7% **of** the memory if we can keep the original sorted array.
 
 To distinguish them from B-trees — the structures with pointers, thousands to millions of elements per node, and empty spaces — we will use the names *S-tree* and *S+ tree* respectively to refer to these particular memory layouts[^name].
 
@@ -28,7 +28,7 @@ The last two approaches use SIMD, which technically disqualifies it from being b
 
 -->
 
-As before, we are using Clang 10 targeting a Zen 2 CPU, but the relative performance improvements should approximately transfer to other platforms, including Arm-based chips. To the best of my knowledge, this is a significant improvement over all the existing [approaches](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf).
+To the best of my knowledge, this is a significant improvement over the existing [approaches](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf). As before, we are using Clang 10 targeting a Zen 2 CPU, but the relative performance improvements should approximately transfer to other platforms, including Arm-based chips.
 
 <!--
 
@@ -38,15 +38,15 @@ This is a large article, which will turn into a multi-hour read. If you feel com
 
 ## B-Tree Layout
 
-B-trees generalize the concept of binary search trees by allowing nodes to have more than two children.
-
-Instead of single key, a B-tree node contains up to $B$ sorted keys may have up to $(B + 1)$ children, thus reducing the tree height in $\frac{\log_2 n}{\log_B n} = \frac{\log B}{\log 2} = \log_2 B \approx 4$ times — and also needing four times less cache lines to fetch.
+B-trees generalize the concept of binary search trees by allowing nodes to have more than two children. Instead of a single key, a node of a B-tree of order $k$ can contain up to $B = (k - 1)$ keys that are stored in sorted order and up to $k$ pointers to child nodes, each satisfying the property that all keys in the subtrees of the first $i$ children are not greater than the $i$-th key in the parent node.
 
 ![A B-tree of order 4](../img/b-tree.jpg)
 
-They were primarily developed for the purpose of managing on-disk databases, as their random access times are almost the same as reading 1MB of data sequentially, which makes the trade-off between number of comparisons and tree height beneficial. In our implementation, we will make each the size of each block equal to the cache line size, which in case of `int` is 16 elements.
+The main advantage of this approach is that it reduces the tree height by $\frac{\log_2 n}{\log_k n} = \frac{\log k}{\log 2} = \log_2 k$ times, while fetching each node still takes roughly the same time as long it fits into a single [memory block](/hpc/external-memory/hierarchy/).
 
-They are widely used for indexing in databases, especially those that operate on-disk, because if $k$ is big, this allows large sequential memory accesses while reducing the height of the tree.
+B-trees were primarily developed for the purpose of managing on-disk databases, where the latency of a randomly fetching a single byte is comparable with the time it takes to read the next 1MB of data sequentially. For our use case, we will be using the block size of $B = 16$ elements — or $64$ bytes, the size of the cache line — which makes the tree height and the total number of cache line fetches per query $\log_2 17 \approx 4$ times smaller compared to the binary search.
+
+### Implicit B-Tree
 
 To perform static binary searches, one can implement a B-tree in an *implicit* way, i. e. without actually storing any pointers and spending only $O(1)$ additional memory, and $k$ could be made equal to the cache line size so that each node request fetches exactly one cache line.
 
