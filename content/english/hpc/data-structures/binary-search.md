@@ -260,7 +260,7 @@ Another way to look at it is that we write every even-indexed element to the end
 
 ### Construction
 
-To construct the Eytzinger array, we could do this even-odd [filtering](/hpc/simd/shuffing/#permutations-and-lookup-tables) $O(\log n)$ times — and, perhaps, this is the fastest approach — but for brevity, we will instead build it by traversing the original search tree:
+To construct the Eytzinger array, we could do this even-odd [filtering](/hpc/simd/shuffling/#permutations-and-lookup-tables) $O(\log n)$ times — and, perhaps, this is the fastest approach — but for brevity, we will instead build it by traversing the original search tree:
 
 ```c++
 int a[n], t[n + 1]; // the original sorted array and the eytzinger array we build
