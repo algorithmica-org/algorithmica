@@ -4,62 +4,73 @@ weight: 2
 draft: true
 ---
 
-This is a follow up on the [previous article](../binary-search) about optimizing binary search. For more context, go there first.
+This article is a follow-up on the [previous one](../binary-search), where we optimized binary search by the means of removing branching and improving the memory layout. Here, we will also be searching over sorted arrays, but this time we are not limited to fetching and comparing only one element at a time.
+
+In this article, we generalize the techniques we developed for binary search to *static B-trees* and accelerate them further using [SIMD instructions](/hpc/simd). In particular, we develop two new implicit data structures:
+
+- The first one is based on the memory layout of a B-tree, and, depending on the array size, it is up to 8x faster than `std::lower_bound` while using the same space as the array and only requiring a permutation of its elements.
+- The second one is based on the memory layout of a B+ tree, and it is up to 15x faster that `std::lower_bound` while using just 6-7% more memory — or 6-7% **of** the memory if we keep the original sorted array.
+
+To distinguish them from B-trees — the structures with pointers, thousands to millions of elements per node, and empty spaces — we will use the names *S-tree* and *S+ tree* respectively to refer to these particular memory layouts[^name].
+
+[^name]: [Similar to B-trees](https://en.wikipedia.org/wiki/B-tree#Origin), "the more you think about what the S in S-trees means, the better you understand S-trees."
+
+<!--
+
+Similar to how the B in B-trees stands for many thing in We even have more claim to it than Bayer had on B-tree: it is succinct, static, simd, my name, my surname.
 
 - *S-tree*: an approach based on the implicit (pointer-free) B-layout accelerated with SIMD operations to perform search efficiently while using less memory bandwidth and is ~8x faster on small arrays and 5x faster on large arrays.
 - *S+ tree*: an approach similarly based on the B+ layout and achieves up to 15x faster for small arrays and ~7x faster on large arrays. Uses 6-7% of the array memory.
 
-The last two approaches use SIMD, which technically disqualifies it from being binary search. This is technically not a drop-in replacement, since it requires some preprocessing, but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing. But otherwise they are effectively drop-in replacements to `std::lower_bound`.
+There is a an obscure data structure in computer vision.
 
-The more you think about the name. "S-tree" and "S+ tree" respectively. There is a an obscure data structures in computer vision. We even have more claim to it than Boer had on B-tree: it is succinct, static, simd, my name, my surname.
+The last two approaches use SIMD, which technically disqualifies it from being binary search. This is technically not a drop-in replacement, since it requires some preprocessing, but I can't recall a lot of scenarios where you obtain a sorted array but can't spend linear time on preprocessing.
+
+-->
+
+As before, we are using Clang 10 targeting a Zen 2 CPU, but the relative performance improvements should approximately transfer to other platforms, including Arm-based chips. To the best of my knowledge, this is a significant improvement over all the existing [approaches](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf).
+
+<!--
+
+This is a large article, which will turn into a multi-hour read. If you feel comfortable reading [intrinsic](/hpc/simd/intrinsics)-heavy code without any context whatsoever, you can skim through the first four implementation and jump straight to the last section.
+
+-->
 
 ## B-Tree Layout
 
-We aren't limited to fetching one element at a time and comparing it.
+B-trees generalize the concept of binary search trees by allowing nodes to have more than two children.
 
-B-trees are basically $(k+1)$-ary trees, meaning that they store $k$ elements in each node and choose between $(k+1)$ possible branches instead of 2.
-
-They are widely used for indexing in databases, especially those that operate on-disk, because if $k$ is big, this allows large sequential memory accesses while reducing the height of the tree.
-
-To perform static binary searches, one can implement a B-tree in an implicit way, i. e. without actually storing any pointers and spending only $O(1)$ additional memory, and $k$ could be made equal to the cache line size so that each node request fetches exactly one cache line.
+Instead of single key, a B-tree node contains up to $B$ sorted keys may have up to $(B + 1)$ children, thus reducing the tree height in $\frac{\log_2 n}{\log_B n} = \frac{\log B}{\log 2} = \log_2 B \approx 4$ times — and also needing four times less cache lines to fetch.
 
 ![A B-tree of order 4](../img/b-tree.jpg)
 
-Let's assume that arithmetic costs nothing and do simple cache block analysis:
-
-* The Eytzinger binary search is supposed to be $4$ times faster if compute didn't matter, as it requests them ~4 times faster on average.
-
-* The B-tree makes $\frac{\log_{17} n}{\log_2 n} = \frac{\log n}{\log 17} \frac{\log 2}{\log n} = \frac{\log 2}{\log 17} \approx 0.245$ memory access per each request of binary search, i. e. it requests ~4 times less cache lines to fetch
-
-This explains why they have roughly the same slope.
-
-### B-tree layout
-
-B-trees generalize the concept of binary search trees by allowing nodes to have more than two children.
-
-Instead of single key, a B-tree node contains up to $B$ sorted keys may have up to $(B+1)$ children, thus reducing the tree height in $\frac{\log_2 n}{\log_B n} = \frac{\log B}{\log 2} = \log_2 B$ times.
-
 They were primarily developed for the purpose of managing on-disk databases, as their random access times are almost the same as reading 1MB of data sequentially, which makes the trade-off between number of comparisons and tree height beneficial. In our implementation, we will make each the size of each block equal to the cache line size, which in case of `int` is 16 elements.
+
+They are widely used for indexing in databases, especially those that operate on-disk, because if $k$ is big, this allows large sequential memory accesses while reducing the height of the tree.
+
+To perform static binary searches, one can implement a B-tree in an *implicit* way, i. e. without actually storing any pointers and spending only $O(1)$ additional memory, and $k$ could be made equal to the cache line size so that each node request fetches exactly one cache line.
 
 Normally, a B-tree node also stores $(B+1)$ pointers to its children, but we will only store keys and rely on pointer arithmetic, similar to the one used in Eytzinger array:
 
-* The root node is numbered $0$.
+- The root node is numbered $0$.
+- Node $k$ has $(B+1)$ child nodes numbered $\{k \cdot (B+1) + i\}$ for $i \in [1, B]$.
 
-* Node $k$ has $(B+1)$ child nodes numbered $\{k \cdot (B+1) + i\}$ for $i \in [1, B]$.
+Keys are stored in a 2d array in non-decreasing order. If the length of the initial array is not a multiple of $B$, the last block is padded with the largest value if its data type.
 
-Keys are stored in a 2d array in non-decreasing order. If the length of the initial array is not a multiple of $B$, the last block is padded with the largest value if its data type. 
+We call this particular layout "S-tree".
 
 ```c++
-typedef __m256i reg;
-
 const int B = 16;
-const int INF = std::numeric_limits<int>::max();
 
-int n;
-int nblocks;
-int *_a;
-int (*btree)[B];
+int nblocks = (n + B - 1) / B;
+int btree[nblocks][B];
+```
 
+### Construction
+
+We can construct B-tree similarly by traversing the search tree.
+
+```c++
 int go(int k, int i) { return k * (B + 1) + i + 1; }
 
 void build(int k = 0) {
@@ -67,45 +78,12 @@ void build(int k = 0) {
     if (k < nblocks) {
         for (int i = 0; i < B; i++) {
             build(go(k, i));
-            btree[k][i] = (t < n ? _a[t++] : INF);
+            btree[k][i] = (t < n ? _a[t++] : INT_MAX);
         }
         build(go(k, B));
     }
 }
-
-void prepare(int *a, int _n) {
-    n = _n;
-    nblocks = (n + B - 1) / B;
-    _a = a;
-    btree = (int(*)[16]) std::aligned_alloc(64, 64 * nblocks);
-    build();
-}
-
-int cmp(reg x_vec, int* y_ptr) {
-    reg y_vec = _mm256_load_si256((reg*) y_ptr);
-    reg mask = _mm256_cmpgt_epi32(x_vec, y_vec);
-    return _mm256_movemask_ps((__m256) mask);
-}
-
-int lower_bound(int x) {
-    int k = 0, res = INF;
-    reg x_vec = _mm256_set1_epi32(x);
-    while (k < nblocks) {
-        int mask = ~(
-            cmp(x_vec, &btree[k][0]) +
-            (cmp(x_vec, &btree[k][8]) << 8)
-        );
-        int i = __builtin_ffs(mask) - 1;
-        if (i < B)
-            res = btree[k][i];
-        k = go(k, i);
-    }
-    return res;
-}
 ```
-
-
-We can construct B-tree similarly by traversing the search tree.
 
 It is correct, because each value of initial array will be copied to a unique position in the resulting array, and the tree height is $\Theta(\log_{B+1} n)$, because $k$ is multiplied by $(B + 1)$ each time a child node is created.
 
@@ -123,10 +101,9 @@ int i = __builtin_ffs(mask) - 1;
 // now i is the number of the correct child node
 ```
 
-
 …but ~8 times faster.
 
-Actually, compiler quite often produces very optimized code that leverages these instructions for certain types of loops. This is called auto-vectorization, and this is the reason why a loop that sums up an array of `short`s is faster (theoretically by a factor of two) than the same loop for `int`s: you can fit more elements on the same 256-bit block. Sadly, this is not our case, as we have loop-carried dependencies.
+Actually, compilers quite often produce very optimized code that leverages these instructions for certain types of loops. This is called auto-vectorization, and this is the reason why a loop that sums up an array of `short`s is faster (theoretically by a factor of two) than the same loop for `int`s: you can fit more elements on the same 256-bit block. Sadly, this is not our case, as we have loop-carried dependencies.
 
 The algorithm we will implement:
 
@@ -141,7 +118,32 @@ This is how it looks using C++ intrinsics, which are basically built-in wrappers
 After that, we call this function two times (because our node size / cache line happens to be 512 bits, which is twice as big) and blend these masks together with bitwise operations.
 
 
-That's it. This implementation should outperform even the [state-of-the-art indexes](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) used in high-performance databases, though it's mostly due to the fact that data structures used in real databases have to support fast updates while we don't.
+
+```c++
+typedef __m256i reg;
+
+int cmp(reg x_vec, int* y_ptr) {
+    reg y_vec = _mm256_load_si256((reg*) y_ptr);
+    reg mask = _mm256_cmpgt_epi32(x_vec, y_vec);
+    return _mm256_movemask_ps((__m256) mask);
+}
+
+int lower_bound(int x) {
+    int k = 0, res = INT_MAX;
+    reg x_vec = _mm256_set1_epi32(x);
+    while (k < nblocks) {
+        int mask = ~(
+            cmp(x_vec, &btree[k][0]) +
+            (cmp(x_vec, &btree[k][8]) << 8)
+        );
+        int i = __builtin_ffs(mask) - 1;
+        if (i < B)
+            res = btree[k][i];
+        k = go(k, i);
+    }
+    return res;
+}
+```
 
 Note that this implementation is very specific to the architecture. Older CPUs and CPUs on mobile devices don't have 256-bit wide registers and will crash (but they likely have 128-bit SIMD so the loop can still be split in 4 parts instead of 2), non-Intel CPUs have their own instruction sets for SIMD, and some computers even have different cache line size.
 
@@ -157,6 +159,8 @@ madvise(btree, 64 * nblocks, MADV_HUGEPAGE);
 ```
 
 ![](../img/search-btree-hugepages.svg)
+
+Ideally, we'd need to also enable it for [previous implementations](../binary-search). But enabling it for previous implementation doesn't make a that much difference as they have one form of prefetching or another anyway.
 
 ```c++
 constexpr std::pair<int, int> precalc(int n) {
@@ -195,12 +199,6 @@ unsigned rank(reg x_vec, int* y_ptr) {
 
 Or 
 
-
-<!--
-//const reg perm_mask = _mm256_set_epi32(3, 2, 1, 0, 7, 6, 5, 4); // todo: setr
--->
-
-
 ```c++
 void permute(int *node) {
     const reg perm = _mm256_setr_epi32(4, 5, 6, 7, 0, 1, 2, 3);
@@ -233,7 +231,7 @@ void update(int &res, int* node, unsigned i) {
 
 ```c++
 int lower_bound(int x) {
-    int k = 0, res = INF;
+    int k = 0, res = INT_MAX;
     reg x_vec = _mm256_set1_epi32(x - 1);
     for (int h = 0; h < height - 1; h++) {
         int *node = btree[k];
@@ -299,7 +297,7 @@ void prepare(int *a, int n) {
     madvise(btree, T, MADV_HUGEPAGE);
 
     for (int i = N; i < S; i++)
-        btree[i] = INF;
+        btree[i] = INT_MAX;
 
     memcpy(btree, a, 4 * N);
     
@@ -311,7 +309,7 @@ void prepare(int *a, int n) {
             // and then always to the left
             for (int l = 0; l < h - 1; l++)
                 k *= (B + 1);
-            btree[offset(h) + i] = (k * B < N ? btree[k * B] : INF);
+            btree[offset(h) + i] = (k * B < N ? btree[k * B] : INT_MAX);
         }
     }
 
@@ -478,6 +476,8 @@ My next priorities is to adapt it to segment trees, which I know how to do, and 
 ![](../img/search-set-relative-all.svg)
 
 A ~15x improvement is definitely worth it — and the memory overhead is not large, as we only need to store pointers (indices, actually) for internal nodes. It may be higher, because we need to fetch two separate memory blocks, or lower, because we need to handle updates somehow. Either way, this will be an interesting optimization problem.
+
+That's it. This implementation should outperform even the [state-of-the-art indexes](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) used in high-performance databases, though it's mostly due to the fact that data structures used in real databases have to support fast updates while we don't.
 
 The problem has more dimensions.
 
