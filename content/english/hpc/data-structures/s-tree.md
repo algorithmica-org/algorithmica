@@ -1,15 +1,14 @@
 ---
 title: Static B-Trees
 weight: 2
-draft: true
 ---
 
-This article is a follow-up on the [previous one](../binary-search), where we optimized binary search by the means of removing branching and improving the memory layout. Here, we will also be searching over sorted arrays, but this time we are not limited to fetching and comparing only one element at a time.
+This article is a follow-up to the [previous one](../binary-search), where we optimized binary search by the means of removing branching and improving the memory layout. Here, we will also be searching over sorted arrays, but this time we are not limited to fetching and comparing only one element at a time.
 
 In this article, we generalize the techniques we developed for binary search to *static B-trees* and accelerate them further using [SIMD instructions](/hpc/simd). In particular, we develop two new implicit data structures:
 
-- The [first one](#b-tree-layout) is based on the memory layout of a B-tree, and, depending on the array size, it is up to 8x faster than `std::lower_bound` while using the same space as the array and only requiring a permutation of its elements.
-- The [second one](#b-tree-layout-1) is based on the memory layout of a B+ tree, and it is up to 15x faster that `std::lower_bound` while using just 6-7% more memory — or 6-7% **of** the memory if we can keep the original sorted array.
+- The [first](#b-tree-layout) is based on the memory layout of a B-tree, and, depending on the array size, it is up to 8x faster than `std::lower_bound` while using the same space as the array and only requiring a permutation of its elements.
+- The [second](#b-tree-layout-1) is based on the memory layout of a B+ tree, and it is up to 15x faster than `std::lower_bound` while using just 6-7% more memory — or 6-7% **of** the memory if we can keep the original sorted array.
 
 To distinguish them from B-trees — the structures with pointers, hundreds to thousands of keys per node, and empty spaces in them — we will use the names *S-tree* and *S+ tree* respectively to refer to these particular memory layouts[^name].
 
@@ -30,7 +29,7 @@ The last two approaches use SIMD, which technically disqualifies it from being b
 
 To the best of my knowledge, this is a significant improvement over the existing [approaches](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf). As before, we are using Clang 10 targeting a Zen 2 CPU, but the performance improvements should approximately transfer to most other platforms, including Arm-based chips. Use [this single-source benchmark](https://github.com/sslotin/amh-code/blob/main/binsearch/standalone.cc) of the final implementation if you want to test it on your machine.
 
-This is a large article, and since this is also serves as [textbook](/hpc/) case study, my side my goal is not to develop algorithms, but to teach people how to develop algorithms — so we will be developing a lot of intermediate optimizations first. If you are already an expert, and feel comfortable reading [intrinsic](/hpc/simd/intrinsics)-heavy code with little to no context, you can jump straight to the [final implementation](#implicit-b-tree-1).
+This is a long article, and since it also serves as a [textbook](/hpc/) case study, we will improve the algorithm incrementally for pedagogical goals. If you are already an expert and feel comfortable reading [intrinsic](/hpc/simd/intrinsics)-heavy code with little to no context, you can jump straight to the [final implementation](#implicit-b-tree-1).
 
 ## B-Tree Layout
 
@@ -38,20 +37,20 @@ B-trees generalize the concept of binary search trees by allowing nodes to have 
 
 ![A B-tree of order 4](../img/b-tree.jpg)
 
-The main advantage of this approach is that it reduces the tree height by $\frac{\log_2 n}{\log_k n} = \frac{\log k}{\log 2} = \log_2 k$ times, while fetching each node still takes roughly the same time as long it fits into a single [memory block](/hpc/external-memory/hierarchy/).
+The main advantage of this approach is that it reduces the tree height by $\frac{\log_2 n}{\log_k n} = \frac{\log k}{\log 2} = \log_2 k$ times while fetching each node still takes roughly the same time — as long it fits into a single [memory block](/hpc/external-memory/hierarchy/).
 
-B-trees were primarily developed for the purpose of managing on-disk databases, where the latency of a randomly fetching a single byte is comparable with the time it takes to read the next 1MB of data sequentially. For our use case, we will be using the block size of $B = 16$ elements — or $64$ bytes, the size of the cache line — which makes the tree height and the total number of cache line fetches per query $\log_2 17 \approx 4$ times smaller compared to the binary search.
+B-trees were primarily developed for the purpose of managing on-disk databases, where the latency of randomly fetching a single byte is comparable with the time it takes to read the next 1MB of data sequentially. For our use case, we will be using the block size of $B = 16$ elements — or $64$ bytes, the size of the cache line — which makes the tree height and the total number of cache line fetches per query $\log_2 17 \approx 4$ times smaller compared to the binary search.
 
 ### Implicit B-Tree
 
-Storing and fetching pointers in a B-tree node wastes precious cache space and decreases performance, but they are essential for changing the tree structure on inserts and deletions. But when there are no updates, and the structure of a tree is *static*, we can get rid of the pointers, which makes the structure *implicit*.
+Storing and fetching pointers in a B-tree node wastes precious cache space and decreases performance, but they are essential for changing the tree structure on inserts and deletions. But when there are no updates and the structure of a tree is *static*, we can get rid of the pointers, which makes the structure *implicit*.
 
 One of the ways to achieve this is by generalizing the [Eytzinger numeration](../binary-search#eytzinger-layout) to $(B + 1)$-ary trees:
 
 - The root node is numbered $0$.
 - Node $k$ has $(B + 1)$ child nodes numbered $\\{k \cdot (B+1) + i\\}$ for $i \in [1, B]$.
 
-This way we can only use $O(1)$ additional memory by allocating one large two-dimensional array of keys and relying on index arithmetic to locate children nodes in the tree:
+This way, we can only use $O(1)$ additional memory by allocating one large two-dimensional array of keys and relying on index arithmetic to locate children nodes in the tree:
 
 ```c++
 const int B = 16;
@@ -68,7 +67,7 @@ This numeration automatically makes the B-tree complete or almost complete with 
 
 ### Construction
 
-We can construct B-tree similar to how we constructed the Eytzinger array — by traversing the search tree:
+We can construct the B-tree similar to how we constructed the Eytzinger array — by traversing the search tree:
 
 ```c++
 void build(int k = 0) {
@@ -91,7 +90,7 @@ Note that this numeration causes a slight imbalance: left-er children may have l
 
 To find the lower bound, we need to fetch the $B$ keys in a node, find the first key $a_i$ not less than $x$, descend to the $i$-th child — and continue until we reach a leaf node. There is some variability in how to find that first key. For example, we could do a tiny internal binary search that makes $O(\log B)$ iterations, or maybe just compare each key sequentially in $O(B)$ time until we find the local lower bound, hopefully exiting from the loop a bit early.
 
-But we are not going to do that — because we can use [SIMD](/hpc/simd). It doesn't work well with branching, so essentially what we want to do is to compare against all $B$ elements regardless, compute a bit mask out of these comparisons, and then use the `ffs` instruction to find the bit corresponding to the first non-lesser element:
+But we are not going to do that — because we can use [SIMD](/hpc/simd). It doesn't work well with branching, so essentially what we want to do is to compare against all $B$ elements regardless, compute a bitmask out of these comparisons, and then use the `ffs` instruction to find the bit corresponding to the first non-lesser element:
 
 ```cpp
 int mask = (1 << B);
@@ -103,7 +102,7 @@ int i = __builtin_ffs(mask) - 1;
 // now i is the number of the correct child node
 ```
 
-Unfortunately, the compilers are not smart enough yet to auto-vectorize this code, so we need to manually use intrinsics:
+Unfortunately, the compilers are not smart enough yet to auto-vectorize this code, so we need to manually vectorize it with intrinsics:
 
 ```c++
 typedef __m256i reg;
@@ -124,7 +123,7 @@ int mask = ~(
 );
 ```
 
-Now, to descend down the tree, we use `ffs` on that mask to get the correct child number and just call the `go` function we defined before:
+Now, to descend down the tree, we use `ffs` on that mask to get the correct child number and just call the `go` function we defined earlier:
 
 ```c++
 int i = __builtin_ffs(mask) - 1;
@@ -161,7 +160,7 @@ This is very good — but we can optimize it even further.
 
 ### Optimization
 
-Before everything else, let's allocate the memory for the array on a [huge page](/hpc/cpu-cache/paging):
+Before everything else, let's allocate the memory for the array on a [hugepage](/hpc/cpu-cache/paging):
 
 ```c++
 const int P = 1 << 21;                        // page size in bytes (2MB)
@@ -218,7 +217,7 @@ const int [height, nblocks] = precalc(N);
 
 -->
 
-Next, we can find the local lower bound in nodes faster. Instead of calculating it separately for two 8-element blocks and merging masks, we can use one [packs](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,4870,6715,4845,3853,90,7307,5993,2692,6946,6949,5456,6938,5456,1021,3007,514,518,7253,7183,3892,5135,5260,3915,4027,3873,7401,4376,4229,151,2324,2310,2324,4075,6130,4875,6385,5259,6385,6250,1395,7253,6452,7492,4669,4669,7253,1039,1029,4669,4707,7253,7242,848,879,848,7251,4275,879,874,849,833,6046,7250,4870,4872,4875,849,849,5144,4875,4787,4787,4787,5227,7359,7335,7392,4787,5259,5230,5223,6438,488,483,6165,6570,6554,289,6792,6554,5230,6385,5260,5259,289,288,3037,3009,590,604,5230,5259,6554,6554,5259,6547,6554,3841,5214,5229,5260,5259,7335,5259,519,1029,515,3009,3009,3011,515,6527,652,6527,6554,288,3841,5230,5259,5230,5259,305,5259,591,633,633,5259,5230,5259,5259,3017,3018,3037,3018,3017,3016,3013,5144&text=_mm256_packs_epi32&techs=AVX,AVX2) instruction before the `movemask`:
+Next, we can find the local lower bound in nodes faster. Instead of calculating it separately for two 8-element blocks and merging two 8-bit masks, we combine the vector masks using the [packs](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,4870,6715,4845,3853,90,7307,5993,2692,6946,6949,5456,6938,5456,1021,3007,514,518,7253,7183,3892,5135,5260,3915,4027,3873,7401,4376,4229,151,2324,2310,2324,4075,6130,4875,6385,5259,6385,6250,1395,7253,6452,7492,4669,4669,7253,1039,1029,4669,4707,7253,7242,848,879,848,7251,4275,879,874,849,833,6046,7250,4870,4872,4875,849,849,5144,4875,4787,4787,4787,5227,7359,7335,7392,4787,5259,5230,5223,6438,488,483,6165,6570,6554,289,6792,6554,5230,6385,5260,5259,289,288,3037,3009,590,604,5230,5259,6554,6554,5259,6547,6554,3841,5214,5229,5260,5259,7335,5259,519,1029,515,3009,3009,3011,515,6527,652,6527,6554,288,3841,5230,5259,5230,5259,305,5259,591,633,633,5259,5230,5259,5259,3017,3018,3037,3018,3017,3016,3013,5144&text=_mm256_packs_epi32&techs=AVX,AVX2) instruction and readily extract it using `movemask` just once:
 
 ```c++
 unsigned rank(reg x, int* y) {
@@ -236,9 +235,9 @@ unsigned rank(reg x, int* y) {
 }
 ```
 
-This instruction converts 32-bit integers stored in two registers to 16-bit integers stored in one register — in our case, effectively joining the vector masks into one. Note that we've swapped the order of comparison — this lets us not invert the mask in the end, but we have to subtract one from the search key once in the beginning to make it correct (otherwise it works as `upper_bound`).
+This instruction converts 32-bit integers stored in two registers to 16-bit integers stored in one register — in our case, effectively joining the vector masks into one. Note that we've swapped the order of comparison — this lets us not invert the mask in the end, but we have to subtract one from the search key once in the beginning to make it correct (otherwise, it works as `upper_bound`).
 
-The problem is, it does this weird interleaving where the result is written in the `a1 b1 a2 b2` order instead of `a1 a2 b1 b2` that want. To correct this, we need to [permute](/hpc/simd/shuffling) the resulting vector, but instead of doing this during the query time, we can just permute every node during preprocessing:
+The problem is, it does this weird interleaving where the result is written in the `a1 b1 a2 b2` order instead of `a1 a2 b1 b2` that we want — many AVX2 instructions tend to do that. To correct this, we need to [permute](/hpc/simd/shuffling) the resulting vector, but instead of doing it during the query time, we can just permute every node during preprocessing:
 
 ```c++
 void permute(int *node) {
@@ -250,9 +249,9 @@ void permute(int *node) {
 }
 ```
 
-We just call `permute(&btree[k])` right after we are done with building a node. There are probably faster ways to swap middle elements, but we will leave it here, as the preprocessing time is not important for now.
+Now we just call `permute(&btree[k])` right after we are done building the node. There are probably faster ways to swap the middle elements, but we will leave it here as the preprocessing time is not that important for now.
 
-This new SIMD routine is significantly faster because the extra `movemask` was slow and also blending the two masks took quite a few instructions. Unfortunately, we now can't just do the `res = btree[k][i]` update anymore because the elements are permuted. We can solve this problem with some bit-level trickery in terms of `i`, but indexing a small lookup table turns out to be faster and also doesn't require a new branch:
+This new SIMD routine is significantly faster because the extra `movemask` is slow, and also blending the two masks takes quite a few instructions. Unfortunately, we now can't just do the `res = btree[k][i]` update anymore because the elements are permuted. We can solve this problem with some bit-level trickery in terms of `i`, but indexing a small lookup table turns out to be faster and also doesn't require a new branch:
 
 ```c++
 const int translate[17] = {
@@ -295,32 +294,32 @@ All this work saved us 15-20% or so:
 
 ![](../img/search-btree-optimized.svg)
 
-Doesn't feel very satisfying so far, but we will reuse these optimization ideas later.
+It doesn't feel very satisfying so far, but we will reuse these optimization ideas later.
 
 There are two main problems with the current implementation:
 
-- The `update` procedure as is quite costly, especially considering that it is likely to be useless: 16 out of 17 times we can just fetch the result from the last block.
-- We do non-constant number of iterations, causing branch prediction problems similar to how it did for the [Eytzinger binary search](/binary-search/#removing-the-last-branch); you can also see it on the graph this time, but the latency bumps have a period of $2^4$.
+- The `update` procedure is quite costly, especially considering that it is very likely going to be useless: 16 out of 17 times, we can just fetch the result from the last block.
+- We do a non-constant number of iterations, causing branch prediction problems similar to how it did for the [Eytzinger binary search](/binary-search/#removing-the-last-branch); you can also see it on the graph this time, but the latency bumps have a period of $2^4$.
 
 To address these problems, we need to change the layout a little bit.
 
 ## B+ Tree Layout
 
-Most of the time people talk about B-trees they really mean *B+ trees*, which is a modification that distinguishes between the two types of nodes:
+Most of the time, when people talk about B-trees, they really mean *B+ trees*, which is a modification that distinguishes between the two types of nodes:
 
 - *Internal nodes* store up to $B$ keys and $(B + 1)$ pointers to child nodes. The key number $i$ is always equal to the smallest key in the subtree of the $(i + 1)$-th child node.
-- *Data nodes* or *leaves* store up to $B$ keys, the pointer to the next leaf node, and, optionally, an associated value for each key, if the structure is used as a key-value map.
+- *Data nodes* or *leaves* store up to $B$ keys, the pointer to the next leaf node, and, optionally, an associated value for each key — if the structure is used as a key-value map.
 
-Advantages of this approach include faster search time as the internal nodes only store keys and the ability to quickly iterate over a range of entries by following next leaf node pointers, but this comes at the cost of some redundancy: we have to store copies of keys in the internal nodes.
+The advantages of this approach include faster search time (as the internal nodes only store keys) and the ability to quickly iterate over a range of entries (by following next leaf node pointers), but this comes at the cost of some memory overhead: we have to store copies of keys in the internal nodes.
 
 ![A B+ tree of order 4](../img/bplus.png)
 
 Back to our use case, this layout can help us solve our two problems:
 
-- Either the last node we descend into is has the local lower bound, or it is the first key of the next leaf node, so we don't need to call `update` on each iteration.
+- Either the last node we descend into has the local lower bound, or it is the first key of the next leaf node, so we don't need to call `update` on each iteration.
 - The depth of all leaves is constant because B+ trees grow at the root and not at the leaves, which removes the need for branching. <!-- todo: elaborate on that -->
 
-The disadvantage is that this layout is not succinct: we need about some additional memory to store the internal nodes — about $\frac{1}{16}$-th of the original array size, to be exact — but the performance improvement will be more than worth it.
+The disadvantage is that this layout is not succinct: we need some additional memory to store the internal nodes — about $\frac{1}{16}$-th of the original array size, to be exact — but the performance improvement will be more than worth it.
 
 ### Implicit B+ Tree
 
@@ -357,11 +356,10 @@ constexpr int offset(int h) {
 const int H = height(N);
 const int S = offset(H); // the tree size is the offset of the (non-existent) layer H
 
-// the tree itself is stored in a single hugepage-aligned array of size S:
-int *btree;
+int *btree; // the tree itself is stored in a single hugepage-aligned array of size S
 ```
 
-Note that we store the layers in reverse order, but the nodes within a layer and data in them is still left-to-right, and also the layers are numbered bottom-up: the leaves form the zeroth layer and the root is the layer `H - 1`. These are just arbitrary decisions — it is just slightly easier to implement in code.
+Note that we store the layers in reverse order, but the nodes within a layer and data in them are still left-to-right, and also the layers are numbered bottom-up: the leaves form the zeroth layer, and the root is the layer `H - 1`. These are just arbitrary decisions — it is just slightly easier to implement in code.
 
 ### Construction
 
@@ -399,15 +397,15 @@ for (int i = offset(1); i < S; i += B)
     permute(btree + i);
 ```
 
-We start from `offset(1)`, and we specifically don't permute leaf nodes and leave the array in the original sorted order. The motivation is that we'd need to do this complex index translation we do in `update` if the keys were permuted, and it is on the critical path when this is the last operation, so just for this layer, we will switch to the original local lower bound procedure with mask-blending.
+We start from `offset(1)`, and we specifically don't permute leaf nodes and leave the array in the original sorted order. The motivation is that we'd need to do this complex index translation we do in `update` if the keys were permuted, and it is on the critical path when this is the last operation. So, just for this layer, we switch to the original mask-blending local lower bound procedure.
 
 ### Searching
 
-The search procedure becomes simpler than for the B-tree layout: we don't need to do `update` and execute a constant number of iterations — although the last one with some special treatment. We slightly optimize the pointer arithmetic by storing `k` already multiplied by `B`:
+The search procedure becomes simpler than for the B-tree layout: we don't need to do `update` and only execute a fixed number of iterations — although the last one with some special treatment:
 
 ```c++
 int lower_bound(int _x) {
-    unsigned k = 0;
+    unsigned k = 0; // we assume k already multiplied by B to optimize pointer arithmetic
     reg x = _mm256_set1_epi32(_x - 1);
     for (int h = H - 1; h > 0; h--) {
         unsigned i = permuted_rank(x, btree + offset(h) + k);
@@ -418,7 +416,7 @@ int lower_bound(int _x) {
 }
 ```
 
-Switching to the B+ layout more than paid off: S+ tree is is 1.5-3x faster than optimized S-tree:
+Switching to the B+ layout more than paid off: this S+ tree is 1.5-3x faster compared to the optimized S-tree:
 
 ![](../img/search-bplus.svg)
 
@@ -434,9 +432,9 @@ On these scales, it makes more sense to look at the relative speedup:
 
 ![](../img/search-relative.svg)
 
-The cliffs in the beginning are because the running time of `std::lower_bound` grows smoothly with the array size, while the for an S+ tree it is locally flat and increases in discrete steps when a new layer needs to be added.
+The cliffs at the beginning of the graph are because the running time of `std::lower_bound` grows smoothly with the array size, while for an S+ tree, it is locally flat and increases in discrete steps when a new layer needs to be added.
 
-One huge asterisk we haven't discussed is that what we are measuring is not real latency, but the *reciprocal throughput* — the total time it takes to execute a lot of queries divided by the number of queries:
+One important asterisk we haven't discussed is that what we are measuring is not real latency, but the *reciprocal throughput* — the total time it takes to execute a lot of queries divided by the number of queries:
 
 ```c++
 clock_t start = clock();
@@ -448,7 +446,7 @@ float seconds = float(clock() - start) / CLOCKS_PER_SEC;
 printf("%.2f ns per query\n", 1e9 * seconds / m);
 ```
 
-To measure *actual* latency, we need to introduce a dependency between the loop iterations so that the next query can't start before the previous completes:
+To measure *actual* latency, we need to introduce a dependency between the loop iterations so that the next query can't start before the previous one finishes:
 
 ```c++
 int last = 0;
@@ -459,11 +457,11 @@ for (int i = 0; i < m; i++) {
 }
 ```
 
-Therefore, in terms of real latency, the speedup is not that large:
+In terms of real latency, the speedup is not that impressive:
 
 ![](../img/search-relative-latency.svg)
 
-A lot of the performance boost of S+ tree comes from removing branching and minimizing memory requests, which allows overlapping the execution of more adjacent queries — apparently, around three on average.
+A lot of the performance boost of the S+ tree comes from removing branching and minimizing memory requests, which allows overlapping the execution of more adjacent queries — apparently, around three on average.
 
 <!-- grouping requests together explicitly? -->
 
@@ -522,24 +520,24 @@ The problem has more dimensions.
 
 To minimize the number of memory accesses during a query, we can increase the block size. To find the local lower bound in a 32-element node (spanning two cache lines and four AVX2 registers), we can use a [similar trick](https://github.com/sslotin/amh-code/blob/a74495a2c19dddc697f94221629c38fee09fa5ee/binsearch/bplus32.cc#L94) that uses two `packs_epi32` and one `packs_epi16` to combine masks.
 
-We can also try to use cache more efficiently by controlling where each tree layer is stored in the cache hierarchy. We can do that by prefetching nodes to a [specific level](/hpc/cpu-cache/prefetching/#software-prefetching) and using [non-temporal reads](/hpc/cpu-cache/bandwidth/#bypassing-the-cache) during queries.
+We can also try to use the cache more efficiently by controlling where each tree layer is stored in the cache hierarchy. We can do that by prefetching nodes to a [specific level](/hpc/cpu-cache/prefetching/#software-prefetching) and using [non-temporal reads](/hpc/cpu-cache/bandwidth/#bypassing-the-cache) during queries.
 
-I implemented these two optimizations: one with a block size of 32 and one where the last read is non-temporal. They don't improve the throughput:
+I implemented these two optimizations: the one with a block size of 32 and the one where the last read is non-temporal. They don't improve the throughput:
 
 ![](../img/search-bplus-other.svg)
 
-But they do make the latency lower:
+…but they do make the latency lower:
 
 ![](../img/search-latency-bplus.svg)
 
 Ideas that I have not yet managed to implement but consider highly perspective are:
 
-- Make the block size non-uniform. The motivation is that the slowdown from having one 32-element layer is less than from having two separate layers. Also the root is often not full, so perhaps it should have only 8 keys or even just one key. Picking the most optimal layer configuration for a given array size should to remove the spikes from the relative speedup graph and make it look more like its upper envelope.
+- Make the block size non-uniform. The motivation is that the slowdown from having one 32-element layer is less than from having two separate layers. Also, the root is often not full, so perhaps it should have only 8 keys or even just one key. Picking the optimal layer configuration for a given array size should remove the spikes from the relative speedup graph and make it look more like its upper envelope.
   
   I know how to do it with code generation, but I went for a generic solution and tried to [implement](
 https://github.com/sslotin/amh-code/blob/main/binsearch/bplus-adaptive.cc) it with the facilities of modern C++, but the compiler can't produce optimal code this way.
-- Group nodes with one or two of generations of its descendants (~300 nodes / ~5k keys) so that they are close in memory, similar to what [FAST](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) calls hierarchical blocking. This reduces the severity of TLB misses and also may improve latency as the memory controller chooses to keep the [RAM row buffer](/hpc/cpu-cache/aos-soa/#ram-specific-timings) open, anticipating local reads.
-- Optionally use prefetching on some specific layers. In addition to the $\frac{1}{17}$-th chance of it actually fetching the node we need, the hardware prefetcher may also get some its neighbors for us if the data bus is not busy. It also has the same TLB and row buffer effects as with blocking.
+- Group nodes with one or two generations of its descendants (~300 nodes / ~5k keys) so that they are close in memory, similar to what [FAST](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) calls hierarchical blocking. This reduces the severity of TLB misses and also may improve latency as the memory controller chooses to keep the [RAM row buffer](/hpc/cpu-cache/aos-soa/#ram-specific-timings) open, anticipating local reads.
+- Optionally use prefetching on some specific layers. Aside from to the $\frac{1}{17}$-th chance of it fetching the node we need, the hardware prefetcher may also get some of its neighbors for us if the data bus is not busy. It also has the same TLB and row buffer effects as with blocking.
 
 Other possible minor optimizations include:
 
@@ -555,7 +553,7 @@ Mobile and some older CPUs only have 128-bit wide registers, and some high-end C
 
 -->
 
-With these optimizations implemented, I would not be surprised to see another 10-30% improvement and over 10x speedup over `std::lower_bound` on large arrays for some platforms.
+With these optimizations implemented, I wouldn't be surprised to see another 10-30% improvement and over 10x speedup over `std::lower_bound` on large arrays for some platforms.
 
 ### As a Dynamic Tree
 
@@ -565,7 +563,7 @@ The comparison is even more favorable against `std::set` and other pointer-based
 
 This suggests that we can probably use this approach to also improve on *dynamic* search trees by a huge margin.
 
-To validate this hypothesis, I added an array of 17 indices per each node that point to where their children should be, and used this array instead of implicit numbering. This array is separate from the tree, not aligned, isn't even on a hugepage, and the only optimization is that the first and the last pointer of a node is prefetched.
+To validate this hypothesis, I added an array of 17 indices for each node that point to where their children should be and used this array instead of implicit numbering. This array is separate from the tree, not aligned, isn't even on a hugepage, and the only optimization is that the first and the last pointer of a node is prefetched.
 
 I also added [B-tree from Abseil](https://abseil.io/blog/20190812-btree) to the comparison, which is the only widely-used B-tree implementation I know of. It performs just slightly better than `std::lower_bound`, while the S+ tree with pointers is ~15x faster for large arrays:
 
@@ -579,7 +577,7 @@ My next priorities is to adapt it to segment trees, which I know how to do, and 
 
 ![](../img/search-set-relative-all.svg)
 
-Of course, this comparison is not fair, as dynamic search tree is a more high-dimensional problem. We'd also need to implement the update operation, which will not be that efficient, and for which we'd need to sacrifice our fanout factor. But it still seems possible to implement a 10-20x faster `std::set` and a 3-5x faster `absl::btree_set`, depending on how you define "faster" — and this is one of the next things we'll try to do.
+Of course, this comparison is not fair, as the dynamic search tree is a more high-dimensional problem. We'd also need to implement the update operation, which will not be that efficient, and for which we'd need to sacrifice our fanout factor. But it still seems possible to implement a 10-20x faster `std::set` and a 3-5x faster `absl::btree_set`, depending on how you define "faster" — and this is one of the next things we'll try to do.
 
 
 <!--

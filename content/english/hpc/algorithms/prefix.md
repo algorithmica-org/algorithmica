@@ -29,7 +29,7 @@ void prefix(int *a, int n) {
 }
 ```
 
-It seems like we need two reads, an add, and a write per each iteration, but of course, the compiler optimizes the extra read away and uses a register as the accumulator:
+It seems like we need two reads, an add, and a write on each iteration, but of course, the compiler optimizes the extra read away and uses a register as the accumulator:
 
 ```nasm
 loop:

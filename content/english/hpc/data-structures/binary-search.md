@@ -397,7 +397,7 @@ Also, note that the last few prefetch requests are actually not needed, and in f
 
 This prefetching technique allows us to read up to four elements ahead, but it doesn't really come for free — we are effectively trading off excess memory [bandwidth](/hpc/cpu-cache/bandwidth) for reduced [latency](/hpc/cpu-cache/latency). If you run more than one instance at a time on separate hardware threads or just any other memory-intensive computation in the background, it will significantly [affect](/hpc/cpu-cache/sharing) the benchmark performance.
 
-But we can do better. Instead of fetching four cache lines at a time, we could fetch four times *fewer* cache lines. And in the next article, we will explore the approach.
+But we can do better. Instead of fetching four cache lines at a time, we could fetch four times *fewer* cache lines. And in the [next article](../s-tree), we will explore the approach.
 
 <!--
 
