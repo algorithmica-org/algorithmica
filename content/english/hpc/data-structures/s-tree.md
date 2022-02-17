@@ -469,7 +469,7 @@ A lot of the performance boost of S+ tree comes from removing branching and mini
 
 Although nobody except maybe the HFT people cares about real latency, and everybody actually measures throughput even when using the word "latency", this nuance is still something to take into account when predicting the possible speedup in user applications.
 
-### Modifications and Possible Optimizations
+### Modifications and Further Optimizations
 
 <!--
 
@@ -528,42 +528,69 @@ I implemented these two optimizations: one with a block size of 32 and one where
 
 ![](../img/search-bplus-other.svg)
 
-But they do, however, make the latency lower:
+But they do make the latency lower:
 
 ![](../img/search-latency-bplus.svg)
 
 Ideas that I have not yet managed to implement but consider highly perspective are:
 
-- Make the block size non-uniform. Upper envelope. I know how to implement it with code generation, but I went for a generic solution [implemented](
-https://github.com/sslotin/amh-code/blob/main/binsearch/bplus-adaptive.cc) it using facilities of modern C++, but the compiler can't unroll a compile-time loop.
-- Group a node with one or two of generations of its descendants (~300 nodes / ~5k keys) so that they are close in memory. Similar to how [FAST](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) does it with what they call hierarchical blocking.
-- Optionally use prefetching of on some specific layers. The hardware prefetcher may also get some its neighbors for us if the data bus is not busy. This removes the TLB issues we discussed, as they will be on the same page. We hit it too when $n > 2^{25}$: unfortunately, this CPU doesn't have 1GB pages. The RAM may speculate.
+- Make the block size non-uniform. The motivation is that the slowdown from having one 32-element layer is less than from having two separate layers. Also the root is often not full, so perhaps it should have only 8 keys or even just one key. Picking the most optimal layer configuration for a given array size should to remove the spikes from the relative speedup graph and make it look more like its upper envelope.
+  
+  I know how to do it with code generation, but I went for a generic solution and tried to [implement](
+https://github.com/sslotin/amh-code/blob/main/binsearch/bplus-adaptive.cc) it with the facilities of modern C++, but the compiler can't produce optimal code this way.
+- Group nodes with one or two of generations of its descendants (~300 nodes / ~5k keys) so that they are close in memory, similar to what [FAST](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) calls hierarchical blocking. This reduces the severity of TLB misses and also may improve latency as the memory controller chooses to keep the [RAM row buffer](/hpc/cpu-cache/aos-soa/#ram-specific-timings) open, anticipating local reads.
+- Optionally use prefetching on some specific layers. In addition to the $\frac{1}{17}$-th chance of it actually fetching the node we need, the hardware prefetcher may also get some its neighbors for us if the data bus is not busy. It also has the same TLB and row buffer effects as with blocking.
 
-Other minor optimizations include:
+Other possible minor optimizations include:
 
-- It may or may not be beneficial to reverse the order in which layers are stored. I only implemented right-to-left because that was easier to code.
-- If we only need the index, we can permuting the nodes of the last layer and use the optimized procedure.
-- Implement it in assembly, as the compile-generated versions don't look the most optimal.
+- Permuting the nodes of the last layer also — if we only need the index and not the value.
+- Reversing the order in which the layers are stored to left-to-right so that the first few layers are on the same page.
+- Rewriting the whole thing in assembly, as the compiler seems to struggle with pointer arithmetic.
 
-With these implemented, I would not be surprised to see another 10-20% improvement — for a total of 10x speedup over `std::lower_bound` on large arrays.
+Note that our implementation is specific to the AVX2 and may require some non-trivial changes to adapt to other platforms. It would be interesting to port it for Intel CPUs with AVX-512 and Arm CPUs with 128-bit NEON, which may require some [trickery](https://github.com/WebAssembly/simd/issues/131) to work.
 
-Note that this implementation is very specific to the architecture. Older CPUs and CPUs on mobile devices don't have 256-bit wide registers and will crash (but they likely have 128-bit SIMD so the loop can still be split in 4 parts instead of 2), non-Intel CPUs have their own instruction sets for SIMD, and some computers even have different cache line size. NEON would require some [trickery](https://github.com/WebAssembly/simd/issues/131)
+<!--
+
+Mobile and some older CPUs only have 128-bit wide registers, and some high-end CPUs have 512-bit registers. and some computers even have different cache line size. NEON would require some [trickery](https://github.com/WebAssembly/simd/issues/131)
+
+-->
+
+With these optimizations implemented, I would not be surprised to see another 10-30% improvement and over 10x speedup over `std::lower_bound` on large arrays for some platforms.
 
 ### As a Dynamic Tree
 
-When we compare S+ trees to `std::set` where we add the same elements and search for the same lower bounds (not counting the time it took to add them), the comparison is even more favorable:
+The comparison is even more favorable against `std::set` and other pointer-based trees. In our benchmark, we add the same elements (without measuring the time it takes to add them) and use the same lower bound queries, and the S+ tree is up to 30x better: 
 
 ![](../img/search-set-relative.svg)
+
+This suggests that we can probably use this approach to also improve on *dynamic* search trees by a huge margin.
+
+To validate this hypothesis, I added an array of 17 indices per each node that point to where their children should be, and used this array instead of implicit numbering. This array is separate from the tree, not aligned, isn't even on a hugepage, and the only optimization is that the first and the last pointer of a node is prefetched.
+
+I also added [B-tree from Abseil](https://abseil.io/blog/20190812-btree) to the comparison, which is the only widely-used B-tree implementation I know of. It performs just slightly better than `std::lower_bound`, while the S+ tree with pointers is ~15x faster for large arrays:
+
+<!--
 
 My next priorities is to adapt it to segment trees, which I know how to do, and to B-trees, which I don't exactly know how to do. But comparing to `std::set` hints that there may be up to 30x improvements:
 
 `absl::btree_set`, the only widely-used B-tree implementation I know, is just slightly faster than binary search.
 
+-->
+
 ![](../img/search-set-relative-all.svg)
+
+Of course, this comparison is not fair, as dynamic search tree is a more high-dimensional problem. We'd also need to implement the update operation, which will not be that efficient, and for which we'd need to sacrifice our fanout factor. But it still seems possible to implement a 10-20x faster `std::set` and a 3-5x faster `absl::btree_set`, depending on how you define "faster" — and this is one of the next things we'll try to do.
+
+
+<!--
 
 A ~15x improvement is definitely worth it — and the memory overhead is not large, as we only need to store pointers (indices, actually) for internal nodes. It may be higher, because we need to fetch two separate memory blocks, or lower, because we need to handle updates somehow. Either way, this will be an interesting optimization problem.
 
-It seems possible to implement a 10-20x faster `std::set` and a 3-5x faster `absl::btree_set`.
+though it's mostly due to the fact that data structures used in real databases have to support fast updates while we don't.
+
+The problem has more dimensions.
+
+-->
 
 ### Acknowledgements
 
