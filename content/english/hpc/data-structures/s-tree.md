@@ -28,13 +28,9 @@ The last two approaches use SIMD, which technically disqualifies it from being b
 
 -->
 
-To the best of my knowledge, this is a significant improvement over the existing [approaches](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf). As before, we are using Clang 10 targeting a Zen 2 CPU, but the relative performance improvements should approximately transfer to other platforms, including Arm-based chips.
+To the best of my knowledge, this is a significant improvement over the existing [approaches](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf). As before, we are using Clang 10 targeting a Zen 2 CPU, but the performance improvements should approximately transfer to most other platforms, including Arm-based chips. Use [this single-source benchmark](https://github.com/sslotin/amh-code/blob/main/binsearch/standalone.cc) of the final implementation if you want to test it on your machine.
 
-<!--
-
-This is a large article, which will turn into a multi-hour read. If you feel comfortable reading [intrinsic](/hpc/simd/intrinsics)-heavy code without any context whatsoever, you can skim through the first four implementation and jump straight to the last section.
-
--->
+This is a large article, and since this is also serves as [textbook](/hpc/) case study, my side my goal is not to develop algorithms, but to teach people how to develop algorithms — so we will be developing a lot of intermediate optimizations first. If you are already an expert, and feel comfortable reading [intrinsic](/hpc/simd/intrinsics)-heavy code with little to no context, you can jump straight to the [final implementation](#implicit-b-tree-1).
 
 ## B-Tree Layout
 
@@ -471,7 +467,7 @@ A lot of the performance boost of S+ tree comes from removing branching and mini
 
 <!-- grouping requests together explicitly? -->
 
-Although nobody except maybe the HFT people cares about real latency, and everybody actually measures throughput even when using the word "latency", this nuance is still something to take into account.
+Although nobody except maybe the HFT people cares about real latency, and everybody actually measures throughput even when using the word "latency", this nuance is still something to take into account when predicting the possible speedup in user applications.
 
 ### Modifications and Possible Optimizations
 
@@ -518,33 +514,40 @@ unsigned rank32(reg x, int *node) {
                   | (cmp(x, node + 24) << 24);
 ```
 
+That's it. This implementation should outperform even the [state-of-the-art indexes](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) used in high-performance databases, though it's mostly due to the fact that data structures used in real databases have to support fast updates while we don't.
+
+The problem has more dimensions.
+
 -->
 
-Another idea is to use cache more efficiently. For example, you can execute `_mm256_stream_load_si256` on just the last iteration.
+To minimize the number of memory accesses during a query, we can increase the block size. To find the local lower bound in a 32-element node (spanning two cache lines and four AVX2 registers), we can use a [similar trick](https://github.com/sslotin/amh-code/blob/a74495a2c19dddc697f94221629c38fee09fa5ee/binsearch/bplus32.cc#L94) that uses two `packs_epi32` and one `packs_epi16` to combine masks.
 
-They aren't beneficial for throughput:
+We can also try to use cache more efficiently by controlling where each tree layer is stored in the cache hierarchy. We can do that by prefetching nodes to a [specific level](/hpc/cpu-cache/prefetching/#software-prefetching) and using [non-temporal reads](/hpc/cpu-cache/bandwidth/#bypassing-the-cache) during queries.
+
+I implemented these two optimizations: one with a block size of 32 and one where the last read is non-temporal. They don't improve the throughput:
 
 ![](../img/search-bplus-other.svg)
 
-However, they perform better:
+But they do, however, make the latency lower:
 
 ![](../img/search-latency-bplus.svg)
 
-Prefetching one of the children nodes (probably the middle one), which has several more benefits:
+Ideas that I have not yet managed to implement but consider highly perspective are:
 
-- The hardware prefetcher may also get some its neighbors for us if the data bus is not busy.
-- This removes the TLB issues we discussed, as they will be on the same page. We hit it too when $n > 2^25$: unfortunately, this CPU doesn't have 1GB pages.
-- The RAM may speculate
+- Make the block size non-uniform. Upper envelope. I know how to implement it with code generation, but I went for a generic solution [implemented](
+https://github.com/sslotin/amh-code/blob/main/binsearch/bplus-adaptive.cc) it using facilities of modern C++, but the compiler can't unroll a compile-time loop.
+- Group a node with one or two of generations of its descendants (~300 nodes / ~5k keys) so that they are close in memory. Similar to how [FAST](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) does it with what they call hierarchical blocking.
+- Optionally use prefetching of on some specific layers. The hardware prefetcher may also get some its neighbors for us if the data bus is not busy. This removes the TLB issues we discussed, as they will be on the same page. We hit it too when $n > 2^{25}$: unfortunately, this CPU doesn't have 1GB pages. The RAM may speculate.
 
-It may or may not be beneficial to reverse the order in which layers are stored. I only implemented right-to-left because that was easier to code.
+Other minor optimizations include:
 
-If we only need the index, we can permuting the nodes of the last layer and use the optimized procedure.
+- It may or may not be beneficial to reverse the order in which layers are stored. I only implemented right-to-left because that was easier to code.
+- If we only need the index, we can permuting the nodes of the last layer and use the optimized procedure.
+- Implement it in assembly, as the compile-generated versions don't look the most optimal.
 
-Upper envelope.
+With these implemented, I would not be surprised to see another 10-20% improvement — for a total of 10x speedup over `std::lower_bound` on large arrays.
 
-I would not be surprised if it is possible to make a 10-20% improvement for a total 10x speedup over `std::lower_bound` on large arrays.
-
-https://github.com/sslotin/amh-code/blob/main/binsearch/bplus-adaptive.cc
+Note that this implementation is very specific to the architecture. Older CPUs and CPUs on mobile devices don't have 256-bit wide registers and will crash (but they likely have 128-bit SIMD so the loop can still be split in 4 parts instead of 2), non-Intel CPUs have their own instruction sets for SIMD, and some computers even have different cache line size. NEON would require some [trickery](https://github.com/WebAssembly/simd/issues/131)
 
 ### As a Dynamic Tree
 
@@ -560,17 +563,11 @@ My next priorities is to adapt it to segment trees, which I know how to do, and 
 
 A ~15x improvement is definitely worth it — and the memory overhead is not large, as we only need to store pointers (indices, actually) for internal nodes. It may be higher, because we need to fetch two separate memory blocks, or lower, because we need to handle updates somehow. Either way, this will be an interesting optimization problem.
 
-That's it. This implementation should outperform even the [state-of-the-art indexes](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) used in high-performance databases, though it's mostly due to the fact that data structures used in real databases have to support fast updates while we don't.
-
-The problem has more dimensions.
-
-NEON would require some [trickery](https://github.com/WebAssembly/simd/issues/131)
-
-Note that this implementation is very specific to the architecture. Older CPUs and CPUs on mobile devices don't have 256-bit wide registers and will crash (but they likely have 128-bit SIMD so the loop can still be split in 4 parts instead of 2), non-Intel CPUs have their own instruction sets for SIMD, and some computers even have different cache line size.
+It seems possible to implement a 10-20x faster `std::set` and a 3-5x faster `absl::btree_set`.
 
 ### Acknowledgements
 
-This [StackOverflow answer](https://stackoverflow.com/questions/20616605/using-simd-avx-sse-for-tree-traversal) by Cory Nelson is where I took the permuted SIMD routine.
+This [StackOverflow answer](https://stackoverflow.com/questions/20616605/using-simd-avx-sse-for-tree-traversal) by Cory Nelson is where I took the permuted 16-element search trick from.
 
 <!--
 
