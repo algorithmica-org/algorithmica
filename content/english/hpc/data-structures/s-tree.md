@@ -122,6 +122,24 @@ int cmp(reg x_vec, int* y_ptr) {
 This function works for 8-element vectors, which is half our block / cache line size. To process the entire block, we need to call it twice and then combine the masks:
 
 ```c++
+int mask = ~(
+    cmp(x, &btree[k][0]) +
+    (cmp(x, &btree[k][8]) << 8)
+);
+```
+
+Now, to descend down the tree, we use `ffs` on that mask to get the correct child number and just call the `go` function we defined before:
+
+```c++
+int i = __builtin_ffs(mask) - 1;
+k = go(k, i);
+```
+
+To actually return the result in the end, we'd want to just fetch `btree[k][i]` in the last node we visited, but the problem is that sometimes the local lower bound doesn't exist ($i \ge B$) because $x$ happens to be greater than all the keys in the node. We could, in theory, do the same thing we did for the [Eytzinger binary search](../binary-search/#search-implementation) and restore the correct element *after* we calculate the last index, but we don't have a nice bit trick this time and have to do a lot of [divisions by 17](/hpc/arithmetic/division) to compute it, which will be slow and almost certainly not worth it.
+
+Instead, we can just remember and return the last local lower bound we encountered when we descended the tree:
+
+```c++
 int lower_bound(int _x) {
     int k = 0, res = INT_MAX;
     reg x = _mm256_set1_epi32(_x);
@@ -139,9 +157,7 @@ int lower_bound(int _x) {
 }
 ```
 
-To actually return the result, we'd want to just fetch `btree[k][i]` in the last node we visited, but the problem is that sometimes the local lower bound doesn't exist ($i \ge B$) because $x$ happens to be greater than all the keys in the node. In this case, we need to return the last local lower bound we actually encountered — hence we update the result as we descend down the tree using the `(i < B)` check.
-
-This implementation outperforms all previous binary search implementations by a huge margin:
+This implementation outperforms all previous binary search implementations, and by a huge margin:
 
 ![](../img/search-btree.svg)
 
@@ -257,6 +273,8 @@ void update(int &res, int* node, unsigned i) {
 }
 ```
 
+This `update` procedure takes some time, but it's not on the critical path between the iterations, so it doesn't affect the actual performance that much.
+
 Stitching it all together (and leaving out some other minor optimizations):
 
 ```c++
@@ -277,17 +295,22 @@ int lower_bound(int _x) {
 }
 ```
 
-All this work saved us 20% or so:
+All this work saved us 15-20% or so:
 
 ![](../img/search-btree-optimized.svg)
 
-To progress further, we need to change the layout a little bit.
+Doesn't feel very satisfying so far, but we will reuse these optimization ideas later.
+
+There are two main problems with the current implementation:
+
+- The `update` procedure as is quite costly, especially considering that it is likely to be useless: 16 out of 17 times we can just fetch the result from the last block.
+- We do non-constant number of iterations, causing branch prediction problems similar to how it did for the [Eytzinger binary search](/binary-search/#removing-the-last-branch); you can also see it on the graph this time, but the latency bumps have a period of $2^4$.
+
+To address these problems, we need to change the layout a little bit.
 
 ## B+ Tree Layout
 
-The `update` seems to be useless: 16 out of 17 times we can just read the element from the last block
-
-We want to get rid of branches completely — this means having a fixed-height tree. We also probably don't want to do the `update` as it turns out to be quite costly.
+The layout is not succinct: we need about some additional memory to store the internal nodes — about $\frac{1}{16}$-th of the original array size, to be exact.
 
 B-tree layout
 
