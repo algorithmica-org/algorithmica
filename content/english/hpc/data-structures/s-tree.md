@@ -563,7 +563,7 @@ The comparison is even more favorable against `std::set` and other pointer-based
 
 This suggests that we can probably use this approach to also improve on *dynamic* search trees by a large margin.
 
-To validate this hypothesis, I added an array of 17 indices for each node that point to where their children should be and used this array to descend the tree instead of the usual implicit numbering. This array is separate from the tree, not aligned, isn't even on a hugepage — the only optimization is that we prefetch the first and the last pointer of a node.
+To validate this hypothesis, I added an array of 17 indices for each node that point to where their children should be and used this array to descend the tree instead of the usual implicit numbering. This array is separate from the tree, not aligned, and isn't even on a hugepage — the only optimization we do is prefetch the first and the last pointer of a node.
 
 I also added [B-tree from Abseil](https://abseil.io/blog/20190812-btree) to the comparison, which is the only widely-used B-tree implementation I know of. It performs just slightly better than `std::lower_bound`, while the S+ tree with pointers is ~15x faster for large arrays:
 
