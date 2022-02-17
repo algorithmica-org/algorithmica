@@ -312,7 +312,7 @@ To address these problems, we need to change the layout a little bit.
 
 Most of the time people talk about B-trees they really mean *B+ trees*, which is a modification that distinguishes between the two types of nodes:
 
-- *Internal nodes* store up to $B$ keys and $(B + 1)$ pointers to child nodes. The key number $i$ always equals the first key of of the $(i + 1)$-th child node.
+- *Internal nodes* store up to $B$ keys and $(B + 1)$ pointers to child nodes. The key number $i$ is always equal to the smallest key in the subtree of the $(i + 1)$-th child node.
 - *Data nodes* or *leaves* store up to $B$ keys, the pointer to the next leaf node, and, optionally, an associated value for each key, if the structure is used as a key-value map.
 
 Advantages of this approach include faster search time as the internal nodes only store keys and the ability to quickly iterate over a range of entries by following next leaf node pointers, but this comes at the cost of some redundancy: we have to store copies of keys in the internal nodes.
@@ -328,9 +328,9 @@ The disadvantage is that this layout is not succinct: we need about some additio
 
 ### Implicit B+ Tree
 
-B-tree layout
+To be more explicit with pointer arithmetic, we will store the entire tree in a single one-dimensional array. To minimize index computations during run-time, we will store each layer sequentially in this array and use compile-time computed offsets to address them: the keys of the node number `k` on layer `h` start with `btree[offset(h) + k * B]`, and its `i`-th child will at `btree[offset(h - 1) + (k * (B + 1) + i) * B]`.
 
-We will explain the constexpr functions because this time it is important:
+To implement all that, we need slightly more `constexpr` functions:
 
 ```c++
 // number of B-element blocks in a layer with n keys
@@ -348,7 +348,7 @@ constexpr int height(int n) {
     return (n <= B ? 1 : height(prev_keys(n)) + 1);
 }
 
-// where each layer starts
+// where the layer h starts (0 is the largest)
 constexpr int offset(int h) {
     int k = 0, n = N;
     while (h--) {
@@ -358,13 +358,18 @@ constexpr int offset(int h) {
     return k;
 }
 
-const int H = height(N), S = offset(H);
+const int H = height(N);
+const int S = offset(H); // the tree size is the offset of the (non-existent) layer H
+
+// the tree itself is stored in a single hugepage-aligned array of size S:
+int *btree;
 ```
 
-To be more explicit with pointer arithmetic, the tree is just a single huge-page aligned array `btree` of size `S`.
+Note that we store the layers in reverse order, but the nodes within a layer and data in them is still left-to-right, and also the layers are numbered bottom-up: the leaves form the zeroth layer and the root is the layer `H - 1`. These are just arbitrary decisions — it is just slightly easier to implement in code.
 
+### Construction
 
-We store in reverse order, but the nodes within a layer and data in them is still left-to-right. This is an arbitrary decision: you can do it the other way around, but it will be slightly harder to code.
+To construct the tree from a sorted array `a`, we first need to copy it into the zeroth layer and pad it with infinities:
 
 ```c++
 memcpy(btree, a, 4 * N);
@@ -373,26 +378,36 @@ for (int i = N; i < S; i++)
     btree[i] = INT_MAX;
 ```
 
+Now we build the internal nodes, layer by layer. For each key, we need to descend to the right of it in, always go left until we reach a leaf node, and then take its first key — it will be the smallest on the subtree:
+
 ```c++
 for (int h = 1; h < H; h++) {
     for (int i = 0; i < offset(h + 1) - offset(h); i++) {
+        // i = k * B + j
         int k = i / B,
             j = i - k * B;
-        k = k * (B + 1) + j + 1; // compare right
+        k = k * (B + 1) + j + 1; // compare to the right of the key
         // and then always to the left
         for (int l = 0; l < h - 1; l++)
             k *= (B + 1);
+        // pad the rest with infinities if the key doesn't exist 
         btree[offset(h) + i] = (k * B < N ? btree[k * B] : INT_MAX);
     }
 }
 ```
+
+And just the finishing touch — we need to permute keys in internal nodes to search them faster:
 
 ```c++
 for (int i = offset(1); i < S; i += B)
     permute(btree + i);
 ```
 
+We start from `offset(1)`, and we specifically don't permute leaf nodes and leave the array in the original sorted order. The motivation is that we'd need to do this complex index translation we do in `update` if the keys were permuted, and it is on the critical path when this is the last operation, so just for this layer, we will switch to the original local lower bound procedure with mask-blending.
+
 ### Searching
+
+The search procedure becomes simpler than for the B-tree layout: we don't need to do `update` and execute a constant number of iterations — although the last one with some special treatment. We slightly optimize the pointer arithmetic by storing `k` already multiplied by `B`:
 
 ```c++
 int lower_bound(int _x) {
@@ -407,15 +422,23 @@ int lower_bound(int _x) {
 }
 ```
 
-
+It is 1.5-3x faster:
 
 ![](../img/search-bplus.svg)
 
-Makes more sense to look at it as a relative speedup:
+The spikes at the end is the L1 TLB: it has 64 entries for 2. The B+ layout hits it slightly faster because of the ~7% additional memory. Unfortunately, this CPU doesn't support 1G ones.
+
+64 * 2 = 128MB
+
+### Comparison with `std::lower_bound`
+
+We've come a long way from binary search:
+
+![](../img/search-all.svg)
+
+On these scales, it makes more sense to look at the relative speedup:
 
 ![](../img/search-relative.svg)
-
-### Measuring Actual Latency
 
 One huge asterisk we didn't disclosed.
 
@@ -437,6 +460,9 @@ for (int i = 0; i < m; i++) {
 
 ![](../img/search-relative-latency.svg)
 
+A lot of the performance boost comes from removing branching and minimizing memory requests, which allows overlapping many queries — around 3 on average.
+
+Although nobody except maybe the HFT people ever measure actual latency and uses it for benchmarking, this is still something to take into account.
 
 ### Modifications
 
@@ -496,8 +522,6 @@ However, they perform better:
 ![](../img/search-latency-bplus.svg)
 
 ## Conclusions
-
-![](../img/search-all.svg)
 
 It may or may not be beneficial to reverse the order in which layers are stored. I only implemented right-to-left because that was easier to code.
 
