@@ -415,7 +415,7 @@ Just the finishing touch. Did you notice the bumpiness of the Eytzinger search? 
 
 The latency is ~10ns higher for the array sizes in the form of $1.5 \cdot 2^k$. These are mispredicted branches from the loop itself — the last branch, to be exact. When the array size is far from a power of two, it is hard to predict whether the loop will make $\lfloor \log_2 n \rfloor$ or $\lfloor \log_2 n \rfloor + 1$ iterations, so we have a 50% chance to suffer exactly one branch mispredict.
 
-We can get rid of that last branch by always executing a constant minimum number of iterations and then using predication to optionally make the last comparison against some dummy element — that is guaranteed to be less than $x$ so that its comparison will be canceled:
+One way to address it is to pad the array with infinities to the closest power of two, but this wastes memory. Instead, we get rid of that last branch by always executing a constant minimum number of iterations and then using predication to optionally make the last comparison against some dummy element — that is guaranteed to be less than $x$ so that its comparison will be canceled:
 
 ```c++
 t[0] = -1; // an element that is less than x
