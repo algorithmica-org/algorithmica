@@ -11,7 +11,7 @@ In this article, we generalize the techniques we developed for binary search to 
 - The [first one](#b-tree-layout) is based on the memory layout of a B-tree, and, depending on the array size, it is up to 8x faster than `std::lower_bound` while using the same space as the array and only requiring a permutation of its elements.
 - The [second one](#b-tree-layout-1) is based on the memory layout of a B+ tree, and it is up to 15x faster that `std::lower_bound` while using just 6-7% more memory — or 6-7% **of** the memory if we can keep the original sorted array.
 
-To distinguish them from B-trees — the structures with pointers, thousands to millions of elements per node, and empty spaces — we will use the names *S-tree* and *S+ tree* respectively to refer to these particular memory layouts[^name].
+To distinguish them from B-trees — the structures with pointers, hundreds to thousands of keys per node, and empty spaces in them — we will use the names *S-tree* and *S+ tree* respectively to refer to these particular memory layouts[^name].
 
 [^name]: [Similar to B-trees](https://en.wikipedia.org/wiki/B-tree#Origin), "the more you think about what the S in S-trees means, the better you understand S-trees."
 
@@ -310,25 +310,45 @@ To address these problems, we need to change the layout a little bit.
 
 ## B+ Tree Layout
 
-The layout is not succinct: we need about some additional memory to store the internal nodes — about $\frac{1}{16}$-th of the original array size, to be exact.
+Most of the time people talk about B-trees they really mean *B+ trees*, which is a modification that distinguishes between the two types of nodes:
+
+- *Internal nodes* store up to $B$ keys and $(B + 1)$ pointers to child nodes. The key number $i$ always equals the first key of of the $(i + 1)$-th child node.
+- *Data nodes* or *leaves* store up to $B$ keys, the pointer to the next leaf node, and, optionally, an associated value for each key, if the structure is used as a key-value map.
+
+Advantages of this approach include faster search time as the internal nodes only store keys and the ability to quickly iterate over a range of entries by following next leaf node pointers, but this comes at the cost of some redundancy: we have to store copies of keys in the internal nodes.
+
+![A B+ tree of order 4](../img/bplus.png)
+
+Back to our use case, this layout can help us solve our two problems:
+
+- Either the last node we descend into is has the local lower bound, or it is the first key of the next leaf node, so we don't need to call `update` on each iteration.
+- The depth of all leaves is constant because B+ trees grow at the root and not at the leaves, which removes the need for branching. <!-- todo: elaborate on that -->
+
+The disadvantage is that this layout is not succinct: we need about some additional memory to store the internal nodes — about $\frac{1}{16}$-th of the original array size, to be exact — but the performance improvement will be more than worth it.
+
+### Implicit B+ Tree
 
 B-tree layout
 
 We will explain the constexpr functions because this time it is important:
 
 ```c++
+// number of B-element blocks in a layer with n keys
 constexpr int blocks(int n) {
     return (n + B - 1) / B;
 }
 
+// number of keys on the layer pervious to one with n element
 constexpr int prev_keys(int n) {
     return (blocks(n) + B) / (B + 1) * B;
 }
 
+// height of a balanced n-key B+ tree
 constexpr int height(int n) {
     return (n <= B ? 1 : height(prev_keys(n)) + 1);
 }
 
+// where each layer starts
 constexpr int offset(int h) {
     int k = 0, n = N;
     while (h--) {
@@ -341,34 +361,38 @@ constexpr int offset(int h) {
 const int H = height(N), S = offset(H);
 ```
 
-To be more explicit with pointer arithmetic, the tree is just a single array now:
+To be more explicit with pointer arithmetic, the tree is just a single huge-page aligned array `btree` of size `S`.
+
+
+We store in reverse order, but the nodes within a layer and data in them is still left-to-right. This is an arbitrary decision: you can do it the other way around, but it will be slightly harder to code.
 
 ```c++
-int *btree;
+memcpy(btree, a, 4 * N);
+
+for (int i = N; i < S; i++)
+    btree[i] = INT_MAX;
 ```
 
 ```c++
-    for (int i = N; i < S; i++)
-        btree[i] = INT_MAX;
-
-    memcpy(btree, a, 4 * N);
-    
-    for (int h = 1; h < H; h++) {
-        for (int i = 0; i < offset(h + 1) - offset(h); i++) {
-            int k = i / B,
-                j = i - k * B;
-            k = k * (B + 1) + j + 1; // compare right
-            // and then always to the left
-            for (int l = 0; l < h - 1; l++)
-                k *= (B + 1);
-            btree[offset(h) + i] = (k * B < N ? btree[k * B] : INT_MAX);
-        }
+for (int h = 1; h < H; h++) {
+    for (int i = 0; i < offset(h + 1) - offset(h); i++) {
+        int k = i / B,
+            j = i - k * B;
+        k = k * (B + 1) + j + 1; // compare right
+        // and then always to the left
+        for (int l = 0; l < h - 1; l++)
+            k *= (B + 1);
+        btree[offset(h) + i] = (k * B < N ? btree[k * B] : INT_MAX);
     }
-
-    for (int i = offset(1); i < S; i += B)
-        permute(btree + i);
 }
 ```
+
+```c++
+for (int i = offset(1); i < S; i += B)
+    permute(btree + i);
+```
+
+### Searching
 
 ```c++
 int lower_bound(int _x) {
