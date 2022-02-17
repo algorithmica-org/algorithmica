@@ -422,13 +422,11 @@ int lower_bound(int _x) {
 }
 ```
 
-It is 1.5-3x faster:
+Switching to the B+ layout more than paid off: S+ tree is is 1.5-3x faster than optimized S-tree:
 
 ![](../img/search-bplus.svg)
 
-The spikes at the end is the L1 TLB: it has 64 entries for 2. The B+ layout hits it slightly faster because of the ~7% additional memory. Unfortunately, this CPU doesn't support 1G ones.
-
-64 * 2 = 128MB
+The spikes at the high end of the graph are caused by the L1 TLB not being large enough: it has 64 entries, so it can handle at most 64 × 2 = 128MB of data, which is exactly what is required for storing `2^25` integers. The S+ tree hits this limit slightly sooner because of the ~7% memory overhead.
 
 ### Comparison with `std::lower_bound`
 
@@ -440,14 +438,21 @@ On these scales, it makes more sense to look at the relative speedup:
 
 ![](../img/search-relative.svg)
 
-One huge asterisk we didn't disclosed.
+The cliffs in the beginning are because the running time of `std::lower_bound` grows smoothly with the array size, while the for an S+ tree it is locally flat and increases in discrete steps when a new layer needs to be added.
+
+One huge asterisk we haven't discussed is that what we are measuring is not real latency, but the *reciprocal throughput* — the total time it takes to execute a lot of queries divided by the number of queries:
 
 ```c++
+clock_t start = clock();
+
 for (int i = 0; i < m; i++)
     checksum ^= lower_bound(q[i]);
+
+float seconds = float(clock() - start) / CLOCKS_PER_SEC;
+printf("%.2f ns per query\n", 1e9 * seconds / m);
 ```
 
-To measure *actual* latency, we need to introduce a dependency between the iterations, so that the next one can't start before the previous finishes:
+To measure *actual* latency, we need to introduce a dependency between the loop iterations so that the next query can't start before the previous completes:
 
 ```c++
 int last = 0;
@@ -458,13 +463,17 @@ for (int i = 0; i < m; i++) {
 }
 ```
 
+Therefore, in terms of real latency, the speedup is not that large:
+
 ![](../img/search-relative-latency.svg)
 
-A lot of the performance boost comes from removing branching and minimizing memory requests, which allows overlapping many queries — around 3 on average.
+A lot of the performance boost of S+ tree comes from removing branching and minimizing memory requests, which allows overlapping the execution of more adjacent queries — apparently, around three on average.
 
-Although nobody except maybe the HFT people ever measure actual latency and uses it for benchmarking, this is still something to take into account.
+<!-- grouping requests together explicitly? -->
 
-### Modifications
+Although nobody except maybe the HFT people cares about real latency, and everybody actually measures throughput even when using the word "latency", this nuance is still something to take into account.
+
+### Modifications and Possible Optimizations
 
 <!--
 
@@ -521,9 +530,21 @@ However, they perform better:
 
 ![](../img/search-latency-bplus.svg)
 
-## Conclusions
+Prefetching one of the children nodes (probably the middle one), which has several more benefits:
+
+- The hardware prefetcher may also get some its neighbors for us if the data bus is not busy.
+- This removes the TLB issues we discussed, as they will be on the same page. We hit it too when $n > 2^25$: unfortunately, this CPU doesn't have 1GB pages.
+- The RAM may speculate
 
 It may or may not be beneficial to reverse the order in which layers are stored. I only implemented right-to-left because that was easier to code.
+
+If we only need the index, we can permuting the nodes of the last layer and use the optimized procedure.
+
+Upper envelope.
+
+I would not be surprised if it is possible to make a 10-20% improvement for a total 10x speedup over `std::lower_bound` on large arrays.
+
+https://github.com/sslotin/amh-code/blob/main/binsearch/bplus-adaptive.cc
 
 ### As a Dynamic Tree
 
