@@ -319,7 +319,7 @@ Back to our use case, this layout can help us solve our two problems:
 - Either the last node we descend into has the local lower bound, or it is the first key of the next leaf node, so we don't need to call `update` on each iteration.
 - The depth of all leaves is constant because B+ trees grow at the root and not at the leaves, which removes the need for branching. <!-- todo: elaborate on that -->
 
-The disadvantage is that this layout is not succinct: we need some additional memory to store the internal nodes — about $\frac{1}{16}$-th of the original array size, to be exact — but the performance improvement will be more than worth it.
+The disadvantage is that this layout is not *succinct*: we need some additional memory to store the internal nodes — about $\frac{1}{16}$-th of the original array size, to be exact — but the performance improvement will be more than worth it.
 
 ### Implicit B+ Tree
 
@@ -416,7 +416,7 @@ int lower_bound(int _x) {
 }
 ```
 
-Switching to the B+ layout more than paid off: this S+ tree is 1.5-3x faster compared to the optimized S-tree:
+Switching to the B+ layout more than paid off: the S+ tree is 1.5-3x faster compared to the optimized S-tree:
 
 ![](../img/search-bplus.svg)
 
@@ -536,7 +536,7 @@ Ideas that I have not yet managed to implement but consider highly perspective a
   
   I know how to do it with code generation, but I went for a generic solution and tried to [implement](
 https://github.com/sslotin/amh-code/blob/main/binsearch/bplus-adaptive.cc) it with the facilities of modern C++, but the compiler can't produce optimal code this way.
-- Group nodes with one or two generations of its descendants (~300 nodes / ~5k keys) so that they are close in memory — in the spirit of what [FAST](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) calls hierarchical blocking. This reduces the severity of TLB misses and also may improve latency as the memory controller may choose to keep the [RAM row buffer](/hpc/cpu-cache/aos-soa/#ram-specific-timings) open, anticipating local reads.
+- Group nodes with one or two generations of its descendants (~300 nodes / ~5k keys) so that they are close in memory — in the spirit of what [FAST](http://kaldewey.com/pubs/FAST__SIGMOD10.pdf) calls hierarchical blocking. This reduces the severity of TLB misses and also may improve the latency as the memory controller may choose to keep the [RAM row buffer](/hpc/cpu-cache/aos-soa/#ram-specific-timings) open, anticipating local reads.
 - Optionally use prefetching on some specific layers. Aside from to the $\frac{1}{17}$-th chance of it fetching the node we need, the hardware prefetcher may also get some of its neighbors for us if the data bus is not busy. It also has the same TLB and row buffer effects as with blocking.
 
 Other possible minor optimizations include:
@@ -544,7 +544,7 @@ Other possible minor optimizations include:
 - Permuting the nodes of the last layer as well — if we only need the index and not the value.
 - Reversing the order in which the layers are stored to left-to-right so that the first few layers are on the same page.
 - Rewriting the whole thing in assembly, as the compiler seems to struggle with pointer arithmetic.
-- Using [blending](/hpc/simd/masking) instead of `packs`: you can odd-even shuffle node keys (`[1 3 5 7] [2 4 6 8]`), compare against the search key, and then blend the low 16 bits of the first register mask with the high 16 bits of the second. Blending is slightly faster on many architectures, and it may also help to alternate between packing and blending for as they use different subsets of ports. (Thanks to Const-me from HackerNews for [suggesting](https://news.ycombinator.com/item?id=30381912) it.)
+- Using [blending](/hpc/simd/masking) instead of `packs`: you can odd-even shuffle node keys (`[1 3 5 7] [2 4 6 8]`), compare against the search key, and then blend the low 16 bits of the first register mask with the high 16 bits of the second. Blending is slightly faster on many architectures, and it may also help to alternate between packing and blending as they use different subsets of ports. (Thanks to Const-me from HackerNews for [suggesting](https://news.ycombinator.com/item?id=30381912) it.)
 
 Note that the current implementation is specific to AVX2 and may require some non-trivial changes to adapt to other platforms. It would be interesting to port it for Intel CPUs with AVX-512 and Arm CPUs with 128-bit NEON, which may require some [trickery](https://github.com/WebAssembly/simd/issues/131) to work.
 
