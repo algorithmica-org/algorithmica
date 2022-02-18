@@ -544,6 +544,7 @@ Other possible minor optimizations include:
 - Permuting the nodes of the last layer as well — if we only need the index and not the value.
 - Reversing the order in which the layers are stored to left-to-right so that the first few layers are on the same page.
 - Rewriting the whole thing in assembly, as the compiler seems to struggle with pointer arithmetic.
+- Using [blending](/hpc/simd/masking) instead of `packs`: you can odd-even shuffle node keys (`[1 3 5 7] [2 4 6 8]`), compare against the search key, and then blend the low 16 bits of the first register mask with the high 16 bits of the second. Blending is slightly faster on many architectures, and it may also help to alternate between packing and blending for as they use different subsets of ports. (Thanks to Const-me from HackerNews for [suggesting](https://news.ycombinator.com/item?id=30381912) it.)
 
 Note that the current implementation is specific to AVX2 and may require some non-trivial changes to adapt to other platforms. It would be interesting to port it for Intel CPUs with AVX-512 and Arm CPUs with 128-bit NEON, which may require some [trickery](https://github.com/WebAssembly/simd/issues/131) to work.
 
