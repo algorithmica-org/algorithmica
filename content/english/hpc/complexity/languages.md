@@ -12,7 +12,7 @@ Mine was in high school, when I realized that making websites and doing *useful*
 
 I didn't know much about computer architecture to answer this question. But I also didn't need the right answer — I needed a rule of thumb. My thought process was: "2-3GHz means 2 to 3 billion instructions executed every second, and in a simple loop that does something with array elements, I also need to increment loop counter, check end-of-loop condition, do array indexing and stuff like that, so let's add room for 3-5 more instructions for every useful one" and ended up with using $5 \cdot 10^8$ as an estimate. None of these statements are true, but counting how many operations my algorithm needed and dividing it by this number was a good rule of thumb for my use case.
 
-The real answer, of course, is much more complicated and highly dependent on what kind of "operation" you have in mind. It can be as low as $10^7$ for things like [pointer chasing](/hpc/memory/latency) and as high as $10^{11}$ for [SIMD-accelerated](/hpc/simd) linear algebra. To demonstrate these striking differences, we will use the case study of matrix multiplication implemented in different languages — and dig deeper into how computers execute them.
+The real answer, of course, is much more complicated and highly dependent on what kind of "operation" you have in mind. It can be as low as $10^7$ for things like [pointer chasing](/hpc/cpu-cache/latency) and as high as $10^{11}$ for [SIMD-accelerated](/hpc/simd) linear algebra. To demonstrate these striking differences, we will use the case study of matrix multiplication implemented in different languages — and dig deeper into how computers execute them.
 
 <!--
 
