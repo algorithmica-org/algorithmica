@@ -63,7 +63,7 @@ So the code above is actually closer to using a ternary operator like this:
 
 ```c++
 for (int i = 0; i < N; i++)
-    s += (a[i] < 50 : a[i] : 0);
+    s += (a[i] < 50 ? a[i] : 0);
 ```
 
 Both variants are optimized by the compiler and produce the following assembly:
