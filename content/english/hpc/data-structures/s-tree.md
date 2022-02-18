@@ -33,7 +33,7 @@ This is a long article, and since it also serves as a [textbook](/hpc/) case stu
 
 ## B-Tree Layout
 
-B-trees generalize the concept of binary search trees by allowing nodes to have more than two children. Instead of a single key, a node of a B-tree of order $k$ can contain up to $B = (k - 1)$ keys stored in sorted order and up to $k$ pointers to child nodes. Each child $i$ satisfies the property that all keys in its subtree are between keys $i$ and $(i + 1)$ in the parent node (using 0-based numbering for children and 1-based numbering for keys).
+B-trees generalize the concept of binary search trees by allowing nodes to have more than two children. Instead of a single key, a node of a B-tree of order $k$ can contain up to $B = (k - 1)$ keys stored in sorted order and up to $k$ pointers to child nodes. Each child $i$ satisfies the property that all keys in its subtree are between keys $(i - 1)$ and $i$ of the parent node (if they exist).
 
 ![A B-tree of order 4](../img/b-tree.jpg)
 
