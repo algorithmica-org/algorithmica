@@ -33,11 +33,11 @@ This is a long article, and since it also serves as a [textbook](/hpc/) case stu
 
 ## B-Tree Layout
 
-B-trees generalize the concept of binary search trees by allowing nodes to have more than two children. Instead of a single key, a node of a B-tree of order $k$ can contain up to $B = (k - 1)$ keys that are stored in sorted order and up to $k$ pointers to child nodes, each satisfying the property that all keys in the subtrees of the first $i$ children are not greater than the $i$-th key in the parent node.
+B-trees generalize the concept of binary search trees by allowing nodes to have more than two children. Instead of a single key, a node of a B-tree of order $k$ can contain up to $B = (k - 1)$ keys stored in sorted order and up to $k$ pointers to child nodes. Each child $i$ satisfies the property that all keys in its subtree are between keys $i$ and $(i + 1)$ in the parent node (using 0-based numbering for children and 1-based numbering for keys).
 
 ![A B-tree of order 4](../img/b-tree.jpg)
 
-The main advantage of this approach is that it reduces the tree height by $\frac{\log_2 n}{\log_k n} = \frac{\log k}{\log 2} = \log_2 k$ times while fetching each node still takes roughly the same time — as long it fits into a single [memory block](/hpc/external-memory/hierarchy/).
+The main advantage of this approach is that it reduces the tree height by $\frac{\log_2 n}{\log_k n} = \frac{\log k}{\log 2} = \log_2 k$ times, while fetching each node still takes roughly the same time — as long it fits into a single [memory block](/hpc/external-memory/hierarchy/).
 
 B-trees were primarily developed for the purpose of managing on-disk databases, where the latency of randomly fetching a single byte is comparable with the time it takes to read the next 1MB of data sequentially. For our use case, we will be using the block size of $B = 16$ elements — or $64$ bytes, the size of the cache line — which makes the tree height and the total number of cache line fetches per query $\log_2 17 \approx 4$ times smaller compared to the binary search.
 
@@ -48,7 +48,7 @@ Storing and fetching pointers in a B-tree node wastes precious cache space and d
 One of the ways to achieve this is by generalizing the [Eytzinger numeration](../binary-search#eytzinger-layout) to $(B + 1)$-ary trees:
 
 - The root node is numbered $0$.
-- Node $k$ has $(B + 1)$ child nodes numbered $\\{k \cdot (B+1) + i + 1\\}$ for $i \in [0, B]$.
+- Node $k$ has $(B + 1)$ child nodes numbered $\\{k \cdot (B + 1) + i + 1\\}$ for $i \in [0, B]$.
 
 This way, we can only use $O(1)$ additional memory by allocating one large two-dimensional array of keys and relying on index arithmetic to locate children nodes in the tree:
 
