@@ -48,7 +48,7 @@ Storing and fetching pointers in a B-tree node wastes precious cache space and d
 One of the ways to achieve this is by generalizing the [Eytzinger numeration](../binary-search#eytzinger-layout) to $(B + 1)$-ary trees:
 
 - The root node is numbered $0$.
-- Node $k$ has $(B + 1)$ child nodes numbered $\\{k \cdot (B+1) + i\\}$ for $i \in [1, B]$.
+- Node $k$ has $(B + 1)$ child nodes numbered $\\{k \cdot (B+1) + i + 1\\}$ for $i \in [0, B]$.
 
 This way, we can only use $O(1)$ additional memory by allocating one large two-dimensional array of keys and relying on index arithmetic to locate children nodes in the tree:
 
