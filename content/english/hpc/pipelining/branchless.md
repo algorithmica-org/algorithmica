@@ -51,6 +51,8 @@ sub  ebx, 1     ; t -= 1 (causing underflow if t = 0)
 and  eax, ebx   ; x &= t
 ```
 
+Note that this optimization is not technically correct from the compiler's perspective: for the 50 lowest representable integers — those in the $[-2^{31}, - 2^{31} + 49]$ range — the result will be wrong due to underflow. We know that all numbers are all between 0 and 100, and this won't happen, but the compiler doesn't.
+
 But the compiler actually elects to do something different. Instead of going with this arithmetic trick, it used a special `cmov` ("conditional move") instruction that assigns a value based on a condition (which is computed and checked using the flags register, the same way as for jumps):
 
 ```nasm
