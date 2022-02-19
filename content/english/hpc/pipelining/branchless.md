@@ -37,16 +37,16 @@ There are no boolean types in assembly, nor any instructions that yield either o
 mov  ebx, eax   ; t = x
 sub  ebx, 50    ; t -= 50
 sar  ebx, 31    ; t >>= 31
-mul  eax, ebx   ; x *= t
+imul  eax, ebx   ; x *= t
 ```
 
-Another, more complicated way to implement this whole sequence is to convert this sign byte into a mask and then use bitwise `and` instead of multiplication: `((a[i] - 50) >> 1 - 1) & a`. This makes the whole sequence one cycle faster, considering that unlike other instructions, `mul` takes 3 cycles:
+Another, more complicated way to implement this whole sequence is to convert this sign byte into a mask and then use bitwise `and` instead of multiplication: `((a[i] - 50) >> 1 - 1) & a`. This makes the whole sequence one cycle faster, considering that unlike other instructions, `imul` takes 3 cycles:
 
 ```nasm
 mov  ebx, eax   ; t = x
 sub  ebx, 50    ; t -= 50
 sar  ebx, 31    ; t >>= 31
-; mul  eax, ebx ; x *= t
+; imul  eax, ebx ; x *= t
 sub  ebx, 1     ; t -= 1 (causing underflow if t = 0)
 and  eax, ebx   ; x &= t
 ```
