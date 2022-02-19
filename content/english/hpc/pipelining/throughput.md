@@ -41,7 +41,7 @@ But we can go higher than that. The *throughput* of `add`[^throughput] is 2 on m
 The solution is to use *two* accumulators and just sum up odd and and even elements separately:
 
 ```c++
-int s0 = 0, s1 = 1;
+int s0 = 0, s1 = 0;
 s0 += a[0];
 s1 += a[1];
 s0 += a[2];
