@@ -92,7 +92,7 @@ struct Data {
 
 Now, each of them is aligned without any padding, and the size of the structure is just 8 bytes. It seems stupid that the size of a structure and consequently its performance depends on the order of definition of its members, but this is required for binary compatibility.
 
-As a rule of thumb, place your type definitions from largest data types to smallest — this greedy algorithm is guaranteed to work unless you have some non-power-of-two type sizes such as the [12-byte](/hpc/arithmetic/ieee-754#float-formats) `long double`.
+As a rule of thumb, place your type definitions from largest data types to smallest — this greedy algorithm is guaranteed to work unless you have some weird non-power-of-two type sizes such as the [10-byte](/hpc/arithmetic/ieee-754#float-formats) `long double`.
 
 <!--
 
