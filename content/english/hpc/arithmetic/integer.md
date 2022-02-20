@@ -68,6 +68,8 @@ The main advantage of this encoding is that you don't have to do anything to con
 
 That said, you need to be careful with signed integer overflows. Even though they almost always overflow the same way as unsigned integers, programming languages usually consider the possibility of overflow as undefined behavior. If you need to overflow integer variables, convert them to unsigned integers: it's free anyway.
 
+**Exercise.** What is the only integer value for which `std::abs` produces a wrong result? What will this result be?
+
 ### Integer Types
 
 Integers come in different sizes, but all function roughly the same.
