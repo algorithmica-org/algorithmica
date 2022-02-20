@@ -15,7 +15,7 @@ A much more human-friendly rendition of machine language, called *assembly langu
 Jumping right into it, here is how you add two numbers (`*c = *a + *b`) in Arm assembly:
 
 ```nasm
-; *a = x0, *b = x2, *c = x2
+; *a = x0, *b = x1, *c = x2
 ldr w0, [x0]    ; load 4 bytes from wherever x0 points into w0
 ldr w1, [x1]    ; load 4 bytes from wherever x1 points into w1
 add w0, w0, w1  ; add w0 with w1 and save the result to w0
