@@ -175,9 +175,9 @@ int main() {
 
 It takes 9 seconds when you compile it with `gcc -O3`.
 
-It doesn't seem like a huge improvement — the 1-3 second advantage over Java and PyPy can be attributed to the additional time of JIT-compilation — but we haven't yet taken advantage of a far better C compiler ecosystem. If we add `-march=native` and `-ffast=math` flags, time suddenly goes down to 0.6 seconds!
+It doesn't seem like a huge improvement — the 1-3 second advantage over Java and PyPy can be attributed to the additional time of JIT-compilation — but we haven't yet taken advantage of a far better C compiler ecosystem. If we add `-march=native` and `-ffast-math` flags, time suddenly goes down to 0.6 seconds!
 
-What happened here is we [communicated to the compiler](/hpc/compilation/flags/) the exact model of the CPU we are running (`-march=native`) and gave it the freedom to rearrange [floating-point computations](/hpc/arithmetic/float) (`-ffast=math`), and so it took advantage of it and used [vectorization](/hpc/simd) to achieve this speedup.
+What happened here is we [communicated to the compiler](/hpc/compilation/flags/) the exact model of the CPU we are running (`-march=native`) and gave it the freedom to rearrange [floating-point computations](/hpc/arithmetic/float) (`-ffast-math`), and so it took advantage of it and used [vectorization](/hpc/simd) to achieve this speedup.
 
 It's not like it is impossible to tune the JIT-compilers of PyPy and Java to achieve the same performance without significant changes to the source code, but it is certainly easier for languages that compile directly to native code.
 
