@@ -3,22 +3,55 @@ title: Rounding Errors
 weight: 2
 ---
 
-The way rounding works in hardware floats is remarkably simple: it occurs if and only if the result of the operation is not representable exactly, and by default gets rounded to the nearest representable number (and to the nearest zero-ending number in case of a tie).
+The way rounding works in hardware floats is remarkably simple: it occurs if and only if the result of the operation is not representable exactly, and by default gets rounded to the nearest representable number (in case of a tie preferring the number that ends with a zero).
+
+Consider the following code snippet:
+
+```c++
+float x = 0;
+for (int i = 0; i < (1 << 25); i++)
+    x++;
+printf("%f\n", x);
+```
+
+Instead of printing $2^{25} = 33554432$ (what the result mathematically should be), it outputs $16777216 = 2^{24}$. Why?
+
+When we repeatedly increment a floating-point number $x$, we eventually hit a point where it becomes so big that $(x + 1)$ gets rounded back to $x$. The first such number is $2^{24}$ (the number of mantissa bits plus one) because
+
+$$2^{24} + 1 = 2^{24} \cdot 1.\underbrace{0\ldots0}_{\times 23} 1$$
+
+has the exact same distance from $2^{24}$ and $(2^{24} + 1)$ but gets rounded down to $2^{24}$ by the above-stated tie-breaker rule. At the same time, the increment of everything lower than that can be represented exactly, so no rounding happens in the first place.
+
+### Rounding Errors and Operation Order
+
+Note is that while most operations with real numbers are commutative and associative, their rounding errors are not: even the result of $(x+y+z)$ depends on the order of summation. Compilers are not allowed to produce non-spec-compliant results, so this disables some potential optimizations that involve rearranging operands. You can disable this strict compliance with the `-ffast-math` flag in GCC and Clang.
+
+For example, if we add `-O3` and `-ffast-math` and re-compile this snippet, it runs [considerably faster](/hpc/simd/reduction) and also happens to output the correct result, 33554432 — although you need to be aware that the compiler also could have chosen a less precise computation path.
+
+### Rounding Modes
 
 Apart from the default mode (also known as Banker's rounding), you can [set](https://www.cplusplus.com/reference/cfenv/fesetround/) other rounding logic with 4 more modes:
 
-* round to nearest, with perfect ties always rounding "away" from zero;
-* round up (toward $+∞$; negative results thus round toward zero);
-* round down (toward $-∞$; negative results thus round away from zero);
-* round toward zero (a truncation of the binary result).
+- round to nearest, with perfect ties always rounding "away" from zero;
+- round up (toward $+∞$; negative results thus round toward zero);
+- round down (toward $-∞$; negative results thus round away from zero);
+- round toward zero (a truncation of the binary result).
 
-The alternative rounding modes are also useful in diagnosing numerical instability. If the results of a subroutine vary substantially between rounding to the positive and negative infinities, then it indicates susceptibility to round-off errors. Is a better test than switching all computations to a lower precision and checking whether the result changed by too much because the default rounding to nearest results in the right "expected" value given enough averaging: statistically, half of the time they are rounding up and the other are rounding down, so they cancel each other.
+<!--
 
-Note that while most operations with real numbers are commutative and associative, their rounding errors are not: even the result of $(x+y+z)$ depends on the order of summation. Compilers are not allowed to produce non-spec-compliant results, so this disables some potential optimizations that involve rearranging operands. You can disable this strict compliance with the `-ffast-math` flag in GCC and Clang, although you need to be aware that this lets compilers sometimes choose less precise computation paths.
+`fesetround(FE_UPWARD)`.
+
+$67108864 = 2^{25}$
+
+-->
+
+One of the uses for the alternative rounding modes is for diagnosing numerical instability. If the results of an algorithm substantially vary when switching between rounding to the positive and negative infinities, it indicates susceptibility to round-off errors.
+
+This test is better than switching all computations to lower precision and checking whether the result changed by too much. The default rounding-to-nearest converges to the correct “expected” value given enough averaging: statistically, half of the time, they are rounding up, and the other half, they are rounding down — so they cancel each other.
+
+### Measuring Errors
 
 It seems surprising to expect this guarantee from hardware that performs complex calculations such as natural logarithms and square roots, but this is it: you are guaranteed to get the highest precision possible from all operations. This makes it remarkably easy to analyze round-off errors, as we will see in a bit.
-
-## Measuring and Mitigating Errors
 
 There are two natural ways to measure computational errors:
 
@@ -183,4 +216,3 @@ The tricky part is the "shortest possible". It can be solved by printing digits 
 How many decimal digits do we need to print a `float`?
 
 -->
-
