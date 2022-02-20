@@ -74,12 +74,14 @@ That said, you need to be careful with signed integer overflows. Even though the
 
 Integers come in different sizes, but all function roughly the same.
 
-| Bits | Bytes | Signed C type | Unsigned C type      | Assembly |
-|-----:|-------|---------------|----------------------|----------|
-|    8 | 1     | `char`        | `unsigned char`      | `byte`   |
-|   16 | 2     | `short`       | `unsigned short`     | `word`   |
-|   32 | 4     | `int`         | `unsigned int`       | `dword`  |
-|   64 | 8     | `long long`   | `unsigned long long` | `qword`  |
+| Bits | Bytes | Signed C type        | Unsigned C type      | Assembly |
+|-----:|-------|----------------------|----------------------|----------|
+|    8 | 1     | `signed char`[^char] | `unsigned char`      | `byte`   |
+|   16 | 2     | `short`              | `unsigned short`     | `word`   |
+|   32 | 4     | `int`                | `unsigned int`       | `dword`  |
+|   64 | 8     | `long long`          | `unsigned long long` | `qword`  |
+
+[^char]: Note that `char`, `unsigned char`, and `signed char` are technically three distinct types. The C standard leaves it up to the implementation whether the plain `char` is signed or unsigned (on most compilers, it is signed).
 
 The bits of an integer are simply stored sequentially. The only ambiguity here is the order in which to store them — left to right or right to left — called *endianness*. Depending on the architecture, the format can be either:
 
