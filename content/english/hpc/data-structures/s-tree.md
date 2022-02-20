@@ -235,7 +235,9 @@ unsigned rank(reg x, int* y) {
 }
 ```
 
-This instruction converts 32-bit integers stored in two registers to 16-bit integers stored in one register — in our case, effectively joining the vector masks into one. Note that we've swapped the order of comparison — this lets us not invert the mask in the end, but we have to subtract one from the search key once in the beginning to make it correct (otherwise, it works as `upper_bound`).
+This instruction converts 32-bit integers stored in two registers to 16-bit integers stored in one register — in our case, effectively joining the vector masks into one. Note that we've swapped the order of comparison — this lets us not invert the mask in the end, but we have to subtract[^float] one from the search key once in the beginning to make it correct (otherwise, it works as `upper_bound`).
+
+[^float]: If you need to work with [floating-point](/hpc/arithmetic/float) keys, consider whether `upper_bound` will suffice — because if you need `lower_bound` specifically, then subtracting one or the machine epsilon from the search key doesn't work: you need to [get the previous representable number](https://stackoverflow.com/questions/10160079/how-to-find-nearest-next-previous-double-value-numeric-limitsepsilon-for-give) instead. Aside from some corner cases, this essentially means reinterpreting its bits as an integer, subtracting one, and reinterpreting it back as a float (which magically works because of how [IEEE-754 floating-point numbers](/hpc/arithmetic/ieee-754) are stored in memory).
 
 The problem is, it does this weird interleaving where the result is written in the `a1 b1 a2 b2` order instead of `a1 a2 b1 b2` that we want — many AVX2 instructions tend to do that. To correct this, we need to [permute](/hpc/simd/shuffling) the resulting vector, but instead of doing it during the query time, we can just permute every node during preprocessing:
 
