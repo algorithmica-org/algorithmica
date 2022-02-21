@@ -37,13 +37,7 @@ Apart from the default mode (also known as Banker's rounding), you can [set](htt
 - round down (toward $-∞$; negative results thus round away from zero);
 - round toward zero (a truncation of the binary result).
 
-<!--
-
-`fesetround(FE_UPWARD)`.
-
-$67108864 = 2^{25}$
-
--->
+For example, if you call `fesetround(FE_UPWARD)` before running the loop above, it outputs not $2^{24}$, and not even $2^{25}$, but $67108864 = 2^{26}$. This happens because when we get to $2^{24}$, $(x + 1)$ starts rounding to the next nearest representable number $(x + 2)$, and we reach $2^{25}$ in half the time, and after that, $(x + 1)$ rounds up to $(x+4)$, and we start going four times as fast.
 
 One of the uses for the alternative rounding modes is for diagnosing numerical instability. If the results of an algorithm substantially vary when switching between rounding to the positive and negative infinities, it indicates susceptibility to round-off errors.
 
