@@ -3,6 +3,7 @@ title: Сжатие координат
 authors:
 - Сергей Слотин
 weight: -1
+draft: true
 ---
 
 
