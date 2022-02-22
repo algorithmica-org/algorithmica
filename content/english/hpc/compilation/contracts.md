@@ -166,11 +166,11 @@ void add(int * __restrict__ a, const int * __restrict__ b, int n) {
 
 These keywords are also a good idea to use by themselves for the purpose of self-documenting.
 
-### C++20 Contracts
+### C++ Contracts
 
-Contract programming is an underused but powerful technique.
+Contract programming is an underused but very powerful technique.
 
-Design-by-contract actually made it into the C++20 standard in the form of [contract attributes](http://www.hellenico.gr/cpp/w/cpp/language/attributes/contract.html), which are functionally equivalent to our hand-made, compiler-specific `assume`:
+There is a late-stage proposal to add design-by-contract into the C++ standard in the form of [contract attributes](http://www.hellenico.gr/cpp/w/cpp/language/attributes/contract.html), which are functionally equivalent to our hand-made, compiler-specific `assume`:
 
 ```c++
 T at(size_t k) [[ expects: k < n ]] {
@@ -180,7 +180,7 @@ T at(size_t k) [[ expects: k < n ]] {
 
 There are 3 types of attributes — `expects`, `ensures`, and `assert` — respectively used for specifying pre- and post-conditions in functions and general assertions that can be put anywhere in the program.
 
-Unfortunately, this exciting new feature is not yet implemented in any major C++ compiler — but maybe around 2022-2023, we will be able to write code like this:
+Unfortunately, this exciting new feature is [not yet finally standardized](https://www.reddit.com/r/cpp/comments/cmk7ek/what_happened_to_c20_contracts/), let alone implemented in a major C++ compiler. But maybe, in a few years, we will be able to write code like this:
 
 ```c++
 bool is_power_of_two(int m) {
