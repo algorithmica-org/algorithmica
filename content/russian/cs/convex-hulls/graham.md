@@ -23,7 +23,7 @@ vector<r> graham(vector<r> points) {
 
     // сортируем точки по полярному углу
     sort(points.begin(), points.end(), [&](r a, r b){
-        return (a - p) ^ (b - p) > 0;
+        return (a - p0) ^ (b - p0) > 0;
     });
 
     vector<r> hull;
