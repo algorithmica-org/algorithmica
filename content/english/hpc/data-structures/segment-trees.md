@@ -67,6 +67,8 @@ struct segtree {
 };
 ```
 
+![](../img/segtree-pointers.svg)
+
 It takes 4+4+4+8+8=28 bytes, although they get padded to 32 for [memory alignment](/hpc/cpu-cache/alignment) reasons.
 
 Actually really good in terms of SWE practices, but terrible in terms of performance
@@ -100,6 +102,8 @@ int sum(int k, int v = 1, int l = 0, int r = N) {
          + sum(k, 2 * v + 1, m, r);
 }
 ```
+
+![](../img/segtree-topdown.svg)
 
 Still have wasted memory.
 
@@ -138,43 +142,7 @@ int sum(int k) {
 }
 ```
 
-### Implicit (Bottom-Up)
-
-```c++
-void add(int k, int x) {
-    int v = 1, l = 0, r = N;
-    while (l + 1 < r) {
-        t[v] += x;
-        int m = (l + r) / 2;
-        if (k < m)
-            v = 2 * v, r = m;
-        else
-            v = 2 * v + 1, l = m;
-    }
-    t[v] += x;
-}
-
-int sum(int k) {
-    if (k == N - 1)
-        return t[1];
-    int v = 1, l = 0, r = n;
-    int s = 0;
-    while (l < r) {
-        int m = (l + r) / 2;
-        v *= 2;
-        if (k < m) {
-            if (k == m - 1)
-                return s + t[v];
-            r = m;
-        } else {
-            s += t[v];
-            v++;
-            l = m;
-        }
-    }
-    return s;
-}
-```
+![](../img/segtree-iterative.svg)
 
 ### Implicit (Bottom-up)
 
@@ -198,14 +166,16 @@ int sum(int k) {
     k += N - 1;
     while (k != 0) {
         if (~k & 1)
-            res += t[k];
-        k = (k - 1) >> 1;
+            res += t[k--];
+        k = k >> 1;
     }
     return res;
 }
 ```
 
-### Arbitrary Array Sizes
+![](../img/segtree-bottomup.svg)
+
+### Arbitrarily-Sized Arrays
 
 ```c++
 int sum(int r) {
@@ -245,14 +215,14 @@ int sum(int k) {
     int s = 0;
     while (k != 0) {
         if (~k & 1)
-            s += t[k];
-        k = (k - 1) >> 1;
+            s += t[k--];
+        k >>= 1;
     }
     return s;
 }
 ```
 
-### Branchless
+Branchless
 
 ```c++
 int sum(int k) {
@@ -265,6 +235,8 @@ int sum(int k) {
     return s;
 }
 ```
+
+![](../img/segtree-branchless.svg)
 
 ## Fenwick trees
 
@@ -296,6 +268,8 @@ int sum (int l, int r) {
 }
 ```
 
+![](../img/segtree-fenwick.svg)
+
 Can't be more optimal because of pipelining and implicit prefetching
 
 ```c++
@@ -317,6 +291,8 @@ int sum(int k) {
     return res;
 }
 ```
+
+![](../img/segtree-fenwick-holes.svg)
 
 ### Wide Segment Trees
 
@@ -380,9 +356,21 @@ void add(int k, int _x) {
 }
 ```
 
+![](../img/segtree-simd.svg)
+
 Wide Fenwick trees make little sense. The speed of Fenwick trees comes from rapidly iterating over just the elements we need.
 
-## Further Reading
+Unlike [S-trees](../s-tree), you can easily change block size:
+
+![](../img/segtree-simd-others.svg)
+
+### Comparison
+
+![](../img/segtree-popular.svg)
+
+![](../img/segtree-popular-relative.svg)
+
+### Acknowledgements
 
 "[Efficient and easy segment trees](https://codeforces.com/blog/entry/18051)" by Oleksandr Bacherikov 
 
