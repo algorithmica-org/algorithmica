@@ -27,7 +27,7 @@ int sum(int k); // sum of elements indexed [0, k]
 
 Static tree data structure used for storing information about array segments. Popular in competitive programming, very rarely used in real life. Many different implementations possible, which we will explore in this article.
 
-![](https://i.stack.imgur.com/xeIcl.png)
+![](../img/segtree-path.png)
 
 ## Pointer-Based Implementation
 
@@ -77,6 +77,8 @@ Pointer chasing, 4 unnecessary metadata fields, recursion, branching
 ## Implicit Segment Trees
 
 Eytzinger-like layout: $2k$ is the left child and $2k+1$ is the right child.
+
+![](../img/segtree-layout.png)
 
 ```c++
 int t[4 * N];
@@ -245,6 +247,9 @@ int sum(int k) {
 * If $f$ is "remove last bit" (`x -= x & -x`),
   then both query and update would only require updating $O(\log n)$ different $t$'s
 
+![](../img/fenwick-sum.png)
+![](../img/fenwick-update.png)
+
 ```cpp
 int t[N + 1];
 
@@ -295,6 +300,8 @@ int sum(int k) {
 ![](../img/segtree-fenwick-holes.svg)
 
 ### Wide Segment Trees
+
+![](../img/segtree-wide.png)
 
 ```c++
 const int b = 4, B = (1 << b);
