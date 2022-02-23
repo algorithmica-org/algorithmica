@@ -116,7 +116,9 @@ int div_signed(int x) {
 If `x` is negative, then simply shifting doesn't work — regardless of whether shifting is done in zeros or sign bits:
 
 - If we shift in zeros, we get a non-negative result (the sign bit is zero).
-- If we shift in sign bits, then rounding will happen towards negative infinity instead of zero (`-5 / 2` will be equal to `-3` instead of `-2`).
+- If we shift in sign bits, then rounding will happen towards negative infinity instead of zero (`-5 / 2` will be equal to `-3` instead of `-2`)[^python].
+
+[^python]: Fun fact: in Python, integer-dividing a negative number for some reason floors the result, so that `-5 // 2 = -3` and equivalent to `-5 >> 1 = -3`. I doubt that Guido van Rossum had this optimization in mind when initially designing the language, but, theoretically, a [JIT-compiled](/hpc/complexity/languages/#compiled-languages) Python program with many divisions by two may be faster than an analogous C++ program.
 
 So, for the general case, we have to insert some crutches to make it work:
 
@@ -135,6 +137,8 @@ int div_assume(int x) {
     return x / 2;
 }
 ```
+
+Although in this particular case, perhaps the best syntax to express that we only expect non-negative numbers is to use an unsigned integer type.
 
 Because of nuances like this, it is often beneficial to expand the algebra in intermediate functions and manually simplify arithmetic yourself rather than relying on the compiler to do it.
 
