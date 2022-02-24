@@ -27,7 +27,7 @@ for (int i = 0; i < N; i++)
     s += (a[i] < 50) * a[i];
 ```
 
-Suddenly, the loop now takes ~7 cycles per element, instead of the original ~14. Also, the performance remains constant if we change `50` to some other threshold, so it doesn't depend on the branch probability.
+Suddenly, the loop now takes ~7 cycles per element instead of the original ~14. Also, the performance remains constant if we change `50` to some other threshold, so it doesn't depend on the branch probability.
 
 But wait… shouldn't there still be a branch? How does `(a[i] < 50)` map to assembly?
 
@@ -92,7 +92,7 @@ This way you can eliminate branching, but this comes at the cost of evaluating *
 
 ### When It Is Beneficial
 
-Using predication eliminates [a structural hazard](../hazard), but introduces a data hazard. There is still a pipeline stall, but it is a cheaper one: you only need to wait for `cmov` to be resolved, and not flush the entire pipeline in case of a mispredict.
+Using predication eliminates [a structural hazard](../hazard) but introduces a data hazard. There is still a pipeline stall, but it is a cheaper one: you only need to wait for `cmov` to be resolved and not flush the entire pipeline in case of a mispredict.
 
 However, there are many situations when it is more efficient to leave branchy code as it is. This is the case when the cost of computing *both* branches instead of just *one* outweighs the penalty for the potential branch mispredictions.
 
@@ -100,10 +100,10 @@ In our example, the branchy code wins when the branch can be predicted with a pr
 
 ![](../img/branchy-vs-branchless.svg)
 
-This 75% threshold is commonly used by the compilers as a heuristic for determining whether to use the `cmov` or not. Unfortunately, this probability is usually unknown at the compile-time, so it needs to provided in one of several ways:
+This 75% threshold is commonly used by the compilers as a heuristic for determining whether to use the `cmov` or not. Unfortunately, this probability is usually unknown at the compile-time, so it needs to be provided in one of several ways:
 
 - We can use [profile-guided optimization](/hpc/compilation/pgo) which will decide for itself whether to use predication or not.
-- We can use [compiler-specific intrinsics](/hpc/compilation/situational) to hint the likeliness of branches: `__builtin_expect_with_probability` in GCC and `__builtin_unpredictable` in Clang.
+- We can use [compiler-specific intrinsics](/hpc/compilation/situational) to hint at the likeliness of branches: `__builtin_expect_with_probability` in GCC and `__builtin_unpredictable` in Clang.
 - We can rewrite branchy code using the ternary operator or various arithmetic tricks, which acts as sort of an implicit contract between programmers and compilers: if the programmer wrote the code this way, then it was probably meant to be branchless.
 
 The "right way" is to use branching hints, but unfortunately, the support for them is lacking. Right now [these hints seem to be lost](https://bugs.llvm.org/show_bug.cgi?id=40027) by the time the compiler back-end decides whether a `cmov` is more beneficial. There is [some progress](https://discourse.llvm.org/t/rfc-cmov-vs-branch-optimization/6040) towards making it possible, but currently, there is no good way of forcing the compiler to generate branch-free code, so sometimes the best hope is to just write a small snippet in assembly.
