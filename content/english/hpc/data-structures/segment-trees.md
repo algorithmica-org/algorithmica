@@ -4,32 +4,53 @@ weight: 3
 draft: true
 ---
 
-The lessons we learned from studying layouts for binary search can be applied to broader range of data structures.
+The lessons we learned from [optimizing](../binary-search) [binary search](../s-tree) can be applied to a broader range of data structures.
+
+In this article, instead of trying to optimize something from the STL, we will focus on a *segment tree* — a structure that may be unfamiliar to most *normal* programmers and perhaps even most computer science researchers[^tcs], but is used very extensively in [programming competitions](https://codeforces.com/) for its speed and simplicity of implementation.
+
+[^tcs]: Segment trees are rarely mentioned in scientific literature because they are relatively novel (invented around 2000), and *asymptotically* don't do anything that [any other binary tree](https://en.wikipedia.org/wiki/Tree_(data_structure)) can't do, but they are much faster *in practice* for the problems they solve.
+
+Segment trees are cool and can do lots of different things, but in this article, we will focus on their simplest non-trivial application — *the dynamic prefix sum problem*:
+
+```cpp
+void add(int k, int x); // execute a[k] = x (0-based indexing)
+int sum(int k);         // sum of the first k elements (from 0 to k - 1)
+```
+
+Note that we have to support two types of queries, which makes this problem multi-dimensional:
+
+- If we only cared about about the cost of *updating the array*, we would store it as it is and [calculated the sum](/hpc/simd/reduction) directly on each `sum` query.
+- And if we only cared about the cost of *prefix sum queries*, we would keep it ready and [re-calculate them entirely from scratch](/hpc/algorithms/prefix) on each update.
+
+Both of these options perform $O(1)$ work on one query type but $O(n)$ work on the other. Depending on the relative frequencies of the query types, the optimal solution may differ.
+
+<!--
+
+sqrt
+
+Enable [hugepages](/hpc/cpu-cache/paging) system-wide and forget about it.
 
 Most of examples in this section are about optimizing some algorithms that are either included in standard library or take under 10 lines of code to implement naively, but we will start off with a bit more obscure example.
 
 There are many things segment trees can do. Persistent structures, computational geometry. But for most of this article, we will focus on the dynamic (as opposed to static) prefix sum problem.
 
-Segment tree is a data structure that stores information about array segments. It is a static tree of degree two, and here is what this means:
-
-Segment trees are used for windowing queries or range queries in general, either by themselves or as part of a larger algorithm. They are very rarely mentioned in scientific literature, because they are relatively novel (invented around 2000), and *asymptotically* they don't do anything that any other binary tree can't, but they are dominant structure in the world of competitive programming because of their performance and ease of implementation.
-
-Enable [hugepages](/hpc/cpu-cache/paging) system-wide and forget about it.
+Segment trees are used for windowing queries or range queries in general, either by themselves or as part of a larger algorithm.
 
 Functional programming, e. g. for implementing persistent arrays and derived structures.
 
+-->
+
+Segment tree is a data structure that stores information about array segments. It is a static tree of degree two, and here is what this means:
+
+![A segment tree for sum](../img/segtree-path.png)
+
+Unlike the previous structures
+
 Segment trees are built recursively: build a tree for left and right halves and merge results to get root.
 
-```cpp
-void add(int k, int x); // 0-based indexation
-int sum(int k); // sum of elements indexed [0, k]
-```
+Many different implementations possible, which we will explore in this article.
 
-Static tree data structure used for storing information about array segments. Popular in competitive programming, very rarely used in real life. Many different implementations possible, which we will explore in this article.
-
-![](../img/segtree-path.png)
-
-## Pointer-Based Implementation
+### Pointer-Based Implementation
 
 If you were at an "Introduction to OOP" class, you would probably implement a segment tree like this:
 
@@ -74,7 +95,7 @@ It takes 4+4+4+8+8=28 bytes, although they get padded to 32 for [memory alignmen
 Actually really good in terms of SWE practices, but terrible in terms of performance
 Pointer chasing, 4 unnecessary metadata fields, recursion, branching
 
-## Implicit Segment Trees
+### Implicit Segment Trees
 
 Eytzinger-like layout: $2k$ is the left child and $2k+1$ is the right child.
 
@@ -146,7 +167,7 @@ int sum(int k) {
 
 ![](../img/segtree-iterative.svg)
 
-### Implicit (Bottom-up)
+### Bottom-Up Implementation
 
 * Different layout: leaf nodes are numbered $n$ to $(2n - 1)$, "parent" is $\lfloor k/2 \rfloor$
 * Minimum possible amount of memory
@@ -240,7 +261,7 @@ int sum(int k) {
 
 ![](../img/segtree-branchless.svg)
 
-## Fenwick trees
+### Fenwick trees
 
 * Structure used to calculate prefix sums and similar operations
 * Defined as array $t_i = \sum_{k=f(i)}^i a_k$ where $f$ is any function for which $f(i) \leq i$
