@@ -13,7 +13,7 @@ In this article, instead of trying to optimize something from the STL, we will f
 Segment trees are cool and can do lots of different things, but in this article, we will focus on their simplest non-trivial application — *the dynamic prefix sum problem*:
 
 ```cpp
-void add(int k, int x); // execute a[k] = x (0-based indexing)
+void add(int k, int x); // execute a[k] += x (0-based indexing)
 int sum(int k);         // sum of the first k elements (from 0 to k - 1)
 ```
 
@@ -22,9 +22,35 @@ Note that we have to support two types of queries, which makes this problem mult
 - If we only cared about about the cost of *updating the array*, we would store it as it is and [calculated the sum](/hpc/simd/reduction) directly on each `sum` query.
 - And if we only cared about the cost of *prefix sum queries*, we would keep it ready and [re-calculate them entirely from scratch](/hpc/algorithms/prefix) on each update.
 
-Both of these options perform $O(1)$ work on one query type but $O(n)$ work on the other. Depending on the relative frequencies of the query types, the optimal solution may differ.
+Both of these options perform $O(1)$ work on one query type but $O(n)$ work on the other. They are only optimal when one type queries is extremely rare. When this is not the case, we can trade off the work on one type of query for increased performance of the other, and segment trees let you do exactly that, achieving the equilibrium of $O(\log n)$ for both queries.
+
+The main idea is this. Calculate the sum of the entire array put it somewhere. Then split it in halves, calculate the sum on both halves, and also store them somewhere. Then split these halves in halves and so on, until we recursively reach segments of length one.
+
+These sequence of computations can be represented as a static-structure tree:
+
+![](../img/segtree-path.png)
+
+Some nice properties of this construct:
+
+1. The tree has at most $2n$ vertices: $n$ on the last layer, $\frac{n}{2}$ on the previous, $\frac{n}{4}$ on the one before that, and so on.
+2. The height of the tree is $\Theta(\log n)$ as on each "level" the sizes of the segments halves.
+3. Each prefix can be split into $O(\log n)$ non-intersecting segments corresponding to vertices of a segment tree: you need at most one from each layer.
+
+When $n$ is not a perfect power of two, not all levels will be filled entirely. The last layer will be incomplete, but this doesn't take away any of these nice properties that let us solve the problem.
+
+1. Property 1 guarantees that we will need $O(n)$ space to store the tree
+2. **Update** query is processed by adding a value to all vertices that correspond to segments that. Property 1 says there will be at most $O(\log n)$ of them.
+3. **Prefix sum** query is processed by finding all vertices that compose the prefix and summing the values stored in them. Property 3 says there will also be at most $O(\log n)$ of them.
+
+This is a general idea. Many different implementations possible, which we will explore one by one in this article.
 
 <!--
+
+Segment trees are built recursively: build a tree for left and right halves and merge results to get root.
+
+Depending on the relative frequencies of the query types, the optimal solution may differ.
+
+One way to do this is through a trick commonly called *square root decomposition*: we split the array (of size $n$) into blocks of approximately $\sqrt n$ elements,
 
 sqrt
 
@@ -39,16 +65,6 @@ Segment trees are used for windowing queries or range queries in general, either
 Functional programming, e. g. for implementing persistent arrays and derived structures.
 
 -->
-
-Segment tree is a data structure that stores information about array segments. It is a static tree of degree two, and here is what this means:
-
-![A segment tree for sum](../img/segtree-path.png)
-
-Unlike the previous structures
-
-Segment trees are built recursively: build a tree for left and right halves and merge results to get root.
-
-Many different implementations possible, which we will explore in this article.
 
 ### Pointer-Based Implementation
 
