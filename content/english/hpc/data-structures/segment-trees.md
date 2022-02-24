@@ -6,7 +6,7 @@ draft: true
 
 The lessons we learned from [optimizing](../binary-search) [binary search](../s-tree) can be applied to a broader range of data structures.
 
-In this article, instead of trying to optimize something from the STL, we will focus on a *segment tree* — a structure that may be unfamiliar to most *normal* programmers and perhaps even most computer science researchers[^tcs], but is used very extensively in [programming competitions](https://codeforces.com/) for its speed and simplicity of implementation.
+In this article, instead of trying to optimize something from the STL, we will focus on the *segment tree* — a structure that may be unfamiliar to most *normal* programmers and perhaps even most computer science researchers[^tcs], but is used very extensively in [programming competitions](https://codeforces.com/) for its speed and simplicity of implementation.
 
 [^tcs]: Segment trees are rarely mentioned in scientific literature because they are relatively novel (invented around 2000), and *asymptotically* don't do anything that [any other binary tree](https://en.wikipedia.org/wiki/Tree_(data_structure)) can't do, but they are much faster *in practice* for the problems they solve.
 
@@ -36,11 +36,13 @@ Some nice properties of this construct:
 2. The height of the tree is $\Theta(\log n)$ as on each "level" the sizes of the segments halves.
 3. Each prefix can be split into $O(\log n)$ non-intersecting segments corresponding to vertices of a segment tree: you need at most one from each layer.
 
-When $n$ is not a perfect power of two, not all levels will be filled entirely. The last layer will be incomplete, but this doesn't take away any of these nice properties that let us solve the problem.
+When $n$ is not a perfect power of two, not all levels will be filled entirely. The last layer will be incomplete, but this doesn't take away any of these nice properties that let us solve the problem (look at the bold path on the illustration):
 
 1. Property 1 guarantees that we will need $O(n)$ space to store the tree
 2. **Update** query is processed by adding a value to all vertices that correspond to segments that. Property 1 says there will be at most $O(\log n)$ of them.
 3. **Prefix sum** query is processed by finding all vertices that compose the prefix and summing the values stored in them. Property 3 says there will also be at most $O(\log n)$ of them.
+
+Note that by the same logic that each prefix can be covered by $O(\log n)$ nodes, each possible segment can also be covered by $O(\log n)$ nodes: you just possibly need at most two of them on each level. This lets us compute sums on any segment, although in this article we are not going to do it, instead reducing it to computing two prefix sums (from the right border, and the subtracting the prefix sum on the left border).
 
 This is a general idea. Many different implementations possible, which we will explore one by one in this article.
 
@@ -68,47 +70,82 @@ Functional programming, e. g. for implementing persistent arrays and derived str
 
 ### Pointer-Based Implementation
 
-If you were at an "Introduction to OOP" class, you would probably implement a segment tree like this:
+The most straightforward way to implement a segment tree is to store everything a node needs explicitly. If you were at an "Introduction to OOP" class, you'd probably implement a segment tree like this:
 
 ```c++
 struct segtree {
-    int lb, rb;
-    int s = 0;
-    segtree *l = nullptr, *r = nullptr;
+    int lb, rb;                         // the range this node is responsible for 
+    int s = 0;                          // the sum of elements [lb, rb)
+    segtree *l = nullptr, *r = nullptr; // pointers to its children
 
     segtree(int lb, int rb) : lb(lb), rb(rb) {
-        if (lb + 1 < rb) {
+        if (lb + 1 < rb) { // if the node is not a leaf, create children
             int t = (lb + rb) / 2;
             l = new segtree(lb, t);
             r = new segtree(t, rb);
         }
     }
-    
-    void add(int k, int x) {
-        s += x;
-        if (l != nullptr) {
-            if (k < l->rb)
-                l->add(k, x);
-            else
-                r->add(k, x);
-        }
-    }
-    
-    int sum(int k) {
-        if (rb <= k)
-            return s;
-        if (lb >= k)
-            return 0;
-        return l->sum(k) + r->sum(k);
-    }
+
+    void add(int k, int x) { /* react to a[k] += x */ }
+    int sum(int k) { /* compute the sum of the first k elements */ }
 };
 ```
 
+If we needed to build it over an existing array, we would rewrite the body of the constructor like this:
+
+```c++
+if (lb + 1 == rb) {
+    s = a[lb];
+} else {
+    int t = (lb + rb) / 2;
+    l = new segtree(lb, t);
+    r = new segtree(t, rb);
+    s = l->s + r->s;
+}
+```
+
+But to remove complexity, we are going to assume that the array is just zero-initialized in all future implementations.
+
+Now, to implement `add`, we descend down the tree, adding the delta to the `s` field, until we reach a leaf node:
+
+```c++
+void add(int k, int x) {
+    s += x;
+    if (l != nullptr) { // check whether it is a leaf node
+        if (k < l->rb)
+            l->add(k, x);
+        else
+            r->add(k, x);
+    }
+}
+```
+
+<!--
+
+We can do largely the same with the prefix sum query, adding the sum stored in the left node each time we go right:
+
+-->
+
+For the prefix sum query, we can check if the query covers the current segment fully or doesn't cover at all and return the result for the node right away. If it is not the case, we can recursively call the query on the children and they will figure it out:
+
+```c++
+int sum(int k) {
+    if (rb <= k)
+        return s;
+    if (lb >= k)
+        return 0;
+    return l->sum(k) + r->sum(k);
+}
+```
+
+Actually really good in terms of SWE practices, but terrible in terms of performance:
+
 ![](../img/segtree-pointers.svg)
+
+This is terrible. It doesn't seem like performance 
 
 It takes 4+4+4+8+8=28 bytes, although they get padded to 32 for [memory alignment](/hpc/cpu-cache/alignment) reasons.
 
-Actually really good in terms of SWE practices, but terrible in terms of performance
 Pointer chasing, 4 unnecessary metadata fields, recursion, branching
 
 ### Implicit Segment Trees
