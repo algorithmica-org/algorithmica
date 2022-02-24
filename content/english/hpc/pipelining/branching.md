@@ -1,6 +1,7 @@
 ---
 title: The Cost of Branching
 weight: 2
+published: true
 ---
 
 When a CPU encounters a conditional jump or [any other type of branching](/hpc/architecture/indirect), it doesn't just sit idle until its condition is computed — instead it starts *speculatively executing* the branch that seems more likely to be taken immediately. During execution the CPU computes statistics about branches taken on each instruction, and after a while and they start to predict them by recognizing common patterns.
@@ -68,7 +69,7 @@ Now, if we benchmark it for different values of `P`, we get an interesting-looki
 
 It's peak is at 50-55%, as expected: branch misprediction is the most expensive thing here. This graph is asymmetrical: it takes just ~1 cycle to only check conditions that are never satisfied (`P = 0`), and ~7 cycles for the sum if the branch is always taken (`P = 100`).
 
-An interesting detail is that this graph is not unimodal: there is another local minimum at around 85-90%. We spend ~6.15 cycles per element there, or about 10-15% faster compared to when we always take the branch, accounting for the fact that we need to perform less additions. Branch misprediction stop affecting performance at this point, because it happens, not the whole instruction buffer is discarded, but only the operations that were speculatively scheduled. That 10-15% mispredict rate is the equilibrium point where we can see far enough in the pipeline not to stall, but save 10-15% on taking the cheaper ">=" branch.
+An interesting detail is that this graph is not unimodal: there is another local minimum at around 85-90%. We spend ~6.15 cycles per element there, or about 10-15% faster compared to when we always take the branch, accounting for the fact that we need to perform less additions. Branch misprediction stops affecting performance at this point, because it happens, not the whole instruction buffer is discarded, but only the operations that were speculatively scheduled. That 10-15% mispredict rate is the equilibrium point where we can see far enough in the pipeline not to stall, but save 10-15% on taking the cheaper ">=" branch.
 
 Note that it costs almost nothing to check for a condition that never or almost never occurs. This is why programmers use runtime exceptions and base case checks so profusely: if they are indeed rare, they don't really cost anything.
 
