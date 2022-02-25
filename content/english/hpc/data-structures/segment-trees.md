@@ -10,6 +10,8 @@ In this article, instead of trying to optimize something from the STL, we will f
 
 [^tcs]: Segment trees are rarely mentioned in scientific literature because they are relatively novel (invented around 2000), and *asymptotically* don't do anything that [any other binary tree](https://en.wikipedia.org/wiki/Tree_(data_structure)) can't do, but they are much faster *in practice* for the problems they solve.
 
+This is a long article, and to make it less long, we will mostly be focusing on its simplest application
+
 Segment trees are cool and can do lots of different things, but in this article, we will focus on their simplest non-trivial application — *the dynamic prefix sum problem*:
 
 ```cpp
@@ -373,40 +375,66 @@ Notice that the bump in latency for the prefix sum query starts at $2^{19}$ and 
 
 ### Fenwick trees
 
-* Structure used to calculate prefix sums and similar operations
-* Defined as array $t_i = \sum_{k=f(i)}^i a_k$ where $f$ is any function for which $f(i) \leq i$
-* If $f$ is "remove last bit" (`x -= x & -x`),
-  then both query and update would only require updating $O(\log n)$ different $t$'s
+Implicit structures are great. They allow us to avoid pointer chasing and visit all the nodes relevant for a query in parallel. What is even better is *succinct* structures. In addition to not storing pointers or any other metadata, they also use the theoretically minimal memory to store the structure — maybe only with $O(1)$ more fields.
 
-![](../img/fenwick-sum.png)
-![](../img/fenwick-update.png)
+To make a segment tree succinct, we need to look at the values stored in the nodes and search for redundancies — the values that can be inferred from other nodes — and remove them. For any node $p$, its sum $s_p$ equals to the sum $(s_l + s_r)$ stored in its children nodes. Therefore, for any such "triangle" of nodes, we only need to store any two of $s_p$, $s_l$, or $s_r$, and we can restore the other one from the $s_p = s_l + s_r$ identity.
 
-```cpp
+Note that in every implementation so far, we never added the sum stored in the right child when computing the prefix sum. *Fenwick tree* is a type of a segment tree that uses this consideration and gets rid of all *right* children, including the last layer. This makes the total required number of memory cells $n + O(1)$, the same as the underlying array.
+
+To calculate a prefix sum, we need to repeatedly jump to the first parent that is a left child:
+
+![A path for the sum query](../img/fenwick-sum.png)
+
+To process an update query, we need to repeatedly add the delta to the first parent the contains the cell $k$:
+
+![A path for the update query](../img/fenwick-update.png)
+
+More formally, a Fenwick tree is defined as the array $t_i = \sum_{k=f(i)}^i a_k$ where $f$ is some function for which $f(i) \leq i$. If $f$ is the "remove last bit" function (`x -= x & -x`), then both query and update would only require updating $O(\log n)$ different $t$'s
+
+```c++
 int t[N + 1];
+```
 
-void add(int k, int x) {
-    for (k += 1; k <= N; k += k & -k)
-        t[k] += x;
-}
+Now, instead of making it actually equivalent to a segment tree, we will make all sizes a power of two and maintain a *forest* of trees. In a sense, we maintain $O(\log n)$ different trees.
 
+Now, the tricky part is how to do it *fast*. If the array size is a perfect power of two, we have a trick. Notice that what left children have in common is that their indices are even. If a node is a deep interior node, it will end with a lot of zeros in its binary representation. We can there just remove the last sequence of ones, which can be done with `k &= k - 1`:
+
+```c++
 int sum(int k) {
     int res = 0;
-    for (; k != 0; k &= k - 1) // k -= k & -k
+    for (; k != 0; k &= k - 1)
         res += t[k];
     return res;
 }
 ```
 
+Now, when we defined $f$, on update, we need to identify the nodes that contain the element that is being updated. Since the $f$ function removes the last index, these have to be the nodes that have the same number of zeros at the end, some of the same prefix, and some number of ones at the middle that will be cancelled to produce a number that is lower than the original one. All such numbers can be yielded by adding the last set bit to the index, which trims zeros:
+
 ```c++
-// how you can use it to calculate sums on subsegments:
-int sum (int l, int r) {
-    return sum(r) - sum(l-1);
+void add(int k, int x) {
+    for (k += 1; k <= N; k += k & -k)
+        t[k] += x;
 }
 ```
 
+Sometimes people use `k -= k & -k` to iterate when processing the `sum` query, which makes this implementation delightfully symmetric.
+
+This is a structure where it is easier to calculate sum on subsegments as the difference of two prefix sums:
+
+```c++
+// [l, r)
+int sum (int l, int r) {
+    return sum(r) - sum(l - 1);
+}
+```
+
+The performance of the Fenwick tree is similar to the optimized bottom-up segment tree:
+
 ![](../img/segtree-fenwick.svg)
 
-Can't be more optimal because of pipelining and implicit prefetching
+There is, however, one weird thing. The performance goes up rapidly close to the L3 boundary. This is a [cache associativity](/hpc/cpu-cache/associativity) effect: the most frequently used cells all have their index divisible by large powers of two and get aliased to the same cache set, kicking each other out.
+
+One way to negate this is to insert "holes" in the layout like this:
 
 ```c++
 inline constexpr int hole(int k) {
@@ -428,7 +456,13 @@ int sum(int k) {
 }
 ```
 
+As computing the `hole` function is not on the critical path between iteration, it does not introduce any significant overhead, but completely removes the cache associativity problem:
+
 ![](../img/segtree-fenwick-holes.svg)
+
+There are still other minor issues with Fenwick trees. Similar to [binary search](../binary-search), the temporal locality of its memory accesses is not great, as rarely accessed elements are grouped with the most frequently accessed ones. It also executes has to perform end-of-loop checks and executes non-constant number of iterations, likely causing a branch mispredict, although just a single one.
+
+But we are going to leave it there and focus on an entirely different approach. If you know [S+ trees](../s-tree), you've probably guessed where this is going.
 
 ### Wide Segment Trees
 
