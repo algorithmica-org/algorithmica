@@ -456,17 +456,21 @@ int sum(int k) {
 }
 ```
 
-As computing the `hole` function is not on the critical path between iteration, it does not introduce any significant overhead, but completely removes the cache associativity problem:
+As computing the `hole` function is not on the critical path between iteration, it does not introduce any significant overhead, but completely removes the cache associativity problem and shrinks the latency by ~3x on large arrays:
 
 ![](../img/segtree-fenwick-holes.svg)
 
 There are still other minor issues with Fenwick trees. Similar to [binary search](../binary-search), the temporal locality of its memory accesses is not great, as rarely accessed elements are grouped with the most frequently accessed ones. It also executes has to perform end-of-loop checks and executes non-constant number of iterations, likely causing a branch mispredict, although just a single one.
 
-But we are going to leave it there and focus on an entirely different approach. If you know [S+ trees](../s-tree), you've probably guessed where this is going.
+But we are going to leave it there and focus on an entirely different approach. If you know [S-trees](../s-tree), you've probably guessed where this is going.
 
 ### Wide Segment Trees
 
+Here is the idea: if we are fetching a full cache line anyway, let's fill it with information that lets us process the query quicker. So let's store more than one data point in a segment tree node — this lets us reduce the tree height and do less iterations descending it.
+
 ![](../img/segtree-wide.png)
+
+We can use a similar constexpr-based approach we used in [S+ trees](../s-tree#implicit-b-tree-1) to implement it:
 
 ```c++
 const int b = 4, B = (1 << b);
@@ -488,6 +492,19 @@ constexpr int H = height(N);
 alignas(64) int t[offset(H)];
 ```
 
+We effectively reduce the height of the tree by $\frac{\log_B n}{\log_2 n} = \log_2 B$ times, but it may be tricky to realize in-node operations.
+
+In this context, we have to options:
+
+1. We could store $B$ sums in each node.
+2. We could store $B$ prefix sums in each node.
+
+If we go with option 1, the `add` query would be largely the same, but the `sum` query would need to sum up to $B$ scalar in each node. If we go with option 2, the `sum` query would be trivial, but the `add` query will need to add the element to some suffix of each node.
+
+In either case, one operation will perform $O(\log_B n)$ operations and rouch one scalar, while the other will perform $O(B \cdot \log_B n)$ operations. However, we really want to use [SIMD](/hpc/simd) to accelerate the slower operation. Since there are no fast [horizontal reductions](/hpc/simd/reduction), but it is easy to add a vector to a vector, we will stick to the second approach and store prefix sums in each node.
+
+This makes the `sum` query very easy:
+
 ```c++
 int sum(int k) {
     int res = 0;
@@ -496,6 +513,8 @@ int sum(int k) {
     return res;
 }
 ```
+
+For the `add` query, however, we need a trick. We only need to add a number to a prefix of a node. We need a mask that will tell us which element to add and which not. We can pre-calculate such a $B \times B$ mask just once, which tells us for each starting position whether the element is engaged in the operation or not:
 
 ```c++
 struct Precalc {
@@ -509,24 +528,30 @@ struct Precalc {
 };
 
 constexpr Precalc T;
+```
 
+We then use these masks to bitwise-and the broadcasted delta value and add it to the values stored at the node:
+
+```c++
 typedef int vec __attribute__ (( vector_size(32) ));
 
 constexpr int round(int k) {
     return k & ~(B - 1); // = k / B * B
 }
 
-void add(int k, int _x) {
-    vec x = _x + vec{};
+void add(int k, int x) {
+    vec v = x + vec{};
     for (int h = 0; h < H; h++) {
-        auto l = (vec*) &t[offset(h) + round(k)];
+        auto a = (vec*) &t[offset(h) + round(k)];
         auto m = (vec*) T.mask[k % B];
         for (int i = 0; i < B / 8; i++)
-            l[i] += x & m[i];
+            a[i] += v & m[i];
         k >>= b;
     }
 }
 ```
+
+This speeds up the `sum` query by more than 10x and the `add` query by up to 4x compared to the Fenwick tree:
 
 ![](../img/segtree-simd.svg)
 
@@ -536,14 +561,36 @@ Unlike [S-trees](../s-tree), you can easily change block size:
 
 ![](../img/segtree-simd-others.svg)
 
+Expectedly, when we increase the node size, the update time also increases, as we need to fetch more cache lines and process them, but the `sum` query time decreases, as the size of the tree becomes smaller.
+
+There are similar considerations to [S+ trees](../s-tree/#modifications-and-further-optimizations) in that the ideal layout (the node sizes on each layer) may depend on the use case.
+
 ### Comparison
+
+This is significantly faster compared to the popular segment tree implementations:
 
 ![](../img/segtree-popular.svg)
 
+It makes sense to look at the relative speedup:
+
 ![](../img/segtree-popular-relative.svg)
+
+The wide segment tree is up to 200 and 40 times faster than the pointer-based segment tree for the prefix sum and update queries respectively, although for sufficiently large arrays, memory efficiency becomes the only concern, and this speedup goes down to 60 and 15 respectively.
+
+### Modifications
+
+We mostly focused on the prefix sum problem, but this general structure can be used for other problems handled by segment trees:
+
+- General sums and other reductions.
+- Range minimum sum queries.
+- Fixed-universe heaps.
+
+Some more exotic applications, reliant on there being pointers, are expectedly harder. To implement dynamic trees, we could store the mapping between the node number and the tree in a hash table. For more complicated cases, such as whether wide segment trees can help in implementing persistent trees is an open question.
+
+why b-ary Fenwick tree is not a good idea
 
 ### Acknowledgements
 
-"[Efficient and easy segment trees](https://codeforces.com/blog/entry/18051)" by Oleksandr Bacherikov 
-
 This article is loosely based on "[Practical Trade-Offs for the Prefix-Sum Problem](https://arxiv.org/pdf/2006.14552.pdf)" by Giulio Ermanno Pibiri and Rossano Venturini. It has some more detailed discussions, as well as some other implementations or branchless top-down segment tree and why b-ary Fenwick tree is not a good idea. Intermediate structures we've skipped here.
+
+Some code was borrowed from "[Efficient and easy segment trees](https://codeforces.com/blog/entry/18051)" by Oleksandr Bacherikov.
