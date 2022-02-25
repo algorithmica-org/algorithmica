@@ -80,9 +80,9 @@ struct segtree {
 
     segtree(int lb, int rb) : lb(lb), rb(rb) {
         if (lb + 1 < rb) { // if the node is not a leaf, create children
-            int t = (lb + rb) / 2;
-            l = new segtree(lb, t);
-            r = new segtree(t, rb);
+            int m = (lb + rb) / 2;
+            l = new segtree(lb, m);
+            r = new segtree(m, rb);
         }
     }
 
@@ -126,7 +126,19 @@ We can do largely the same with the prefix sum query, adding the sum stored in t
 
 -->
 
-For the prefix sum query, we can check if the query covers the current segment fully or doesn't cover at all and return the result for the node right away. If it is not the case, we can recursively call the query on the children and they will figure it out:
+To calculate the sum on a segment, we can check if the query covers the current segment fully or doesn't cover at all and return the result for the node right away. If it is not the case, we can recursively call the query on the children and they will figure it out:
+
+```c++
+int sum(int lq, int rq) {
+    if (rb <= lq && rb <= rq) // if we are fully inside, return the sum
+        return s;
+    if (rq <= lb || lq >= rb) // if we don't intersect, return zero
+        return 0;
+    return l->sum(k) + r->sum(k);
+}
+```
+
+For the prefix sum query, since the left border is always zero, these checks simplify:
 
 ```c++
 int sum(int k) {
@@ -138,25 +150,34 @@ int sum(int k) {
 }
 ```
 
-Actually really good in terms of SWE practices, but terrible in terms of performance:
+Since we have two types of queries, we also got two separate graphs to look at:
 
 ![](../img/segtree-pointers.svg)
 
-This is terrible. It doesn't seem like performance 
+While this object-oriented implementation is quite good in terms of software engineering practices, there are several aspects that make it terrible in terms of performance:
 
-It takes 4+4+4+8+8=28 bytes, although they get padded to 32 for [memory alignment](/hpc/cpu-cache/alignment) reasons.
+- Query implementations use [recursion](/hpc/architecture/functions), although the `add` query can be tail-call optimized.
+- Query implementations use unpredictable [branching](/hpc/pipelining/branching), stalling the CPU pipeline.
+- The nodes stores extra metadata. The structure takes $4+4+4+8+8=28$ bytes and gets padded to 32 bytes for [memory alignment](/hpc/cpu-cache/alignment) reasons, while only 4 bytes are necessary to hold the integer sum.
+- And, most importantly, we are doing [pointer chasing](/hpc/cpu-cache/latency) in both queries: we can't descend into children until we fetched their pointers, even though we can precisely infer the segments we need just from the query bounds.
 
-Pointer chasing, 4 unnecessary metadata fields, recursion, branching
+The last issue is the most critical one. To get rid of pointer chasing, we need to get rid of pointers, converting our structure to being implicit.
 
 ### Implicit Segment Trees
 
-Eytzinger-like layout: $2k$ is the left child and $2k+1$ is the right child.
+To store our segment tree implicitly, we can also use the [Eytzinger layout](../binary-search#eytzinger-layout), storing the nodes in a large array, where for every non-leaf node $v$ corresponding to the range $[l, r)$, the node $2v$ is its left child and the node $(2v+1)$ is its right child, corresponding to the ranges $[l, \lfloor \frac{l+r}{2} \rfloor)$ and $[\lfloor \frac{l+r}{2} \rfloor, r)$ respectively.
 
-![](../img/segtree-layout.png)
+![The memory layout of implicit segment tree with the same query path highlighted](../img/segtree-layout.png)
+
+One little problem with this layout is that if $n$ is not a perfect power of two, we would need more array cells to store the tree — $4n$, to be exact. The tree structure hasn't change, and there are still exactly $(2n - 1)$ nodes in the tree — they are just not compactly packed on the last layer.
 
 ```c++
 int t[4 * N];
+```
 
+To implement `add`, we similarly implement a recursive function that uses this index arithmetic instead of pointers. Since we also don't store the borders of the segment, we need to pass them as parameters. This makes the function a bit clumsy, as there are now five of them in total that you need to pass around:
+
+```c++
 void add(int k, int x, int v = 1, int l = 0, int r = N) {
     t[v] += x;
     if (l + 1 < r) {
@@ -167,7 +188,11 @@ void add(int k, int x, int v = 1, int l = 0, int r = N) {
             add(k, x, 2 * v + 1, m, r);
     }
 }
+```
 
+To implement the prefix sum query, we do largely the same:
+
+```c++
 int sum(int k, int v = 1, int l = 0, int r = N) {
     if (l >= k)
         return 0;
@@ -179,11 +204,13 @@ int sum(int k, int v = 1, int l = 0, int r = N) {
 }
 ```
 
+Apart from using much less memory, the main advantage is that we can now make use of [memory parallelism](/hpc/cpu-cache/mlp) and fetch the nodes we need in parallel, considerably improving the running time for both queries:
+
 ![](../img/segtree-topdown.svg)
 
-Still have wasted memory.
+To improve further, we can manually optimize the index arithmetic and replace division by two with an explicit binary shift — as the compilers [aren't always able](/hpc/compilation/contracts/#arithmetic) to do themselves — and, more importantly, remove the recursion and make the implementation iterative.
 
-### Iterative Implementation
+Here is how a fully iterative `add` looks like:
 
 ```c++
 void add(int k, int x) {
@@ -199,7 +226,11 @@ void add(int k, int x) {
     }
     t[v] += x;
 }
+```
 
+This is slightly harder to do for the `sum` query as it has two recursive calls. The trick is to notice that when we make these calls, one of them is guaranteed to terminate immediately, so we can simply check this condition when descend:
+
+```c++
 int sum(int k) {
     int v = 1, l = 0, r = N, s = 0;
     while (true) {
@@ -218,7 +249,11 @@ int sum(int k) {
 }
 ```
 
+This doesn't improve the performance for the update query by a lot because it was tail-recursive, and the compiler already performed a similar optimization, but the running time on the prefix sum query roughly halved for all problem sizes:
+
 ![](../img/segtree-iterative.svg)
+
+This implementation still has some problems: we are potentially using twice as much memory as necessary, and we still have costly branching. To get rid of these problems, we need to change the approach a little bit.
 
 ### Bottom-Up Implementation
 
