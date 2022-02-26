@@ -13,7 +13,10 @@
    height="172pt"
    id="svg460"
    sodipodi:docname="segtree-succinct.svg"
-   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)">
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
+   inkscape:export-filename="/home/sereja/Projects/algorithmica/content/english/hpc/data-structures/img/src/segtree-succinct.png"
+   inkscape:export-xdpi="132.65491"
+   inkscape:export-ydpi="132.65491">
   <sodipodi:namedview
      pagecolor="#ffffff"
      bordercolor="#666666"
@@ -27,9 +30,9 @@
      inkscape:window-height="1016"
      id="namedview462"
      showgrid="false"
-     inkscape:zoom="8"
-     inkscape:cx="396.19673"
-     inkscape:cy="29.549452"
+     inkscape:zoom="2.8284271"
+     inkscape:cx="186.96904"
+     inkscape:cy="56.328076"
      inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
@@ -135,11 +138,6 @@
      fill="none">
     <title
        id="title14">Canvas 5</title>
-    <rect
-       width="559.2"
-       height="782.8"
-       id="rect16"
-       fill="white" />
     <g
        id="g456">
       <title
@@ -1802,20 +1800,6 @@
            id="tspan448"
            textLength="13.957031"
            font-family="Linux Libertine">[0,15]</tspan>
-      </text>
-      <text
-         transform="translate(118.385826 235.1063)"
-         id="text454"
-         fill="black">
-        <tspan
-           font-size="8"
-           font-style="italic"
-           font-weight="500"
-           x=".33203125"
-           y="7"
-           id="tspan452"
-           textLength="5.3359375"
-           font-family="Linux Libertine">A</tspan>
       </text>
       <g
          transform="translate(-79.370032,1.4160156e-6)"

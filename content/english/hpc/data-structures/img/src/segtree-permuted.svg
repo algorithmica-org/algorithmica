@@ -13,7 +13,10 @@
    height="172pt"
    id="svg460"
    sodipodi:docname="segtree-permuted.svg"
-   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)">
+   inkscape:version="0.92.5 (2060ec1f9f, 2020-04-08)"
+   inkscape:export-filename="/home/sereja/Projects/algorithmica/content/english/hpc/data-structures/img/src/segtree-permuted.png"
+   inkscape:export-xdpi="132.43047"
+   inkscape:export-ydpi="132.43047">
   <sodipodi:namedview
      pagecolor="#ffffff"
      bordercolor="#666666"
@@ -28,8 +31,8 @@
      id="namedview462"
      showgrid="false"
      inkscape:zoom="2.1152246"
-     inkscape:cx="149.12595"
-     inkscape:cy="90.843446"
+     inkscape:cx="135.22157"
+     inkscape:cy="95.805854"
      inkscape:window-x="0"
      inkscape:window-y="27"
      inkscape:window-maximized="1"
@@ -177,11 +180,6 @@
      id="g458">
     <title
        id="title14">Canvas 5</title>
-    <rect
-       width="559.2"
-       height="782.8"
-       id="rect16"
-       fill="white" />
     <g
        id="g456">
       <title
