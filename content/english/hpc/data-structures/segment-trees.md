@@ -26,6 +26,8 @@ Note that we have to support two types of queries, which makes this problem mult
 
 Both of these options perform $O(1)$ work on one query type but $O(n)$ work on the other. They are only optimal when one type queries is extremely rare. When this is not the case, we can trade off the work on one type of query for increased performance of the other, and segment trees let you do exactly that, achieving the equilibrium of $O(\log n)$ for both queries.
 
+### The Structure
+
 The main idea is this. Calculate the sum of the entire array put it somewhere. Then split it in halves, calculate the sum on both halves, and also store them somewhere. Then split these halves in halves and so on, until we recursively reach segments of length one.
 
 These sequence of computations can be represented as a static-structure tree:
