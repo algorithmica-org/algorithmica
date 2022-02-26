@@ -32,7 +32,7 @@ The main idea is this. Calculate the sum of the entire array put it somewhere. T
 
 These sequence of computations can be represented as a static-structure tree:
 
-![](../img/segtree-path.png)
+![](../img/segtree-path.svg)
 
 Some nice properties of this construct:
 
@@ -171,7 +171,7 @@ The last issue is the most critical one. To get rid of pointer chasing, we need 
 
 To store our segment tree implicitly, we can also use the [Eytzinger layout](../binary-search#eytzinger-layout), storing the nodes in a large array, where for every non-leaf node $v$ corresponding to the range $[l, r)$, the node $2v$ is its left child and the node $(2v+1)$ is its right child, corresponding to the ranges $[l, \lfloor \frac{l+r}{2} \rfloor)$ and $[\lfloor \frac{l+r}{2} \rfloor, r)$ respectively.
 
-![The memory layout of implicit segment tree with the same query path highlighted](../img/segtree-layout.png)
+![The memory layout of implicit segment tree with the same query path highlighted](../img/segtree-layout.svg)
 
 One little problem with this layout is that if $n$ is not a perfect power of two, we would need more array cells to store the tree — $4n$, to be exact. The tree structure hasn't change, and there are still exactly $(2n - 1)$ nodes in the tree — they are just not compactly packed on the last layer.
 
@@ -297,7 +297,7 @@ int sum(int l, int r) {
 
 This results and a much simpler and faster code. However, when the array size is not a power of two, the `sum` query doesn't work correctly. To understand why, consider at the tree structure for 13 elements:
 
-![The nodes comprising the first 7 elements are selected in bold](../img/segtree-ranges.png)
+![](../img/segtree-permuted.svg)
 
 The first index of the last layer is always a power of two, but when $n$ is not a power of two, some prefix of the leaf elements gets wrapped around to the right side of the tree.
 
@@ -383,13 +383,15 @@ To make a segment tree succinct, we need to look at the values stored in the nod
 
 Note that in every implementation so far, we never added the sum stored in the right child when computing the prefix sum. *Fenwick tree* is a type of a segment tree that uses this consideration and gets rid of all *right* children, including the last layer. This makes the total required number of memory cells $n + O(1)$, the same as the underlying array.
 
+![](../img/segtree-succinct.svg)
+
 To calculate a prefix sum, we need to repeatedly jump to the first parent that is a left child:
 
-![A path for the sum query](../img/fenwick-sum.png)
+![A path for the sum query](../img/fenwick-sum.svg)
 
 To process an update query, we need to repeatedly add the delta to the first parent the contains the cell $k$:
 
-![A path for the update query](../img/fenwick-update.png)
+![A path for the update query](../img/fenwick-update.svg)
 
 More formally, a Fenwick tree is defined as the array $t_i = \sum_{k=f(i)}^i a_k$ where $f$ is some function for which $f(i) \leq i$. If $f$ is the "remove last bit" function (`x -= x & -x`), then both query and update would only require updating $O(\log n)$ different $t$'s
 
@@ -470,7 +472,7 @@ But we are going to leave it there and focus on an entirely different approach. 
 
 Here is the idea: if we are fetching a full cache line anyway, let's fill it with information that lets us process the query quicker. So let's store more than one data point in a segment tree node — this lets us reduce the tree height and do less iterations descending it.
 
-![](../img/segtree-wide.png)
+![](../img/segtree-wide.svg)
 
 We can use a similar constexpr-based approach we used in [S+ trees](../s-tree#implicit-b-tree-1) to implement it:
 
