@@ -299,13 +299,15 @@ This implementation still has some problems: we are using up to twice as much me
 
 ### Bottom-Up Implementation
 
-Let's change the definition of the implicit segment tree. Instead of relying on the parent-to-child relationship, we first assign all the leaf nodes numbers from $n$ to $(2n - 1)$, and then define the parent of node $k$ to be equal to node $\lfloor \frac{k}{2} \rfloor$. It's easy to see that you can still reach the root (node $1$) by dividing the node number by two, and each node still has at most two children — $2k$ and $(2k + 1)$ — as anything else would floor to another number.
+Let's change the definition of the implicit segment tree layout. Instead of relying on the parent-to-child relationship, we first forcefully assign all the leaf nodes numbers in the  $[n, 2n)$ range, and then recursively define the parent of node $k$ to be equal to node $\lfloor \frac{k}{2} \rfloor$.
+
+This structure is largely the same as before: you can still reach the root (node $1$) by dividing any node number by two, and each node still has at most two children: $2k$ and $(2k + 1)$, as anything else yields a different parent number when floor-divided by two. The advantage we get is that we've forced the last layer to be contiguous and start from $n$, so we can use the array of half the size:
 
 ```c++
 int t[2 * N];
 ```
 
-When $n$ is a power of two, this yields the same structure, and taking advantage of this bottom-up approach lets us starting from the leaf node and go up to the root:
+When $n$ is a power of two, the structure of the tree is exactly the same as before and when implementing the queries, we can take advantage of this bottom-up approach and start from the $k$-th leaf node (simply indexed $N + k$) and ascend the tree until we reach the root:
 
 ```c++
 void add(int k, int x) {
@@ -317,7 +319,7 @@ void add(int k, int x) {
 }
 ```
 
-To fix this, we can similarly calculate the sum of a segment in general. For that, we need to maintain two pointers on the first and the last node to be summed, and stop when they are giving an empty segment:
+To calculate the sum on the $[l, r)$ subsegment, we can maintain pointers to the first and the last element that needs to be added, increase/decrease them respectively when we add a node and stop after they converge to the same node (which would be their least common ancestor):
 
 ```c++
 int sum(int l, int r) {
@@ -325,44 +327,52 @@ int sum(int l, int r) {
     r += N - 1;
     int s = 0;
     while (l <= r) {
-        if ( l & 1) s += t[l++];
-        if (~r & 1) s += t[r--];
+        if ( l & 1) s += t[l++]; // l is a right child: add it and move to a cousin
+        if (~r & 1) s += t[r--]; // r is a light child: add it and move to a cousin
         l >>= 1, r >>= 1;
     }
     return s;
 }
 ```
 
-This results and a much simpler and faster code. However, when the array size is not a power of two, the `sum` query doesn't work correctly. To understand why, consider at the tree structure for 13 elements:
+Surprisingly, both queries work correctly even when $n$ is not a power of two. To understand why, consider a 13-element segment tree:
 
 ![](../img/segtree-permuted.png)
 
-The first index of the last layer is always a power of two, but when $n$ is not a power of two, some prefix of the leaf elements gets wrapped around to the right side of the tree.
+The first index of the last layer is always a power of two, but when the array size is not a perfect power of two, some prefix of the leaf elements gets wrapped around to the right side of the tree. Magically, this fact does not pose a problem for our implementation:
 
-Magically, it this works even for non-power-of-two array sizes and for queries where the left boundary is to the right of the right one because the left at some point will "wrap around", and when this happens, the `l <= r` condition will become false.
+- The `add` query still updates its parent nodes, even though some of them correspond to some prefix and some suffix of the array instead of a contiguous subsegment.
+- The `sum` query still computes the sum on the correct subsegment, even when `l` is on that wrapped prefix and logically "to the right" of `r` because eventually `l` becomes the last node on a layer and gets incremented, suddenly jumping to the first element of the next layer and proceeding normally after adding just the right nodes on the wrapped-around part of the tree (look at the dimmed nodes in the illustration).
+
+Compared to the top-down approach, we use half the memory and don't have to maintain query ranges, which results in simpler and consequently faster code:
 
 ![](../img/segtree-bottomup.svg)
 
-Now, since we are only interested in the prefix sum, and we'd want to get rid of maintaining `l` and only move the right border like this:
+When running the benchmarks, we use the `sum(l, r)` procedure for computing a general subsegment sum and just fix `l` equal to `0`. To achieve higher performance on the prefix sum query, we want to avoid maintaining `l` and only move the right border like this:
 
 ```c++
 int sum(int k) {
-    int res = 0;
+    int s = 0;
     k += N - 1;
     while (k != 0) {
         if (~k & 1)
-            res += t[k--];
+            s += t[k--];
         k = k >> 1;
     }
-    return res;
+    return s;
 }
 ```
 
-It works when $n$ is a power of two, but fails for all other array sizes. To make it work for arbitrary array sizes, we can do the following trick: just permute the leaves so that they go in the right order, even though they span two layers. This can be done like this:
+In contrast, this prefix sum implementation doesn't work unless $n$ is not a power of two — because `k` could be on that wrapped-around part, and we'd sum almost the entire array instead of a small prefix.
+
+To make it work for arbitrary array sizes, we can permute the leaves so that they are in the left-to-right logical order in the last two layers of the tree. In the example above, this would mean adding $3$ to all leaf indexes and then moving the last three leaves one level higher by subtracting $13$.
+
+In the general case, this can be done using predication in a few cycles like this:
 
 ```c++
 const int last_layer = 1 << __lg(2 * N - 1);
 
+// calculate the index of the leaf k
 int leaf(int k) {
     k += last_layer;
     k -= (k >= 2 * N) * N;
@@ -370,7 +380,7 @@ int leaf(int k) {
 }
 ```
 
-Now, when implementing the queries, all we need to do is to call the `leaf` function:
+When implementing the queries, all we need to do is to call the `leaf` function to get the correct leaf index:
 
 ```c++
 void add(int k, int x) {
@@ -393,7 +403,7 @@ int sum(int k) {
 }
 ```
 
-The last touch: by replacing the `s += t[k--]` line with predication, we can now make the implementation branchless (except for the last branch, where we check the loop condition):
+The last touch: by replacing the `s += t[k--]` line with predication, we can make the implementation branchless (except for the last branch — we still need to check the loop condition):
 
 ```c++
 int sum(int k) {
@@ -407,11 +417,11 @@ int sum(int k) {
 }
 ```
 
-Combined, these optimizations make the prefix sum queries run much faster:
+When combined, these optimizations make the prefix sum queries run much faster:
 
 ![](../img/segtree-branchless.svg)
 
-Notice that the bump in latency for the prefix sum query starts at $2^{19}$ and not at $2^{20}$, where we run out of the L3 cache. This is because we are still storing $2n$ integers, and also fetching the `t[k]` element regardless of whether we will add it to `s` or not. We can actually solve both of these problems.
+Notice that the bump in the latency for the prefix sum query starts at $2^{19}$ and not at $2^{20}$, the L3 cache boundary. This is because we are still storing $2n$ integers and also fetching the `t[k]` element regardless of whether we will add it to `s` or not. We can actually solve both of these problems.
 
 ### Fenwick trees
 
