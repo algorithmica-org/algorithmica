@@ -84,7 +84,9 @@ Functional programming, e. g. for implementing persistent arrays and derived str
 
 ### Pointer-Based Implementation
 
-The most straightforward way to implement a segment tree is to store everything a node needs explicitly. If you were at an "Introduction to OOP" class, you'd probably implement a segment tree like this:
+The most straightforward way to implement a segment tree is to store everything we need in a node explicitly: including the array segment boundaries, the sum, and the pointers to its children.
+
+If we were at the "Introduction to OOP" class, we would implement a segment tree recursively like this:
 
 ```c++
 struct segtree {
@@ -109,18 +111,18 @@ If we needed to build it over an existing array, we would rewrite the body of th
 
 ```c++
 if (lb + 1 == rb) {
-    s = a[lb];
+    s = a[lb]; // the node is a leaf -- its sum is the element a[lb]
 } else {
     int t = (lb + rb) / 2;
     l = new segtree(lb, t);
     r = new segtree(t, rb);
-    s = l->s + r->s;
+    s = l->s + r->s; // we can use the sums of children that we've just calculated
 }
 ```
 
-But to remove complexity, we are going to assume that the array is just zero-initialized in all future implementations.
+The construction time is of no significant interest to us, so to reduce the mental burden, we will just assume that the array is zero-initialized in all future implementations.
 
-Now, to implement `add`, we descend down the tree, adding the delta to the `s` field, until we reach a leaf node:
+Now, to implement `add`, we need to descend down the tree until we reach a leaf node, adding the delta to the `s` fields:
 
 ```c++
 void add(int k, int x) {
@@ -140,19 +142,21 @@ We can do largely the same with the prefix sum query, adding the sum stored in t
 
 -->
 
-To calculate the sum on a segment, we can check if the query covers the current segment fully or doesn't cover at all and return the result for the node right away. If it is not the case, we can recursively call the query on the children and they will figure it out:
+To calculate the sum on a segment, we can check if the query covers the current segment fully or doesn't intersect with it at all — and return the result for this node right away. If neither is the case, we recursively pass the query to the children so that they figure it out themselves:
 
 ```c++
 int sum(int lq, int rq) {
-    if (rb <= lq && rb <= rq) // if we are fully inside, return the sum
+    if (rb <= lq && rb <= rq) // if we're fully inside the query, return the sum
         return s;
-    if (rq <= lb || lq >= rb) // if we don't intersect, return zero
+    if (rq <= lb || lq >= rb) // if we don't intersect with the query, return zero
         return 0;
     return l->sum(k) + r->sum(k);
 }
 ```
 
-For the prefix sum query, since the left border is always zero, these checks simplify:
+This function visits a total of $O(\log n)$ nodes because it only spawns children when a segment only partially intersects with the query, and there are at most $O(\log n)$ of such segments.
+
+For *prefix sums*, these checks can be simplified as the left border of the query is always zero:
 
 ```c++
 int sum(int k) {
@@ -164,18 +168,18 @@ int sum(int k) {
 }
 ```
 
-Since we have two types of queries, we also got two separate graphs to look at:
+Since we have two types of queries, we also got two graphs to look at:
 
 ![](../img/segtree-pointers.svg)
 
 While this object-oriented implementation is quite good in terms of software engineering practices, there are several aspects that make it terrible in terms of performance:
 
-- Query implementations use [recursion](/hpc/architecture/functions), although the `add` query can be tail-call optimized.
-- Query implementations use unpredictable [branching](/hpc/pipelining/branching), stalling the CPU pipeline.
-- The nodes stores extra metadata. The structure takes $4+4+4+8+8=28$ bytes and gets padded to 32 bytes for [memory alignment](/hpc/cpu-cache/alignment) reasons, while only 4 bytes are necessary to hold the integer sum.
-- And, most importantly, we are doing [pointer chasing](/hpc/cpu-cache/latency) in both queries: we can't descend into children until we fetched their pointers, even though we can precisely infer the segments we need just from the query bounds.
+- Both query implementations use [recursion](/hpc/architecture/functions) — although the `add` query can be tail-call optimized.
+- Both query implementations use unpredictable [branching](/hpc/pipelining/branching), which stalls the CPU pipeline.
+- The nodes store extra metadata. The structure takes $4+4+4+8+8=28$ bytes and gets padded to 32 bytes for [memory alignment](/hpc/cpu-cache/alignment) reasons, while only 4 bytes are really necessary to hold the integer sum.
+- Most importantly, we are doing [pointer chasing](/hpc/cpu-cache/latency): we have to fetch the pointers to the children to descend into them, even though we can infer, ahead of time, which segments we'll need just from the query.
 
-The last issue is the most critical one. To get rid of pointer chasing, we need to get rid of pointers, converting our structure to being implicit.
+Pointer chasing outweighs all other issues by orders of magnitude — and to negate it, we need to get rid of pointers, turning the structure *implicit*.
 
 ### Implicit Segment Trees
 
