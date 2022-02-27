@@ -8,7 +8,7 @@ The lessons we learned from [optimizing](../s-tree) [binary search](../binary-se
 
 In this article, instead of trying to optimize something from the STL again, we will focus on *segment trees*, the structures that may be unfamiliar to most *normal* programmers and perhaps even most computer science researchers[^tcs], but are used [very extensively](https://www.google.com/search?q=segment+tree+site%3Acodeforces.com&newwindow=1&sxsrf=APq-WBuTupSOnSn9JNEHhaqtmv0Uq0eogQ%3A1645969931499&ei=C4IbYrb2HYibrgS9t6qgDQ&ved=0ahUKEwj2p8_og6D2AhWIjYsKHb2bCtQQ4dUDCA4&uact=5&oq=segment+tree+site%3Acodeforces.com&gs_lcp=Cgdnd3Mtd2l6EAM6BwgAEEcQsAM6BwgAELADEEM6BAgjECc6BAgAEEM6BQgAEIAEOgYIABAWEB46BQghEKABSgQIQRgASgQIRhgAUMkFWLUjYOgkaANwAXgAgAHzAYgB9A-SAQYxNS41LjGYAQCgAQHIAQrAAQE&sclient=gws-wiz) in programming competitions for their speed and simplicity of implementation.
 
-[^tcs]: Segment trees are rarely mentioned in the scientific literature because they are relatively novel (invented ~2000), mostly don't do anything that [any other binary tree](https://en.wikipedia.org/wiki/Tree_(data_structure)) can't do, and *asymptotically* aren't faster — although, in practice, they often win by a lot in terms of speed.
+[^tcs]: Segment trees are rarely mentioned in the theoretical computer science literature because they are relatively novel (invented ~2000), mostly don't do anything that [any other binary tree](https://en.wikipedia.org/wiki/Tree_(data_structure)) can't do, and *asymptotically* aren't faster — although, in practice, they often win by a lot in terms of speed.
 
 ### Dynamic Prefix Sum
 
@@ -41,7 +41,7 @@ The main idea behind segment trees is this:
 
 These computed subsegment sums can be logically represented as a binary tree — which is what we call a *segment tree*:
 
-![](../img/segtree-path.png)
+![A segment tree with with nodes relevant for the sum(11) and add(10) queries highlighted](../img/segtree-path.png)
 
 Segment trees have some nice properties:
 
@@ -177,23 +177,41 @@ While this object-oriented implementation is quite good in terms of software eng
 - Both query implementations use [recursion](/hpc/architecture/functions) — although the `add` query can be tail-call optimized.
 - Both query implementations use unpredictable [branching](/hpc/pipelining/branching), which stalls the CPU pipeline.
 - The nodes store extra metadata. The structure takes $4+4+4+8+8=28$ bytes and gets padded to 32 bytes for [memory alignment](/hpc/cpu-cache/alignment) reasons, while only 4 bytes are really necessary to hold the integer sum.
-- Most importantly, we are doing [pointer chasing](/hpc/cpu-cache/latency): we have to fetch the pointers to the children to descend into them, even though we can infer, ahead of time, which segments we'll need just from the query.
+- Most importantly, we are doing a lot of [pointer chasing](/hpc/cpu-cache/latency): we have to fetch the pointers to the children to descend into them, even though we can infer, ahead of time, which segments we'll need just from the query.
 
-Pointer chasing outweighs all other issues by orders of magnitude — and to negate it, we need to get rid of pointers, turning the structure *implicit*.
+Pointer chasing outweighs all other issues by orders of magnitude — and to negate it, we need to get rid of pointers, making the structure *implicit*.
 
 ### Implicit Segment Trees
 
-To store our segment tree implicitly, we can also use the [Eytzinger layout](../binary-search#eytzinger-layout), storing the nodes in a large array, where for every non-leaf node $v$ corresponding to the range $[l, r)$, the node $2v$ is its left child and the node $(2v+1)$ is its right child, corresponding to the ranges $[l, \lfloor \frac{l+r}{2} \rfloor)$ and $[\lfloor \frac{l+r}{2} \rfloor, r)$ respectively.
+As a segment tree is a type of a binary tree, we can use the [Eytzinger layout](../binary-search#eytzinger-layout) to store its nodes in one large array and use index arithmetic instead of explicit pointers to navigate it.
+
+More formally, we define node $1$ to be the root, holding the sum of the entire array $[0, n)$. Then, for every node $v$ corresponding to the range $[l, r]$, we define:
+
+- the node $2v$ to be its left child corresponding to the range $[l, \lfloor \frac{l+r}{2} \rfloor)$;
+- the node $(2v+1)$ to be its right child corresponding to the range $[\lfloor \frac{l+r}{2} \rfloor, r)$.
+
+When $n$ is a perfect power of two, this layout packs the entire tree very nicely:
 
 ![The memory layout of implicit segment tree with the same query path highlighted](../img/segtree-layout.png)
 
-One little problem with this layout is that if $n$ is not a perfect power of two, we would need more array cells to store the tree — $4n$, to be exact. The tree structure hasn't change, and there are still exactly $(2n - 1)$ nodes in the tree — they are just not compactly packed on the last layer.
+However, when $n$ is not a power of two, the layout is no longer compact: even though we still have exactly $(2n - 1)$ nodes regardless of how we split segments, they are not mapped perfectly to the $[1, 2n)$ range.
+
+For example, consider what happens when we descend to the rightmost leaf in a segment tree of size $17 = 2^4 + 1$:
+
+- we start with the root numbered $1$ that corresponds to the range $[0, 16]$,
+- we go to node $3 = 2 \times 1 + 1$ representing range $[8, 16]$,
+- we go to node $7 = 2 \times 2 + 1$ representing range $[12, 16]$,
+- we go to node $15 = 2 \times 7 + 1$ representing range $[14, 16]$,
+- we go to node $31 = 2 \times 15 + 1$ representing range $[15, 16]$,
+- and we finally reach node $63 = 2 \times 31 + 1$ representing range $[16, 16]$.
+
+So, as $63 > 2 \times 17 - 1 = 33$, there are some holes in the layout, but the structure of the tree is still the same, and its height is still $O(\log n)$. For now, we can ignore this problem and just allocate a larger array for storing the nodes — it can be shown that the index of the rightmost leaf never exceeds $4n$, so allocating that many cells will always suffice:
 
 ```c++
-int t[4 * N];
+int t[4 * N]; // contains the node sums
 ```
 
-To implement `add`, we similarly implement a recursive function that uses this index arithmetic instead of pointers. Since we also don't store the borders of the segment, we need to pass them as parameters. This makes the function a bit clumsy, as there are now five of them in total that you need to pass around:
+Now, to implement `add`, we create a similar recursive function but using index arithmetic instead of pointers. Since we've also stopped storing the borders of the segment in the nodes, we need to re-calculate them and pass them as parameters for each recursive call:
 
 ```c++
 void add(int k, int x, int v = 1, int l = 0, int r = N) {
@@ -208,7 +226,7 @@ void add(int k, int x, int v = 1, int l = 0, int r = N) {
 }
 ```
 
-To implement the prefix sum query, we do largely the same:
+The implementation of the prefix sum query is largely the same:
 
 ```c++
 int sum(int k, int v = 1, int l = 0, int r = N) {
@@ -222,13 +240,19 @@ int sum(int k, int v = 1, int l = 0, int r = N) {
 }
 ```
 
-Apart from using much less memory, the main advantage is that we can now make use of [memory parallelism](/hpc/cpu-cache/mlp) and fetch the nodes we need in parallel, considerably improving the running time for both queries:
+Passing around five variables in a recursive function seems clumsy, but the performance gains are clearly worth it:
 
 ![](../img/segtree-topdown.svg)
 
-To improve further, we can manually optimize the index arithmetic and replace division by two with an explicit binary shift — as the compilers [aren't always able](/hpc/compilation/contracts/#arithmetic) to do themselves — and, more importantly, remove the recursion and make the implementation iterative.
+Apart from requiring much less memory, which is good for fitting into the CPU caches, the main advantage of this implementation is that we can now make use of the [memory parallelism](/hpc/cpu-cache/mlp) and fetch the nodes we need in parallel, considerably improving the running time for both queries.
 
-Here is how a fully iterative `add` looks like:
+To improve the performance further, we can:
+
+- manually optimize the index arithmetic (e. g. noticing that we need to multiply `v` by `2` either way),
+- replace division by two with an explicit binary shift (because [compilers aren't always able to do it themselves](/hpc/compilation/contracts/#arithmetic)),
+- and, most importantly, get rid of [recursion](/hpc/architecture/functions) and make the implementation fully iterative.
+
+As `add` is tail-recursive and has no return value, it is easy turn it into a single `while` loop:
 
 ```c++
 void add(int k, int x) {
@@ -246,7 +270,7 @@ void add(int k, int x) {
 }
 ```
 
-This is slightly harder to do for the `sum` query as it has two recursive calls. The trick is to notice that when we make these calls, one of them is guaranteed to terminate immediately, so we can simply check this condition when descend:
+Doing the same for the `sum` query is slightly harder as it has two recursive calls. The key trick is to notice that when we make these calls, one of them is guaranteed to terminate immediately as `k` can only be in one of the halves, so we can simply check this condition before descending the tree:
 
 ```c++
 int sum(int k) {
@@ -267,11 +291,11 @@ int sum(int k) {
 }
 ```
 
-This doesn't improve the performance for the update query by a lot because it was tail-recursive, and the compiler already performed a similar optimization, but the running time on the prefix sum query roughly halved for all problem sizes:
+This doesn't improve the performance for the update query by a lot (because it was tail-recursive, and the compiler already performed a similar optimization), but the running time on the prefix sum query has roughly halved for all problem sizes:
 
 ![](../img/segtree-iterative.svg)
 
-This implementation still has some problems: we are potentially using twice as much memory as necessary, have maintain and re-compute array bounds, and we still have costly branching. To get rid of these problems, we need to change the approach a little bit.
+This implementation still has some problems: we are using up to twice as much memory as necessary, we have costly [branching](/hpc/pipelining/branching), and we have to maintain and re-compute array bounds on each iteration. To get rid of these problems, we need to change our approach a little bit.
 
 ### Bottom-Up Implementation
 
