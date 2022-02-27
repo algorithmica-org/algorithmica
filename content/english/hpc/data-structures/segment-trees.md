@@ -4,53 +4,63 @@ weight: 3
 draft: true
 ---
 
-The lessons we learned from [optimizing](../binary-search) [binary search](../s-tree) can be applied to a broader range of data structures.
+The lessons we learned from [optimizing](../s-tree) [binary search](../binary-search) can be applied to a broad range of data structures.
 
-In this article, instead of trying to optimize something from the STL, we will focus on the *segment tree* — a structure that may be unfamiliar to most *normal* programmers and perhaps even most computer science researchers[^tcs], but is used very extensively in [programming competitions](https://codeforces.com/) for its speed and simplicity of implementation.
+In this article, instead of trying to optimize something from the STL again, we will focus on *segment trees*, the structures that may be unfamiliar to most *normal* programmers and perhaps even most computer science researchers[^tcs], but are used [very extensively](https://www.google.com/search?q=segment+tree+site%3Acodeforces.com&newwindow=1&sxsrf=APq-WBuTupSOnSn9JNEHhaqtmv0Uq0eogQ%3A1645969931499&ei=C4IbYrb2HYibrgS9t6qgDQ&ved=0ahUKEwj2p8_og6D2AhWIjYsKHb2bCtQQ4dUDCA4&uact=5&oq=segment+tree+site%3Acodeforces.com&gs_lcp=Cgdnd3Mtd2l6EAM6BwgAEEcQsAM6BwgAELADEEM6BAgjECc6BAgAEEM6BQgAEIAEOgYIABAWEB46BQghEKABSgQIQRgASgQIRhgAUMkFWLUjYOgkaANwAXgAgAHzAYgB9A-SAQYxNS41LjGYAQCgAQHIAQrAAQE&sclient=gws-wiz) in programming competitions for their speed and simplicity of implementation.
 
-[^tcs]: Segment trees are rarely mentioned in scientific literature because they are relatively novel (invented around 2000), and *asymptotically* don't do anything that [any other binary tree](https://en.wikipedia.org/wiki/Tree_(data_structure)) can't do, but they are much faster *in practice* for the problems they solve.
+[^tcs]: Segment trees are rarely mentioned in the scientific literature because they are relatively novel (invented ~2000), mostly don't do anything that [any other binary tree](https://en.wikipedia.org/wiki/Tree_(data_structure)) can't do, and *asymptotically* aren't faster — although, in practice, they often win by a lot in terms of speed.
 
-This is a long article, and to make it less long, we will mostly be focusing on its simplest application
+### Dynamic Prefix Sum
+
+<!--
+
+This is a long article, and to make it less long, we will mostly be focusing on its simplest application -->
 
 Segment trees are cool and can do lots of different things, but in this article, we will focus on their simplest non-trivial application — *the dynamic prefix sum problem*:
 
 ```cpp
-void add(int k, int x); // execute a[k] += x (0-based indexing)
-int sum(int k);         // sum of the first k elements (from 0 to k - 1)
+void add(int k, int x); // react to a[k] += x (zero-based indexing)
+int sum(int k);         // return the sum of the first k elements (from 0 to k - 1)
 ```
 
-Note that we have to support two types of queries, which makes this problem multi-dimensional:
+As we now have to support two types of queries, our optimization problem becomes multi-dimensional, and the optimal solution depends on the distribution of queries. For example, if one type of the queries were extremely rare, we would only optimize for the other, which is relatively easy to do:
 
-- If we only cared about about the cost of *updating the array*, we would store it as it is and [calculated the sum](/hpc/simd/reduction) directly on each `sum` query.
-- And if we only cared about the cost of *prefix sum queries*, we would keep it ready and [re-calculate them entirely from scratch](/hpc/algorithms/prefix) on each update.
+- If we only cared about the cost of *updating the array*, we would store it as it is and [calculate the sum](/hpc/simd/reduction) directly on each `sum` query.
+- If we only cared about the cost of *prefix sum queries*, we would keep it ready and [re-calculate them entirely from scratch](/hpc/algorithms/prefix) on each update.
 
-Both of these options perform $O(1)$ work on one query type but $O(n)$ work on the other. They are only optimal when one type queries is extremely rare. When this is not the case, we can trade off the work on one type of query for increased performance of the other, and segment trees let you do exactly that, achieving the equilibrium of $O(\log n)$ for both queries.
+Both of these options perform $O(1)$ work on one query type but $O(n)$ work on the other. When the query frequencies are relatively close, we can trade off the performance on one type of query for performance on the other. Segment trees let you do exactly that, achieving the equilibrium of $O(\log n)$ for both queries.
 
-### The Structure
+### Segment Tree Structure
 
-The main idea is this. Calculate the sum of the entire array put it somewhere. Then split it in halves, calculate the sum on both halves, and also store them somewhere. Then split these halves in halves and so on, until we recursively reach segments of length one.
+The main idea behind segment trees is this:
 
-These sequence of computations can be represented as a static-structure tree:
+- calculate the sum of the entire array and write it down somewhere;
+- split the array into two halves, calculate the sum on both halves, and also write them down somewhere;
+- split these halves into halves, calculate the total of four sums on them, and also write them down;
+- …and so on, until we recursively reach segments of length one.
+
+These computed subsegment sums can be logically represented as a binary tree — which is what we call a *segment tree*:
 
 ![](../img/segtree-path.png)
 
-Some nice properties of this construct:
+Segment trees have some nice properties:
 
-1. The tree has at most $2n$ vertices: $n$ on the last layer, $\frac{n}{2}$ on the previous, $\frac{n}{4}$ on the one before that, and so on.
-2. The height of the tree is $\Theta(\log n)$ as on each "level" the sizes of the segments halves.
-3. Each prefix can be split into $O(\log n)$ non-intersecting segments corresponding to vertices of a segment tree: you need at most one from each layer.
+- If the underlying array has $n$ elements, the segment tree has exactly $(2n - 1)$ nodes — $n$ leaves and $(n - 1)$ internal nodes — because each internal node splits a segment in two, and you only need $(n - 1)$ of them to completely split the original $[0, n-1]$ range.
+- The height of the tree is $\Theta(\log n)$: on each next level starting from the root, the number of nodes roughly doubles and the size of their segments roughly halves.
+- Each segment can be split into $O(\log n)$ non-intersecting segments that correspond to the nodes of the segment tree: you need at most two from each layer.
 
-When $n$ is not a perfect power of two, not all levels will be filled entirely. The last layer will be incomplete, but this doesn't take away any of these nice properties that let us solve the problem (look at the bold path on the illustration):
+When $n$ is not a perfect power of two, not all levels are filled entirely — the last layer may be incomplete — but the truthfulness of these properties remains unaffected. The first property allows us to use only $O(n)$ memory to store the tree, and the last two let us solve the problem in $O(\log n)$ time:
 
-1. Property 1 guarantees that we will need $O(n)$ space to store the tree
-2. **Update** query is processed by adding a value to all vertices that correspond to segments that. Property 1 says there will be at most $O(\log n)$ of them.
-3. **Prefix sum** query is processed by finding all vertices that compose the prefix and summing the values stored in them. Property 3 says there will also be at most $O(\log n)$ of them.
+- The `add(k, x)` query can be handled by adding the value `x` to all nodes whose segments contain the element `k`, and we've already established that there are only $O(\log n)$ of them.
+- The `sum(k)` query can be answered by finding all nodes that collectively compose the `[0, k)` prefix and summing the values stored in them — and we've also established that there would be at most $O(\log n)$ of them.
+
+But this is still theory. As we'll see later, there are remarkably many ways one can implement this data structure.
+
+<!--
 
 Note that by the same logic that each prefix can be covered by $O(\log n)$ nodes, each possible segment can also be covered by $O(\log n)$ nodes: you just possibly need at most two of them on each level. This lets us compute sums on any segment, although in this article we are not going to do it, instead reducing it to computing two prefix sums (from the right border, and the subtracting the prefix sum on the left border).
 
 This is a general idea. Many different implementations possible, which we will explore one by one in this article.
-
-<!--
 
 Segment trees are built recursively: build a tree for left and right halves and merge results to get root.
 
