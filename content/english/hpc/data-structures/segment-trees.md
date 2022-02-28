@@ -425,13 +425,55 @@ Notice that the bump in the latency for the prefix sum query starts at $2^{19}$ 
 
 ### Fenwick trees
 
-Implicit structures are great. They allow us to avoid pointer chasing and visit all the nodes relevant for a query in parallel. What is even better is *succinct* structures. In addition to not storing pointers or any other metadata, they also use the theoretically minimal memory to store the structure — maybe only with $O(1)$ more fields.
+Implicit structures are great: they avoid pointer chasing, allow visiting all the relevant nodes in parallel, and take less space as they don't store metadata in nodes. Even better than implicit structures are *succinct* structures: they only require the information-theoretical minimum space to store the structure, using only $O(1)$ additional memory.
 
-To make a segment tree succinct, we need to look at the values stored in the nodes and search for redundancies — the values that can be inferred from other nodes — and remove them. For any node $p$, its sum $s_p$ equals to the sum $(s_l + s_r)$ stored in its children nodes. Therefore, for any such "triangle" of nodes, we only need to store any two of $s_p$, $s_l$, or $s_r$, and we can restore the other one from the $s_p = s_l + s_r$ identity.
+To make a segment tree succinct, we need to look at the values stored in the nodes and search for redundancies — the values that can be inferred from others — and remove them. One way to do this is to notice that in every implementation of prefix sum, we've never used the sums stored in right children — therefore, for computing prefix sums, such nodes are redundant:
 
-Note that in every implementation so far, we never added the sum stored in the right child when computing the prefix sum. *Fenwick tree* is a type of a segment tree that uses this consideration and gets rid of all *right* children, including the last layer. This makes the total required number of memory cells $n + O(1)$, the same as the underlying array.
+<!--
+
+One way to do this is to use the fact that for every node $v$ with children $l$ and $r$, we have $s_v = s_l + s_r$, so we only need to store two of these values, and we can in "triangle" $(l, v, r)$
+
+For any node $p$, its sum $s_p$ equals to the sum $(s_l + s_r)$ stored in its children nodes. Therefore, for any such "triangle" of nodes, we only need to store any two of $s_p$, $s_l$, or $s_r$, and we can restore the other one from the $s_p = s_l + s_r$ identity.
+
+-->
 
 ![](../img/segtree-succinct.png)
+
+*The Fenwick tree* (also called *binary indexed tree* — soon you'll understand why) is a type of a segment tree that uses this consideration and gets rid of all *right* children, essentially removing every second node in each layer and making the total node count the same as the underlying array.
+
+```c++
+int t[N + 1]; // +1 because we use use one-based indexing
+```
+
+To store these segment sums compactly, Fenwick tree ditches the Eytzinger layout: instead, in place of every element $k$ that would be leaf in the last layer of a segment tree, it stores the sum of its first non-removed ancestor. For example:
+
+- the element $7$ would hold the sum on the $[0, 7]$ range ($282$),
+- the element $9$ would hold the sum on the $[8, 9]$ range ($-86$),
+- the element $10$ would hold the sum on the $[10, 10]$ range ($-52$, the element itself).
+
+How to compute this range for a given element $k$ (the left boundary, to be more specific: the right boundary is always the element $k$ itself) quicker than simulating the descend down the tree? Turns out, there is a smart bit trick that works when the tree size is a power of two and we use one-based indexing — just remove the least significant bit of the index:
+
+- the left bound of element $7 + 1 = 8 = 1000_2$ is $0000_2 = 0$,
+- the left bound of element $9 + 1 = 10 = 1010_2$ is $1000_2 = 8$, 
+- the left bound of element $10 + 1 = 11 = 1011_2$ is $1010_2 = 10$.
+
+And to get the last set bit of an integer, we can use this procedure:
+
+```c++
+int lowbit(int x) {
+    return x & -x;
+}
+```
+
+This trick works by the virtue of how signed numbers are stored in binary using [two's complement](/hpc/arithmetic/integer). When we compute `-x`, we implicitly subtract it from a large power of two: some prefix of the number flips, some suffix of zeros at the end remains, and the only one-bit that stays unchanged is the last set bit — which will be the only one surviving `x & -x`. For example:
+
+```
++90 = 64 + 16 + 8 + 2 = (0)10110
+-90 = 00000 - 10110   = (1)01010
+    → (+90) & (-90)   = (0)00010
+```
+
+More formally, a Fenwick tree is defined as the array $t_i = \sum_{k=f(i)}^i a_k$ where $f$ is some function for which $f(i) \leq i$. If $f$ is the "remove last bit" function (`x -= x & -x`), then both query and update would only require updating $O(\log n)$ different $t$'s
 
 To calculate a prefix sum, we need to repeatedly jump to the first parent that is a left child:
 
@@ -441,11 +483,6 @@ To process an update query, we need to repeatedly add the delta to the first par
 
 ![A path for the update query](../img/fenwick-update.png)
 
-More formally, a Fenwick tree is defined as the array $t_i = \sum_{k=f(i)}^i a_k$ where $f$ is some function for which $f(i) \leq i$. If $f$ is the "remove last bit" function (`x -= x & -x`), then both query and update would only require updating $O(\log n)$ different $t$'s
-
-```c++
-int t[N + 1];
-```
 
 Now, instead of making it actually equivalent to a segment tree, we will make all sizes a power of two and maintain a *forest* of trees. In a sense, we maintain $O(\log n)$ different trees.
 
