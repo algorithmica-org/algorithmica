@@ -3,7 +3,7 @@ title: Memory-Level Parallelism
 weight: 5
 ---
 
-Memory requests can overlap in time: while you wait for a read request to complete, you can sand a few others, which will be executed concurrently with it. This is the reason why [linear iteration](../bandwidth) is so much faster than [pointer jumping](../latency): the CPU knows which memory locations it needs to fetch next and sends memory requests far ahead of time.
+Memory requests can overlap in time: while you wait for a read request to complete, you can send a few others, which will be executed concurrently with it. This is the reason why [linear iteration](../bandwidth) is so much faster than [pointer jumping](../latency): the CPU knows which memory locations it needs to fetch next and sends memory requests far ahead of time.
 
 The number of concurrent memory operations is large but limited, and it is different for different types of memory. When designing algorithms and especially data structures, you may want to know this number, as it limits the amount of parallelism your computation can achieve.
 

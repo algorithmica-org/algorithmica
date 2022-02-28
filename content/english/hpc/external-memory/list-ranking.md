@@ -48,7 +48,7 @@ I/O complexity of this algorithm with therefore be the same as joining, namely $
 
 List ranking is especially useful in graph algorithms.
 
-For example, we can obtain the Euler tour of a tree in external memory by constructing a linked list from the tree that corresponds to its Wuler tour and then applying the list ranking algorithm — the ranks of each node will be the same as its index $tin_v$ in the Euler tour. To construct this list, we need to:
+For example, we can obtain the Euler tour of a tree in external memory by constructing a linked list from the tree that corresponds to its Euler tour and then applying the list ranking algorithm — the ranks of each node will be the same as its index $tin_v$ in the Euler tour. To construct this list, we need to:
 
 - split each undirected tree edge into two directed ones;
 - duplicate the parent node for each up-edge (because list nodes can only have one incoming edge, but we visit some tree vertices multiple times);
