@@ -473,31 +473,50 @@ This trick works by the virtue of how signed numbers are stored in binary using 
     → (+90) & (-90)   = (0)00010
 ```
 
-More formally, a Fenwick tree is defined as the array $t_i = \sum_{k=f(i)}^i a_k$ where $f$ is some function for which $f(i) \leq i$. If $f$ is the "remove last bit" function (`x -= x & -x`), then both query and update would only require updating $O(\log n)$ different $t$'s
+<!-- More formally, a Fenwick tree is defined as the array $t_i = \sum_{k=f(i)}^i a_k$ where $f$ is some function for which $f(i) \leq i$. If $f$ is the "remove last bit" function (`x -= x & -x`), then both query and update would only require updating $O(\log n)$ different $t$. -->
 
-To calculate a prefix sum, we need to repeatedly jump to the first parent that is a left child:
+We've established what a Fenwick tree is just an array of size `n` where each element `k` is defined to be the sum of elements from `k - lowbit(k) + 1` and `k` inclusive in the original array, and now it's time to implement some queries.
 
-![A path for the sum query](../img/fenwick-sum.png)
-
-To process an update query, we need to repeatedly add the delta to the first parent the contains the cell $k$:
-
-![A path for the update query](../img/fenwick-update.png)
-
-
-Now, instead of making it actually equivalent to a segment tree, we will make all sizes a power of two and maintain a *forest* of trees. In a sense, we maintain $O(\log n)$ different trees.
-
-Now, the tricky part is how to do it *fast*. If the array size is a perfect power of two, we have a trick. Notice that what left children have in common is that their indices are even. If a node is a deep interior node, it will end with a lot of zeros in its binary representation. We can there just remove the last sequence of ones, which can be done with `k &= k - 1`:
+Implementing the prefix sum query is easy. The `t[k]` holds the sum we need except for the first `k - lowbit(k)` elements, so we can just add it to the result and then jump to `k - lowbit(k)` and continue doing this until we reach the beginning of the array:
 
 ```c++
 int sum(int k) {
-    int res = 0;
-    for (; k != 0; k &= k - 1)
-        res += t[k];
-    return res;
+    int s = 0;
+    for (; k != 0; k -= lowbit(k))
+        s += t[k];
+    return s;
 }
 ```
 
-Now, when we defined $f$, on update, we need to identify the nodes that contain the element that is being updated. Since the $f$ function removes the last index, these have to be the nodes that have the same number of zeros at the end, some of the same prefix, and some number of ones at the middle that will be cancelled to produce a number that is lower than the original one. All such numbers can be yielded by adding the last set bit to the index, which trims zeros:
+<!-- In a segment tree, this is equivalent to starting at the leaf `k` and jumping straight to the first ancestor that is a left child: -->
+
+Since we are repeatedly removing the lowest set bit from `k`, and also since this procedure is equivalent to visiting the same left-child nodes in a segment tree, each `sum` query can touch at most $O(\log n)$ nodes:
+
+![A path for a prefix sum query in a Fenwick tree](../img/fenwick-sum.png)
+
+To slightly improve the performance of the `sum` query, we use `k &= k - 1` to remove the lowest bit in one go, which is one instruction faster than `k -= k & -k`:
+
+```c++
+int sum(int k) {
+    int s = 0;
+    for (; k != 0; k &= k - 1)
+        s += t[k];
+    return s;
+}
+```
+
+Unlike all previous segment tree implementations, a Fenwick tree is a structure where it is easier and more efficient to to calculate the sum on a subsegment as the difference of two prefix sums:
+
+```c++
+// [l, r)
+int sum (int l, int r) {
+    return sum(r) - sum(l);
+}
+```
+
+The update query is easier to code but less intuitive. We need to add a value `x` to all nodes that are left-child ancestors of leaf `k`. Such nodes have indices `m` larger than `k` but `m - lowbit(m) < k` so that `k` is included in their ranges.
+
+All such indices need to have a common prefix with `k`, then a `1` where it was `0` in `k`, and then a suffix of zeros so that that `1` canceled and the result of `m - lowbit(m)` is less than `k`. All such indices can be generated iteratively like this:
 
 ```c++
 void add(int k, int x) {
@@ -506,24 +525,21 @@ void add(int k, int x) {
 }
 ```
 
-Sometimes people use `k -= k & -k` to iterate when processing the `sum` query, which makes this implementation delightfully symmetric.
+Repeatedly adding the lowest set bit to `k` makes it "more even" and lifts it to its next left-child segment tree ancestor:
 
-This is a structure where it is easier to calculate sum on subsegments as the difference of two prefix sums:
+![A path for an update query in a Fenwick tree](../img/fenwick-update.png)
 
-```c++
-// [l, r)
-int sum (int l, int r) {
-    return sum(r) - sum(l - 1);
-}
-```
+Now, if we leave all the code as it is, it works correctly even when $n$ is not a power of two. In this case, the Fenwick tree is not equivalent to a segment tree fo size $n$ but to a *forest* of up to $O(\log n)$ segment trees of power-of-two sizes — or to a single segment tree padded with zeros to a large power of two, if you like to think this way. In either case, all procedures remain working correctly as they never touch anything outside the $[1, n]$ range.
 
-The performance of the Fenwick tree is similar to the optimized bottom-up segment tree:
+<!-- Sometimes people use `k -= k & -k` to iterate when processing the `sum` query, which makes this implementation delightfully symmetric. -->
+
+The performance of the Fenwick tree is similar to the optimized bottom-up segment tree for the update queries and slightly faster for the prefix sum queries:
 
 ![](../img/segtree-fenwick.svg)
 
-There is, however, one weird thing. The performance goes up rapidly close to the L3 boundary. This is a [cache associativity](/hpc/cpu-cache/associativity) effect: the most frequently used cells all have their index divisible by large powers of two and get aliased to the same cache set, kicking each other out.
+There is one weird thing on the graph. After we cross the L3 cache boundary, the performance takes off very rapidly. This is a [cache associativity](/hpc/cpu-cache/associativity) effect: the most frequently used cells all have their indices divisible by large powers of two, so they get aliased to the same cache set, kicking each other out and effectively reducing the cache size.
 
-One way to negate this is to insert "holes" in the layout like this:
+One way to negate this effect is to insert "holes" in the layout like this:
 
 ```c++
 inline constexpr int hole(int k) {
@@ -545,13 +561,13 @@ int sum(int k) {
 }
 ```
 
-As computing the `hole` function is not on the critical path between iteration, it does not introduce any significant overhead, but completely removes the cache associativity problem and shrinks the latency by ~3x on large arrays:
+Computing the `hole` function is not on the critical path between iterations, so it does not introduce any significant overhead, but completely removes the cache associativity problem and shrinks the latency by up to 3x on large arrays:
 
 ![](../img/segtree-fenwick-holes.svg)
 
-There are still other minor issues with Fenwick trees. Similar to [binary search](../binary-search), the temporal locality of its memory accesses is not great, as rarely accessed elements are grouped with the most frequently accessed ones. It also executes has to perform end-of-loop checks and executes non-constant number of iterations, likely causing a branch mispredict, although just a single one.
+Fenwick trees are fast, but there are still other minor issues with them. Similar to [binary search](../binary-search), the temporal locality of their memory accesses is not the greatest, as rarely accessed elements are grouped with the most frequently accessed ones. Fenwick trees also execute non-constant number of iterations and have to perform end-of-loop checks, causing a very likely branch mispredict — although just a single one.
 
-But we are going to leave it there and focus on an entirely different approach. If you know [S-trees](../s-tree), you've probably guessed where this is going.
+There are probably still some things to optimize, but we are going to leave it there and focus on an entirely different approach, and if you know [S-trees](../s-tree), you probably already know where this is headed.
 
 ### Wide Segment Trees
 
