@@ -575,7 +575,7 @@ Here is the main idea: if the memory system is fetching a full [cache line](/hpc
 
 ![](../img/segtree-wide.png)
 
-We will use the term *wide segment tree* to refer to this modification.
+We will use the term *wide (B-ary) segment tree* to refer to this modification.
 
 To implement this layout, we can we can use a similar [constexpr](/hpc/compilation/precalc)-based approach we used in [S+ trees](../s-tree#implicit-b-tree-1):
 
@@ -639,7 +639,7 @@ struct Precalc {
 constexpr Precalc T;
 ```
 
-When processing the `add` query, we just use these masks to bitwise-and the broadcasted `x` value to mask it and then add it to the values stored in the node:
+Apart from this masking trick, the rest of the computation is simple enough to be handled with [GCC vector types](/hpc/simd/intrinsics#gcc-vector-extensions) only. When processing the `add` query, we just use these masks to bitwise-and them with the broadcasted `x` value to mask it and then add it to the values stored in the node:
 
 ```c++
 typedef int vec __attribute__ (( vector_size(32) ));
@@ -663,27 +663,26 @@ void add(int k, int x) {
 This speeds up the `sum` query by more than 10x and the `add` query by up to 4x compared to the Fenwick tree:
 
 ![](../img/segtree-simd.svg)
-Expectedly, when we increase the node size, the update time also increases, as we need to fetch more cache lines and process them, but the `sum` query time decreases, as the size of the tree becomes smaller.
 
-Unlike [S-trees](../s-tree), you can easily change block size:
+Unlike [S-trees](../s-tree), the block size can be easily changed in this implementation (by literally changing one character). Expectedly, when we increase it, the update time also increases as we need to fetch more cache lines and process them, but the `sum` query time decreases as the height of the tree becomes smaller:
 
 ![](../img/segtree-simd-others.svg)
 
-There are similar considerations to [S+ trees](../s-tree/#modifications-and-further-optimizations) in that the ideal layout (the node sizes on each layer) may depend on the use case.
+Similar to the [S+ trees](../s-tree/#modifications-and-further-optimizations), the optimal memory layout probably has non-uniform block sizes, depending on the problem size and the distribution of queries, but we are not going to explore this idea and just leave the optimization here.
 
 <!-- Wide Fenwick trees make little sense. The speed of Fenwick trees comes from rapidly iterating over just the elements we need. -->
 
-### Comparison
+### Comparisons
 
-This is significantly faster compared to the popular segment tree implementations:
+Wide segment trees are significantly faster compared to other popular segment tree implementations:
 
 ![](../img/segtree-popular.svg)
 
-It makes sense to look at the relative speedup:
+The relative speedup is in the orders of magnitude:
 
 ![](../img/segtree-popular-relative.svg)
 
-The wide segment tree is up to 200 and 40 times faster than the pointer-based segment tree for the prefix sum and update queries respectively, although for sufficiently large arrays, memory efficiency becomes the only concern, and this speedup goes down to 60 and 15 respectively.
+Compared to the original pointer-based implementation, the wide segment tree is up to 200 and 40 times faster for the prefix sum and update queries respectively, although for sufficiently large arrays, both implementations become only memory-bound, and this speedup goes down to around 60 and 15 respectively.
 
 <!--
 
@@ -703,6 +702,8 @@ why b-ary Fenwick tree is not a good idea
 
 ### Acknowledgements
 
-This article is loosely based on "[Practical Trade-Offs for the Prefix-Sum Problem](https://arxiv.org/pdf/2006.14552.pdf)" by Giulio Ermanno Pibiri and Rossano Venturini. It has some more detailed discussions, as well as some other implementations or branchless top-down segment tree and why b-ary Fenwick tree is not a good idea. Intermediate structures we've skipped here.
+Thanks to Giulio Ermanno Pibiri for collaborating on this case study, which is largely based on a 2020 paper "[Practical Trade-Offs for the Prefix-Sum Problem](https://arxiv.org/pdf/2006.14552.pdf)" authored by himself and Rossano Venturini. I highly recommend reading the original article if you are interested in the details we've skipped through here for brevity.
 
-Some code was borrowed from "[Efficient and easy segment trees](https://codeforces.com/blog/entry/18051)" by Oleksandr Bacherikov.
+<!-- It has some more detailed discussions, as well as some other implementations or branchless top-down segment tree and why b-ary Fenwick tree is not a good idea. Intermediate structures we've skipped here. -->
+
+Code and some important bottom-up segment tree ideas from were adapted from a 2015 blogpost "[Efficient and easy segment trees](https://codeforces.com/blog/entry/18051)" by Oleksandr Bacherikov.
