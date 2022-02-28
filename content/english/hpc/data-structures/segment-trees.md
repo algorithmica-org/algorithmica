@@ -571,19 +571,23 @@ There are probably still some things to optimize, but we are going to leave it t
 
 ### Wide Segment Trees
 
-Here is the idea: if we are fetching a full cache line anyway, let's fill it with information that lets us process the query quicker. So let's store more than one data point in a segment tree node — this lets us reduce the tree height and do less iterations descending it.
+Here is the main idea: if the memory system is fetching a full [cache line](/hpc/cpu-cache/cache-lines) for us anyway, let's fill it to the maximum with information that lets us process the query quicker. For segment trees, this means storing more than one data point in a node. This lets us reduce the tree height and perform less iterations when descending or ascending it:
 
 ![](../img/segtree-wide.png)
 
-We can use a similar constexpr-based approach we used in [S+ trees](../s-tree#implicit-b-tree-1) to implement it:
+We will use the term *wide segment tree* to refer to this modification.
+
+To implement this layout, we can we can use a similar [constexpr](/hpc/compilation/precalc)-based approach we used in [S+ trees](../s-tree#implicit-b-tree-1):
 
 ```c++
-const int b = 4, B = (1 << b);
+const int b = 4, B = (1 << b); // cache line size (in integers, not bytes)
 
+// the height of the tree over an n-element array 
 constexpr int height(int n) {
     return (n <= B ? 1 : height(n / B) + 1);
 }
 
+// where the h-th layer starts
 constexpr int offset(int h) {
     int s = 0, n = N;
     while (h--) {
@@ -594,32 +598,32 @@ constexpr int offset(int h) {
 }
 
 constexpr int H = height(N);
-alignas(64) int t[offset(H)];
+alignas(64) int t[offset(H)]; // an array for storing nodes
 ```
 
-We effectively reduce the height of the tree by $\frac{\log_B n}{\log_2 n} = \log_2 B$ times, but it may be tricky to realize in-node operations.
+This way we effectively reduce the height of the tree by approximately $\frac{\log_B n}{\log_2 n} = \log_2 B$ times ($\sim4$ times if $B = 16$), but it becomes non-trivial to implement in-node operations efficiently. For our problem, we have two main options:
 
-In this context, we have to options:
+1. We could store $B$ *sums* in each node (for each of its $B$ children).
+2. We could store $B$ *prefix sums* in each node (the $i$-th being the sum of the first $(i + 1)$ children).
 
-1. We could store $B$ sums in each node.
-2. We could store $B$ prefix sums in each node.
+If we go with the first option, the `add` query would be largely the same as in the bottom-up segment tree, but the `sum` query would need to add up to $B$ scalars in each node it visits. And if we go with the second option, the `sum` query would be trivial, but the `add` query would need to add `x` to some suffix on each node it visits.
 
-If we go with option 1, the `add` query would be largely the same, but the `sum` query would need to sum up to $B$ scalar in each node. If we go with option 2, the `sum` query would be trivial, but the `add` query will need to add the element to some suffix of each node.
+In either case, one operation will perform $O(\log_B n)$ operations, touching just one scalar in each node, while the other will perform $O(B \cdot \log_B n)$ operations, touching up to $B$ scalars in each node. However, it is 21st century, and we can use [SIMD](/hpc/simd) to accelerate the slower operation. Since there are no fast [horizontal reductions](/hpc/simd/reduction) in SIMD instruction sets, but it is easy to add a vector to a vector, we will choose the second approach and store prefix sums in each node.
 
-In either case, one operation will perform $O(\log_B n)$ operations and rouch one scalar, while the other will perform $O(B \cdot \log_B n)$ operations. However, we really want to use [SIMD](/hpc/simd) to accelerate the slower operation. Since there are no fast [horizontal reductions](/hpc/simd/reduction), but it is easy to add a vector to a vector, we will stick to the second approach and store prefix sums in each node.
-
-This makes the `sum` query very easy:
+This makes the `sum` query extremely fast and easy to implement:
 
 ```c++
 int sum(int k) {
-    int res = 0;
+    int s = 0;
     for (int h = 0; h < H; h++)
-        res += t[offset(h) + (k >> (h * b))];
-    return res;
+        s += t[offset(h) + (k >> (h * b))];
+    return s;
 }
 ```
 
-For the `add` query, however, we need a trick. We only need to add a number to a prefix of a node. We need a mask that will tell us which element to add and which not. We can pre-calculate such a $B \times B$ mask just once, which tells us for each starting position whether the element is engaged in the operation or not:
+The `add` query is more complicated and slower. We need to add a number to only a suffix of a node, and we can do this by [masking out](/hpc/simd/masking) the positions that need not be modified.
+
+We can pre-calculate a $B \times B$ array corresponding to $B$ such masks that tell, for each of $B$ positions within a node, whether a certain prefix sum value needs to be updated or not:
 
 ```c++
 struct Precalc {
@@ -635,7 +639,7 @@ struct Precalc {
 constexpr Precalc T;
 ```
 
-We then use these masks to bitwise-and the broadcasted delta value and add it to the values stored at the node:
+When processing the `add` query, we just use these masks to bitwise-and the broadcasted `x` value to mask it and then add it to the values stored in the node:
 
 ```c++
 typedef int vec __attribute__ (( vector_size(32) ));
@@ -659,16 +663,15 @@ void add(int k, int x) {
 This speeds up the `sum` query by more than 10x and the `add` query by up to 4x compared to the Fenwick tree:
 
 ![](../img/segtree-simd.svg)
-
-Wide Fenwick trees make little sense. The speed of Fenwick trees comes from rapidly iterating over just the elements we need.
+Expectedly, when we increase the node size, the update time also increases, as we need to fetch more cache lines and process them, but the `sum` query time decreases, as the size of the tree becomes smaller.
 
 Unlike [S-trees](../s-tree), you can easily change block size:
 
 ![](../img/segtree-simd-others.svg)
 
-Expectedly, when we increase the node size, the update time also increases, as we need to fetch more cache lines and process them, but the `sum` query time decreases, as the size of the tree becomes smaller.
-
 There are similar considerations to [S+ trees](../s-tree/#modifications-and-further-optimizations) in that the ideal layout (the node sizes on each layer) may depend on the use case.
+
+<!-- Wide Fenwick trees make little sense. The speed of Fenwick trees comes from rapidly iterating over just the elements we need. -->
 
 ### Comparison
 
@@ -682,6 +685,8 @@ It makes sense to look at the relative speedup:
 
 The wide segment tree is up to 200 and 40 times faster than the pointer-based segment tree for the prefix sum and update queries respectively, although for sufficiently large arrays, memory efficiency becomes the only concern, and this speedup goes down to 60 and 15 respectively.
 
+<!--
+
 ### Modifications
 
 We mostly focused on the prefix sum problem, but this general structure can be used for other problems handled by segment trees:
@@ -693,6 +698,8 @@ We mostly focused on the prefix sum problem, but this general structure can be u
 Some more exotic applications, reliant on there being pointers, are expectedly harder. To implement dynamic trees, we could store the mapping between the node number and the tree in a hash table. For more complicated cases, such as whether wide segment trees can help in implementing persistent trees is an open question.
 
 why b-ary Fenwick tree is not a good idea
+
+-->
 
 ### Acknowledgements
 
