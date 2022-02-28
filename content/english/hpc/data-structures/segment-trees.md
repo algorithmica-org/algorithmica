@@ -1,7 +1,6 @@
 ---
 title: Segment Trees
 weight: 3
-draft: true
 ---
 
 The lessons learned from [optimizing](../s-tree) [binary search](../binary-search) can be applied to a broad range of data structures.
