@@ -4,11 +4,13 @@ weight: 3
 draft: true
 ---
 
-The lessons we learned from [optimizing](../s-tree) [binary search](../binary-search) can be applied to a broad range of data structures.
+The lessons learned from [optimizing](../s-tree) [binary search](../binary-search) can be applied to a broad range of data structures.
 
-In this article, instead of trying to optimize something from the STL again, we will focus on *segment trees*, the structures that may be unfamiliar to most *normal* programmers and perhaps even most computer science researchers[^tcs], but are used [very extensively](https://www.google.com/search?q=segment+tree+site%3Acodeforces.com&newwindow=1&sxsrf=APq-WBuTupSOnSn9JNEHhaqtmv0Uq0eogQ%3A1645969931499&ei=C4IbYrb2HYibrgS9t6qgDQ&ved=0ahUKEwj2p8_og6D2AhWIjYsKHb2bCtQQ4dUDCA4&uact=5&oq=segment+tree+site%3Acodeforces.com&gs_lcp=Cgdnd3Mtd2l6EAM6BwgAEEcQsAM6BwgAELADEEM6BAgjECc6BAgAEEM6BQgAEIAEOgYIABAWEB46BQghEKABSgQIQRgASgQIRhgAUMkFWLUjYOgkaANwAXgAgAHzAYgB9A-SAQYxNS41LjGYAQCgAQHIAQrAAQE&sclient=gws-wiz) in programming competitions for their speed and simplicity of implementation.
+In this article, instead of trying to optimize something from the STL again, we focus on *segment trees*, the structures that may be unfamiliar to most *normal* programmers and perhaps even most computer science researchers[^tcs], but that are used [very extensively](https://www.google.com/search?q=segment+tree+site%3Acodeforces.com&newwindow=1&sxsrf=APq-WBuTupSOnSn9JNEHhaqtmv0Uq0eogQ%3A1645969931499&ei=C4IbYrb2HYibrgS9t6qgDQ&ved=0ahUKEwj2p8_og6D2AhWIjYsKHb2bCtQQ4dUDCA4&uact=5&oq=segment+tree+site%3Acodeforces.com&gs_lcp=Cgdnd3Mtd2l6EAM6BwgAEEcQsAM6BwgAELADEEM6BAgjECc6BAgAEEM6BQgAEIAEOgYIABAWEB46BQghEKABSgQIQRgASgQIRhgAUMkFWLUjYOgkaANwAXgAgAHzAYgB9A-SAQYxNS41LjGYAQCgAQHIAQrAAQE&sclient=gws-wiz) in programming competitions for their speed and simplicity of implementation.
 
 [^tcs]: Segment trees are rarely mentioned in the theoretical computer science literature because they are relatively novel (invented ~2000), mostly don't do anything that [any other binary tree](https://en.wikipedia.org/wiki/Tree_(data_structure)) can't do, and *asymptotically* aren't faster — although, in practice, they often win by a lot in terms of speed.
+
+(If you already know the context, jump straight to the [last section](#wide-segment-trees) for the novelty: the *wide segment tree* that works 4 to 12 times faster than the Fenwick tree.)
 
 ### Dynamic Prefix Sum
 
@@ -23,12 +25,12 @@ void add(int k, int x); // react to a[k] += x (zero-based indexing)
 int sum(int k);         // return the sum of the first k elements (from 0 to k - 1)
 ```
 
-As we now have to support two types of queries, our optimization problem becomes multi-dimensional, and the optimal solution depends on the distribution of queries. For example, if one type of the queries were extremely rare, we would only optimize for the other, which is relatively easy to do:
+As we have to support two types of queries, our optimization problem becomes multi-dimensional, and the optimal solution depends on the distribution of queries. For example, if one type of the queries were extremely rare, we would only optimize for the other, which is relatively easy to do:
 
 - If we only cared about the cost of *updating the array*, we would store it as it is and [calculate the sum](/hpc/simd/reduction) directly on each `sum` query.
 - If we only cared about the cost of *prefix sum queries*, we would keep it ready and [re-calculate them entirely from scratch](/hpc/algorithms/prefix) on each update.
 
-Both of these options perform $O(1)$ work on one query type but $O(n)$ work on the other. When the query frequencies are relatively close, we can trade off the performance on one type of query for performance on the other. Segment trees let you do exactly that, achieving the equilibrium of $O(\log n)$ for both queries.
+Both of these options perform $O(1)$ work on one query type but $O(n)$ work on the other. When the query frequencies are relatively close, we can trade off some performance on one type of query for increased performance on the other. Segment trees let you do exactly that, achieving the equilibrium of $O(\log n)$ work for both queries.
 
 ### Segment Tree Structure
 
@@ -355,7 +357,7 @@ int sum(int k) {
     int s = 0;
     k += N - 1;
     while (k != 0) {
-        if (~k & 1)
+        if (~k & 1) // if k is a right child
             s += t[k--];
         k = k >> 1;
     }
@@ -403,14 +405,14 @@ int sum(int k) {
 }
 ```
 
-The last touch: by replacing the `s += t[k--]` line with predication, we can make the implementation branchless (except for the last branch — we still need to check the loop condition):
+The last touch: by replacing the `s += t[k--]` line with [predication](/hpc/pipelining/branchless), we can make the implementation branchless (except for the last branch — we still need to check the loop condition):
 
 ```c++
 int sum(int k) {
     k = leaf(k - 1);
     int s = 0;
     while (k != 0) {
-        s += (~k & 1) ? t[k] : 0;
+        s += (~k & 1) ? t[k] : 0; // will be replaced with a cmov
         k = (k - 1) >> 1;
     }
     return s;
