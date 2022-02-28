@@ -112,7 +112,7 @@ If we needed to build it over an existing array, we would rewrite the body of th
 
 ```c++
 if (lb + 1 == rb) {
-    s = a[lb]; // the node is a leaf -- its sum is the element a[lb]
+    s = a[lb]; // the node is a leaf -- its sum is just the element a[lb]
 } else {
     int t = (lb + rb) / 2;
     l = new segtree(lb, t);
@@ -193,9 +193,9 @@ More formally, we define node $1$ to be the root, holding the sum of the entire 
 
 When $n$ is a perfect power of two, this layout packs the entire tree very nicely:
 
-![The memory layout of implicit segment tree with the same query path highlighted](../img/segtree-layout.png)
+![The memory layout of the implicit segment tree with the same query path highlighted](../img/segtree-layout.png)
 
-However, when $n$ is not a power of two, the layout is no longer compact: even though we still have exactly $(2n - 1)$ nodes regardless of how we split segments, they are not mapped perfectly to the $[1, 2n)$ range.
+However, when $n$ is not a power of two, the layout stops being compact: although we still have exactly $(2n - 1)$ nodes regardless of how we split segments, they are no longer mapped perfectly to the $[1, 2n)$ range.
 
 For example, consider what happens when we descend to the rightmost leaf in a segment tree of size $17 = 2^4 + 1$:
 
