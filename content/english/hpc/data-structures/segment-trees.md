@@ -183,7 +183,7 @@ Pointer chasing outweighs all other issues by orders of magnitude — and to neg
 
 ### Implicit Segment Trees
 
-As a segment tree is a type of a binary tree, we can use the [Eytzinger layout](../binary-search#eytzinger-layout) to store its nodes in one large array and use index arithmetic instead of explicit pointers to navigate it.
+As a segment tree is a type of binary tree, we can use the [Eytzinger layout](../binary-search#eytzinger-layout) to store its nodes in one large array and use index arithmetic instead of explicit pointers to navigate it.
 
 More formally, we define node $1$ to be the root, holding the sum of the entire array $[0, n)$. Then, for every node $v$ corresponding to the range $[l, r]$, we define:
 
@@ -439,13 +439,13 @@ For any node $p$, its sum $s_p$ equals to the sum $(s_l + s_r)$ stored in its ch
 
 ![](../img/segtree-succinct.png)
 
-*The Fenwick tree* (also called *binary indexed tree* — soon you'll understand why) is a type of a segment tree that uses this consideration and gets rid of all *right* children, essentially removing every second node in each layer and making the total node count the same as the underlying array.
+*The Fenwick tree* (also called *binary indexed tree* — soon you'll understand why) is a type of segment tree that uses this consideration and gets rid of all *right* children, essentially removing every second node in each layer and making the total node count the same as the underlying array.
 
 ```c++
 int t[N + 1]; // +1 because we use use one-based indexing
 ```
 
-To store these segment sums compactly, Fenwick tree ditches the Eytzinger layout: instead, in place of every element $k$ that would be leaf in the last layer of a segment tree, it stores the sum of its first non-removed ancestor. For example:
+To store these segment sums compactly, the Fenwick tree ditches the Eytzinger layout: instead, in place of every element $k$ that would be a leaf in the last layer of a segment tree, it stores the sum of its first non-removed ancestor. For example:
 
 - the element $7$ would hold the sum on the $[0, 7]$ range ($282$),
 - the element $9$ would hold the sum on the $[8, 9]$ range ($-86$),
@@ -453,9 +453,9 @@ To store these segment sums compactly, Fenwick tree ditches the Eytzinger layout
 
 How to compute this range for a given element $k$ (the left boundary, to be more specific: the right boundary is always the element $k$ itself) quicker than simulating the descend down the tree? Turns out, there is a smart bit trick that works when the tree size is a power of two and we use one-based indexing — just remove the least significant bit of the index:
 
-- the left bound of element $7 + 1 = 8 = 1000_2$ is $0000_2 = 0$,
-- the left bound of element $9 + 1 = 10 = 1010_2$ is $1000_2 = 8$, 
-- the left bound of element $10 + 1 = 11 = 1011_2$ is $1010_2 = 10$.
+- the left bound for element $7 + 1 = 8 = 1000_2$ is $0000_2 = 0$,
+- the left bound for element $9 + 1 = 10 = 1010_2$ is $1000_2 = 8$, 
+- the left bound for element $10 + 1 = 11 = 1011_2$ is $1010_2 = 10$.
 
 And to get the last set bit of an integer, we can use this procedure:
 
@@ -505,7 +505,7 @@ int sum(int k) {
 }
 ```
 
-Unlike all previous segment tree implementations, a Fenwick tree is a structure where it is easier and more efficient to to calculate the sum on a subsegment as the difference of two prefix sums:
+Unlike all previous segment tree implementations, a Fenwick tree is a structure where it is easier and more efficient to calculate the sum on a subsegment as the difference of two prefix sums:
 
 ```c++
 // [l, r)
@@ -561,23 +561,23 @@ int sum(int k) {
 }
 ```
 
-Computing the `hole` function is not on the critical path between iterations, so it does not introduce any significant overhead, but completely removes the cache associativity problem and shrinks the latency by up to 3x on large arrays:
+Computing the `hole` function is not on the critical path between iterations, so it does not introduce any significant overhead but completely removes the cache associativity problem and shrinks the latency by up to 3x on large arrays:
 
 ![](../img/segtree-fenwick-holes.svg)
 
-Fenwick trees are fast, but there are still other minor issues with them. Similar to [binary search](../binary-search), the temporal locality of their memory accesses is not the greatest, as rarely accessed elements are grouped with the most frequently accessed ones. Fenwick trees also execute non-constant number of iterations and have to perform end-of-loop checks, causing a very likely branch mispredict — although just a single one.
+Fenwick trees are fast, but there are still other minor issues with them. Similar to [binary search](../binary-search), the temporal locality of their memory accesses is not the greatest, as rarely accessed elements are grouped with the most frequently accessed ones. Fenwick trees also execute a non-constant number of iterations and have to perform end-of-loop checks, very likely causing a branch misprediction — although just a single one.
 
 There are probably still some things to optimize, but we are going to leave it there and focus on an entirely different approach, and if you know [S-trees](../s-tree), you probably already know where this is headed.
 
 ### Wide Segment Trees
 
-Here is the main idea: if the memory system is fetching a full [cache line](/hpc/cpu-cache/cache-lines) for us anyway, let's fill it to the maximum with information that lets us process the query quicker. For segment trees, this means storing more than one data point in a node. This lets us reduce the tree height and perform less iterations when descending or ascending it:
+Here is the main idea: if the memory system is fetching a full [cache line](/hpc/cpu-cache/cache-lines) for us anyway, let's fill it to the maximum with information that lets us process the query quicker. For segment trees, this means storing more than one data point in a node. This lets us reduce the tree height and perform fewer iterations when descending or ascending it:
 
 ![](../img/segtree-wide.png)
 
 We will use the term *wide (B-ary) segment tree* to refer to this modification.
 
-To implement this layout, we can we can use a similar [constexpr](/hpc/compilation/precalc)-based approach we used in [S+ trees](../s-tree#implicit-b-tree-1):
+To implement this layout, we can use a similar [constexpr](/hpc/compilation/precalc)-based approach we used in [S+ trees](../s-tree#implicit-b-tree-1):
 
 ```c++
 const int b = 4, B = (1 << b); // cache line size (in integers, not bytes)
@@ -682,7 +682,7 @@ The relative speedup is in the orders of magnitude:
 
 ![](../img/segtree-popular-relative.svg)
 
-Compared to the original pointer-based implementation, the wide segment tree is up to 200 and 40 times faster for the prefix sum and update queries respectively, although for sufficiently large arrays, both implementations become only memory-bound, and this speedup goes down to around 60 and 15 respectively.
+Compared to the original pointer-based implementation, the wide segment tree is up to 200 and 40 times faster for the prefix sum and update queries, respectively — although, for sufficiently large arrays, both implementations become purely memory-bound, and this speedup goes down to around 60 and 15 respectively.
 
 <!--
 
@@ -702,8 +702,8 @@ why b-ary Fenwick tree is not a good idea
 
 ### Acknowledgements
 
-Thanks to Giulio Ermanno Pibiri for collaborating on this case study, which is largely based on a 2020 paper "[Practical Trade-Offs for the Prefix-Sum Problem](https://arxiv.org/pdf/2006.14552.pdf)" authored by himself and Rossano Venturini. I highly recommend reading the original article if you are interested in the details we've skipped through here for brevity.
+Many thanks to Giulio Ermanno Pibiri for collaborating on this case study, which is largely based on his 2020 paper "[Practical Trade-Offs for the Prefix-Sum Problem](https://arxiv.org/pdf/2006.14552.pdf)" co-authored with Rossano Venturini. I highly recommend reading the original article if you are interested in the details we've skipped through here for brevity.
 
 <!-- It has some more detailed discussions, as well as some other implementations or branchless top-down segment tree and why b-ary Fenwick tree is not a good idea. Intermediate structures we've skipped here. -->
 
-Code and some important bottom-up segment tree ideas from were adapted from a 2015 blogpost "[Efficient and easy segment trees](https://codeforces.com/blog/entry/18051)" by Oleksandr Bacherikov.
+The code and some ideas regarding bottom-up segment trees were adapted from a 2015 blog post "[Efficient and easy segment trees](https://codeforces.com/blog/entry/18051)" by Oleksandr Bacherikov.
