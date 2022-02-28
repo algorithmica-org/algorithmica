@@ -42,7 +42,7 @@ The main idea behind segment trees is this:
 
 These computed subsegment sums can be logically represented as a binary tree — which is what we call a *segment tree*:
 
-![A segment tree with with nodes relevant for the sum(11) and add(10) queries highlighted](../img/segtree-path.png)
+![A segment tree with with the nodes relevant for the sum(11) and add(10) queries highlighted](../img/segtree-path.png)
 
 Segment trees have some nice properties:
 
@@ -199,14 +199,14 @@ However, when $n$ is not a power of two, the layout is no longer compact: even t
 
 For example, consider what happens when we descend to the rightmost leaf in a segment tree of size $17 = 2^4 + 1$:
 
-- we start with the root numbered $1$ that corresponds to the range $[0, 16]$,
-- we go to node $3 = 2 \times 1 + 1$ representing range $[8, 16]$,
-- we go to node $7 = 2 \times 2 + 1$ representing range $[12, 16]$,
-- we go to node $15 = 2 \times 7 + 1$ representing range $[14, 16]$,
-- we go to node $31 = 2 \times 15 + 1$ representing range $[15, 16]$,
-- and we finally reach node $63 = 2 \times 31 + 1$ representing range $[16, 16]$.
+- we start with the root numbered $1$ representing the range $[0, 16]$,
+- we go to node $3 = 2 \times 1 + 1$ representing the range $[8, 16]$,
+- we go to node $7 = 2 \times 2 + 1$ representing the range $[12, 16]$,
+- we go to node $15 = 2 \times 7 + 1$ representing the range $[14, 16]$,
+- we go to node $31 = 2 \times 15 + 1$ representing the range $[15, 16]$,
+- and we finally reach node $63 = 2 \times 31 + 1$ representing the range $[16, 16]$.
 
-So, as $63 > 2 \times 17 - 1 = 33$, there are some holes in the layout, but the structure of the tree is still the same, and its height is still $O(\log n)$. For now, we can ignore this problem and just allocate a larger array for storing the nodes — it can be shown that the index of the rightmost leaf never exceeds $4n$, so allocating that many cells will always suffice:
+So, as $63 > 2 \times 17 - 1 = 33$, there are some empty spaces in the layout, but the structure of the tree is still the same, and its height is still $O(\log n)$. For now, we can ignore this problem and just allocate a larger array for storing the nodes — it can be shown that the index of the rightmost leaf never exceeds $4n$, so allocating that many cells will always suffice:
 
 ```c++
 int t[4 * N]; // contains the node sums
