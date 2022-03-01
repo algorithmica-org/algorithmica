@@ -687,7 +687,23 @@ Compared to the original pointer-based implementation, the wide segment tree is 
 
 <!--
 
-### Modifications
+### More Complex Operations
+
+We have only focused on the prefix sum problem for 32-bit integers — to make this already long article slightly less long and also to make the comparison with the Fenwick tree fair — but wide segment trees can be used for other common range operations, although implementing them efficiently with SIMD requires some creativity.
+
+**Other data types** and other commutative operations can be trivially supported by changing the vector type and the $B$ parameter.
+
+(multiplication modulo prime, xor, etc.)
+
+**Non-commutative operations** and other reductions that are non-commutative.
+
+r, I highly encourage the community to try to efficiently implement mass assignment, RMQ, lazy propagation, persistency, and other common segment tree operations using wide segment trees.
+
+**Minimum.** You can make an efficient fixed-universe min-heap. For example, this is often the case for the Dijkstra algorithm.
+
+**Lazy propagation** can be done with broadcasting a value.
+
+**Persistent** trees
 
 We mostly focused on the prefix sum problem, but this general structure can be used for other problems handled by segment trees:
 
