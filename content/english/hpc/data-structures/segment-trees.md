@@ -151,7 +151,7 @@ int sum(int lq, int rq) {
         return s;
     if (rq <= lb || lq >= rb) // if we don't intersect with the query, return zero
         return 0;
-    return l->sum(k) + r->sum(k);
+    return l->sum(lq, rq) + r->sum(lq, rq);
 }
 ```
 
