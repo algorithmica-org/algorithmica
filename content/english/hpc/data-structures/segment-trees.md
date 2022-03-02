@@ -698,32 +698,39 @@ It may also be that the queries have different limits on the updates and the pre
 Unfortunately, that doesn't work in the general case, but we still have a way to speed up queries when the update deltas are small: we can *buffer* the updates queries. Using the same "$\pm 1$" example, we can make the branching factor $B=64$ as we wanted, and in each node, we store $B$ 32-bit integers, $B$ 8-bit signed chars, and a single 8-bit counter variable that starts at $127$ and decrements each time we update a node. Then, when we process the queries in nodes:
 
 - For the update query, we add a vector of masked 8-bit plus-or-minus ones to the `char` array, decrement the counter, and, if it is zero, [convert](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,3009,4870,6715,4845,3853,288,6570,90,7307,5993,2692,6946,6949,5456,6938,5456,1021,3007,514,518,7253,7183,3892,5135,5260,3915,4027,3873,7401,4376,4229,151,2324,2310,2324,591,4075,3011,3009,6130,4875,6385,5259,6385,6250,1395,7253,6452,7492,4669,4669,7253,1039,1029,4669,4707,7253,7242,848,879,848,7251,4275,879,874,849,833,6046,7250,4870,4872,4875,849,849,5144,4875,4787,4787,4787,3016,3018,5227,7359,7335,7392,4787,5259,5230,5230,5223,5214,6438,5229,488,483,6527,6527,6554,1829,1829,1829&techs=AVX,AVX2&text=cvtepi8_) the values in the `char` array to 32-bit integers, add them to the integer array, set the `char` array to zero, and reset the counter back to 127.
-- For the prefix sum query, we visit the same nodes, but add *both* `int` and `char` values to the result.
+- For the prefix sum query, we visit the same nodes but add *both* `int` and `char` values to the result.
 
 This update accumulation trick lets us increase the performance by up to 1.5x at the cost of using ~25% more memory.
 
-Having a conditional branch in the `add` query and adding the `char` array to the `int` array is rather slow, but since we only have to do it every 127 iterations, it doesn't cost us anything in the amortized sense. The processing time for the `sum` query increases, but not significantly as it mostly depends on the slowest read rather than the number of iterations.
+Having a conditional branch in the `add` query and adding the `char` array to the `int` array is rather slow, but since we only have to do it every 127 iterations, it doesn't cost us anything in the amortized sense. The processing time for the `sum` query increases, but not significantly — because it mostly depends on the slowest read rather than the number of iterations.
 
 **General range queries** can be supported the same way as in the Fenwick tree: just decompose the range $[l, r)$ as the difference of two prefix sums $[0, r)$ and $[0, l)$.
 
 This also works for some operations other than addition (multiplication modulo prime, xor, etc.), although they have to be *reversible:* there should be a way to quickly "cancel" the operation on the left prefix from the final result.
 
-<!--
-
-**Non-reversible operations** can also be supported, although the they should still satisfy some other properties:
+**Non-reversible operations** can also be supported, although they should still satisfy some other properties:
 
 - They must be *associative:* $(a \circ b) \circ c = a \circ (b \circ c)$.
 - They must have an *identity element:* $a \circ e = e \circ a = a$.
 
-(Such algebraic structures are called [monoids](https://en.wikipedia.org/wiki/Monoid), if you're a snob.)
+(Such algebraic structures are called [monoids](https://en.wikipedia.org/wiki/Monoid) if you're a snob.)
 
 Unfortunately, the prefix sum trick doesn't work when the operation is not reversible, so we have to switch to [option one](#wide-segment-trees) and store the results of these operations separately for each segment. This requires some significant changes to the queries:
 
-- The update query [horizontal reduction](/hpc/simd/reduction/#horizontal-summation).
+- The update query should replace one scalar at the leaf, perform a [horizontal reduction](/hpc/simd/reduction/#horizontal-summation) at the leaf node, and then continue upwards, replacing one scalar of its parent and so on.
+- The range reduction query should, separately for left and right borders, calculate a vector with vertically reduced values on their paths, combine these two vectors into one, and then reduce it horizontally to return the final answer. Note that we still need to use masking to replace values outside of query with neutral elements, and this time, it probably requires some conditional moves/blending and either $B \times B$ precomputed masks or using two masks to account for both left and right borders of the query.
 
-**Minimum.** You can make an efficient fixed-universe min-heap. For example, this is often the case for the Dijkstra algorithm.
+This makes both queries much slower — especially the reduction — but this should still be faster compared to the bottom-up segment tree.
 
-**Lazy propagation** can be done with broadcasting a value.
+**Minimum** is a nice exception where the update query can be made slightly faster if the new value of the element is less than the current one: we can skip the horizontal reduction part and just update $\log_B n$ nodes using a scalar procedure.
+
+This works very fast when we mostly have such updates, which is the case e. g. for the sparse-graph Dijkstra algorithm when we have more edges than vertices. For this problem, the wide segment tree can serve as an efficient fixed-universe min-heap.
+
+**Lazy propagation** can be done by storing a separate array for the delayed operations in a node. To propagate the updates, we need to go top to bottom (which can be done by simply reversing the direction of the `for` loop and using `k >> (h * b)` to calculate the `h`-th ancestor), [broadcast](/hpc/simd/moving/#broadcast) and reset the delayed operation value stored in the parent of the current node, and apply it to all values stored in the current node with SIMD.
+
+One minor problem is that for some operations, we need to know the lengths of the segments: for example, when we need to support a sum and a mass assignment. It can be solved by either padding the elements so that each segment on a layer is uniform in size, pre-calculating the segment lengths and storing them in the node, or using predication to check for the problematic nodes (there will be at most one on each layer).
+
+<!--
 
 **Persistent** trees
 
