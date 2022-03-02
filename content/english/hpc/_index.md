@@ -19,27 +19,43 @@ All materials are hosted on GitHub, with code in a [separate repository](https:/
 
 ### FAQ
 
-**Release date.**
+**Fixing errors.** If you spot an error, please do one of these — in the order of preference:
 
-There are also future parts (see below).
+- Fix it right away by either by either clicking on the pencil icon on the top right on any page or directly modifying it on GitHub (link to a markdown source is also on the top right).
+- Creating an issue on GitHub.
+- Emailing or texting it to me directly.
 
-As of March 2nd 2022, the first part is 70-80% complete.
+or commenting on other websites — I read most of [HackerNews](https://news.ycombinator.com/from?site=algorithmica.org), [CodeForces](https://codeforces.com/profile/sslotin), and [Twitter](https://twitter.com/sergey_slotin) threads where I'm tagged.
 
-**Fixing errors.** If you spot an error, please create an issue on GitHub or, preferably, fix it right away (the pencil icon on the top-right).
+**Release date.** The book is split into several parts that I plan to finish sequentially with large breaks in-between. Part I, Performance Engineering, is ~75% complete as of March 2022, and will hopefully be >95% complete by summer.
 
-**Pre-ordering / financially supporting the book.**
+"Release" for an open-source book like this means mostly freezing the table of contents, filling all TODOs, doing a final round of heavy copyediting[^copyedit], drawing illustrations, and then making a print-optimized pdf and figuring out the best way to distribute it. In either case, the web-book will always be available online in full version, and the e-book/printed version will probably be sold on a "pay what you want" basis.
 
-Until I find.
+After then, I will mostly only be doing minor edits, fixing errors and adding changes changes in technology or reflecting new algorithm advancements.
 
-The best way you can help is to share the articles on link aggregation.
+[^copyedit]: Hopefully with help of a professional editor — because I still haven't figured out how commas work in English.
 
-In either case, the book will always be available online in full version. "pay what you want" hard copy.
+**Pre-ordering / financially supporting the book.** You can't — until I find a way that simultaneously doesn't sponsor the war and won't put either me in jail for either tax evasion or treason.
 
-**Translations.** As the book. The website has a functionality.
+So, don't bother. Just share the articles you like on link aggregators and report/fix bugs and typos :)
 
-Italian and Chinese (and I will personally translate at least some of it in my native Russian).
+**Teaching performance engineering in colleges.** It is one of my dreams.
 
-However, you are encouraged to make your translation. I'd appreciate it if and also sent me the link to the translation.
+There are two impactful books on which all computer science courses build on, but one is 50 years old and the other one is 30 years old.
+
+I want it to be a book that CS students read after they've  [TAOCP](https://en.wikipedia.org/wiki/The_Art_of_Computer_Programming) and [CLRS](https://en.wikipedia.org/wiki/Introduction_to_Algorithms)
+
+There are good endeavors, such as "[Programming Parallel Computers](https://ppc.cs.aalto.fi/)" from Aalto University, "[Performance Engineering of Software Systems](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2018/)" from MIT, and also non-academic ones like [Denis Bakhvalov's endevors](https://github.com/dendibakh/perf-ninja), but these are more of an exception, and are also not deep enough to get people to the edge.
+
+I've created courses from scratch in the past. I've already received, and I'm looking forward to collaborating more. Which is one of the reasons I rush to finish it by summer — so that colleges can pick up on the idea.
+
+Competitive programming is, in my opinion, misguided. They are doing useless things, but they are good at doing wrong things, and the performance engineering community should learn from them.
+
+**Translations.**
+
+There are already volunteers that want to translate it into Italian and Chinese (and I will personally translate at least some of it in my native Russian). The website has a functionality.
+
+As the book is evolving, it is probably not the best idea to start translation right away. However, you are very much encouraged to make your translations and post them in your blogs — I'd also appreciate it if you sent me the link to the translation.
 
 **"Translating" the Russian version.** The articles at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms, targeted towards competitive programming audience.
 
