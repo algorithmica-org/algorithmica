@@ -685,19 +685,41 @@ The relative speedup is in the orders of magnitude:
 
 Compared to the original pointer-based implementation, the wide segment tree is up to 200 and 40 times faster for the prefix sum and update queries, respectively — although, for sufficiently large arrays, both implementations become purely memory-bound, and this speedup goes down to around 60 and 15 respectively.
 
-<!--
-
-### More Complex Operations
+### Modifications
 
 We have only focused on the prefix sum problem for 32-bit integers — to make this already long article slightly less long and also to make the comparison with the Fenwick tree fair — but wide segment trees can be used for other common range operations, although implementing them efficiently with SIMD requires some creativity.
 
-**Other data types** and other commutative operations can be trivially supported by changing the vector type and the $B$ parameter.
+*Disclaimer:* I haven't implemented any of these ideas, so some of them may be fatally flawed.
 
-(multiplication modulo prime, xor, etc.)
+**Other data types** can be trivially supported by changing the vector type and, if they differ in size, the node size $B$ — which also changes the tree height and hence the total number of iterations for both queries.
 
-**Non-commutative operations** and other reductions that are non-commutative.
+It may also be that the queries have different limits on the updates and the prefix sum queries. For example, it is not uncommon to have only "$\pm 1$" update queries with a guarantee that the result of the prefix sum query always fits into a 32-bit integer. If the result could fit into 8 bits, we'd simply use a 8-bit `char` with block size of $B=64$ bytes, making the total tree height $\frac{\log_{16} n}{\log_{64} n} = \log_{16} 64 = 1.5$ times smaller and both queries proportionally faster.
 
-r, I highly encourage the community to try to efficiently implement mass assignment, RMQ, lazy propagation, persistency, and other common segment tree operations using wide segment trees.
+Unfortunately, that doesn't work in the general case, but we still have a way to speed up queries when the update deltas are small: we can *buffer* the updates queries. Using the same "$\pm 1$" example, we can make the branching factor $B=64$ as we wanted, and in each node, we store $B$ 32-bit integers, $B$ 8-bit signed chars, and a single 8-bit counter variable that starts at $127$ and decrements each time we update a node. Then, when we process the queries in nodes:
+
+- For the update query, we add a vector of masked 8-bit plus-or-minus ones to the `char` array, decrement the counter, and, if it is zero, [convert](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#ig_expand=3037,3009,4870,6715,4845,3853,288,6570,90,7307,5993,2692,6946,6949,5456,6938,5456,1021,3007,514,518,7253,7183,3892,5135,5260,3915,4027,3873,7401,4376,4229,151,2324,2310,2324,591,4075,3011,3009,6130,4875,6385,5259,6385,6250,1395,7253,6452,7492,4669,4669,7253,1039,1029,4669,4707,7253,7242,848,879,848,7251,4275,879,874,849,833,6046,7250,4870,4872,4875,849,849,5144,4875,4787,4787,4787,3016,3018,5227,7359,7335,7392,4787,5259,5230,5230,5223,5214,6438,5229,488,483,6527,6527,6554,1829,1829,1829&techs=AVX,AVX2&text=cvtepi8_) the values in the `char` array to 32-bit integers, add them to the integer array, set the `char` array to zero, and reset the counter back to 127.
+- For the prefix sum query, we visit the same nodes, but add *both* `int` and `char` values to the result.
+
+This update accumulation trick lets us increase the performance by up to 1.5x at the cost of using ~25% more memory.
+
+Having a conditional branch in the `add` query and adding the `char` array to the `int` array is rather slow, but since we only have to do it every 127 iterations, it doesn't cost us anything in the amortized sense. The processing time for the `sum` query increases, but not significantly as it mostly depends on the slowest read rather than the number of iterations.
+
+**General range queries** can be supported the same way as in the Fenwick tree: just decompose the range $[l, r)$ as the difference of two prefix sums $[0, r)$ and $[0, l)$.
+
+This also works for some operations other than addition (multiplication modulo prime, xor, etc.), although they have to be *reversible:* there should be a way to quickly "cancel" the operation on the left prefix from the final result.
+
+<!--
+
+**Non-reversible operations** can also be supported, although the they should still satisfy some other properties:
+
+- They must be *associative:* $(a \circ b) \circ c = a \circ (b \circ c)$.
+- They must have an *identity element:* $a \circ e = e \circ a = a$.
+
+(Such algebraic structures are called [monoids](https://en.wikipedia.org/wiki/Monoid), if you're a snob.)
+
+Unfortunately, the prefix sum trick doesn't work when the operation is not reversible, so we have to switch to [option one](#wide-segment-trees) and store the results of these operations separately for each segment. This requires some significant changes to the queries:
+
+- The update query [horizontal reduction](/hpc/simd/reduction/#horizontal-summation).
 
 **Minimum.** You can make an efficient fixed-universe min-heap. For example, this is often the case for the Dijkstra algorithm.
 
