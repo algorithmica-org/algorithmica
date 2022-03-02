@@ -15,6 +15,38 @@ Its intended audience is everyone from performance engineers and practical algor
 
 All materials are hosted on GitHub, with code in a [separate repository](https://github.com/sslotin/scmm-code). This isn't a collaborative project, but any contributions and feedback are very much welcome.
 
+<!--
+
+### FAQ
+
+**Release date.**
+
+There are also future parts (see below).
+
+As of March 2nd 2022, the first part is 70-80% complete.
+
+**Fixing errors.** If you spot an error, please create an issue on GitHub or, preferably, fix it right away (the pencil icon on the top-right).
+
+**Pre-ordering / financially supporting the book.**
+
+Until I find.
+
+The best way you can help is to share the articles on link aggregation.
+
+In either case, the book will always be available online in full version. "pay what you want" hard copy.
+
+**Translations.** As the book. The website has a functionality.
+
+Italian and Chinese (and I will personally translate at least some of it in my native Russian).
+
+However, you are encouraged to make your translation. I'd appreciate it if and also sent me the link to the translation.
+
+**"Translating" the Russian version.** The articles at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms, targeted towards competitive programming audience.
+
+They are undergrad-level, and most of the information there is not unique in other placed on the internet — e. g. the similar-spirited [cp-algorithms.com](https://cp-algorithms.com/).
+
+-->
+
 ### Part I: Performance Engineering
 
 The first part covers the basics of computer architecture and optimization of single-threaded algorithms.
@@ -140,18 +172,19 @@ Among cool things that we will speed up:
 
 - 2x faster GCD (compared to `std::gcd`)
 - 8-15x faster binary search (compared to `std::lower_bound`)
-- 7x faster segment trees
+- 5-10x faster segment trees (compared to Fenwick trees)
 - 5x faster hash tables (compared to `std::unordered_map`)
-- ~~?x faster popcount~~
+- 2x faster popcount (compared to repeatedly calling `popcnt`)
 - 2x faster parsing series of integers (compared to `scanf`)
 - ?x faster sorting (compared to `std::sort`)
 - 2x faster sum (compared to `std::accumulate`)
+- 2-3x faster prefix sum (compared to naive implementation)
+- 10x faster argmin (compared to naive implementation)
 - 10x faster array searching (compared to `std::find`)
 - 100x faster matrix multiplication (compared to "for-for-for")
 - optimal word-size integer factorization (~0.4ms per 60-bit integer)
 - optimal Karatsuba Algorithm
 - optimal FFT
-- argmin at the speed of memory
 
 This work is largely based on blog posts, research papers, conference talks and other work authored by a lot of people:
 
@@ -181,27 +214,27 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
 - [Creel](https://www.youtube.com/c/WhatsACreel)
 
-Volume: 300-400 pages  
-Release date: early 2022
+Volume: 450-600 pages  
+Release date: Q2 2022
 
 ### Part II: Parallel Algorithms
 
-Concurrency, models of parallelism, green threads and runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking and graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication and sorting.
+Concurrency, models of parallelism, green threads and concurrent runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking and graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication and sorting.
 
 Volume: 150-200 pages  
-Release date: late 2022 / 2023?
+Release date: 2023?
 
 ### Part III: Distributed Computing
 
 Communication-constrained algorithms, message passing, actor model, partitioning, MapReduce, consistency and reliability at scale, storage, compression, scheduling and cloud computing, distributed deep learning.
 
-Release date: ???
+Release date: ??? (more likely to be completed than not)
 
 ### Part IV: Compilers and Domain-Specific Architectures
 
-LLVM IR, main optimization techniques from the dragon book, JIT-compilation, Cython, JAX, Numba, Julia, OpenCL, DPC++ and oneAPI, XLA, FPGAs and Verilog, ASICs, TPUs and other AI accelerators.
+LLVM IR, compiler optimizations, JIT-compilation, Cython, JAX, Numba, Julia, OpenCL, DPC++ and oneAPI, XLA,  Verilog, FPGAs, ASICs, TPUs and other AI accelerators.
 
-Release date: ???
+Release date: ??? (less likely to be completed than not)
 
 ### Disclaimer: Technology Choices
 
