@@ -66,7 +66,7 @@ Competitive programming is, in my opinion, misguided. They are doing useless thi
 
 That said, you are very much encouraged to make translations of any article and publish them in your blogs — just send me the link so that we can merge it back when a centralized translation process starts.
 
-**"Translating" the Russian version.** The articles hosted at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms. They are oriented towards competitive programmers and mostly don't discuss how to speed them up beyond asymptotic complexity. Most of the information there is not unique and already exists in English on some other places of the internet: for example, the similar-spirited [cp-algorithms.com](https://cp-algorithms.com/).
+**"Translating" the Russian version.** The articles hosted at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms — without discussing how to speed them up beyond asymptotic complexity. Most of the information there is not unique and already exists in English on some other places on the internet: for example, the similar-spirited [cp-algorithms.com](https://cp-algorithms.com/).
 
 ### Part I: Performance Engineering
 
