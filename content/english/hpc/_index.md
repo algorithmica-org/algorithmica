@@ -35,7 +35,13 @@ The e-book/printed editions will most likely be sold on a "pay what you want" ba
 
 **Pre-ordering / financially supporting the book.** Due to my unfortunate citizenship and place of birth, you can't — that is, until I find a way that at the same time complies with international sanctions, doesn't sponsor [the war](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine), and won't put me in prison for tax evasion.
 
-So, don't bother. If you want to support this book, just share the articles you like on link aggregators and social media and help fix typos — that'd be enough.
+So, don't bother. If you want to support this book, just share the articles you like on link aggregators and social media and help fix typos — that would be enough.
+
+**Translations.** The website has a separate functionality for creating and managing translations — and there are already volunteers willing to translate the book into Italian and Chinese (and I will personally translate at least some of it into my native Russian).
+
+However, as the book is still evolving, it is probably not the best idea to start translation at least before the first part is complete — to not potentially waste the effort. That said, you are very much encouraged to make translations of any article and publish them in your blogs — just send me the link so that we can merge it back when a centralized translation process starts.
+
+**"Translating" the Russian version.** The articles hosted at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms — without discussing how to speed them up beyond asymptotic complexity. Most of the information there is not unique and already exists in English on some other places on the internet: for example, the similar-spirited [cp-algorithms.com](https://cp-algorithms.com/).
 
 **Teaching performance engineering in colleges.** One of my goals for writing this book is to change the way computer science — algorithm design, to be more precise — is taught in colleges. Let me elaborate on that.
 
@@ -61,12 +67,6 @@ I've created courses from scratch in the past. I've already received, and I'm lo
 Competitive programming is, in my opinion, misguided. They are doing useless things, but they are good at doing wrong things, and the performance engineering community should learn from them.
 
 -->
-
-**Translations.** The website has a separate functionality for creating and managing translations — and there are already volunteers willing to translate the book into Italian and Chinese (and I will personally translate at least some of it into my native Russian). However, as the book is still evolving, it is probably not the best idea to start translation at least before the first part is complete — to not potentially waste the effort.
-
-That said, you are very much encouraged to make translations of any article and publish them in your blogs — just send me the link so that we can merge it back when a centralized translation process starts.
-
-**"Translating" the Russian version.** The articles hosted at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms — without discussing how to speed them up beyond asymptotic complexity. Most of the information there is not unique and already exists in English on some other places on the internet: for example, the similar-spirited [cp-algorithms.com](https://cp-algorithms.com/).
 
 ### Part I: Performance Engineering
 
