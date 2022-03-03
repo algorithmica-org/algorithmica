@@ -13,37 +13,41 @@ This is an upcoming high performance computing book titled "Algorithms for Moder
 
 Its intended audience is everyone from performance engineers and practical algorithm researchers to undergraduate computer science students who have just finished an advanced algorithms course and want to learn more practical ways to speed up a program than by going from $O(n \log n)$ to $O(n \log \log n)$.
 
-All materials are hosted on GitHub, with code in a [separate repository](https://github.com/sslotin/scmm-code). This isn't a collaborative project, but any contributions and feedback are very much welcome.
-
-<!--
+All book materials are [hosted on GitHub](https://github.com/algorithmica-org/algorithmica), with code in a [separate repository](https://github.com/sslotin/scmm-code). This isn't a collaborative project, but any contributions and feedback are very much welcome.
 
 ### FAQ
 
-**Fixing errors.** If you spot an error, please do one of these — in the order of preference:
+**Bug/typo fixes.** If you spot an error on any page, please do one of these — in the order of preference:
 
-- Fix it right away by either by either clicking on the pencil icon on the top right on any page or directly modifying it on GitHub (link to a markdown source is also on the top right).
-- Creating an issue on GitHub.
-- Emailing or texting it to me directly.
+- fix it right away by either clicking on the pencil icon on the top right on any page (opens the [Prose](https://prose.io/) editor) or, more traditionally, by modifying the page directly on GitHub (the link to the source is also on the top right);
+- create an issue on [GitHub](https://github.com/algorithmica-org/algorithmica);
+- [tell me](http://sereja.me/) about it directly;
 
-or commenting on other websites — I read most of [HackerNews](https://news.ycombinator.com/from?site=algorithmica.org), [CodeForces](https://codeforces.com/profile/sslotin), and [Twitter](https://twitter.com/sergey_slotin) threads where I'm tagged.
+or leave a comment on some other website where it is being discussed — I read most of [HackerNews](https://news.ycombinator.com/from?site=algorithmica.org), [CodeForces](https://codeforces.com/profile/sslotin), and [Twitter](https://twitter.com/sergey_slotin) threads where I'm tagged.
 
-**Release date.** The book is split into several parts that I plan to finish sequentially with large breaks in-between. Part I, Performance Engineering, is ~75% complete as of March 2022, and will hopefully be >95% complete by summer.
+**Release date.** The book is split into several parts that I plan to finish sequentially with long breaks in-between. Part I, Performance Engineering, is ~75% complete as of March 2022 and will hopefully be >95% complete by summer.
 
-"Release" for an open-source book like this means mostly freezing the table of contents, filling all TODOs, doing a final round of heavy copyediting[^copyedit], drawing illustrations, and then making a print-optimized pdf and figuring out the best way to distribute it. In either case, the web-book will always be available online in full version, and the e-book/printed version will probably be sold on a "pay what you want" basis.
+"Release" for an open-source book like this means mostly freezing the table of contents, filling all the TODOs, doing one final round of heavy copyediting[^copyedit], drawing illustrations, and then making a print-optimized pdf and figuring out the best way to distribute it. After that, I will mostly be fixing errors and only doing some minor edits reflecting the changes in technology or new algorithm advancements.
 
-After then, I will mostly only be doing minor edits, fixing errors and adding changes changes in technology or reflecting new algorithm advancements.
+The e-book/printed editions will most likely be sold on a "pay what you want" basis, and in either case, the web version will always be available online in full.
 
-[^copyedit]: Hopefully with help of a professional editor — because I still haven't figured out how commas work in English.
+[^copyedit]: Hopefully, with the help of a professional editor — I still haven’t figured out how commas work in English. 
 
-**Pre-ordering / financially supporting the book.** You can't — until I find a way that simultaneously doesn't sponsor the war and won't put either me in jail for either tax evasion or treason.
+**Pre-ordering / financially supporting the book.** Due to my unfortunate citizenship and place of birth, you can't — that is, until I find a way that at the same time complies with international sanctions, doesn't sponsor [the war](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine), and won't put me in prison for tax evasion.
 
-So, don't bother. Just share the articles you like on link aggregators and report/fix bugs and typos :)
+So, don't bother. If you want to support this book, just share the articles you like on link aggregators and social media and help fix typos — that'd be enough.
 
-**Teaching performance engineering in colleges.** It is one of my dreams.
+<!--
 
-There are two impactful books on which all computer science courses build on, but one is 50 years old and the other one is 30 years old.
+**Teaching performance engineering in colleges.** One of my goals for writing this book is to change the way computer science — algorithm design, to be more precise — is taught in colleges. Let me elaborate on that.
 
-I want it to be a book that CS students read after they've  [TAOCP](https://en.wikipedia.org/wiki/The_Art_of_Computer_Programming) and [CLRS](https://en.wikipedia.org/wiki/Introduction_to_Algorithms)
+There are two highly impactful textbooks on which most computer science courses are built. Both are undoubtedly outstanding, but [one of them](https://en.wikipedia.org/wiki/The_Art_of_Computer_Programming) is 50 years old, and [the other](https://en.wikipedia.org/wiki/Introduction_to_Algorithms) is 30 years old, and [computers have changed a lot](/hpc/complexity/hardware) since then. Back then, you lived on the promise that Moore's law do the rest — and you'd mostly be right — but today we've hit the capacity of what a single CPU core can do.
+
+So, what I want to do. The next thing is to create infrastructure, which .
+
+TAOCP and CLRS
+
+I want it to be a book that CS students read after they've  and
 
 There are good endeavors, such as "[Programming Parallel Computers](https://ppc.cs.aalto.fi/)" from Aalto University, "[Performance Engineering of Software Systems](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2018/)" from MIT, and also non-academic ones like [Denis Bakhvalov's endevors](https://github.com/dendibakh/perf-ninja), but these are more of an exception, and are also not deep enough to get people to the edge.
 
