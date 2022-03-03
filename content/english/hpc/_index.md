@@ -37,35 +37,36 @@ The e-book/printed editions will most likely be sold on a "pay what you want" ba
 
 So, don't bother. If you want to support this book, just share the articles you like on link aggregators and social media and help fix typos — that'd be enough.
 
-<!--
-
 **Teaching performance engineering in colleges.** One of my goals for writing this book is to change the way computer science — algorithm design, to be more precise — is taught in colleges. Let me elaborate on that.
 
-There are two highly impactful textbooks on which most computer science courses are built. Both are undoubtedly outstanding, but [one of them](https://en.wikipedia.org/wiki/The_Art_of_Computer_Programming) is 50 years old, and [the other](https://en.wikipedia.org/wiki/Introduction_to_Algorithms) is 30 years old, and [computers have changed a lot](/hpc/complexity/hardware) since then. Back then, you lived on the promise that Moore's law do the rest — and you'd mostly be right — but today we've hit the capacity of what a single CPU core can do.
+There are two highly impactful textbooks on which most computer science courses are built. Both are undoubtedly outstanding, but [one of them](https://en.wikipedia.org/wiki/The_Art_of_Computer_Programming) is 50 years old, and [the other](https://en.wikipedia.org/wiki/Introduction_to_Algorithms) is 30 years old, and [computers have changed a lot](/hpc/complexity/hardware) since then. Asymptotic complexity is not the sole deciding factor anymore. In modern practical algorithm design, you choose the approach that makes better use of different types of parallelism available in the hardware over the one that theoretically does fewer raw operations on galaxy-scale inputs.
 
-So, what I want to do. The next thing is to create infrastructure, which .
+And yet, the computer science curricula in most colleges completely ignore this shift. Although there are some great courses that aim to correct that — such as "[Performance Engineering of Software Systems](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2018/)" from MIT, "[Programming Parallel Computers](https://ppc.cs.aalto.fi/)" from Aalto University, and some non-academic ones like Denis Bakhvalov's "[Performance Ninja](https://github.com/dendibakh/perf-ninja)" — most computer science graduates still treat the hardware like something from the 90s.
 
-TAOCP and CLRS
+What I ideally want to achieve is that performance engineering becomes taught right after introduction to algorithms. Writing the first comprehensive textbook on the subject is a large part of this — which is why I rush to finish it by summer so that the colleges can pick it up in the next academic year. But creating a new course requires more than that: you need a balanced curriculum, course infrastructure, lecture slides, lab assignments… So for some period after finishing the book, I will be working on materials and tools for teaching performance engineering — and I'm looking forward to working with other people who want to make it into reality as well.
 
-I want it to be a book that CS students read after they've  and
+<!--
 
-There are good endeavors, such as "[Programming Parallel Computers](https://ppc.cs.aalto.fi/)" from Aalto University, "[Performance Engineering of Software Systems](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2018/)" from MIT, and also non-academic ones like [Denis Bakhvalov's endevors](https://github.com/dendibakh/perf-ninja), but these are more of an exception, and are also not deep enough to get people to the edge.
+Back then, you lived on the promise that Moore's law do the rest — and you'd mostly be right — but today we've hit the capacity of what a single CPU core can do.
+
+The next thing is to create infrastructure, which .
+
+I want it to be a book that CS students read after they've read 
+TAOCP and CLRS.
+
+There are good endeavors, such as,, and also, but these are more of an exception, and are also not deep enough to get people to the edge.
 
 I've created courses from scratch in the past. I've already received, and I'm looking forward to collaborating more. Which is one of the reasons I rush to finish it by summer — so that colleges can pick up on the idea.
 
 Competitive programming is, in my opinion, misguided. They are doing useless things, but they are good at doing wrong things, and the performance engineering community should learn from them.
 
-**Translations.**
-
-There are already volunteers that want to translate it into Italian and Chinese (and I will personally translate at least some of it in my native Russian). The website has a functionality.
-
-As the book is evolving, it is probably not the best idea to start translation right away. However, you are very much encouraged to make your translations and post them in your blogs — I'd also appreciate it if you sent me the link to the translation.
-
-**"Translating" the Russian version.** The articles at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms, targeted towards competitive programming audience.
-
-They are undergrad-level, and most of the information there is not unique in other placed on the internet — e. g. the similar-spirited [cp-algorithms.com](https://cp-algorithms.com/).
-
 -->
+
+**Translations.** The website has a separate functionality for creating and managing translations — and there are already volunteers willing to translate the book into Italian and Chinese (and I will personally translate at least some of it into my native Russian). However, as the book is still evolving, it is probably not the best idea to start translation at least before the first part is complete — to not potentially waste the effort.
+
+That said, you are very much encouraged to make translations of any article and publish them in your blogs — just send me the link so that we can merge it back when a centralized translation process starts.
+
+**"Translating" the Russian version.** The articles hosted at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms. They are oriented towards competitive programmers and mostly don't discuss how to speed them up beyond asymptotic complexity. Most of the information there is not unique and already exists in English on some other places of the internet: for example, the similar-spirited [cp-algorithms.com](https://cp-algorithms.com/).
 
 ### Part I: Performance Engineering
 
