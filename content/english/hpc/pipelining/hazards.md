@@ -1,6 +1,7 @@
 ---
 title: Pipeline Hazards
 weight: 1
+published: true
 ---
 
 [Pipelining](../) lets you hide the latencies of instructions by running them concurrently, but also creates some potential obstacles of its own — characteristically called *pipeline hazards*, that is, situations when the next instruction cannot execute on the following clock cycle.
@@ -18,7 +19,7 @@ The only way to resolve a hazard is to have a *pipeline stall*: stop the progres
 Different hazards have different penalties:
 
 - In structural hazards, you have to wait (usually one more cycle) until the execution unit is ready. They fundamental bottlenecks on performance and can't be avoided — you have to engineer around them.
-- In data hazards, you have to wait of the required data to be computed (the latency of the *critical path*). Data hazards are solved by restructuring computations so that the critical path is shorter.
+- In data hazards, you have to wait for the required data to be computed (the latency of the *critical path*). Data hazards are solved by restructuring computations so that the critical path is shorter.
 - In control hazards, you generally have to flush the entire pipeline and start over, wasting whole 15-20 cycles. They are solved by either removing branches completely, or making them predictable so that the CPU can effectively *speculate* on what is going to be executed next.
 
 As they have very different impact on performance, we are going to go in the reversed order and start with the more grave ones.
