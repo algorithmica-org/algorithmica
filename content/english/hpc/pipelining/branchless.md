@@ -1,6 +1,7 @@
 ---
 title: Branchless Programming
 weight: 3
+published: true
 ---
 
 As we established in [the previous section](../branching), branches that can't be effectively predicted by the CPU are expensive as they may cause a long pipeline stall to fetch new instructions after a branch mispredict. In this section, we discuss the means of removing branches in the first place.
@@ -40,7 +41,7 @@ sar  ebx, 31    ; t >>= 31
 imul  eax, ebx   ; x *= t
 ```
 
-Another, more complicated way to implement this whole sequence is to convert this sign byte into a mask and then use bitwise `and` instead of multiplication: `((a[i] - 50) >> 1 - 1) & a`. This makes the whole sequence one cycle faster, considering that unlike other instructions, `imul` takes 3 cycles:
+Another, more complicated way to implement this whole sequence is to convert this sign bit into a mask and then use bitwise `and` instead of multiplication: `((a[i] - 50) >> 1 - 1) & a`. This makes the whole sequence one cycle faster, considering that unlike other instructions, `imul` takes 3 cycles:
 
 ```nasm
 mov  ebx, eax   ; t = x
