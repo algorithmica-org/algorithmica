@@ -183,7 +183,7 @@ int abs(int a) {
 
 A very common value for strings is the empty string — which is also its default value. You also need to handle them somehow, and the idiomatic thing to do is to assign `nullptr` as the pointer and `0` as the string size, and then check if the pointer is null or if the size is zero at the beginning of every procedure involving strings.
 
-However, this requires a separate branch, which is costly unless most strings are empty. What we can do to get rid of it is to to allocate a "zero C-string", which is just a zero byte allocated somewhere, and then simply point all empty strings there. Now all string operations with empty strings have to read this useless zero byte, but this is still much cheaper than a branch misprediction.
+However, this requires a separate branch, which is costly unless most strings are empty. What we can do to get rid of it is to allocate a "zero C-string", which is just a zero byte allocated somewhere, and then simply point all empty strings there. Now all string operations with empty strings have to read this useless zero byte, but this is still much cheaper than a branch misprediction.
 
 **Binary search.** The standard binary search [can be implemented](/hpc/data-structures/binary-search) without branches, and on small arrays (that fit into cache) it works ~4x faster than the branchy `std::lower_bound`:
 

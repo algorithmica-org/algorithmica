@@ -13,7 +13,7 @@ These problems are not that critical for some specialized computer systems such 
 
 ### Memory Paging
 
-Virtual memory gives each process the impression that it fully controls a contiguous region of memory, which in reality may be mapped to multiple smaller blocks of the physical memory — which includes both the main memory (RAM) and external memory (HDD, SDD).
+Virtual memory gives each process the impression that it fully controls a contiguous region of memory, which in reality may be mapped to multiple smaller blocks of the physical memory — which includes both the main memory (RAM) and external memory (HDD, SSD).
 
 ![](../img/virtual-memory.jpg)
 
@@ -47,6 +47,6 @@ std::sort(data, data + 1024);
 
 Here we map a 4K file, which can fit entirely on just a single memory page, but when we open larger files, its reads will be done lazily when we request a certain page, and its writes will be buffered and committed to the file system when the operating decides to (usually on the program termination or when the system runs out of RAM).
 
-A technique that has the same operating principle, but the reverse intention is the *swap file*, which lets the operating system automatically use parts of an SDD or an HDD as an extension of the main memory when there is not enough real RAM. This lets the systems that run out of memory just terribly slow down instead of crashing.
+A technique that has the same operating principle, but the reverse intention is the *swap file*, which lets the operating system automatically use parts of an SSD or an HDD as an extension of the main memory when there is not enough real RAM. This lets the system run out of memory just terribly slowly instead of crashing.
 
-This seamless integration of the main and external memory essentially turns RAM into ab "L4 cache" for the external memory, which is a convenient way to think about it from the algorithm design perspective.
+This seamless integration of the main and external memory essentially turns RAM into an "L4 cache" for the external memory, which is a convenient way to think about it from the algorithm design perspective.
