@@ -142,3 +142,5 @@ When you run a program on a laptop for under a second, a ±5% fluctuation in per
 ### Further Reading
 
 Interested readers can explore this comprehensive [list of experimental computer science resources](https://www.cs.huji.ac.il/w~feit/exp/related.html) by Dror Feitelson, perhaps starting with "[Producing Wrong Data Without Doing Anything Obviously Wrong](http://eecs.northwestern.edu/~robby/courses/322-2013-spring/mytkowicz-wrong-data.pdf)" by Todd Mytkowicz et al.
+
+You can also watch [this great talk](https://www.youtube.com/watch?v=r-TLSBdHe1A) by Emery Berger on how to do statistically sound performance evaluation.
