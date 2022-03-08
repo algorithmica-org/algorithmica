@@ -547,6 +547,7 @@ Other possible minor optimizations include:
 - Reversing the order in which the layers are stored to left-to-right so that the first few layers are on the same page.
 - Rewriting the whole thing in assembly, as the compiler seems to struggle with pointer arithmetic.
 - Using [blending](/hpc/simd/masking) instead of `packs`: you can odd-even shuffle node keys (`[1 3 5 7] [2 4 6 8]`), compare against the search key, and then blend the low 16 bits of the first register mask with the high 16 bits of the second. Blending is slightly faster on many architectures, and it may also help to alternate between packing and blending as they use different subsets of ports. (Thanks to Const-me from HackerNews for [suggesting](https://news.ycombinator.com/item?id=30381912) it.)
+- Using [popcount](/hpc/simd/shuffling/#shuffles-and-popcount) instead of `tzcnt`: the index `i` is equal to the number of keys less than `x`, so we can compare `x` against all keys, combine the vector mask any way we want, call `maskmov`, and then calculate the number of set bits with `popcnt`. This removes the need to store the keys in any particular order, which lets us skip the permutation step and also use this procedure on the last layer as well.
 
 Note that the current implementation is specific to AVX2 and may require some non-trivial changes to adapt to other platforms. It would be interesting to port it for Intel CPUs with AVX-512 and Arm CPUs with 128-bit NEON, which may require some [trickery](https://github.com/WebAssembly/simd/issues/131) to work.
 
