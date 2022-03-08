@@ -13,7 +13,7 @@ Complexity is an old concept. It was [systematically formulated](http://www.cs.a
 
 The "elementary operations" of a CPU are called *instructions*, and their "costs" are called *latencies*. Instructions are stored in *memory* and executed one by one by the processor, which has some internal *state* stored in a number of *registers*. One of these registers is the *instruction pointer* that indicates the address of the next instruction to read and execute. Each instruction changes the state of the processor in a certain way (including moving the instruction pointer), possibly modifies the main memory, and takes a different amount of *CPU cycles* to complete before the next one can be started.
 
-To estimate the real running time of a program, you need to sum all latencies for its executed instructions and multiply it by the *clock frequency*, that is, the number of cycles a particular CPU does per second. 
+To estimate the real running time of a program, you need to sum all latencies for its executed instructions and divide it by the *clock frequency*, that is, the number of cycles a particular CPU does per second. 
 
 ![](img/cpu.png)
 
