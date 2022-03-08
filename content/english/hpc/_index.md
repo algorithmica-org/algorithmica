@@ -20,26 +20,30 @@ All book materials are [hosted on GitHub](https://github.com/algorithmica-org/al
 **Bug/typo fixes.** If you spot an error on any page, please do one of these — in the order of preference:
 
 - fix it right away by either clicking on the pencil icon on the top right on any page (opens the [Prose](https://prose.io/) editor) or, more traditionally, by modifying the page directly on GitHub (the link to the source is also on the top right);
-- create an issue on [GitHub](https://github.com/algorithmica-org/algorithmica);
+- create [an issue on GitHub](https://github.com/algorithmica-org/algorithmica/issues);
 - [tell me](http://sereja.me/) about it directly;
 
 or leave a comment on some other website where it is being discussed — I read most of [HackerNews](https://news.ycombinator.com/from?site=algorithmica.org), [CodeForces](https://codeforces.com/profile/sslotin), and [Twitter](https://twitter.com/sergey_slotin) threads where I'm tagged.
 
-**Release date.** The book is split into several parts that I plan to finish sequentially with long breaks in-between. Part I, Performance Engineering, is ~75% complete as of March 2022 and will hopefully be >95% complete by summer.
+**Release date.** The book is split into several parts that I plan to finish sequentially with long breaks in-between. Part I, Performance Engineering, is ~75% complete as of March 2022 and will hopefully be >95% complete by this summer.
 
-"Release" for an open-source book like this means mostly freezing the table of contents, filling all the TODOs, doing one final round of heavy copyediting[^copyedit], drawing illustrations, and then making a print-optimized pdf and figuring out the best way to distribute it. After that, I will mostly be fixing errors and only doing some minor edits reflecting the changes in technology or new algorithm advancements.
+A "release" for an open-source book like this essentially means:
 
-The e-book/printed editions will most likely be sold on a "pay what you want" basis, and in either case, the web version will always be available online in full.
+- finishing all essential sections and filling all the TODOs,
+- mostly freezing the table of contents (except for the case studies),
+- doing one final round of heavy copyediting (hopefully, with the help of a professional editor — I still haven’t figured out how commas work in English),
+- drawing illustrations (I stole a lot of those that are currently displayed),
+- making a print-optimized pdf and figuring out the best way to distribute it.
 
-[^copyedit]: Hopefully, with the help of a professional editor — I still haven’t figured out how commas work in English. 
+After that, I will mostly be fixing errors and only doing some minor edits reflecting the changes in technology or new algorithm advancements. The e-book/printed editions will most likely be sold on a "pay what you want" basis, and in any case, the web version will always be fully available online.
 
 **Pre-ordering / financially supporting the book.** Due to my unfortunate citizenship and place of birth, you can't — that is, until I find a way that at the same time complies with international sanctions, doesn't sponsor [the war](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine), and won't put me in prison for tax evasion.
 
 So, don't bother. If you want to support this book, just share the articles you like on link aggregators and social media and help fix typos — that would be enough.
 
-**Translations.** The website has a separate functionality for creating and managing translations — and there are already volunteers willing to translate the book into Italian and Chinese (and I will personally translate at least some of it into my native Russian).
+**Translations.** The website has a separate functionality for creating and managing translations — and I've already been contacted by some nice people willing to translate the book into Italian and Chinese (and I will personally translate at least some of it into my native Russian).
 
-However, as the book is still evolving, it is probably not the best idea to start translation at least before the first part is complete — to not potentially waste the effort. That said, you are very much encouraged to make translations of any article and publish them in your blogs — just send me the link so that we can merge it back when a centralized translation process starts.
+However, as the book is still evolving, it is probably not the best idea to start translating it at least until Part I is finished. That said, you are very much encouraged to make translations of any articles and publish them in your blogs — just send me the link so that we can merge it back when a centralized translation process starts.
 
 **"Translating" the Russian version.** The articles hosted at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms — without discussing how to speed them up beyond asymptotic complexity. Most of the information there is not unique and already exists in English on some other places on the internet: for example, the similar-spirited [cp-algorithms.com](https://cp-algorithms.com/).
 
@@ -49,7 +53,7 @@ There are two highly impactful textbooks on which most computer science courses 
 
 And yet, the computer science curricula in most colleges completely ignore this shift. Although there are some great courses that aim to correct that — such as "[Performance Engineering of Software Systems](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2018/)" from MIT, "[Programming Parallel Computers](https://ppc.cs.aalto.fi/)" from Aalto University, and some non-academic ones like Denis Bakhvalov's "[Performance Ninja](https://github.com/dendibakh/perf-ninja)" — most computer science graduates still treat the hardware like something from the 90s.
 
-What I ideally want to achieve is that performance engineering becomes taught right after introduction to algorithms. Writing the first comprehensive textbook on the subject is a large part of this — which is why I rush to finish it by summer so that the colleges can pick it up in the next academic year. But creating a new course requires more than that: you need a balanced curriculum, course infrastructure, lecture slides, lab assignments… So for some period after finishing the book, I will be working on materials and tools for teaching performance engineering — and I'm looking forward to working with other people who want to make it into reality as well.
+What I really want to achieve is that performance engineering becomes taught right after introduction to algorithms. Writing the first comprehensive textbook on the subject is a large part of it, and this is why I rush to finish it by the summer so that the colleges can pick it up in the next academic year. But creating a new course requires more than that: you need a balanced curriculum, course infrastructure, lecture slides, lab assignments… so for some time after finishing the main book, I will be working on course materials and tools for *teaching* performance engineering — and I'm looking forward to collaborating with other people who want to make it a reality as well.
 
 <!--
 
@@ -86,11 +90,12 @@ Planned table of contents:
 2. Computer Architecture
  1.1. Instruction Set Architectures
  1.2. Assembly Language
- 1.2. Loops and Conditionals
- 1.3. Functions and Recursion
- 1.4. Indirect Branching
- 1.5. Interrupts and System Calls
+ 1.3. Loops and Conditionals
+ 1.4. Functions and Recursion
+ 1.5. Indirect Branching
  1.6. Machine Code Layout
+ 1.7. Interrupts and System Calls
+ 1.8. Virtualization
 3. Instruction-Level Parallelism
  3.1. Pipeline Hazards
  3.2. The Cost of Branching
@@ -189,7 +194,7 @@ Planned table of contents:
 (12.8. Probabilistic Filters)
 ```
 
-Among cool things that we will speed up:
+Among the cool things that we will speed up:
 
 - 2x faster GCD (compared to `std::gcd`)
 - 8-15x faster binary search (compared to `std::lower_bound`)
