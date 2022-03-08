@@ -264,6 +264,6 @@ Release date: ??? (less likely to be completed than not)
 
 ### Disclaimer: Technology Choices
 
-The examples in this book use C++, GCC, x86-64, CUDA and Spark, although the underlying principles we aim to convey are not specific to them.
+The examples in this book use C++, GCC, x86-64, CUDA, and Spark, although the underlying principles we aim to convey are not specific to them.
 
-To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment, and thus more helpful for the reader. I would have respectively picked C / Rust, LLVM, arm, OpenCL and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
+To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment and thus more helpful to the reader. I would have respectively picked C / Rust, LLVM, arm, OpenCL, and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
