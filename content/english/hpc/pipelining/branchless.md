@@ -88,7 +88,7 @@ $$
 x = c \cdot a + (1 - c) \cdot b
 $$
 
-This way you can eliminate branching, but this comes at the cost of evaluating *both* branches and the `cmov` itself. Because evaluating the ">=" branch costs nothing, the performance is exactly equal to [the "always yes" case](branching/#branch-prediction) in the branchy version.
+This way you can eliminate branching, but this comes at the cost of evaluating *both* branches and the `cmov` itself. Because evaluating the ">=" branch costs nothing, the performance is exactly equal to [the "always yes" case](../branching/#branch-prediction) in the branchy version.
 
 ### When It Is Beneficial
 
