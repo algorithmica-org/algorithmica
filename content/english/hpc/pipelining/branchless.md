@@ -1,6 +1,7 @@
 ---
 title: Branchless Programming
 weight: 3
+published: true
 ---
 
 As we established in [the previous section](../branching), branches that can't be effectively predicted by the CPU are expensive as they may cause a long pipeline stall to fetch new instructions after a branch mispredict. In this section, we discuss the means of removing branches in the first place.
@@ -217,7 +218,7 @@ That there are no substantial reasons why compilers can't do this on their own, 
 
 **Data-parallel programming.** Branchless programming is very important for [SIMD](/hpc/simd) applications, including GPU programming, because they don't have branching in the first place.
 
-In our array sum example, if you remove the `volatile` type qualifier from the accumulator, the compiler becomes able to [vectorize](/hpc/simd/autovectorization) the loop:
+In our array sum example, if you remove the `volatile` type qualifier from the accumulator, the compiler becomes able to [vectorize](/hpc/simd/auto-vectorization) the loop:
 
 ```c++
 /* volatile */ int s = 0;
