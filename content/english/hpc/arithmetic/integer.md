@@ -56,7 +56,7 @@ Here $\bar{x}$ represents bitwise negation, which can be also thought of as subt
 As an exercise, here are some facts about signed integers:
 
 - All positive numbers and zero remain the same as their binary notation.
-- All negative numbers have the highest bit set to zero.
+- All negative numbers have the highest bit set to one.
 - There are more negative numbers than positive numbers (exactly by one — because of zero).
 - For `int`, if you add $1$ to $(2^{31}-1)$, the result will be $-2^{31}$, represented as `10000000` (for exposition purposes, we will only write 8 bits instead of 32).
 - Knowing a binary notation of a positive number `x`, you can get the binary notation of `-x` as `~x + 1`.
