@@ -530,7 +530,7 @@ Repeatedly adding the lowest set bit to `k` makes it "more even" and lifts it to
 
 ![A path for an update query in a Fenwick tree](../img/fenwick-update.png)
 
-Now, if we leave all the code as it is, it works correctly even when $n$ is not a power of two. In this case, the Fenwick tree is not equivalent to a segment tree fo size $n$ but to a *forest* of up to $O(\log n)$ segment trees of power-of-two sizes — or to a single segment tree padded with zeros to a large power of two, if you like to think this way. In either case, all procedures remain working correctly as they never touch anything outside the $[1, n]$ range.
+Now, if we leave all the code as it is, it works correctly even when $n$ is not a power of two. In this case, the Fenwick tree is not equivalent to a segment tree of size $n$ but to a *forest* of up to $O(\log n)$ segment trees of power-of-two sizes — or to a single segment tree padded with zeros to a large power of two, if you like to think this way. In either case, all procedures still work correctly as they never touch anything outside the $[1, n]$ range.
 
 <!-- Sometimes people use `k -= k & -k` to iterate when processing the `sum` query, which makes this implementation delightfully symmetric. -->
 
