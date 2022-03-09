@@ -335,7 +335,7 @@ constexpr int blocks(int n) {
     return (n + B - 1) / B;
 }
 
-// number of keys on the layer pervious to one with n element
+// number of keys on the layer previous to one with n keys
 constexpr int prev_keys(int n) {
     return (blocks(n) + B) / (B + 1) * B;
 }
@@ -345,7 +345,7 @@ constexpr int height(int n) {
     return (n <= B ? 1 : height(prev_keys(n)) + 1);
 }
 
-// where the layer h starts (0 is the largest)
+// where the layer h starts (layer 0 is the largest)
 constexpr int offset(int h) {
     int k = 0, n = N;
     while (h--) {
