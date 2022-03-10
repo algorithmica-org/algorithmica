@@ -9,7 +9,7 @@ The users of floating-point arithmetic deserve one of these IQ bell curve memes 
 - Then they discover that `0.1 + 0.2 != 0.3` or some other quirk like that, freak out, start thinking that some random error term is added to every computation, and for many years avoid any real data types completely.
 - Then they finally man up, read the specification of how IEEE-754 floats work and start using them appropriately.
 
-Most people are unfortunately still at stage 2, breeding various misconceptions about floating-point arithmetic — thinking that it is fundamentally imprecise and unstable, and slower than integer arithmetic.
+Too many people are unfortunately still at stage 2, breeding various misconceptions about floating-point arithmetic — thinking that it is fundamentally imprecise and unstable, and slower than integer arithmetic.
 
 ![](../img/iq.svg)
 
