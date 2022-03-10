@@ -1,6 +1,7 @@
 ---
 title: Memory Bandwidth
 weight: 1
+published: true
 ---
 
 On the data path between the CPU registers and the RAM, there is a hierarchy of *caches* that exist to speed up access to frequently used data: the layers closer to the processor are faster but also smaller in size. The word "faster" here applies to two closely related but separate timings:
@@ -100,6 +101,8 @@ In fact, the performance increase in the case of the RAM is even more than 2x an
 - the memory controller doesn't have to switch the bus between read and write modes this way;
 - the instruction sequence becomes simpler, allowing for more pending memory instructions;
 - and, perhaps most importantly, the cache system can simply "fire and forget" non-temporal write requests, while for reads it needs to remember what to do with the data once it arrives — similar to connection handles in networking software.
+
+-- The reason that pure non-cached writes are around 50% faster than the reads is because a write cycle to a DRAM is around 50% shorter than a read cycle.  For reads the address has to be broadcast to the RAM chips, then wait a number of cycles until the bus "turns around" in order for the retrieved data to be broadcast back to the memory controller.  For writes, the memory controller just broadcasts the address, then the data with a (small? none?) number of "dead cycles" in between.
 
 Also, for these reasons, a single CPU core usually [can't fully saturate the memory bandwidth](../sharing).
 
