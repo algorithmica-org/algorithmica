@@ -71,7 +71,7 @@ bool eq(float a, float b) {
 }
 ```
 
-The value of epsilon should depend on the application: the one above — the machine epsilon for `float` — is only good for no more than one floating-point operation.
+The value of `eps` should depend on the application: the one above — the machine epsilon for `float` — is only good for no more than one floating-point operation.
 
 ### Interval Arithmetic
 
