@@ -127,7 +127,7 @@ In this one, it is easy to show that the error is be bound by $\epsilon \cdot |x
 
 ### Kahan Summation
 
-From the previous example, we can see that long chains of operations are not a problem, but adding and subtracting numbers of different magnitude is. The general approach to dealing with such problems is to try to keep big numbers with big numbers and low numbers with low numbers.
+From the previous example, we can see that long chains of operations are not a problem, but adding and subtracting numbers of different magnitude is. The general approach to dealing with such problems is to try to keep big numbers with big numbers and small numbers with small numbers.
 
 Consider the standard summation algorithm:
 
