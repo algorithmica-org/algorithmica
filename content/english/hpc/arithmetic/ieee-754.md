@@ -58,7 +58,7 @@ The default way integer arithmetic deals with corner cases such as division by z
 
 Sometimes a software crash, in turn, causes a real, physical one. In 1996, the maiden flight of the [Ariane 5](https://en.wikipedia.org/wiki/Ariane_5) (the space launch vehicle that ESA uses to lift stuff into low Earth orbit) ended in [a catastrophic explosion](https://www.youtube.com/watch?v=gp_D8r-2hwk) due to the policy of aborting computation on arithmetic error, which in this case was a floating-point to integer conversion overflow, that led to the navigation system thinking that it was off course and making a large correction, eventually causing the disintegration of a $1B rocket.
 
-There is a way to gracefully handle corner cases like these: hardware interrupts. When an exception occurs, CPU:
+There is a way to gracefully handle corner cases like these: hardware interrupts. When an exception occurs, the CPU
 
 - interrupts the execution of a program;
 - packs every all relevant information into a data structure called "interrupt vector";
