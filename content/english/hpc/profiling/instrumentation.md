@@ -1,6 +1,7 @@
 ---
 title: Instrumentation
 weight: 1
+published: true
 ---
 
 *Instrumentation* is an overcomplicated term that means inserting timers and other tracking code into programs. The simplest example is using the `time` utility in Unix-like systems to measure the duration of execution for the whole program.
@@ -77,4 +78,4 @@ void query() {
 
 This way we can remove the need to sample a new random number on each invocation, only resetting the counter when we choose to calculate statistics.
 
-Techniques like that are frequently by library algorithm developers inside large projects to collect profiling data without affecting the performance of the end program too much.
+Techniques like that are frequently used by library algorithm developers inside large projects to collect profiling data without affecting the performance of the end program too much.
