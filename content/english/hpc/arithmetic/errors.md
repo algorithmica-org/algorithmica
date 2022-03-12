@@ -170,7 +170,7 @@ for (int i = 0; i < n; i++) {
 
 This trick is known as *Kahan summation*. Its relative error is bounded by $2 \epsilon + O(n \epsilon^2)$: the first term comes from the very last summation, and the second term is due to the fact that we work with less-than-epsilon errors on each step.
 
-Of course, a more general approach would be to switch to a more precise data type, like `double`, either way effectively squaring the machine epsilon. It can sort of be scaled by bundling two `double` variables together: one for storing the value, and another for its non-representable errors, so that they actually represent $a+b$. This approach is known as *double-double* arithmetic, and it can be similarly generalized to define quad-double and higher precision arithmetic.
+Of course, a more general approach that works not just for array summation would be to switch to a more precise data type, like `double`, also effectively squaring the machine epsilon. Furthermore, it can (sort of) be scaled by bundling two `double` variables together: one for storing the value and another for its non-representable errors so that they represent the value $a+b$. This approach is known as double-double arithmetic, and it can be similarly generalized to define quad-double and higher precision arithmetic.
 
 <!--
 
