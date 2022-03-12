@@ -15,7 +15,7 @@ $$
 f(x) = 0
 $$
 
-The only thing assumed about the function $f$ is that at least one root exists and that $f(x)$ is continuous and differentiable on the search interval.
+The only thing assumed about the function $f$ is that at least one root exists and that $f(x)$ is continuous and differentiable on the search interval. There are also some [boring corner cases](https://en.wikipedia.org/wiki/Newton%27s_method#Failure_analysis), but they almost never occur in practice, so we will just informally say that the function is "good."
 
 The main idea of the algorithm is to start with some initial approximation $x_0$ and then iteratively improve it by drawing the tangent to the graph of the function at $x = x_i$ and setting the next approximation $x_{i+1}$ equal to the $x$-coordinate of its intersection with the $x$-axis. The intuition is that if the function $f$ is "[good](https://en.wikipedia.org/wiki/Smoothness)" and $x_i$ is already close enough to the root, then $x_{i+1}$ will be even closer.
 
