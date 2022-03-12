@@ -71,7 +71,7 @@ bool eq(float a, float b) {
 }
 ```
 
-The value of epsilon should depend on the application: the one above — the machine epsilon for `float` — is only good for no more than one floating-point operation.
+The value of `eps` should depend on the application: the one above — the machine epsilon for `float` — is only good for no more than one floating-point operation.
 
 ### Interval Arithmetic
 
@@ -127,7 +127,7 @@ In this one, it is easy to show that the error is be bound by $\epsilon \cdot |x
 
 ### Kahan Summation
 
-From the previous example, we can see that long chains of operations are not a problem, but adding and subtracting numbers of different magnitude is. The general approach to dealing with such problems is to try to keep big numbers with big numbers and low numbers with low numbers.
+From the previous example, we can see that long chains of operations are not a problem, but adding and subtracting numbers of different magnitude is. The general approach to dealing with such problems is to try to keep big numbers with big numbers and small numbers with small numbers.
 
 Consider the standard summation algorithm:
 
@@ -139,7 +139,7 @@ for (int i = 0; i < n; i++)
 
 Since we are performing summations and not multiplications, its relative error is no longer just bounded by $O(\epsilon \cdot n)$, but heavily depends on the input.
 
-In the most ridiculous case, if the first value is $2^{23}$ and the others are ones, the sum is going to be $2^{23}$ regardless of $n$, which can be verified by executing the following code and observing that it simply prints $16777216 = 2^{23}$ twice:
+In the most ridiculous case, if the first value is $2^{23}$ and the other values are equal to $1$, the sum is going to be $2^{23}$ regardless of $n$, which can be verified by executing the following code and observing that it simply prints $16777216 = 2^{23}$ twice:
 
 ```cpp
 const int n = (1<<24);

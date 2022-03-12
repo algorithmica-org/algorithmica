@@ -9,7 +9,7 @@ The users of floating-point arithmetic deserve one of these IQ bell curve memes 
 - Then they discover that `0.1 + 0.2 != 0.3` or some other quirk like that, freak out, start thinking that some random error term is added to every computation, and for many years avoid any real data types completely.
 - Then they finally man up, read the specification of how IEEE-754 floats work and start using them appropriately.
 
-Most people are unfortunately still at stage 2, breeding various misconceptions about floating-point arithmetic — thinking that it is fundamentally imprecise and unstable, and slower than integer arithmetic.
+Too many people are unfortunately still at stage 2, breeding various misconceptions about floating-point arithmetic — thinking that it is fundamentally imprecise and unstable, and slower than integer arithmetic.
 
 ![](../img/iq.svg)
 
@@ -189,4 +189,4 @@ fp operator*(fp a, fp b) {
 
 Many applications that require higher levels of precision use software floating-point arithmetic in a similar fashion. But of course, you don't want to execute a sequence of 10 or so instructions that this code compiles to each time you want to multiply two real numbers, so on modern CPUs, floating-point arithmetic is implemented in hardware — usually as separate coprocessors due to its complexity.
 
-The *floating-point unit* of x86 (often referred to as x87) has separate registers and its own tiny instruction set that supports memory operations, basic arithmetic, trigonometry, and some common operations such as logarithm, exponent, and square root. To make these operations properly work together, some additional details of floating-point number representation need to be clarified — which we will do in [the next section](../ieee).
+The *floating-point unit* of x86 (often referred to as x87) has separate registers and its own tiny instruction set that supports memory operations, basic arithmetic, trigonometry, and some common operations such as logarithm, exponent, and square root. To make these operations properly work together, some additional details of floating-point number representation need to be clarified — which we will do in [the next section](./ieee-754.md).

@@ -51,7 +51,7 @@ int main() {
 }
 ```
 
-This is a very low-overhead method that lets you run more experiments and [get more accurate results](../noise) from them. You still have to perform some repeated actions, but they can be largely automated with frameworks, [Google benchmark library](https://github.com/google/benchmark) being the most popular choice for C++. Some programming languages also have handy built-in tools for benchmarking: special mention here goes to [Python's timeit function](https://docs.python.org/3/library/timeit.html) and [Julia's @benckmark macro](https://github.com/JuliaCI/BenchmarkTools.jl).
+This is a very low-overhead method that lets you run more experiments and [get more accurate results](../noise) from them. You still have to perform some repeated actions, but they can be largely automated with frameworks, [Google benchmark library](https://github.com/google/benchmark) being the most popular choice for C++. Some programming languages also have handy built-in tools for benchmarking: special mention here goes to [Python's timeit function](https://docs.python.org/3/library/timeit.html) and [Julia's @benchmark macro](https://github.com/JuliaCI/BenchmarkTools.jl).
 
 Although *efficient* in terms of execution speed, C and C++ are not the most *productive* languages, especially when it comes to analytics. When your algorithm depends on some parameters such as the input size, and you need to collect more than just one data point from each implementation, you really want to integrate your benchmarking code with the outside environment and analyze the results using something else.
 

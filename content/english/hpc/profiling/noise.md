@@ -11,7 +11,7 @@ Situations like these are usually not caused by fraudulent actions by their auth
 
 There are many things that can introduce bias into benchmarks.
 
-**Differing datasets.** There are many algorithms whose performance somehow depends on the dataset distribution. In order to define, for example, what the fastest sorting, shortest path, or binary search algorithms are, you have to fixing the dataset on which the algorithm is run.
+**Differing datasets.** There are many algorithms whose performance somehow depends on the dataset distribution. In order to define, for example, what the fastest sorting, shortest path, or binary search algorithms are, you have to fix the dataset on which the algorithm is run.
 
 This sometimes applies even to algorithms that process a single piece of input. For example, it is not a good idea to feed GCD implementations sequential numbers because it makes branches very predictable:
 
