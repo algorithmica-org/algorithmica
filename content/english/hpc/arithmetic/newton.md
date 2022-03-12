@@ -33,7 +33,7 @@ $$
 x_{i+1} = x_i - \frac{f(x_i)}{f'(x_i)}
 $$
 
-Newton's method is very important: it is the basis of most optimization solvers in science and engineering. 
+Newton's method is very important: it is the basis of a wide range of optimization solvers in science and engineering. 
 
 ### Square Root
 
