@@ -139,7 +139,7 @@ for (int i = 0; i < n; i++)
 
 Since we are performing summations and not multiplications, its relative error is no longer just bounded by $O(\epsilon \cdot n)$, but heavily depends on the input.
 
-In the most ridiculous case, if the first value is $2^{23}$ and the others are are equal to $1$, the sum is going to be $2^{23}$ regardless of $n$, which can be verified by executing the following code and observing that it simply prints $16777216 = 2^{23}$ twice:
+In the most ridiculous case, if the first value is $2^{23}$ and the other values are equal to $1$, the sum is going to be $2^{23}$ regardless of $n$, which can be verified by executing the following code and observing that it simply prints $16777216 = 2^{23}$ twice:
 
 ```cpp
 const int n = (1<<24);
