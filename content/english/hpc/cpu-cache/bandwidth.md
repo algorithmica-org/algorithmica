@@ -1,6 +1,7 @@
 ---
 title: Memory Bandwidth
 weight: 1
+published: true
 ---
 
 On the data path between the CPU registers and the RAM, there is a hierarchy of *caches* that exist to speed up access to frequently used data: the layers closer to the processor are faster but also smaller in size. The word "faster" here applies to two closely related but separate timings:
@@ -95,11 +96,13 @@ Non-temporal memory reads or writes are a way to tell the CPU that we won't be n
 
 On the one hand, if the array is small enough to fit into the cache, and we actually access it some short time after, this has a negative effect because we have to read entirely it from the RAM (or, in this case, we have to *write* it into the RAM instead of using a locally cached version). And on the other, this prevents read-backs and lets us use the memory bus more efficiently.
 
-In fact, the performance increase in the case of the RAM is even more than 2x and faster than the read-only benchmark. The best explanation I have is that it is because:
+In fact, the performance increase in the case of the RAM is even more than 2x and faster than the read-only benchmark. This happens because:
 
 - the memory controller doesn't have to switch the bus between read and write modes this way;
 - the instruction sequence becomes simpler, allowing for more pending memory instructions;
-- and, perhaps most importantly, the cache system can simply "fire and forget" non-temporal write requests, while for reads it needs to remember what to do with the data once it arrives — similar to connection handles in networking software.
+- and, most importantly, the memory controller can simply "fire and forget" non-temporal write requests — while for reads, it needs to remember what to do with the data once it arrives (similar to connection handles in networking software).
+
+Theoretically, both requests should use the same bandwidth: a read request sends an address and gets data, and a non-temporal write request sends an address *with* data and gets nothing. Not accounting for the direction, we transmit the same data, but the read cycle will be longer because it needs to wait for the data to be fetched. Since [there is a practical limit](../mlp) on how many concurrent requests the memory system can handle, this difference in read/write cycle latency also results in the difference in their bandwidth.
 
 Also, for these reasons, a single CPU core usually [can't fully saturate the memory bandwidth](../sharing).
 
