@@ -185,4 +185,13 @@ for (int i = 0; i < 100/4; i++)
     c[i] = a[i] + b[i];
 ```
 
-As you can see, vector extensions are much cleaner compared to the nightmare we have with intrinsic functions. But some things that we may want to do are just not expressible with native C++ constructs, so we will still need intrinsics. Luckily, this is not an exclusive choice, because vector types support zero-cost conversion to the `_mm` types and back. We will, however, try to avoid doing so as much as possible and stick to vector extensions when we can.
+As you can see, vector extensions are much cleaner compared to the nightmare we have with intrinsic functions. Their downside is that there are some things that we may want to do are just not expressible with native C++ constructs, so we will still need intrinsics for them. Luckily, this is not an exclusive choice, because vector types support zero-cost conversion to the `_mm` types and back:
+
+```c++
+v8f x;
+int mask = _mm256_movemask_ps((__m256) x)
+```
+
+There are also many third-party libraries for different languages that provide a similar capability to write portable SIMD code and also implement some, and just in general are nicer to use than both intrinsics and built-in vector types. Notable examples for C++ are [Highway](https://github.com/google/highway), [Expressive Vector Engine](https://github.com/jfalcou/eve), [Vector Class Library](https://github.com/vectorclass/version2), and [xsimd](https://github.com/xtensor-stack/xsimd).
+
+Using a well-established SIMD library is recommended as it greatly improves the developer experience. In this book, however, we will try to keep close to the hardware and mostly use intrinsics directly, occasionally switching to the vector extensions for simplicity when we can.
