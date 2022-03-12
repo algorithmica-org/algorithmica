@@ -117,7 +117,7 @@ struct fp {
 };
 ```
 
-This way we can represent numbers in the form $\pm \\; m \times 2^e$ where both $m$ and $e$ are bounded *and possibly negative* integers — which would correspond to negative or small numbers respectively. The distribution of these numbers is very much non-uniform: there are as many numbers in the $[0, 1]$ range as in the $[0, +\infty)$ range.
+This way we can represent numbers in the form $\pm \\; m \times 2^e$ where both $m$ and $e$ are bounded *and possibly negative* integers — which would correspond to negative or small numbers respectively. The distribution of these numbers is very much non-uniform: there are roughly as many numbers in the $[0, 1)$ range as in the $[1, +\infty)$ range.
 
 Note that these representations are not unique for some numbers. For example, number $1$ can be represented as
 
