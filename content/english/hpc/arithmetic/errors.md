@@ -43,7 +43,7 @@ For example, if you call `fesetround(FE_UPWARD)` before running the loop above, 
 
 One of the uses for the alternative rounding modes is for diagnosing numerical instability. If the results of an algorithm substantially vary when switching between rounding to the positive and negative infinities, it indicates susceptibility to round-off errors.
 
-This test is better than switching all computations to lower precision and checking whether the result changed by too much. The default rounding-to-nearest converges to the correct “expected” value given enough averaging: statistically, half of the time, they are rounding up, and the other half, they are rounding down — so they cancel each other.
+This test is often better than switching all computations to lower precision and checking whether the result changed by too much because the default round-to-nearest policy converges to the correct “expected” value given enough averaging: half of the time the errors are rounding up, and the other they are rounding down — so, statistically, they cancel each other.
 
 ### Measuring Errors
 
