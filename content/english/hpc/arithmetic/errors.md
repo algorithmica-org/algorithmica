@@ -24,9 +24,11 @@ has the exact same distance from $2^{24}$ and $(2^{24} + 1)$ but gets rounded do
 
 ### Rounding Errors and Operation Order
 
-Note is that while most operations with real numbers are commutative and associative, their rounding errors are not: even the result of $(x+y+z)$ depends on the order of summation. Compilers are not allowed to produce non-spec-compliant results, so this disables some potential optimizations that involve rearranging operands. You can disable this strict compliance with the `-ffast-math` flag in GCC and Clang.
+The result of a floating-point computation may depend on the order of operations despite being algebraically correct.
 
-For example, if we add `-O3` and `-ffast-math` and re-compile this snippet, it runs [considerably faster](/hpc/simd/reduction) and also happens to output the correct result, 33554432 — although you need to be aware that the compiler also could have chosen a less precise computation path.
+For example, while the operations of addition and multiplication are commutative and associative in the pure mathematical sense, their rounding errors are not: when we have three floating-point variables $x$, $y$, and $z$, the result of $(x+y+z)$ depends on the order of summation. The same non-commutativity principle applies to most if not all other floating-point operations.
+
+Compilers are not allowed to produce [non-spec-compliant](/hpc/compilation/contracts/) results, so this annoying nuance disables some potential optimizations that involve rearranging operands in arithmetic. You can disable this strict compliance with the `-ffast-math` flag in GCC and Clang. If we add it and re-compile the code snippet above, it runs [considerably faster](/hpc/simd/reduction) and also happens to output the correct result, 33554432 (although you need to be aware that the compiler also could have chosen a less precise computation path).
 
 ### Rounding Modes
 
