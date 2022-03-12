@@ -77,7 +77,7 @@ The value of `eps` should depend on the application: the one above — the machi
 
 ### Interval Arithmetic
 
-An algorithm is called *numerically stable* if its error, whatever its cause, does not grow to be much larger during the calculation. This happens if the problem is *well-conditioned*, meaning that the solution changes by only a small amount if the problem data are changed by a small amount.
+An algorithm is called *numerically stable* if its error, whatever its cause, does not grow much larger during the calculation. This can only happen if the problem itself is *well-conditioned*, meaning that the solution changes only by a small amount if the input data are changed by a small amount.
 
 When analyzing numerical algorithms, it is often useful to adopt the same method that is used in experimental physics: instead of working with unknown real values, we will work with the intervals where they may be in.
 
