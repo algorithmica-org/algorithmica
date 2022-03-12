@@ -99,7 +99,7 @@ $$
 
 There are two types of NaNs: a *signaling NaN* and a *quiet NaN*. A signaling NaN raises an exception flag, which may or may not cause immediate hardware interrupt depending on the FPU configuration, while a quiet NaN just propagates through almost every arithmetic operation, resulting in more NaNs.
 
-Both NaNs are encoded as all their exponent set to ones and the mantissa part being everything other than all zeroes (to distinguish them from infinities).
+In binary, both NaNs have their exponent bits all set and the mantissa part being anything other than all zeros (to distinguish them from infinities). Note that there are *very* many valid encodings for a NaN.
 
 ## Further Reading
 
