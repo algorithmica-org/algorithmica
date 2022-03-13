@@ -37,9 +37,9 @@ Remember [the $M \gg B$ assumption](../model) when we introduced the computation
 
 ### Merge Sorting
 
-The "normal" complexity of the standard mergesort algorithm is $O(N \log_2 N)$: on each of its $O(\log_2 N)$ "layers", the algorithms need to go through all $N$ elements in total and merge them in linear time.
+The "normal" complexity of the standard mergesort algorithm is $O(N \log_2 N)$: on each of its $O(\log_2 N)$ "layers," the algorithms need to go through all $N$ elements in total and merge them in linear time.
 
-In the external memory model, when we read a block of size $M$, we can sort its elements "for free", since they are already in memory. This way we can split the arrays into $O(\frac{N}{M})$ blocks of consecutive elements and sort them separately as the base step, and only then merge them.
+In the external memory model, when we read a block of size $M$, we can sort its elements "for free," since they are already in memory. This way we can split the arrays into $O(\frac{N}{M})$ blocks of consecutive elements and sort them separately as the base step, and only then merge them.
 
 ![](../img/k-way.png)
 

@@ -21,7 +21,7 @@ constexpr int fibonacci(int n) {
 static_assert(fibonacci(10) == 55);
 ```
 
-These functions have some restrictions like that they only call other `constexpr` functions and can't do memory allocation, but otherwise, they are executed "as is".
+These functions have some restrictions like that they only call other `constexpr` functions and can't do memory allocation, but otherwise, they are executed "as is."
 
 Note that while they don't cost anything during the run-time, they still increase compilation time, so at least remotely care about their efficiency and don't put something NP-complete in them:
 

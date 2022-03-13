@@ -30,12 +30,12 @@ You get especially frustrated if you had a competitive programming experience. Y
 
 Programmers can be put in several "levels" in terms of their software optimization abilities:
 
-0. "Newbie". Those who don't think about performance at all. They usually write in high-level languages, sometimes in declarative / functional languages. Most "programmers" stay there (and there is nothing wrong with it).
-1. "Undergraduate student". Those who know about Big O notation and are familiar with basic data structures and approaches. LeetCode and CodeForces folks are there. This is also the requirement in getting into big companies — they have a lot of in-house software, large scale, and they are looking for people in the long term, so asking things like programming language.
-2. "Graduate student". Those who know that not all operations are created equal; know other cost models such as external memory model (B-tree, external sorting), word model (bitset,) or parallel computing, but still in theory.
-3. "Professional developer". Those who know actual timings of these operations. Aware that branch mispredictions are costly, memory is split into cache lines. Knows some basic SIMD techniques. 
-4. "Performance engineer". Know exactly what happens inside their hardware. Know the difference between latency and bandwidth, know about ports. Knows how to use SIMD and the rest of instruction set effectively. Can read assembly and use profilers.
-5. "Intel employee". Knows microarchitecture-specific details. This is outside of the purview of normal engineers.
+0. *Newbie*. Those who don't think about performance at all. They usually write in high-level languages, sometimes in declarative / functional languages. Most "programmers" stay there (and there is nothing wrong with it).
+1. *Undergraduate student*. Those who know about Big O notation and are familiar with basic data structures and approaches. LeetCode and CodeForces folks are there. This is also the requirement in getting into big companies — they have a lot of in-house software, large scale, and they are looking for people in the long term, so asking things like programming language.
+2. *Graduate student*. Those who know that not all operations are created equal; know other cost models such as external memory model (B-tree, external sorting), word model (bitset,) or parallel computing, but still in theory.
+3. *Professional developer*. Those who know actual timings of these operations. Aware that branch mispredictions are costly, memory is split into cache lines. Knows some basic SIMD techniques. 
+4. *Performance engineer*. Know exactly what happens inside their hardware. Know the difference between latency and bandwidth, know about ports. Knows how to use SIMD and the rest of instruction set effectively. Can read assembly and use profilers.
+5. *Intel employee*. Knows microarchitecture-specific details. This is outside of the purview of normal engineers.
 
 In this book, we expect that the average reader is somewhere around stage 1, and hopefully by the end of it will get to 4.
 

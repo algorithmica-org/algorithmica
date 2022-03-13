@@ -21,7 +21,7 @@ for (int t = 0; t < K; t++)
         a[i]++;
 ```
 
-Changing $N$ and adjusting $K$ so that the total number of array cells accessed remains roughly constant and expressing the total time in "operations per second", we get a graph like this:
+Changing $N$ and adjusting $K$ so that the total number of array cells accessed remains roughly constant and expressing the total time in "operations per second," we get a graph like this:
 
 ![Dotted vertical lines are cache layer sizes](../img/inc.svg)
 

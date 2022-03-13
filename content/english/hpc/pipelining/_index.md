@@ -19,9 +19,9 @@ Parallelism helps in reducing *latency*. It is important, but for now, our main 
 
 Sharing computations is an art in itself, but for now, we want to learn how to use resources that we already have more efficiently.
 
-While multi-core parallelism is "cheating", many form of parallelism exist  "for free".
+While multi-core parallelism is "cheating," many form of parallelism exist "for free."
 
-Adapting algorithms for parallel hardware is important for achieving *scalability*. In the first part of this book, we will consider this technique "cheating". We only do optimizations that are truly free, and preferably don't take away resources from other processes that might be running concurrently.
+Adapting algorithms for parallel hardware is important for achieving *scalability*. In the first part of this book, we will consider this technique "cheating." We only do optimizations that are truly free, and preferably don't take away resources from other processes that might be running concurrently.
 
 -->
 
@@ -62,7 +62,7 @@ You can find many analogies with modern CPUs:
 2. There are multiple execution units that can process these instructions simultaneously while sharing other CPU facilities (usually 2-4 execution units).
 3. Instructions are processed in pipelined fashion (saving roughly the same number of cycles as the number of years between kindergarten and PhD).
 
-<!-- You can continue "up": there are multiple school branches (cores), multiple schools (computers), etc. -->
+<!-- You can continue "up:" there are multiple school branches (cores), multiple schools (computers), etc. -->
 
 In addition to that, several other aspects also match:
 

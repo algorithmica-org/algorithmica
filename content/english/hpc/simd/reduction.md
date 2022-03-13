@@ -50,7 +50,7 @@ You can use this approach for for other reductions, such as for finding the mini
 
 ### Horizontal Summation
 
-The last part, where we sum up the 8 accumulators stored in a vector register into a single scalar to get the total sum, is called "horizontal summation".
+The last part, where we sum up the 8 accumulators stored in a vector register into a single scalar to get the total sum, is called "horizontal summation."
 
 Although extracting and adding every scalar one by one only takes a constant number of cycles, it can be computed slightly faster using a [special instruction](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#techs=AVX,AVX2&text=_mm256_hadd_epi32&expand=2941) that adds together pairs of adjacent elements in a register.
 

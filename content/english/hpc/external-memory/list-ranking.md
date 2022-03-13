@@ -52,7 +52,7 @@ For example, we can obtain the Euler tour of a tree in external memory by constr
 
 - split each undirected tree edge into two directed ones;
 - duplicate the parent node for each up-edge (because list nodes can only have one incoming edge, but we visit some tree vertices multiple times);
-- route each such node either to the "next sibling", if it has one, or otherwise to its own parent;
+- route each such node either to the "next sibling," if it has one, or otherwise to its own parent;
 - and then finally break the resulting cycle at the root.
 
 This general technique is called *tree contraction*, and it serves as the basis for a large number of tree algorithms.

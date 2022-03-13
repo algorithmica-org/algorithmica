@@ -12,7 +12,7 @@ Hash function is any function that is:
 
 * Computed fast — at least in linear time, that is.
 * Has a limited image — say, 64-bit values.
-* "Deterministically-random": if it takes $n$ different values, then the probability of collision of two random hashes is $\frac{1}{n}$ and can't be predicted well without knowing the hash function.
+* "Deterministically-random:" if it takes $n$ different values, then the probability of collision of two random hashes is $\frac{1}{n}$ and can't be predicted well without knowing the hash function.
 
 One good test is that can't create a collision in any better time than by birthday paradox. Square root of the hash space.
 

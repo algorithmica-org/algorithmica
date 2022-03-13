@@ -18,9 +18,9 @@ The real answer, of course, is much more complicated and highly dependent on wha
 
 Because of this logic, and also because of the [computation model](../) postulated in CS 101, many programmers have a misconception that computers can execute a certain number of "operations" per second, and that using different programming languages has some sort of [multiplier effect](https://benchmarksgame-team.pages.debian.net/benchmarksgame/index.html) on that number:
 
-- "you can execute about $5 \cdot 10^8$ operations per second on this machine",
-- "C is 2 times faster than Java",
-- "Python is 100x slower than C++".
+- "you can execute about $5 \cdot 10^8$ operations per second on this machine,"
+- "C is 2 times faster than Java,"
+- "Python is 100x slower than C++."
 
 -->
 

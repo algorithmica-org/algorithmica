@@ -13,7 +13,7 @@ While using the elementwise instructions is easy, the largest challenge with SIM
 
 ### Aligned Loads and Stores
 
-Operations of reading and writing the contents of a SIMD register into memory have two versions each: `load` / `loadu` and `store` / `storeu`. The letter "u" here stands for "unaligned". The difference is that the former ones only work correctly when the read / written block fits inside a single [cache line](/hpc/cpu-cache/cache-lines) (and crash otherwise), while the latter work either way, but with a slight performance penalty if the block crosses a cache line.
+Operations of reading and writing the contents of a SIMD register into memory have two versions each: `load` / `loadu` and `store` / `storeu`. The letter "u" here stands for "unaligned." The difference is that the former ones only work correctly when the read / written block fits inside a single [cache line](/hpc/cpu-cache/cache-lines) (and crash otherwise), while the latter work either way, but with a slight performance penalty if the block crosses a cache line.
 
 Sometimes, especially when the "inner" operation is very lightweight, the performance difference becomes significant (at least because you need to fetch two cache lines instead of one). As an extreme example, this way of adding two arrays together:
 

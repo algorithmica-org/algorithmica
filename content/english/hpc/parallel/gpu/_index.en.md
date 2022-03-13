@@ -73,7 +73,7 @@ CUDA is available for many languages.
 
 Nice documentation can be found here: https://documen.tician.de/pycuda/index.html
 
-If you are on Colab, go to Runtime -> Change runtime type -> Hardware accelerator and set it to "GPU".
+If you are on Colab, go to Runtime -> Change runtime type -> Hardware accelerator and set it to "GPU."
 
 
 ```python
@@ -431,7 +431,7 @@ Well, you don't really need anything more precise than that for deep learning an
 
 It is called mixed precision because input matrices are fp16 but multiplication result and accumulator are fp32 matrices.
 
-Probably, the proper name would be "4x4 matrix cores", however NVIDIA marketing team decided to use "tensor cores".
+Probably, the proper name would be "4x4 matrix cores," however NVIDIA marketing team decided to use "tensor cores."
 
 So, see, this is not exactly fair comparison.
 

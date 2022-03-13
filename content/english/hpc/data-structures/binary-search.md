@@ -175,7 +175,7 @@ With prefetching, the performance on large arrays becomes roughly the same:
 
 ![](../img/search-branchless-prefetch.svg)
 
-The graph still grows faster as the branchy version also prefetches "grandchildren", "grand-grandchildren", and so on — although the usefulness of each new speculative read diminishes exponentially as the prediction is less and less likely to be correct.
+The graph still grows faster as the branchy version also prefetches "grandchildren," "grand-grandchildren," and so on — although the usefulness of each new speculative read diminishes exponentially as the prediction is less and less likely to be correct.
 
 In the branchless version, we could also fetch ahead by more than one layer, but the number of fetches we'd need also grows exponentially. Instead, we will try a different approach to optimize memory operations.
 

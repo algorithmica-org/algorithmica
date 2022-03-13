@@ -19,7 +19,7 @@ The "body" of the loop is `add edx, DWORD PTR [rax]`: this instruction loads dat
 
 ### Jumps
 
-Assembly doesn't have if-s, for-s, functions, or other control flow structures that high-level languages have. What it does have is `goto`, or "jump", how it is known in the world of low-level programming.
+Assembly doesn't have if-s, for-s, functions, or other control flow structures that high-level languages have. What it does have is `goto`, or "jump," how it is known in the world of low-level programming.
 
 **Jump** moves the instruction pointer to a location specified by its operand. This location may be either an absolute address in memory, relative to the current address or even [computed during runtime](../indirect). To avoid the headache of managing these addresses directly, you can mark any instruction with a string followed by `:`, and then use this string as a label which gets replaced by the relative address of this instruction when converted to machine code.
 

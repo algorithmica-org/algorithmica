@@ -467,7 +467,7 @@ A lot of the performance boost of the S+ tree comes from removing branching and 
 
 <!-- grouping requests together explicitly? -->
 
-Although nobody except maybe the HFT people cares about real latency, and everybody actually measures throughput even when using the word "latency", this nuance is still something to take into account when predicting the possible speedup in user applications.
+Although nobody except maybe the HFT people cares about real latency, and everybody actually measures throughput even when using the word "latency," this nuance is still something to take into account when predicting the possible speedup in user applications.
 
 ### Modifications and Further Optimizations
 

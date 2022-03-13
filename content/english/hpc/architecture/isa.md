@@ -23,7 +23,7 @@ Historically, there have been many competing ISAs in use. But unlike [character 
 - **Arm** chips, which are used in almost all mobile devices, as well as other computer-like devices such as TVs, smart fridges, microwaves, [car autopilots](https://en.wikipedia.org/wiki/Tesla_Autopilot), and so on. They are designed by a British company of the same name, as well as a number of electronics manufacturers including Apple and Samsung.
 - **x86**[^x86] chips, which are used in almost all servers and desktops, with a few notable exceptions such as Apple's M1 MacBooks, AWS's Graviton processors, and the current [world's fastest supercomputer](https://en.wikipedia.org/wiki/Fugaku_(supercomputer)), all of which use Arm-based CPUs. They are designed by a duopoly of Intel and AMD.
 
-[^x86]: Modern 64-bit versions of x86 are known as "AMD64", "Intel 64", or by the more vendor-neutral names of "x86-64" or just "x64". A similar 64-bit extension of Arm is called "AArch64" or "ARM64". In this book, we will just use plain "x86" and "Arm" implying the 64-bit versions.
+[^x86]: Modern 64-bit versions of x86 are known as "AMD64," "Intel 64," or by the more vendor-neutral names of "x86-64" or just "x64." A similar 64-bit extension of Arm is called "AArch64" or "ARM64." In this book, we will just use plain "x86" and "Arm" implying the 64-bit versions.
 
 The main difference between them is that of architectural complexity, which is more of a design philosophy rather than some strictly defined property:
 

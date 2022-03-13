@@ -193,7 +193,7 @@ f(n, m) &= 1 \times (1-\frac{1}{m}) \times (1-\frac{2}{m}) \times ... \times (1-
 \end{aligned}
 $$
 
-This product shrinks pretty quickly with $n$, but it is not clear what value of $m$ is needed to be "safe". Turns out, if $n = O(\sqrt m)$, the probability of collision tends to zero, and anything asymptotically larger guarantees a collision. One can show this with calculus, but we will choose the probability theory way.
+This product shrinks pretty quickly with $n$, but it is not clear what value of $m$ is needed to be "safe." Turns out, if $n = O(\sqrt m)$, the probability of collision tends to zero, and anything asymptotically larger guarantees a collision. One can show this with calculus, but we will choose the probability theory way.
 
 Let's go back to the idea of counting pairs of birthdays and introduce $\frac{n \cdot (n-1)}{2}$ indicators $I_{ij}$ — one for each pair $(i, j)$ of persons — each being equal to $1$ if the birthdays match. The probability and expectation of each indicator is $\frac{1}{m}$.
 

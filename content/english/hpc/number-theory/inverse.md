@@ -18,7 +18,7 @@ mint inv() const {
 
 In this section, we are going to discuss some preliminaries before discussing more advanced topics.
 
-In computers, we use the 1st of January, 1970 as the start of the "Unix era", and all time computations are usually done relative to that timestamp.
+In computers, we use the 1st of January, 1970 as the start of the "Unix era," and all time computations are usually done relative to that timestamp.
 
 We humans also keep track of time relative to some point in the past, which usually has a political or religious significance. At the moment of writing, approximately 63882260594 seconds have passed since 0 AD.
 
@@ -69,7 +69,7 @@ where $\phi(m)$ is called Euler's totient function and is equal to the number of
 
 These theorems have a lot of applications. One of them is checking whether a number $n$ is prime or not faster than factoring it. You can pick any base $a$ at random and try to raise it to power $a^{p-1}$ modulo $n$ and check if it is $1$. Such base is called *witness*.
 
-Such probabilistic tests are therefore returning either "no" or "maybe". It may be the case that it just happened to be equal to $1$ but in fact $n$ is composite, in which case you need to repeat the test until you are okay with the false positive probability. Moreover, there exist carmichael numbers, which are composite numbers $n$ that satisfy $a^n \equiv 1 \pmod n$ for all $a$. These numbers are rare, but still [exist](https://oeis.org/A002997).
+Such probabilistic tests are therefore returning either "no" or "maybe." It may be the case that it just happened to be equal to $1$ but in fact $n$ is composite, in which case you need to repeat the test until you are okay with the false positive probability. Moreover, there exist carmichael numbers, which are composite numbers $n$ that satisfy $a^n \equiv 1 \pmod n$ for all $a$. These numbers are rare, but still [exist](https://oeis.org/A002997).
 
 Unless the input is provided by an adversary, the mistake probability will be low. This test is adequate for finding large primes: there are roughly $\frac{n}{\ln n}$ primes among the first $n$ numbers, which is another fact that we are not going to prove. These primes are distributed more or less evenly, so one can just pick a random number and check numbers in sequence, and after checking $O(\ln n)$ numbers one will probably be found.
 

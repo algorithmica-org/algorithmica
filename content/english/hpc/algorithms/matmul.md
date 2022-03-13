@@ -60,7 +60,7 @@ void step(float* r, const float* d, int n) {
 
 Compile with `g++ -O3 -march=native -std=c++17`
 
-On our Intel Core i5-6500 ("Skylake", 4 cores, 3.6 GHz) with $n=4000$ it runs for 99s,
+On our Intel Core i5-6500 ("Skylake," 4 cores, 3.6 GHz) with $n=4000$ it runs for 99s,
 which amounts to ~1.3B useful floating point operations per second
 
 ---

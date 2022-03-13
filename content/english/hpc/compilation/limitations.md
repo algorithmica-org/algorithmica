@@ -34,4 +34,4 @@ Usually the right approach to performance is to think how the main hot spots of 
 2. Is there a real-world dataset for which the optimization may not be beneficial? (hints, pragmas, PGO)
 3. Are there at least 1000 other places where this optimization makes sense? (remove abstractions and implement it manually, add a feature request for GCC and Clang)
 
-In the majority of the cases, at least one of these answers will be "no", and then you will know what to do.
+In the majority of the cases, at least one of these answers will be "no," and then you will know what to do.

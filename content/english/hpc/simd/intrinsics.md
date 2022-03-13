@@ -156,7 +156,7 @@ typedef int v8si __attribute__ (( vector_size(32) ));
 
 Unfortunately, this is not a part of the C or C++ standard, so different compilers use different syntax for that.
 
-There is somewhat of a naming convention, which is to include size and type of elements into the name of the type: in the example above, we defined a "vector of 8 signed integers". But you may choose any name you want, like `vec`, `reg` or whatever. The only thing you don't want to do is to name it `vector` because of how much confusion there would be because of `std::vector`.
+There is somewhat of a naming convention, which is to include size and type of elements into the name of the type: in the example above, we defined a "vector of 8 signed integers." But you may choose any name you want, like `vec`, `reg` or whatever. The only thing you don't want to do is to name it `vector` because of how much confusion there would be because of `std::vector`.
 
 The main advantage of using these types is that for many operations you can use normal C++ operators instead of looking up the relevant intrinsic.
 

@@ -207,7 +207,7 @@ But what to do in general case, if the exponent value is either too large or too
 
 Multiplying or dividing by 10 is the same as incrementing the exponent (the resulting one after the "e" in scientific notation, not the binary). The idea is to find a proper power of 10 so that the resulting number will have . We need to precalculate numbers of the form $\frac{10^a}{2^b}$ (since exponent is limited, there won't be many of them). To get the precalculated number, we need to look at the exponent (or possibly its neighbors).
 
-The tricky part is the "shortest possible". It can be solved by printing digits one by one and trying to parse it back, but this would be too slow.
+The tricky part is the "shortest possible." It can be solved by printing digits one by one and trying to parse it back, but this would be too slow.
 
 How many decimal digits do we need to print a `float`?
 

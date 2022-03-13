@@ -6,7 +6,7 @@ weight: 2
 When we designed our [DIY floating-point type](../float), we omitted quite a lot of important little details:
 
 - How many bits do we dedicate for the mantissa and the exponent?
-- Does a "0" sign bit mean "+", or is it the other way around?
+- Does a `0` sign bit mean `+`, or is it the other way around?
 - How are these bits stored in memory?
 - How do we represent 0?
 - How exactly does rounding happen?
@@ -44,11 +44,11 @@ Their availability ranges from chip to chip:
 - Extended formats are exclusive to x86, and are available in C as the `long double` type, which falls back to double precision on arm. The choice of 64 bits for mantissa is so that every `long long` integer can be represented exactly. There is also a 40-bit format that similarly allocates 32 mantissa bits.
 - Quadruple as well as the 256-bit "octuple" formats are only used for specific scientific computations and are not supported by general-purpose hardware.
 - Half-precision arithmetic only supports a small subset of operations and is generally used for machine learning applications, especially neural networks, because they tend to do a large amount of calculation, but don't require a high level of precision.
-- Half-precision is being gradually replaced by bfloat, which trades off 3 mantissa bits to have the same range as single-precision, enabling interoperability with it. It is mostly being adopted by specialized hardware: TPUs, FGPAs, and GPUs. The name stands for "[Brain](https://en.wikipedia.org/wiki/Google_Brain) float".
+- Half-precision is being gradually replaced by bfloat, which trades off 3 mantissa bits to have the same range as single-precision, enabling interoperability with it. It is mostly being adopted by specialized hardware: TPUs, FGPAs, and GPUs. The name stands for "[Brain](https://en.wikipedia.org/wiki/Google_Brain) float."
 
 Lower precision types need less memory bandwidth to move them around and usually take fewer cycles to operate on (e. g. the division instruction may take $x$, $y$, or $z$ cycles depending on the type), which is why they are preferred when error tolerance allows it.
 
-Deep learning, emerging as a very popular and computationally-intensive field, created a huge demand for low-precision matrix multiplication, which led to manufacturers developing separate hardware or at least adding specialized instructions that support these types of computations — most notably, Google developing a custom chip called TPU (*tensor processing unit*) that specializes on multiplying 128-by-128 bfloat matrices, and NVIDIA adding "tensor cores", capable of performing 4-by-4 matrix multiplication in one go, to all their newer GPUs.
+Deep learning, emerging as a very popular and computationally-intensive field, created a huge demand for low-precision matrix multiplication, which led to manufacturers developing separate hardware or at least adding specialized instructions that support these types of computations — most notably, Google developing a custom chip called TPU (*tensor processing unit*) that specializes on multiplying 128-by-128 bfloat matrices, and NVIDIA adding "tensor cores," capable of performing 4-by-4 matrix multiplication in one go, to all their newer GPUs.
 
 Apart from their sizes, most of the behavior is exactly the same between all floating-point types, which we will now clarify.
 
@@ -61,7 +61,7 @@ Sometimes a software crash, in turn, causes a real, physical one. In 1996, the m
 There is a way to gracefully handle corner cases like these: hardware interrupts. When an exception occurs, the CPU
 
 - interrupts the execution of a program;
-- packs every all relevant information into a data structure called "interrupt vector";
+- packs all relevant information into a data structure called "interrupt vector";
 - passes it to the operating system, which in turn either calls the handling code if it exists (the "try-except" block) or terminates the program otherwise.
 
 This is a complex mechanism that deserves an article of its own, but since this is a book about performance, the only thing you need to know is that they are quite slow and not desirable in real-time systems such as navigating rockets.

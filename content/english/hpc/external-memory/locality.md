@@ -34,8 +34,8 @@ In this section, we will do some case studies to show how these high-level conce
 
 Consider a divide-and-conquer algorithm such as merge sorting. There are two approaches to implementing it:
 
-- We can implement it recursively, or "depth-first", the way it is normally implemented: sort the left half, sort the right half and then merge the results.
-- We can implement it iteratively, or "breadth-first": do the lowest "layer" first, looping through the entire dataset and comparing odd elements with even elements, then merge the first two elements with the second two elements, the third two elements with the fourth two elements and so on.
+- We can implement it recursively, or "depth-first," the way it is normally implemented: sort the left half, sort the right half and then merge the results.
+- We can implement it iteratively, or "breadth-first:" do the lowest "layer" first, looping through the entire dataset and comparing odd elements with even elements, then merge the first two elements with the second two elements, the third two elements with the fourth two elements and so on.
 
 It seems like the second approach is more cumbersome, but faster — because recursion is always slow, right?
 

@@ -22,9 +22,9 @@ While complex instruction sets had the benefit, with superscalar processors you 
 
 Instructions are microcoded.
 
-uOps ("micro-ops", the first letter is meant to be greek letter mu as in us (microsecond), but nobody cares enough to type it).
+uOps ("micro-ops," the first letter is meant to be greek letter mu as in us (microsecond), but nobody cares enough to type it).
 
-Each architecture has its own set of "ports", each capable of executing its own set of instructions (uOps, to be more exact).
+Each architecture has its own set of "ports," each capable of executing its own set of instructions (uOps, to be more exact).
 
 But still, when you use it, it appears and feels like a single instruction. How does CPU achieve that?
 

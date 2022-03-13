@@ -22,13 +22,13 @@ To calculate $d$ and restore the message, the attacker would need to repeat step
 
 When doing actual communication, people first exchange their public keys (in any, possibly unsecure way) and then use it to encrypt messages.
 
-This is what web browsers do when establishing connection "https". You can also do it by hand with GPG.
+This is what web browsers do when establishing connection "https." You can also do it by hand with GPG.
 
 ### Man-in-the-middle
 
 There is an issue when establishing initial communication that the attacker could replace it and control the communication.
 
-Between your browser and a bank. "Hey this is a message from a bank".
+Between your browser and a bank. "Hey this is a message from a bank."
 
 Trust networks. E. g. everyone can trust Google or whoever makes the device or operating system.
 

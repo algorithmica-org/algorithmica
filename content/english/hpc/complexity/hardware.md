@@ -46,7 +46,7 @@ Since the per-unit manufacturing cost is a function of area, and the exploitatio
 
 [^power]: The cost of electricity for running a busy server for 2-3 years roughly equals the cost of making the chip itself.
 
-Due to the trade-offs between energy and performance you can make during the design, the fidelity of the fabrication process itself, such as "180nm" or "65nm", directly translating to the density of transistors, became the trademark for CPU efficiency[^fidelity].
+Due to the trade-offs between energy and performance you can make during the design, the fidelity of the fabrication process itself, such as "180nm" or "65nm," directly translating to the density of transistors, became the trademark for CPU efficiency[^fidelity].
 
 [^fidelity]: At some point, when Moore's law started to slow down, chip makers stopped delineating their chips by the size of their components — and it is now more like a marketing term. [A special committee](https://en.wikipedia.org/wiki/International_Technology_Roadmap_for_Semiconductors) has a meeting every two years where they take the previous node name, divide it by the square root of two, round to the nearest integer, declare the result to be the new node name, and then drink lots of wine. The "nm" doesn't mean nanometer anymore.
 
@@ -66,7 +66,7 @@ The only way to mitigate this is to increase voltage; and to balance off power c
 
 ### Power Efficiency
 
-It may come as a surprise, but the primary metric for modern CPUs is not the clock frequency, but rather "useful operations per joule", or, more practically put, "useful operations per dollar".
+It may come as a surprise, but the primary metric for modern CPUs is not the clock frequency, but rather "useful operations per joule," or, more practically put, "useful operations per dollar."
 
 Thermodynamically, a computer is just a very efficient device for converting electrical power into heat. This heat eventually needs to be removed, and it's not straightforward to do when you are working with a millimeter-scale crystal. There are physical limits to how much power you can consume and then dissipate.
 
