@@ -44,23 +44,23 @@ For this reason, it is [advised](/hpc/profiling/noise) to keep the clock rate fi
 
 ### Directional Access
 
-On each iteration, we need to fetch a value, increment it, and then write it back — so this loop simultaneously performs both reads and writes during its execution. For many applications we only need to do one of them, so let's try to measure one-directional bandwidth.
+This incrementing loop needs to perform both reads and writes during its execution: on each iteration, we fetch a value, increment it, and then write it back. In many applications, we only need to do one of them, so let’s try to measure unidirectional bandwidth.
 
-An array sum would only require memory reads:
+Calculating the sum of an array only requires memory reads:
 
 ```c++
 for (int i = 0; i < N; i++)
     s += a[i];
 ```
 
-And zeroing an array or filling it with any other value would only require memory writes:
+And zeroing an array (or filling it with any other constant value) only requires memory writes:
 
 ```c++
 for (int i = 0; i < N; i++)
     a[i] = 0;
 ```
 
-Both loops are trivially vectorized by the compiler, and the second one is actually replaced with `memset`, so the CPU is also not the bottleneck here, except when the array fits into the L1 cache.
+Both loops are trivially [vectorized](/hpc/simd) by the compiler, and the second one is actually replaced with a `memset`, so the CPU is also not the bottleneck here (except when the array fits into the L1 cache).
 
 ![](../img/directional.svg)
 
