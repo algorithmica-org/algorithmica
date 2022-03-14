@@ -1,6 +1,7 @@
 ---
 title: External Sorting
 weight: 4
+published: true
 ---
 
 Now, let's try to design some actually useful algorithms for the new [external memory model](../model). Our goal in this section is to slowly build up more complex things and eventually get to *external sorting* and its interesting applications.
@@ -43,7 +44,7 @@ In the external memory model, when we read a block of size $M$, we can sort its 
 
 ![](../img/k-way.png)
 
-This effectively means that, in terms of IO operations, the first $O(\log M)$ layers of mergesort are free, and there are only $O(\log_2 \frac{N}{B})$ non-zero-cost layers, each mergeable in $O(\frac{N}{B})$ IOPS in total. This brings total I/O complexity to
+This effectively means that, in terms of IO operations, the first $O(\log M)$ layers of mergesort are free, and there are only $O(\log_2 \frac{N}{M})$ non-zero-cost layers, each mergeable in $O(\frac{N}{B})$ IOPS in total. This brings total I/O complexity to
 
 $$
 O\left(\frac{N}{B} \log_2 \frac{N}{M}\right)
