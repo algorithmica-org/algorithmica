@@ -196,7 +196,7 @@ int mod_power_of_two(int x, int m)
     [[ expects: is_power_of_two(m) ]]
     [[ ensures r: r >= 0 && r < m ]]
 {
-    float r = x & (m - 1);
+    int r = x & (m - 1);
     [[ assert: r = x % m ]];
     return r;
 }
