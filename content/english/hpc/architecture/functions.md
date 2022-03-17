@@ -1,6 +1,7 @@
 ---
 title: Functions and Recursion
 weight: 3
+published: true
 ---
 
 To "call a function" in assembly, you need to [jump](../loops) to its beginning and then jump back. But then two important problems arise:
@@ -55,11 +56,11 @@ add rsp, 8
 
 ; "call func"
 push rip ; <- instruction pointer (although accessing it like that is probably illegal)
-jump func
+jmp func
 
 ; "ret"
 pop  rcx ; <- choose any unused register
-jump rcx
+jmp rcx
 ```
 
 The memory region between `rbp` and `rsp` is called a *stack frame*, and this is where local variables of functions are typically stored. It is pre-allocated at the start of the program, and if you push more data on the stack than its capacity (8MB by default on Linux), you encounter a *stack overflow* error. Because modern operating systems don't actually give you memory pages until you read or write to their address space, you can freely specify a very large stack size, which acts more like a limit on how much stack memory can be used, and not a fixed amount every program has to use.
