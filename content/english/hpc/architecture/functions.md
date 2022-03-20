@@ -94,7 +94,7 @@ Note that the data in the stack is written top-to-bottom. This is just a convent
 
 ### Calling Conventions
 
-The people who develop compilers and operating systems eventually came up with [conventions](https://wiki.osdev.org/Calling_Conventions) on how to write and call functions. These conventions enable some important [software engineering marvels](/hpc/compilation/linking/) such as splitting compilation into separate units, re-using already compiled libraries, and even writing them in different programming languages.
+The people who develop compilers and operating systems eventually came up with [conventions](https://wiki.osdev.org/Calling_Conventions) on how to write and call functions. These conventions enable some important [software engineering marvels](/hpc/compilation/stages/) such as splitting compilation into separate units, re-using already compiled libraries, and even writing them in different programming languages.
 
 Consider the following example in C:
 
