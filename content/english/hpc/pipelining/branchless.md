@@ -93,7 +93,7 @@ This way you can eliminate branching, but this comes at the cost of evaluating *
 
 ### When It Is Beneficial
 
-Using predication eliminates [a structural hazard](../hazard) but introduces a data hazard. There is still a pipeline stall, but it is a cheaper one: you only need to wait for `cmov` to be resolved and not flush the entire pipeline in case of a mispredict.
+Using predication eliminates [a control hazard](../hazard) but introduces a data hazard. There is still a pipeline stall, but it is a cheaper one: you only need to wait for `cmov` to be resolved and not flush the entire pipeline in case of a mispredict.
 
 However, there are many situations when it is more efficient to leave branchy code as it is. This is the case when the cost of computing *both* branches instead of just *one* outweighs the penalty for the potential branch mispredictions.
 
