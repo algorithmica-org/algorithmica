@@ -117,20 +117,18 @@ There are actually multiple *assemblers* (the programs that produce machine code
 
 These syntaxes are also sometimes called *GAS* and *NASM* respectively, by the names of the two primary assemblers that use them (*GNU Assembler* and *Netwide Assembler*).
 
-We used Intel syntax in this chapter and will continue to preferably use it for the rest of the book. For comparison, here is what the summation loop looks like in AT&T asm:
+We used Intel syntax in this chapter and will continue to preferably use it for the rest of the book. For comparison, here is how the same `*c = *a + *b` example looks like in AT&T asm:
 
 ```asm
-loop:
-    addl (%rax), %edx
-    addq $4, %rax
-    cmpq %rcx, %rax
-    jne  loop
+movl (%rsi), %eax
+addl (%rdi), %eax
+movl %eax, (%rdx)
 ```
 
 The key differences can be summarized as follows:
 
 1. The *last* operand is used to specify the destination.
-2. Register names and constants need to be prefixed by `%` and `$` respectively.
+2. Registers and constants need to be prefixed by `%` and `$` respectively (e. g. `addl    $1, %rdx` increments `rdx`).
 3. Memory addressing looks like this: `displacement(%base, %index, scale)`.
 4. Both `;` and `#` can be used for line comments, and also `/* */` can be used for block comments.
 
