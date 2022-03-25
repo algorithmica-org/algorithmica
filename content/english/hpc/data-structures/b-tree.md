@@ -88,6 +88,8 @@ B-trees are very memory-efficient compared to the pointer-based binary trees. Fo
 
 ### Searching
 
+It is a very common scenario when >90% of operations are lookups, and even if this is not the case, every other tree operation typically begins with locating a key anyway, so we will start with implementing and optimizing the searches.
+
 When we implemented [S-trees](../s-tree/#optimization), we ended up storing the keys in permuted order due to the intricacies of how the blending/packs instructions work. For the *dynamic tree* problem, storing the keys in permuted order would make inserts much harder to implement, so we will change the approach instead.
 
 An alternative way to think about finding the would-be position of the element `x` in a sorted array is not "the index of the first element that is not less than `x`" but "the number of elements that are less than `x`." This observation generates the following idea: compare the keys against `x`, aggregate the vector masks into a 32-bit mask (where each bit can correspond to any element as long as the mapping is bijective), and then call `popcnt` on it, returning the number of elements less than `x`.
@@ -273,43 +275,45 @@ There are many inefficiencies, but, luckily, the body of `if (filled)` is execut
 
 ## Evaluation
 
-We need to implement `insert` and `lower_bound`. Deletions, iteration, and other things are not our concern for now.
+We have only implemented `insert` and `lower_bound`, so this is what we will measure.
 
-Of course, this comparison is not fair, as implementing a dynamic search tree is a more high-dimensional problem.
+We want the evaluation to take a reasonable time, so our benchmark is a loop that alternates between two steps:
 
-Technically, we use `std::multiset` and `absl::btree_multiset` to support repeated keys.
+- Increase the structure size from $1.17^k$ to $1.17^{k+1}$ using individual `insert`s and measure the time it took.
+- Perform $10^6$ random `lower_bound` queries and measure the time it took.
+
+We start at the size $10^4$ and end at $10^7$, for around $50$ data points in total. We generate the data for both query types uniformly in the $[0, 2^{30})$ range and independently between the stages. Since the data generation process allows for repeated keys, we compared against `std::multiset` and `absl::btree_multiset`, although we still refer to them as `std::set` and `absl::btree` for brevity. We also enable [hugepages](/hpc/cpu-cache/paging) on the system level for all three runs.
+
+
+<!--
 
 Keys are uniform, but we should not rely on that fact (e. g. using ).
 
 It is common that >90% of operations are lookups. Optimizing searches is important because every other operation starts with locating a key.
 
-(a different set each time)
+I apologize to everyone else, but this is sort of your fault for not using a public benchmark.
 
-We use different points between $10^4$ and $10^7$ in (arount 250 in total). After, we use $10^6$ queries (independently random each time). All data is generated uniformly in the range $[0, 2^{30})$ and independent between stages.
+-->
 
-$1.17^k$ and $1.17^{k+1}$.
-
-It may or may not be representative of your use case.
-
-[Hugepages](/hpc/cpu-cache/paging) are enabled globally for all three algorithms.
-
-As predicted, the performance is much better:
+The performance of the B− tree matches what we originally predicted — at least for the lookups:
 
 ![](../img/btree-absolute.svg)
 
-When the data set is small, the latency increases in discrete steps: 3.5ns for under 32 elements, 6.5ns, and to 12ns, until it hits the L2 cache (not shown on graphs) and starts increasing more smoothly yet still with noticeable spikes when the tree grows upwards.
+The relative speedup varies with the structure size — 7-18x/3-8x over STL and 3-7x/1.5-2x over Abseil:
 
 ![](../img/btree-relative.svg)
 
-I apologize to everyone else, but this is sort of your fault for not using a public benchmark.
+Insertions are only 1.5-2 faster than for `absl::btree`, which uses scalar code to do everything. I don't know (yet) why insertions are *that* slow, but my guess is that it has something to do with data dependencies between queries.
 
 ![](../img/btree-absl.svg)
 
-Interestingly, B− tree wins over `absl::btree` even when it only stores one key: it takes around 5ns to figure out branch prediction, while B− tree is branchless.
+When the structure size is small, the [reciprocal throughput](../s-tree/#comparison-with-stdlower_bound) of `lower_bound` increases in discrete steps: it starts with 3.5ns when there is only the root to visit, then grows to 6.5ns (two nodes), and then to 12ns (three nodes), and then hits the L2 cache (not shown on the graphs) and starts increasing more smoothly, but still with noticeable spikes when the tree height increases.
 
-I don't know (yet) why insertions are *that* slow. My guess is that it has something to do with data dependencies between queries.
+Interestingly, B− tree outperforms `absl::btree` even when it only stores a single key: it takes around 5ns stalling on [branch misprediction](/hpc/pipelining/branching/), while (the search in) the B− tree is entirely branchless.
 
 ### Possible Optimizations
+
+In our previous optimization efforts.
 
 Maximum height was 6.
 
@@ -364,6 +368,8 @@ It is possible to get rid of pointers even more. For example, for large trees, w
 
 ### Other Operations
 
+<!-- Deletions, iteration, and other things are not our concern for now. -->
+
 Going to father and fetching $B$ pointers at a time is faster as it negates [pointer chasing](/hpc/cpu-cache/latency/).
 
 Pointer to either parent or next node.
@@ -380,7 +386,7 @@ If the node is at least half-full, we're done. Otherwise, we try to borrow keys 
 
 If that fails, we can merge the two nodes together, and iteratively delete the key in the parent.
 
-One interesting use case is *rope*, also known as *cord*, which is used for wrapping strings in a tree to support mass operations. For example, editing a very large text file. Which is the topic.
+<!-- One interesting use case is *rope*, also known as *cord*, which is used for wrapping strings in a tree to support mass operations. For example, editing a very large text file. Which is the topic. -->
 
 [Skip list](https://en.wikipedia.org/wiki/Skip_list), which [some attempts to vectorize it](https://doublequan.github.io/), although it may achieve higher total throughput in concurrent setting. I have low hope that it can be improved.
 
