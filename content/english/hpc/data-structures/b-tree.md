@@ -7,7 +7,7 @@ In the [previous article](../s-tree), we designed and implemented *static* B-tre
 
 In this article, we follow up on that proposition and design a minimally functional search tree for integer keys, [achieving](#evaluation) up to 18x/8x speedup over `std::set` and up to 7x/2x speedup over [`absl::btree`](https://abseil.io/blog/20190812-btree) for `lower_bound` and `insert` queries, respectively, with yet ample room for improvement.
 
-The memory overhead of the structure is around 30%, and the [final implementation](https://github.com/sslotin/amh-code/blob/main/b-tree/btree-final.cc) is under 150 lines of C.
+The memory overhead of the structure is around 30%, and the final implementation is [under 150 lines of C++](https://github.com/sslotin/amh-code/blob/main/b-tree/btree-final.cc).
 
 <!--
 
@@ -146,7 +146,7 @@ Implementing search is easy, and it doesn't introduce much overhead. The hard pa
 
 On the one side, correctly implementing insertion takes a lot of code, but on the other, most of that code is executed very infrequently, so we don't have to care about its performance that much. Most often, all we need to do is to reach the leaf node (which we've already figured out how to do) and then insert a new key into it, moving some suffix of the keys one position to the right. Occasionally, we also need to split the node and/or update some ancestors, but this is relatively rare, so let's focus on the most common execution path first.
 
-To insert a key into an array of $(B - 1)$ sorted elements, we can load them in vector registers and then [mask-store](/hpc/simd/masking) them one position to the right using a precomputed mask that tells which elements need to be written for a given `i`:
+To insert a key into an array of $(B - 1)$ sorted elements, we can load them in vector registers and then [mask-store](/hpc/simd/masking) them one position to the right using a [precomputed](/hpc/compilation/precalc/) mask that tells which elements need to be written for a given `i`:
 
 ```c++
 struct Precalc {
@@ -175,6 +175,8 @@ void insert(int *node, int i, int x) {
     node[i] = x; // finally, write the element itself
 }
 ```
+
+This [constexpr magic](/hpc/compilation/precalc/) is the only C++ feature we use.
 
 There are other ways to do it, some possibly more efficient, but we are going to stop there for now.
 
@@ -281,8 +283,9 @@ We want the evaluation to take a reasonable time, so our benchmark is a loop tha
 - Increase the structure size from $1.17^k$ to $1.17^{k+1}$ using individual `insert`s and measure the time it took.
 - Perform $10^6$ random `lower_bound` queries and measure the time it took.
 
-We start at the size $10^4$ and end at $10^7$, for around $50$ data points in total. We generate the data for both query types uniformly in the $[0, 2^{30})$ range and independently between the stages. Since the data generation process allows for repeated keys, we compared against `std::multiset` and `absl::btree_multiset`, although we still refer to them as `std::set` and `absl::btree` for brevity. We also enable [hugepages](/hpc/cpu-cache/paging) on the system level for all three runs.
+We start at the size $10^4$ and end at $10^7$, for around $50$ data points in total. We generate the data for both query types uniformly in the $[0, 2^{30})$ range and independently between the stages. Since the data generation process allows for repeated keys, we compared against `std::multiset` and `absl::btree_multiset`[^absl], although we still refer to them as `std::set` and `absl::btree` for brevity. We also enable [hugepages](/hpc/cpu-cache/paging) on the system level for all three runs.
 
+[^absl]: If you also think that only comparing with Abseil's B-tree is not convincing enough, [feel free](https://github.com/sslotin/amh-code/tree/main/b-tree) to add your favorite search tree to the benchmark.
 
 <!--
 
