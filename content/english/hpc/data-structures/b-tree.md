@@ -1,12 +1,11 @@
 ---
 title: Search Trees
 weight: 3
-draft: true
 ---
 
-In the [previous article](../s-tree), we designed and implemented *static* B-trees to speed up binary searching in sorted arrays, and in its [last section](../s-tree/#as-a-dynamic-tree), we briefly discussed how to make them *dynamic* back while retaining the performance gains from [SIMD](/hpc/simd), and validated our predictions by adding and following explicit pointers in the internal nodes of the S+ tree.
+In the [previous article](../s-tree), we designed and implemented *static* B-trees to speed up binary searching in sorted arrays. In its [last section](../s-tree/#as-a-dynamic-tree), we briefly discussed how to make them *dynamic* back while retaining the performance gains from [SIMD](/hpc/simd) and validated our predictions by adding and following explicit pointers in the internal nodes of the S+ tree.
 
-In this article, we follow up on that proposition and design a minimally functional search tree for integer keys, [achieving](#evaluation) up to 18x/8x speedup over `std::set` and up to 7x/2x speedup over [`absl::btree`](https://abseil.io/blog/20190812-btree) for `lower_bound` and `insert` queries respectively, with yet ample room for improvement.
+In this article, we follow up on that proposition and design a minimally functional search tree for integer keys, [achieving](#evaluation) up to 18x/8x speedup over `std::set` and up to 7x/2x speedup over [`absl::btree`](https://abseil.io/blog/20190812-btree) for `lower_bound` and `insert` queries, respectively, with yet ample room for improvement.
 
 The memory overhead of the structure is around 30%, and the [final implementation](https://github.com/sslotin/amh-code/blob/main/b-tree/btree-final.cc) is under 150 lines of C.
 
@@ -22,7 +21,7 @@ that we call *B− tree*
 
 Instead of making small incremental improvements like we usually do in other case studies, in this article, we will implement just one data structure that we name *B− tree*, which is based on the [B+ tree](../s-tree/#b-tree-layout-1), with a few minor differences:
 
-- Nodes in the B− tree do not store pointers or any metadata whatsoever except for the pointers to internal node children (while the B+ tree leaf nodes store a pointer to the next leaf node). This lets us perfectly place the keys in the leaf nodes on cache lines.
+- Nodes in the B− tree do not store pointers or any metadata except for the pointers to internal node children (while the B+ tree leaf nodes store a pointer to the next leaf node). This lets us perfectly place the keys in the leaf nodes on cache lines.
 - We define key $i$ to be the *maximum* key in the subtree of the child $i$ instead of the *minimum* key in the subtree of the child $(i + 1)$. This lets us not fetch any other nodes after we reach a leaf (in the B+ tree, all keys in the leaf node may be less than the search key, so we need to go to the next leaf node to fetch its first element).
 
 We also use a node size of $B=32$, which is smaller than typical. The reason why it is not $16$, which was [optimal for the S+ tree](s-tree/#modifications-and-further-optimizations), is because we have the additional overhead associated with fetching the pointer, and the benefit of reducing the tree height by ~20% outweighs the cost of processing twice the elements per node, and also because it improves the running time of the `insert` query that needs to perform a costly node split every $\frac{B}{2}$ insertions on average.
@@ -59,12 +58,12 @@ for (int i = 0; i < R; i++)
 
 Both nodes types store their keys sequentially in sorted order and are identified by the index of its first key in the array:
 
-- A leaf node has up to $(B - 1)$ keys, but is padded to $B$ elements with infinities.
+- A leaf node has up to $(B - 1)$ keys but is padded to $B$ elements with infinities.
 - An internal node has up to $(B - 2)$ keys padded to $B$ elements and up to $(B - 1)$ indices of its child nodes, also padded to $B$ elements.
 
 These design decisions are not arbitrary:
 
-- Padding ensures that leaf nodes occupy exactly 2 cache lines and internal nodes occupy exactly 4 cache lines.
+- The padding ensures that leaf nodes occupy exactly 2 cache lines and internal nodes occupy exactly 4 cache lines.
 - We specifically use [indices instead of pointers](/hpc/cpu-cache/pointers/) to save cache space and make moving them with SIMD faster.  
   (We will use "pointer" and "index" interchangeably from now on.)
 - We store indices right after the keys even though they are stored in separate cache lines because [we have reasons](/hpc/cpu-cache/aos-soa/).
@@ -147,7 +146,7 @@ Implementing search is easy, and it doesn't introduce much overhead. The hard pa
 
 On the one side, correctly implementing insertion takes a lot of code, but on the other, most of that code is executed very infrequently, so we don't have to care about its performance that much. Most often, all we need to do is to reach the leaf node (which we've already figured out how to do) and then insert a new key into it, moving some suffix of the keys one position to the right. Occasionally, we also need to split the node and/or update some ancestors, but this is relatively rare, so let's focus on the most common execution path first.
 
-To insert a key into an array of $(B - 1)$ sorted elements, we can load them in vector registers, and then mask-store them one position to the right using a precomputed mask that tells which elements need to be written for a given `i`:
+To insert a key into an array of $(B - 1)$ sorted elements, we can load them in vector registers and then [mask-store](/hpc/simd/masking) them one position to the right using a precomputed mask that tells which elements need to be written for a given `i`:
 
 ```c++
 struct Precalc {
@@ -303,7 +302,7 @@ The relative speedup varies with the structure size — 7-18x/3-8x over STL and 
 
 ![](../img/btree-relative.svg)
 
-Insertions are only 1.5-2 faster than for `absl::btree`, which uses scalar code to do everything. I don't know (yet) why insertions are *that* slow, but my guess is that it has something to do with data dependencies between queries.
+Insertions are only 1.5-2 faster than for `absl::btree`, which uses scalar code to do everything. I don't know (yet) why insertions are *that* slow, but I guess it has something to do with data dependencies between queries.
 
 ![](../img/btree-absl.svg)
 
@@ -313,13 +312,11 @@ Interestingly, B− tree outperforms `absl::btree` even when it only stores a si
 
 ### Possible Optimizations
 
-In our previous optimization efforts.
+In our previous endeavors in data structure optimization, it helped a lot to make as many variables as possible compile-time constants: the compiler can hardcode these constants into the machine code, simplify the arithmetic, unroll all the loops, and do many other nice things for us.
 
-Maximum height was 6.
+This would not be a problem at all if our tree were of constant height, but it is not. It is *largely* constant, though: the height rarely changes, and in fact, under the constraints of the benchmark, the maximum height was only 6.
 
-Compile. I tried it, but couldn't get the compiler to generate optimal code.
-
-The idiomatic C++ way is to use virtual functions, but we will be explicit:
+What we can do is pre-compile the `insert` and `lower_bound` functions for several different compile-time constant heights and switch between them as the tree grows. The idiomatic C++ way is to use virtual functions, but I prefer to be explicit and use raw function pointers like this:
 
 ```c++
 void (*insert_ptr)(int);
@@ -333,6 +330,8 @@ int lower_bound(int x) {
     return lower_bound_ptr(x);
 }
 ```
+
+We now define template functions that have the tree height as a parameter, and in the grow-tree block inside the `insert` function, we change the pointers as the tree grows:
 
 ```c++
 template <int H>
@@ -357,18 +356,20 @@ void insert_impl<10>(int x) {
 }
 ```
 
-```c++
+<!--
 insert_ptr = &insert_impl<1>;
 lower_bound_ptr = &lower_bound_impl<1>;
-```
+-->
 
-Recursion unrolled.
+I tried but could not get any performance improvement with this, but I still have high hope for this approach because the compiler can (theoretically) remove `sk` and `si`, completely removing any temporary storage and only reading and computing everything once, greatly optimizing the `insert` procedure.
+
+<!--
 
 It is possible to get rid of pointers even more. For example, for large trees, we can probably afford a small S+ tree for $16 \cdot 17$ or so elements as the root, which we rebuild from scratch on each infrequent occasion when it changes.
 
 ### Other Operations
 
-<!-- Deletions, iteration, and other things are not our concern for now. -->
+Deletions, iteration, and other things are not our concern for now.
 
 Going to father and fetching $B$ pointers at a time is faster as it negates [pointer chasing](/hpc/cpu-cache/latency/).
 
@@ -386,10 +387,13 @@ If the node is at least half-full, we're done. Otherwise, we try to borrow keys 
 
 If that fails, we can merge the two nodes together, and iteratively delete the key in the parent.
 
-<!-- One interesting use case is *rope*, also known as *cord*, which is used for wrapping strings in a tree to support mass operations. For example, editing a very large text file. Which is the topic. -->
-
 [Skip list](https://en.wikipedia.org/wiki/Skip_list), which [some attempts to vectorize it](https://doublequan.github.io/), although it may achieve higher total throughput in concurrent setting. I have low hope that it can be improved.
 
 ## Acknowledgements
 
 Thanks to [Danila Kutenin](https://danlark.org/) from Google for meaningful discussions of applicability and possible replacement in Abseil.
+
+-->
+
+
+<!-- One interesting use case is *rope*, also known as *cord*, which is used for wrapping strings in a tree to support mass operations. For example, editing a very large text file. Which is the topic. -->

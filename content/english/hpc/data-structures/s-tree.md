@@ -584,7 +584,7 @@ My next priorities is to adapt it to segment trees, which I know how to do, and 
 
 Of course, this comparison is not fair, as implementing a dynamic search tree is a more high-dimensional problem.
 
-We'd also need to implement the update operation, which will not be that efficient, and for which we'd need to sacrifice the fanout factor. But it still seems possible to implement a 10-20x faster `std::set` and a 3-5x faster `absl::btree_set`, depending on how you define "faster" — and this is one of the things we'll attempt to do next.
+We'd also need to implement the update operation, which will not be that efficient, and for which we'd need to sacrifice the fanout factor. But it still seems possible to implement a 10-20x faster `std::set` and a 3-5x faster `absl::btree_set`, depending on how you define "faster" — and this is one of the things we'll [attempt to do next](../b-tree).
 
 
 <!--
