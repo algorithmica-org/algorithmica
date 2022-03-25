@@ -4,35 +4,57 @@ weight: 3
 draft: true
 ---
 
-In the [previous article](../s-tree), we designed *static* B-trees to speed up binary searching in sorted arrays, designing S-tree and S+ Tree. In the last section we [briefly discussed](../s-tree/#as-a-dynamic-tree) how to turn them *dynamic* while retaining performance gains from [SIMD](/hpc/simd), making a proof-of-concept. Simply adding pointers to S+ tree.
+In the [previous article](../s-tree), we designed and implemented *static* B-trees to speed up binary searching in sorted arrays, and in its [last section](../s-tree/#as-a-dynamic-tree), we briefly discussed how to make them *dynamic* back while retaining the performance gains from [SIMD](/hpc/simd), and validated our predictions by adding and following explicit pointers in the internal nodes of the S+ tree.
 
-In this section, we follow up on that promise and design a minimally functional search tree for integer keys, called *B− tree*, that achieves significant improvements over [improvements](#evaluation): 7-18 times faster for large arrays and 3-8 faster for inserts. The [absl::btree](https://abseil.io/blog/20190812-btree) 3-7 times faster for searches and 1.5-2 times faster for with yet ample room for improvement.
+In this article, we follow up on that proposition and design a minimally functional search tree for integer keys, [achieving](#evaluation) up to 18x/8x speedup over `std::set` and up to 7x/2x speedup over [`absl::btree`](https://abseil.io/blog/20190812-btree) for `lower_bound` and `insert` queries respectively, with yet ample room for improvement.
 
-The memory overhead of the structure around 30%. The [final implementation](https://github.com/sslotin/amh-code/blob/main/b-tree/btree-final.cc) is around 150 lines of C.
+The memory overhead of the structure is around 30%, and the [final implementation](https://github.com/sslotin/amh-code/blob/main/b-tree/btree-final.cc) is under 150 lines of C.
 
-We give more details in th evaluation section.
+<!--
+
+7-18x/3-8x speedup over `std::set` and 3-7x/1.5-2x
+
+that we call *B− tree*
+
+-->
 
 ## B− Tree
 
-Instead of making small incremental changes, we will design just one data structure in this article, which is based on [B+ tree](../s-tree/#b-tree-layout-1) with a few minor exceptions:
+Instead of making small incremental improvements like we usually do in other case studies, in this article, we will implement just one data structure that we name *B− tree*, which is based on the [B+ tree](../s-tree/#b-tree-layout-1), with a few minor differences:
 
-- We do not store any pointers except for the children (while B+ stores one pointer for the next leaf node).
-- We define key $i$ as the *maximum* key in the subtree of child $i$ instead of the *minimum* key in the subtree of child $(i + 1)$. This removes the need.
-- We use a small node size $B=32$. This is needed simd to be efficient (we will discuss other node sizes later).
+- Nodes in the B− tree do not store any pointers or meta-information whatsoever except for the pointers to internal node children (while the B+ tree leaf nodes store a pointer to the next leaf node). This lets us perfectly place the keys in the leaf nodes on cache lines.
+- We define key $i$ to be the *maximum* key in the subtree of the child $i$ instead of the *minimum* key in the subtree of the child $(i + 1)$. This lets us not fetch any other nodes after we reach a leaf (in the B+ tree, all keys in the leaf node may be less than the search key, so we need to go to the next leaf node to fetch its first element).
+
+We also use a node size of $B=32$, which is smaller than typical. The reason why it is not $16$, which was [optimal for the S+ tree](s-tree/#modifications-and-further-optimizations), is because we have the additional overhead associated with fetching the pointer, and the benefit of reducing the tree height by ~20% outweighs the cost of processing twice the elements per node, and also because it improves the running time of the `insert` query that needs to perform a costly node split every $\frac{B}{2}$ insertions on average.
+
+<!--
+
+We will discuss other node sizes later.
+
+This is needed simd to be efficient (we will discuss other node sizes later).
 
 There is some overhead, so it makes sense to use more than one cache line.
 
-Analogous to the B+ tree, we call this modification *B− tree*.
+Analogous to the B+ tree,
 
-### Layout
+-->
+
+### Memory Layout
+
+Although this is probably not the best software engineering practice, 
 
 We rely on arena allocation.
 
 ```c++
-const int B = 32; // node size
-
 const int R = 1e8; // reserve
 alignas(64) int tree[R];
+
+for (int i = 0; i < R; i++)
+    tree[i] = INT_MAX;
+```
+
+```c++
+const int B = 32; // node size
 
 int root = 0;   // where the tree root starts
 int n_tree = B; 
@@ -41,10 +63,7 @@ int H = 1;      // tree height
 
 To further simplify the implementation, we set all array cells with infinities:
 
-```c++
-for (int i = 0; i < R; i++)
-    tree[i] = INT_MAX;
-```
+We need these fields to hold temporary values after insertions.
 
 We can do this — this does not affect performance. Memory allocation and initialization is not the bottleneck.
 
@@ -55,11 +74,13 @@ This way, leaf nodes occupy 2 cache lines and waste 1 slot, while internal nodes
 
 To "allocate" a new node, we simply increase `n_tree` by $B$ if it is a data node or by $2 \cdot B$ if it is an internal node. 
 
+`std::set` needs at least 32 bytes. 3 pointers (parent, left, right), plus another 8, while we need ~5.2 *on average* and slightly over 8 in the worst case. (sequential inserts)
+
 ### Searching
 
 We used permutations when we implemented [S-trees](../s-tree/#optimization). Storing values in permuted order will make inserts much harder, so we change the approach.
 
-Using popcount instead of tzcnt: the index i is equal to the number of keys less than x, so we can compare x against all keys, combine the vector mask any way we want, call maskmov, and then calculate the number of set bits with popcnt. This removes the need to store the keys in any particular order, which lets us skip the permutation step and also use this procedure on the last layer as well.
+Using popcount instead of tzcnt: the index i is equal to the number of keys less than x, so we can compare x against all keys, combine the vector mask any way we want, call `maskmov`, and then calculate the number of set bits with popcnt. This removes the need to store the keys in any particular order, which lets us skip the permutation step and also use this procedure on the last layer as well.
 
 ```c++
 typedef __m256i reg;
@@ -252,6 +273,8 @@ $1.17^k$ and $1.17^{k+1}$.
 
 It may or may not be representative of your use case.
 
+[Hugepages](/hpc/cpu-cache/paging) are enabled globally for all three algorithms.
+
 As predicted, the performance is much better:
 
 ![](../img/btree-absolute.svg)
@@ -263,6 +286,8 @@ When the data set is small, the latency increases in discrete steps: 3.5ns for u
 I apologize to everyone else, but this is sort of your fault for not using a public benchmark.
 
 ![](../img/btree-absl.svg)
+
+Interestingly, B− tree wins over `absl::btree` even when it only stores one key: it takes around 5ns to figure out branch prediction, while B− tree is branchless.
 
 I don't know (yet) why insertions are *that* slow. My guess is that it has something to do with data dependencies between queries.
 
@@ -316,6 +341,8 @@ lower_bound_ptr = &lower_bound_impl<1>;
 ```
 
 Recursion unrolled.
+
+It is possible to get rid of pointers even more. For example, for large trees, we can probably afford a small S+ tree for $16 \cdot 17$ or so elements as the root, which we rebuild from scratch on each infrequent occasion when it changes.
 
 ### Other Operations
 
