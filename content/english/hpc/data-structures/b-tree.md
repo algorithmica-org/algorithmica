@@ -366,7 +366,7 @@ lower_bound_ptr = &lower_bound_impl<1>;
 
 I tried but could not get any performance improvement with this, but I still have high hope for this approach because the compiler can (theoretically) remove `sk` and `si`, completely removing any temporary storage and only reading and computing everything once, greatly optimizing the `insert` procedure.
 
-Insertion can also probably be optimized by using a larger block size as node splits would become rare, but this comes at the cost of slower lookups.
+Insertion can also probably be optimized by using a larger block size as node splits would become rare, but this comes at the cost of slower lookups. We could also try different node sizes for different layers: leaves should probably be larger than the internal nodes.
 
 **Another idea** is to move extra keys on insert to a sibling node, delaying the node split as long as possible.
 
@@ -378,32 +378,22 @@ This technique can even be extended to, say, three-to-four splits, although furt
 
 We could also try some non-tree data structures, such as the [skip list](https://en.wikipedia.org/wiki/Skip_list). There has even been a [successful attempt to vectorize it](https://doublequan.github.io/) — although the speedup was not that impressive. I have low hope that skip-list, in particular, can be improved, although it may achieve a higher total throughput in the concurrent setting.
 
-
-<!--
-
 ### Other Operations
 
-Deletions, iteration, and other things are not our concern for now.
+To *delete* a key, we can similarly locate and remove it from a node with the same mask-store trick. After that, if the node is at least half-full, we're done. Otherwise, we try to borrow a key from the next sibling. If the sibling has more than $\frac{B}{2}$ keys, we append its first key and shift its keys one to the left. Otherwise, both the current node and the next node have less than $\frac{B}{2}$ keys, so we can merge them, after which we go to the parent and iteratively delete a key there.
 
-Going to father and fetching $B$ pointers at a time is faster as it negates [pointer chasing](/hpc/cpu-cache/latency/).
+Another thing we may want to implement is *iteration*. Bulk-loading each key from `l` to `r` is a very common pattern — for example, in `SELECT abc ORDER BY xyz` type of queries in databases — and B+ trees usually store pointers to the next node in the data layer to allow for this type of rapid iteration. In B− trees, as we're using a much smaller node size, we can experience [pointer chasing](/hpc/cpu-cache/latency/) problems if we do this. Going to the parent and reading all its $B$ pointers is probably faster as it negates this problem. Therefore, a stack of ancestors (the `sk` and `si` arrays we used in `insert`) can serve as an iterator and may even be better than separately storing pointers in nodes.
 
-Pointer to either parent or next node.
+We can easily implement almost everything that `std::set` does, but the B− tree, like any other B-tree, is very unlikely to become a drop-in replacement to `std::set` due to the requirement of pointer stability: a pointer to an element should remain valid unless the element is deleted, which is hard to achieve when we split and merge nodes all the time. This is a major problem not only for search trees but most data structures in general: having both pointer stability and high performance at the same time is next to impossible.
 
-Stack of ancestors.
-
-Nodes are at least ½ full (because they are created ½ full), except for the root, and, on average, ¾ full assuming random inserts.
+<!--
+Maybe if the C++ standard adds something like `std::set_with_unstable_pointers`
 
 We can't store junk in keys.
-
-If the node is at least half-full, we're done. Otherwise, we try to borrow keys from siblings (no expensive two-pointer merging is necessary: we can just append them to the end/beginning and swap key of the parent).
-
-If that fails, we can merge the two nodes together, and iteratively delete the key in the parent.
+-->
 
 ## Acknowledgements
 
-Thanks to [Danila Kutenin](https://danlark.org/) from Google for meaningful discussions of applicability and possible replacement in Abseil.
-
--->
-
+Thanks to [Danila Kutenin](https://danlark.org/) from Google for meaningful discussions of applicability and the usage of B-trees in Abseil.
 
 <!-- One interesting use case is *rope*, also known as *cord*, which is used for wrapping strings in a tree to support mass operations. For example, editing a very large text file. Which is the topic. -->
