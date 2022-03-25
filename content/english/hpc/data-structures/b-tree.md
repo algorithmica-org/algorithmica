@@ -65,7 +65,8 @@ Both nodes types store their keys sequentially in sorted order and are identifie
 These design decisions are not arbitrary:
 
 - Padding ensures that leaf nodes occupy exactly 2 cache lines and internal nodes occupy exactly 4 cache lines.
-- We specifically use [indices instead of pointers](/hpc/cpu-cache/pointers/) to save cache space.
+- We specifically use [indices instead of pointers](/hpc/cpu-cache/pointers/) to save cache space and make moving them with SIMD faster.  
+  (We will use "pointer" and "index" interchangeably from now on.)
 - We store indices right after the keys even though they are stored in separate cache lines because [we have reasons](/hpc/cpu-cache/aos-soa/).
 - We intentionally "waste" one array cell in leaf nodes and $2+1=3$ cells in internal nodes because we need it to store temporary results during a node split.
 
@@ -101,15 +102,17 @@ reg cmp(reg x, int *node) {
     return _mm256_cmpgt_epi32(x, y);
 }
 
+// returns how many keys are less than x
 unsigned rank32(reg x, int *node) {
     reg m1 = cmp(x, node);
     reg m2 = cmp(x, node + 8);
     reg m3 = cmp(x, node + 16);
     reg m4 = cmp(x, node + 24);
 
+    // take lower 16 bits from m1/m3 and higher 16 bits from m2/m4
     m1 = _mm256_blend_epi16(m1, m2, 0b01010101);
     m3 = _mm256_blend_epi16(m3, m4, 0b01010101);
-    m1 = _mm256_packs_epi16(m1, m3);
+    m1 = _mm256_packs_epi16(m1, m3); // can also use blendv here, but packs is simpler
 
     unsigned mask = _mm256_movemask_epi8(m1);
     return __builtin_popcount(mask);    
@@ -132,21 +135,17 @@ int lower_bound(int _x) {
 
     unsigned i = rank32(x, &tree[k]);
 
-    return tree[k + i]; // what if next block? maybe we store 31 elements?
+    return tree[k + i];
 }
 ```
 
-Implementing `lower_bound` is easy, and it doesn't introduce much overhead. The hard part is to implement insertion.
+Implementing search is easy, and it doesn't introduce much overhead. The hard part is implementing insertion.
 
 ### Insertion
 
-Insertion needs a lot of logic, but the good news is that it does not have to be executed frequently.
+On the one side, correctly implementing insertion takes a lot of code, but on the other, most of that code is executed very infrequently, so we don't have to care about its performance that much. Most often, all we need to do is to reach the leaf node (which we've already figured out how to do) and then insert a new key into it, moving some suffix of the keys one position to the right. Occasionally, we also need to split the node and/or update some ancestors, but this is relatively rare, so let's focus on the most common execution path first.
 
-Most of the time, all we need is to reach a leaf node and then insert a key into it, moving some other keys one position to the right.
-
-Occasionally, we also need to split the node and/or update some parents, but this is relatively rare, so let's focus on the most common part.
-
-To insert efficiently.
+To insert a key into an array of $(B - 1)$ sorted elements, we can load them in vector registers, and then mask-store them one position to the right using a precomputed mask that tells which elements need to be written for a given `i`:
 
 ```c++
 struct Precalc {
@@ -155,25 +154,30 @@ struct Precalc {
     constexpr Precalc() : mask{} {
         for (int i = 0; i < B; i++)
             for (int j = i; j < B - 1; j++)
+                // everything from i to B - 2 inclusive needs to be moved
                 mask[i][j] = -1;
     }
 };
 
 constexpr Precalc P;
-```
 
-```c++
 void insert(int *node, int i, int x) {
+    // need to iterate right-to-left to not overwrite the first element of the next lane
     for (int j = B - 8; j >= 0; j -= 8) {
+        // load the keys
         reg t = _mm256_load_si256((reg*) &node[j]);
+        // load the corresponding mask
         reg mask = _mm256_load_si256((reg*) &P.mask[i][j]);
+        // mask-write them one position to the right
         _mm256_maskstore_epi32(&node[j + 1], mask, t);
     }
-    node[i] = x;
+    node[i] = x; // finally, write the element itself
 }
 ```
 
-Next, let's try. To split a node, we need. So let's write another primitive:
+There are other ways to do it, some possibly more efficient, but we are going to stop there for now.
+
+When we split a node, we need to move half of the keys to another node, so let's write another primitive that does it:
 
 ```c++
 // move the second half of a node and fill it with infinities
@@ -187,12 +191,15 @@ void move(int *from, int *to) {
 }
 ```
 
-Now we need to (very carefully)
+With these two vector functions implemented, we can now very carefully implement insertion:
 
 ```c++
 void insert(int _x) {
-    // we save the path we visited in case we need to update some of our ancestors
-    unsigned sk[10], si[10];
+    // the beginning of the procedure is the same as in lower_bound,
+    // except that we save the path in case we need to update some of our ancestors
+    unsigned sk[10], si[10]; // k and i on each iteration
+    //           ^------^ We assume that the tree height does not exceed 10
+    //                    (which would require at least 16^10 elements)
     
     unsigned k = root;
     reg x = _mm256_set1_epi32(_x);
@@ -200,7 +207,7 @@ void insert(int _x) {
     for (int h = 0; h < H - 1; h++) {
         unsigned i = rank32(x, &tree[k]);
 
-        // check if we need to update the key right away
+        // optionally update the key i right away
         tree[k + i] = (_x > tree[k + i] ? _x : tree[k + i]);
         sk[h] = k, si[h] = i; // and save the path
         
@@ -209,13 +216,13 @@ void insert(int _x) {
 
     unsigned i = rank32(x, &tree[k]);
 
-    // we can start computing this check ahead of insertion
+    // we can start computing the is-full check before insertion completes
     bool filled  = (tree[k + B - 2] != INT_MAX);
 
     insert(tree + k, i, _x);
 
     if (filled) {
-        // create a new leaf node
+        // the node needs to be split, so we create a new leaf node
         move(tree + k, tree + n_tree);
         
         int v = tree[k + B / 2 - 1]; // new key to be inserted
@@ -224,14 +231,13 @@ void insert(int _x) {
         n_tree += B;
 
         for (int h = H - 2; h >= 0; h--) {
-            // for each parent node we repeat this process
-            // until we reach the root of determine that the node is not split
+            // ascend and repeat until we reach the root or find a the node is not split
             k = sk[h], i = si[h];
 
             filled = (tree[k + B - 3] != INT_MAX);
 
-            // the node already has a correct key (right one)
-            //                  and a correct pointer (left one)
+            // the node already has a correct key (the right one)
+            //                  and a correct pointer (the left one)
             insert(tree + k,     i,     v);
             insert(tree + k + B, i + 1, p);
             
@@ -249,7 +255,8 @@ void insert(int _x) {
             n_tree += 2 * B;
         }
 
-        // if we've reached here, this means we've reached the root, and it was split
+        // if reach here, this means we've reached the root,
+        // and it was split into two, so we need a new root
         tree[n_tree] = v;
 
         tree[n_tree + B] = root;
@@ -262,7 +269,7 @@ void insert(int _x) {
 }
 ```
 
-There are many inefficiencies, but luckily they are rarely called.
+There are many inefficiencies, but, luckily, the body of `if (filled)` is executed very infrequently — approximately every $\frac{B}{2}$ insertions — and the insertion performance is not really our top priority, so we will just leave it there.
 
 ## Evaluation
 
