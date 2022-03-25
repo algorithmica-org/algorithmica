@@ -366,9 +366,20 @@ lower_bound_ptr = &lower_bound_impl<1>;
 
 I tried but could not get any performance improvement with this, but I still have high hope for this approach because the compiler can (theoretically) remove `sk` and `si`, completely removing any temporary storage and only reading and computing everything once, greatly optimizing the `insert` procedure.
 
-<!--
+Insertion can also probably be optimized by using a larger block size as node splits would become rare, but this comes at the cost of slower lookups.
 
-It is possible to get rid of pointers even more. For example, for large trees, we can probably afford a small S+ tree for $16 \cdot 17$ or so elements as the root, which we rebuild from scratch on each infrequent occasion when it changes.
+**Another idea** is to move extra keys on insert to a sibling node, delaying the node split as long as possible.
+
+One such particular modification is known as the B* tree. It moves the last key to the next node if the current one is full, and when both nodes become full, it jointly splits both of them, producing three nodes that are ⅔ full. This reduces the memory overhead (the nodes will be ⅚ full on average) and increases the fanout factor, reducing the height, which helps all operations.
+
+This technique can even be extended to, say, three-to-four splits, although further generalization would come at the cost of a slower `insert`.
+
+**And yet another idea** is to get rid of (some) pointers. For example, for large trees, we can probably afford a small [S+ tree](../s-tree) for $16 \cdot 17$ or so elements as the root, which we rebuild from scratch on each infrequent occasion when it changes. You can't extend it to the whole tree, unfortunately: I believe there is a paper somewhere saying that we can't turn a dynamic structure fully implicit without also having to do $\Omega(\sqrt n)$ operations per query.
+
+We could also try some non-tree data structures, such as the [skip list](https://en.wikipedia.org/wiki/Skip_list). There has even been a [successful attempt to vectorize it](https://doublequan.github.io/) — although the speedup was not that impressive. I have low hope that skip-list, in particular, can be improved, although it may achieve a higher total throughput in the concurrent setting.
+
+
+<!--
 
 ### Other Operations
 
@@ -384,13 +395,9 @@ Nodes are at least ½ full (because they are created ½ full), except for the ro
 
 We can't store junk in keys.
 
-B* split
-
 If the node is at least half-full, we're done. Otherwise, we try to borrow keys from siblings (no expensive two-pointer merging is necessary: we can just append them to the end/beginning and swap key of the parent).
 
 If that fails, we can merge the two nodes together, and iteratively delete the key in the parent.
-
-[Skip list](https://en.wikipedia.org/wiki/Skip_list), which [some attempts to vectorize it](https://doublequan.github.io/), although it may achieve higher total throughput in concurrent setting. I have low hope that it can be improved.
 
 ## Acknowledgements
 
