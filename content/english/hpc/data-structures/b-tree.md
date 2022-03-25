@@ -41,40 +41,49 @@ Analogous to the B+ tree,
 
 ### Memory Layout
 
-Although this is probably not the best software engineering practice, 
-
-We rely on arena allocation.
+Although this is probably not the best approach in terms of software engineering, we will simply store the entire tree in a large pre-allocated array, without discriminating between leaves and internal nodes:
 
 ```c++
-const int R = 1e8; // reserve
+const int R = 1e8;
 alignas(64) int tree[R];
+```
 
+We also pre-fill this array with infinities to simplify the implementation:
+
+```c++
 for (int i = 0; i < R; i++)
     tree[i] = INT_MAX;
 ```
 
-```c++
-const int B = 32; // node size
+(In general, it is technically cheating to compare against `std::set` or other structures that use `new` under the hood, but memory allocation and initialization are not the bottlenecks here, so this does not significantly affect the evaluation.)
 
-int root = 0;   // where the tree root starts
-int n_tree = B; 
-int H = 1;      // tree height
+Both nodes types store their keys sequentially in sorted order and are identified by the index of its first key in the array:
+
+- A leaf node has up to $(B - 1)$ keys, but is padded to $B$ elements with infinities.
+- An internal node has up to $(B - 2)$ keys padded to $B$ elements and up to $(B - 1)$ indices of its child nodes, also padded to $B$ elements.
+
+These design decisions are not arbitrary:
+
+- Padding ensures that leaf nodes occupy exactly 2 cache lines and internal nodes occupy exactly 4 cache lines.
+- We specifically use [indices instead of pointers](/hpc/cpu-cache/pointers/) to save cache space.
+- We store indices right after the keys even though they are stored in separate cache lines because [we have reasons](/hpc/cpu-cache/aos-soa/).
+- We intentionally "waste" one array cell in leaf nodes and $2+1=3$ cells in internal nodes because we need it to store temporary results during a node split.
+
+Initially, we only have one empty leaf node as the root:
+
+```c++
+const int B = 32;
+
+int root = 0;   // where the keys of the root start
+int n_tree = B; // number of allocated array cells
+int H = 1;      // current tree height
 ```
 
-To further simplify the implementation, we set all array cells with infinities:
+To "allocate" a new node, we simply increase `n_tree` by $B$ if it is a leaf node or by $2 B$ if it is an internal node. 
 
-We need these fields to hold temporary values after insertions.
+Since new nodes can only be created by splitting a full node, each node except for the root will be at least half full. This implies that we need between 4 and 8 bytes per integer element (the internal nodes will contribute $\frac{1}{16}$-th or so to that number), the former being the case when the inserts are sequential, and the latter being the case when the input is adversarial. When the queries are uniformly distributed, the nodes are ~75% full on average, projecting to ~5.2 bytes per element.
 
-We can do this — this does not affect performance. Memory allocation and initialization is not the bottleneck.
-
-To save precious cache space, we use [indices instead of pointers](/hpc/cpu-cache/pointers/).
-Despite that they are in separate cache lines, it still [makes sense](/hpc/cpu-cache/aos-soa/) to store them close to keys.
-
-This way, leaf nodes occupy 2 cache lines and waste 1 slot, while internal nodes occupy 4 cache lines and waste 2+1=3 slots.
-
-To "allocate" a new node, we simply increase `n_tree` by $B$ if it is a data node or by $2 \cdot B$ if it is an internal node. 
-
-`std::set` needs at least 32 bytes. 3 pointers (parent, left, right), plus another 8, while we need ~5.2 *on average* and slightly over 8 in the worst case. (sequential inserts)
+B-trees are very memory-efficient compared to the pointer-based binary trees. For example, `std::set` needs at least three pointers (the left child, the right child, and the parent), alone costing $3 \times 8 = 24$ bytes, plus at least another $8$ bytes to store the key and the meta-information due to [structure padding](hpc/cpu-cache/alignment/).
 
 ### Searching
 
