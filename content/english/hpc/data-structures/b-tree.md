@@ -5,9 +5,9 @@ weight: 3
 
 In the [previous article](../s-tree), we designed and implemented *static* B-trees to speed up binary searching in sorted arrays. In its [last section](../s-tree/#as-a-dynamic-tree), we briefly discussed how to make them *dynamic* back while retaining the performance gains from [SIMD](/hpc/simd) and validated our predictions by adding and following explicit pointers in the internal nodes of the S+ tree.
 
-In this article, we follow up on that proposition and design a minimally functional search tree for integer keys, [achieving](#evaluation) up to 18x/8x speedup over `std::set` and up to 7x/2x speedup over [`absl::btree`](https://abseil.io/blog/20190812-btree) for `lower_bound` and `insert` queries, respectively, with yet ample room for improvement.
+In this article, we follow up on that proposition and design a minimally functional search tree for integer keys, [achieving](#evaluation) up to 18x/8x speedup over `std::set` and up to 7x/2x speedup over [`absl::btree`](https://abseil.io/blog/20190812-btree) for `lower_bound` and `insert` queries, respectively — with yet ample room for improvement.
 
-The memory overhead of the structure is around 30%, and the final implementation is [under 150 lines of C++](https://github.com/sslotin/amh-code/blob/main/b-tree/btree-final.cc).
+The memory overhead of the structure is around 30% for 32-bit integers, and the final implementation is [under 150 lines of C++](https://github.com/sslotin/amh-code/blob/main/b-tree/btree-final.cc). It can be easily generalized to other arithmetic types and small/fixed-length strings such as hashes, country codes, and stock symbols.
 
 <!--
 
