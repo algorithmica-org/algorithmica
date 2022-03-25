@@ -22,7 +22,7 @@ that we call *B− tree*
 
 Instead of making small incremental improvements like we usually do in other case studies, in this article, we will implement just one data structure that we name *B− tree*, which is based on the [B+ tree](../s-tree/#b-tree-layout-1), with a few minor differences:
 
-- Nodes in the B− tree do not store any pointers or meta-information whatsoever except for the pointers to internal node children (while the B+ tree leaf nodes store a pointer to the next leaf node). This lets us perfectly place the keys in the leaf nodes on cache lines.
+- Nodes in the B− tree do not store pointers or any metadata whatsoever except for the pointers to internal node children (while the B+ tree leaf nodes store a pointer to the next leaf node). This lets us perfectly place the keys in the leaf nodes on cache lines.
 - We define key $i$ to be the *maximum* key in the subtree of the child $i$ instead of the *minimum* key in the subtree of the child $(i + 1)$. This lets us not fetch any other nodes after we reach a leaf (in the B+ tree, all keys in the leaf node may be less than the search key, so we need to go to the next leaf node to fetch its first element).
 
 We also use a node size of $B=32$, which is smaller than typical. The reason why it is not $16$, which was [optimal for the S+ tree](s-tree/#modifications-and-further-optimizations), is because we have the additional overhead associated with fetching the pointer, and the benefit of reducing the tree height by ~20% outweighs the cost of processing twice the elements per node, and also because it improves the running time of the `insert` query that needs to perform a costly node split every $\frac{B}{2}$ insertions on average.
@@ -87,9 +87,11 @@ B-trees are very memory-efficient compared to the pointer-based binary trees. Fo
 
 ### Searching
 
-We used permutations when we implemented [S-trees](../s-tree/#optimization). Storing values in permuted order will make inserts much harder, so we change the approach.
+When we implemented [S-trees](../s-tree/#optimization), we ended up storing the keys in permuted order due to the intricacies of how the blending/packs instructions work. For the *dynamic tree* problem, storing the keys in permuted order would make inserts much harder to implement, so we will change the approach instead.
 
-Using popcount instead of tzcnt: the index i is equal to the number of keys less than x, so we can compare x against all keys, combine the vector mask any way we want, call `maskmov`, and then calculate the number of set bits with popcnt. This removes the need to store the keys in any particular order, which lets us skip the permutation step and also use this procedure on the last layer as well.
+An alternative way to think about finding the would-be position of the element `x` in a sorted array is not "the index of the first element that is not less than `x`" but "the number of elements that are less than `x`." This observation generates the following idea: compare the keys against `x`, aggregate the vector masks into a 32-bit mask (where each bit can correspond to any element as long as the mapping is bijective), and then call `popcnt` on it, returning the number of elements less than `x`.
+
+This trick lets us perform the local search efficiently and without requiring any shuffling:
 
 ```c++
 typedef __m256i reg;
@@ -114,9 +116,9 @@ unsigned rank32(reg x, int *node) {
 }
 ```
 
-This is also the reason why the "key area" in the nodes should not be contaminated and only store keys padded with infinities — or masked out.
+Note that, because of this procedure, we have to pad the "key area" with infinities, which prevents us from storing metadata in the vacated cells (unless we are also willing to spend a few cycles to mask it out when loading a SIMD lane).
 
-To implement `lower_bound`, we just use the same procedure, but fetch the pointer after we computed the child number:
+Now, to implement `lower_bound`, we can descend the tree just like we did in the S+ tree, but fetching the pointer after we compute the child number:
 
 ```c++
 int lower_bound(int _x) {
