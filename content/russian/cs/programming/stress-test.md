@@ -151,9 +151,9 @@ _, f1, f2, gen, iters = sys.argv
 
 for i in range(int(iters)):
     print('Test', i + 1)
-    os.system('python3 %s > test.txt' % gen)
-    v1 = os.system('./%s < test.txt' % f1).read()
-    v2 = os.system('./%s < test.txt' % f2).read()
+    os.system(f'python3 {gen} > test.txt')
+    v1 = os.popen(f'./{f1} < test.txt').read()
+    v2 = os.popen(f'./{f2} < test.txt').read()
     if v1 != v2:
         print("Failed test:")
         print(open("text.txt").read())
