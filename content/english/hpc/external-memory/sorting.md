@@ -107,15 +107,28 @@ fclose(input);
 
 What is left now is to merge them together. The bandwidth of modern HDDs can be quite high, and there may be a lot of parts to merge, so the I/O efficiency of this stage is not our only concern: we also need a faster way to merge $k$ arrays than by finding minima with $O(k)$ comparisons. We can do that in $O(\log k)$ time per element if we maintain a min-heap for these $k$ elements, in a manner almost identical to heapsort.
 
-Here is how to implement it. First, we need to initialize some variables:
+Here is how to implement it. First, we are going to need a heap (`priority_queue` in C++):
 
-```cpp
+```c++
+struct Pointer {
+    int key, part; // the element itself and the number of its part
+
+    bool operator<(const Pointer& other) const {
+        return key > other.key; // std::priority_queue is a max-heap by default
+    }
+};
+
+std::priority_queue<Pointer> q;
+```
+
+Then, we need to allocate and fill the buffers:
+
+```c++
 const int nparts = parts.size();
 
-std::priority_queue< std::pair<int, int> > q; // the heap itself (element + part number)
-auto buffers = new int[nparts][B];            // buffers for each part
-int *l = new int[nparts],                     // # of already processed buffer elements
-    *r = new int[nparts];                     // buffer size (in case it isn't full)
+auto buffers = new int[nparts][B]; // buffers for each part
+int *l = new int[nparts],          // # of already processed buffer elements
+    *r = new int[nparts];          // buffer size (in case it isn't full)
 
 // now we add fill the buffer for each part and add their elements to the heap
 for (int part = 0; part < nparts; part++) {
