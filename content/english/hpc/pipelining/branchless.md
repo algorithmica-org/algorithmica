@@ -41,7 +41,7 @@ sar  ebx, 31    ; t >>= 31
 imul  eax, ebx   ; x *= t
 ```
 
-Another, more complicated way to implement this whole sequence is to convert this sign bit into a mask and then use bitwise `and` instead of multiplication: `((a[i] - 50) >> 1 - 1) & a`. This makes the whole sequence one cycle faster, considering that unlike other instructions, `imul` takes 3 cycles:
+Another, more complicated way to implement this whole sequence is to convert this sign bit into a mask and then use bitwise `and` instead of multiplication: `((a[i] - 50) >> 31 - 1) & a`. This makes the whole sequence one cycle faster, considering that, unlike other instructions, `imul` takes 3 cycles:
 
 ```nasm
 mov  ebx, eax   ; t = x
