@@ -156,7 +156,7 @@ for i in range(int(iters)):
     v2 = os.popen(f'./{f2} < test.txt').read()
     if v1 != v2:
         print("Failed test:")
-        print(open("text.txt").read())
+        print(open("test.txt").read())
         print(f'Output of {f1}:')
         print(v1)
         print(f'Output of {f2}:')
