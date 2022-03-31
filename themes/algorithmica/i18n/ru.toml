@@ -28,7 +28,7 @@ other = "пререквизиты"
 other = "переводы"
 
 [copyright1]
-other = "Copyleft 2017–2021 Тинькофф Образование" # {{ .Count / . }}
+other = "Copyleft 2017–2022 Algorithmica.org" # {{ .Count / . }}
 
 [copyright2]
 other = "Материалы распространяются под <a href='https://tldrlegal.com/license/creative-commons-attribution-sharealike-4.0-international-(cc-by-sa-4.0)'>CC BY-SA</a>"
