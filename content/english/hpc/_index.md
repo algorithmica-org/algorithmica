@@ -242,6 +242,7 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Marshall Lochbaum](https://mlochbaum.github.io/publications.html)
 - [Pavel Zemtsov](https://pzemtsov.github.io/)
 - [Nayuki](https://www.nayuki.io/category/programming)
+- [InstLatX64](https://twitter.com/InstLatX64)
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
 - [Z boson](https://stackoverflow.com/users/2542702/z-boson)
 - [Creel](https://www.youtube.com/c/WhatsACreel)

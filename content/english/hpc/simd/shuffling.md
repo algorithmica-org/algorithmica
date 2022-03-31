@@ -225,7 +225,7 @@ The vectorized version takes some work to implement, but it is 6-7x faster than 
 
 ![](../img/filter.svg)
 
-The loop performance is relatively low — taking 4 CPU cycles per iteration —  because, on this particular CPU (Zen 2), `movemask`, `permute`, and `store` have low throughput and all have to go through the same execution port (P2). On most other platforms, you can expect it to be ~2x faster.
+The loop performance is still relatively low — taking 4 CPU cycles per iteration —  because, on this particular CPU (Zen 2), `movemask`, `permute`, and `store` have low throughput and all have to go through the same execution port (P2). On most other x86 CPUs, you can expect it to be ~2x faster.
 
 Filtering can also be implemented considerably faster on AVX-512: it has a special "[compress](_mm512_mask_compress_epi32)" instruction that takes a vector of data and a mask and writes its unmasked elements contiguously. It makes a huge difference in algorithms that rely on various filtering subroutines, such as quicksort.
 
