@@ -178,20 +178,22 @@ Planned table of contents:
  11.7. Number-Theoretic Transform
  11.8. Argmin with SIMD
  11.9. Prefix Sum with SIMD
- 11.10. Reading and Writing Integers
-(11.11. Reading and Writing Floats)
-(11.12. String Searching)
- 11.13. Sorting
- 11.14. Matrix Multiplication
+ 11.10. Reading Decimal Integers
+ 11.11. Writing Decimal Integers
+(11.12. Reading and Writing Floats)
+(11.13. String Searching)
+ 11.14. Sorting
+ 11.15. Matrix Multiplication
 12. Data Structure Case Studies
  12.1. Binary Search
  12.2. Static B-Trees
- 12.3. Segment Trees
-(12.4. Search Trees)
-(12.5. Range Minimum Query)
- 12.6. Hash Tables
-(12.7. Bitmaps)
-(12.8. Probabilistic Filters)
+(12.3. Search Trees)
+ 12.4. Segment Trees
+(12.5. Tries)
+(12.6. Range Minimum Query)
+ 12.7. Hash Tables
+(12.8. Bitmaps)
+(12.9. Probabilistic Filters)
 ```
 
 Among the cool things that we will speed up:
@@ -201,12 +203,13 @@ Among the cool things that we will speed up:
 - 5-10x faster segment trees (compared to Fenwick trees)
 - 5x faster hash tables (compared to `std::unordered_map`)
 - 2x faster popcount (compared to repeatedly calling `popcnt`)
-- 2x faster parsing series of integers (compared to `scanf`)
+- 35x faster parsing series of integers (compared to `scanf`)
 - ?x faster sorting (compared to `std::sort`)
 - 2x faster sum (compared to `std::accumulate`)
 - 2-3x faster prefix sum (compared to naive implementation)
 - 10x faster argmin (compared to naive implementation)
 - 10x faster array searching (compared to `std::find`)
+- 15x faster search tree (compared to `std::set`)
 - 100x faster matrix multiplication (compared to "for-for-for")
 - optimal word-size integer factorization (~0.4ms per 60-bit integer)
 - optimal Karatsuba Algorithm
@@ -237,8 +240,10 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Matt Kulukundis](https://twitter.com/JuvHarlequinKFM)
 - [Georg Sauthoff](https://gms.tf/)
 - [Marshall Lochbaum](https://mlochbaum.github.io/publications.html)
+- [Pavel Zemtsov](https://pzemtsov.github.io/)
 - [Nayuki](https://www.nayuki.io/category/programming)
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
+- [Z boson](https://stackoverflow.com/users/2542702/z-boson)
 - [Creel](https://www.youtube.com/c/WhatsACreel)
 
 Volume: 450-600 pages  
