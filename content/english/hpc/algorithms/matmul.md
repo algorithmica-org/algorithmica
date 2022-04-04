@@ -1,9 +1,49 @@
 ---
 title: Matrix Multiplication
-weight: 4
+weight: 20
 draft: true
 ---
 
+"[Anatomy of High-Performance Matrix Multiplication](https://www.cs.utexas.edu/~flame/pubs/GotoTOMS_revision.pdf)" by Kazushige Goto and Robert van de Geijn.
+
+For reasons that will later become aparent, we only use sizes that are multiples of $48$. 1920
+
+Cache associativity strikes again. This is also an issue, but we will not address it for now.
+
+GCC 13.
+
+3.5s for 1025 ad 12s for 1024.
+
+baseline 13.58622 0.5209607970428861
+hugepages 16.749895 0.42256312651512146
+transposed 12.377302 0.5718441708863531
+autovec 3.117215 2.2705806304666187
+vectorized 3.075742 2.301196914435606
+kernel 2.24264 3.1560517960974566
+blocked 0.461477 15.33746643928083
+noalloc 0.408031 17.346446716058338
+nomove 0.303826 23.295860130469414
+blas 0.27489790320396423 25.747333528217077
+
+![](../img/mm-vectorized-barplot.svg)
+
+![](../img/mm-vectorized-plot.svg)
+
+![](../img/mm-kernel-barplot.svg)
+
+![](../img/mm-kernel-plot.svg)
+
+![](../img/mm-blocked-plot.svg)
+
+![](../img/mm-blocked-barplot.svg)
+
+![](../img/mm-noalloc.svg)
+
+![](../img/mm-blas.svg)
+
+Which is fine, considering that this is not the only thing that CPUs are made for.
+
+---
 
 ## Case Study: Distance Product
 
