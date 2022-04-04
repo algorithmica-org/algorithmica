@@ -109,7 +109,7 @@ This helps if `n` or `mod` is a constant.
 
 ### Modular Division
 
-"Normal" operations also apply to residues: +, -, *. But there is an issue with division, because we can't just bluntly divide two numbers: $\frac{8}{2} = 4$, но $\frac{8 \\% 5 = 3}{2 \\% 5 = 2} \neq 4$.
+"Normal" operations also apply to residues: +, -, *. But there is an issue with division, because we can't just bluntly divide two numbers: $\frac{8}{2} = 4$, but $\frac{8 \\% 5 = 3}{2 \\% 5 = 2} \neq 4$.
 
 To perform division, we need to find an element that will behave itself like the reciprocal $\frac{1}{a} = a^{-1}$, and instead of "division" multiply by it. This element is called a *modular inverse*.
 
