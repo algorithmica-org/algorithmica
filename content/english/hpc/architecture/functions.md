@@ -230,7 +230,7 @@ Equivalent assembly:
 ```nasm
 ; n = edi, ret = eax
 factorial:
-    test edi, edi   ; test if a value if zero
+    test edi, edi   ; test if a value is zero
     jne  nonzero    ; (the machine code of "cmp rax, 0" would be one byte longer)
     mov  eax, 1     ; return 1
     ret
