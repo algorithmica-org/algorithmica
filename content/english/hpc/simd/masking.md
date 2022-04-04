@@ -67,7 +67,7 @@ for (int i = 0; i < N; i += 8) {
 }
 ```
 
-This loop performs slightly faster because on this particular CPU, the vector `and` take one cycle less than `blend`.
+This loop performs slightly faster because on this particular CPU, the vector `and` takes one cycle less than `blend`.
 
 Several other instructions support masks as inputs, most notably:
 
