@@ -5,8 +5,6 @@ draft: true
 ---
 
 <!--
-todo: FMA, but without kernel?
-
 baseline 13.58622 0.5209607970428861
 hugepages 16.749895 0.42256312651512146
 transposed 12.377302 0.5718441708863531
@@ -44,15 +42,23 @@ void matmul(const float *a, const float *b, float *c, int n) {
 }
 ```
 
-For reasons that will become aparent later, we only use matrix sizes that are multiples of $48$ for benchmarking, but the implementations are still correct for all other sizes.
+For reasons that will become apparent later, we only use matrix sizes that are multiples of $48$ for benchmarking, but the implementations are still correct for all other sizes. We also use [32-bit floats](/hpc/arithmetic/ieee-754) specifically, although it can be [generalized](#generalizations) to other types and operations.
 
-Compiled with `g++ -O3 -march=native -funroll-loops`, this code runs in ~16.7s for $n = 1920$.
+Compiled with `g++ -O3 -march=native -funroll-loops`, the naive approach multiplies two matrices of size $n = 1920$ in ~16.7 seconds. That is approximately $\frac{1920^3}{16.7 \times 10^9} \approx 0.42$ useful operations per nanosecond (GFLOPS), or roughly 5 CPU cycles per multiplication.
 
-[Cache associativity](/hpc/cpu-cache/associativity/) strikes again. This is also an issue, but we will not address it for now.
+## Transposition
 
-3.5s for 1025 ad 12s for 1024.
+In general, when you optimize an algorithm that processes large quantities of data — and $1920^2 \times 3 \times 4 \approx 42$ MB clearly is a large quantity as it can't fit into any of the [CPU caches](/hpc/cpu-cache) — you should always start with memory before optimizing arithmetic, as it is much more likely to be the bottleneck.
 
-Transpose:
+Note that the field $C_{ij}$ can be viewed as the dot product of row $i$ in matrix $A$ and column $j$ in matrix $B$. As we are incrementing the `k` variable in the inner loop above, we are reading the matrix `a` sequentially, but we are jumping over $n$ elements as we iterate over a column of `b`, which is [not as fast](/hpc/cpu-cache/aos-soa).
+
+One [well-known optimization](/hpc/external-memory/oblivious/#matrix-multiplication) that mitigates this problem is to either store matrix $B$ in *column-major* order or to *transpose* it before the matrix multiplication — spending $O(n^2)$ additional operations, but ensuring sequential reads in the hot loop:
+
+<!--
+
+![](../img/column-major.jpg)
+
+-->
 
 ```c++
 void matmul(const float *a, const float *_b, float *c, int n) {
@@ -65,15 +71,25 @@ void matmul(const float *a, const float *_b, float *c, int n) {
     for (int i = 0; i < n; i++)
         for (int j = 0; j < n; j++)
             for (int k = 0; k < n; k++)
-                c[i * n + j] += a[i * n + k] * b[j * n + k]; // notice indices
+                c[i * n + j] += a[i * n + k] * b[j * n + k]; // <- note the indices
 }
 ```
+
+This code runs in ~12.4s, or about 30% faster. As we will see in a bit, there are more important benefits to transposing it than just the sequential memory reads.
+
+## Vectorization
+
+/hpc/compilation/contracts/#memory-aliasing
+
+/hpc/simd/auto-vectorization/
 
 ```c++
 void matmul(const float *a, const float *_b, float * __restrict__ c, int n) {
     // ...
 }
 ```
+
+![](../img/mm-vectorized-barplot.svg)
 
 ```c++
 const int B = 8; // number of elements in a vector
@@ -117,20 +133,27 @@ void matmul(const float *_a, const float *_b, float *c, int n) {
 }
 ```
 
-![](../img/mm-vectorized-barplot.svg)
-
 ![](../img/mm-vectorized-plot.svg)
 
-## Theoretical Performance
+[memory bandwidth](/hpc/cpu-cache/bandwidth/) is not the problem.
 
-This CPU importantly supports the [FMA3](https://en.wikipedia.org/wiki/FMA_instruction_set) SIMD extension that we will utilize in the later implementations.
+[Cache associativity](/hpc/cpu-cache/associativity/) strikes again. This is also an issue, but we will not address it for now.
 
-$$
-\underbrace{4}_{CPUs} \cdot \underbrace{8}_{SIMD} \cdot \underbrace{2}_{1/thr} \cdot \underbrace{3.6 \cdot 10^9}_{cycles/sec} = 230.4 \; GFLOPS \;\; (2.3 \cdot 10^{11})
-$$
+$1920 = 2^7 \times 3 \times 5$, so it is divisible by a large power of two.
+
+Slightly slower than.
+
+3.5s for 1025 ad 12s for 1024.
+
+However, now we *really* hit the memory limit.
+
+## Register reuse
+
+This CPU importantly supports the [FMA3](https://en.wikipedia.org/wiki/FMA_instruction_set) SIMD extension that we will utilize in later implementations.
 
 RAM bandwidth is lower than that
 
+The latency of FMA is 5 cycles, while its reciprocal throughput is ½. 
 
 ```c++
 void kernel(float *a, vector *b, vector *c, int x, int y, int l, int r, int n) {
@@ -203,9 +226,17 @@ for (int i3 = 0; i3 < ny; i3 += s3)
 
 ![](../img/mm-blocked-barplot.svg)
 
+Avoid moving anything:
+
 ![](../img/mm-noalloc.svg)
 
+$$
+\underbrace{4}_{CPUs} \cdot \underbrace{8}_{SIMD} \cdot \underbrace{2}_{1/thr} \cdot \underbrace{3.6 \cdot 10^9}_{cycles/sec} = 230.4 \; GFLOPS \;\; (2.3 \cdot 10^{11})
+$$
+
 ![](../img/mm-blas.svg)
+
+We hit about 95.
 
 Which is fine, considering that this is not the only thing that CPUs are made for.
 
