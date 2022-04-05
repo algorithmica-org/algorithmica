@@ -4,17 +4,8 @@ weight: 20
 draft: true
 ---
 
-"[Anatomy of High-Performance Matrix Multiplication](https://www.cs.utexas.edu/~flame/pubs/GotoTOMS_revision.pdf)" by Kazushige Goto and Robert van de Geijn.
-
-Inspired by "[Programming Parallel Computers](http://ppc.cs.aalto.fi/ch2/)" course.
-
-For reasons that will later become aparent, we only use sizes that are multiples of $48$. 1920
-
-Cache associativity strikes again. This is also an issue, but we will not address it for now.
-
-GCC 13.
-
-3.5s for 1025 ad 12s for 1024.
+<!--
+todo: FMA, but without kernel?
 
 baseline 13.58622 0.5209607970428861
 hugepages 16.749895 0.42256312651512146
@@ -26,12 +17,23 @@ blocked 0.461477 15.33746643928083
 noalloc 0.408031 17.346446716058338
 nomove 0.303826 23.295860130469414
 blas 0.27489790320396423 25.747333528217077
+-->
+
+In this case study, we will design and implement several algorithms for matrix multiplication. We start with the naive "for-for-for" algorithm and incrementally improve it, eventually developing an implementation that is 50 times faster and matches the performance of BLAS libraries while being under 40 lines of C.
+
+We compile our implementations with GCC 13 and run them on Zen 2 clocked at 2GHz.
+
+## Baseline
+
+The result of multiplying an $l \times n$ matrix $A$ by an $n \times m$ matrix $B$ is an $l \times m$ matrix $C$ calculated as:
 
 $$
-C_{ij} = \sum_{i=1}^{n} A_{ik} \cdot B_{kj}
+C_{ij} = \sum_{k=1}^{n} A_{ik} \cdot B_{kj}
 $$
 
-Implement the definition of what we need to do, but using arrays instead of matrices:
+For simplicity, we will only consider *square* matrices, where $l = m = n$.
+
+To implement matrix multiplication, we can just transfer this definition into code — but instead of two-dimensional arrays (aka matrices), we will be using one-dimensional arrays, to be explicit about memory addressing:
 
 ```c++
 void matmul(const float *a, const float *b, float *c, int n) {
@@ -41,6 +43,14 @@ void matmul(const float *a, const float *b, float *c, int n) {
                 c[i * n + j] += a[i * n + k] * b[k * n + j];
 }
 ```
+
+For reasons that will become aparent later, we only use matrix sizes that are multiples of $48$ for benchmarking, but the implementations are still correct for all other sizes.
+
+Compiled with `g++ -O3 -march=native -funroll-loops`, this code runs in ~16.7s for $n = 1920$.
+
+[Cache associativity](/hpc/cpu-cache/associativity/) strikes again. This is also an issue, but we will not address it for now.
+
+3.5s for 1025 ad 12s for 1024.
 
 Transpose:
 
@@ -112,6 +122,8 @@ void matmul(const float *_a, const float *_b, float *c, int n) {
 ![](../img/mm-vectorized-plot.svg)
 
 ## Theoretical Performance
+
+This CPU importantly supports the [FMA3](https://en.wikipedia.org/wiki/FMA_instruction_set) SIMD extension that we will utilize in the later implementations.
 
 $$
 \underbrace{4}_{CPUs} \cdot \underbrace{8}_{SIMD} \cdot \underbrace{2}_{1/thr} \cdot \underbrace{3.6 \cdot 10^9}_{cycles/sec} = 230.4 \; GFLOPS \;\; (2.3 \cdot 10^{11})
@@ -197,6 +209,20 @@ for (int i3 = 0; i3 < ny; i3 += s3)
 
 Which is fine, considering that this is not the only thing that CPUs are made for.
 
+```c++
+for (int i3 = 0; i3 < n; i3 += s3)
+    for (int i2 = 0; i2 < n; i2 += s2)
+        for (int i1 = 0; i1 < n; i1 += s1)
+            for (int x = i2; x < i2 + s2; x += 6)
+                for (int y = i3; y < i3 + s3; y += 16)
+                    for (int k = i1; k < i1 + s1; k++)
+                        for (int i = 0; i < 6; i++)
+                            for (int j = 0; j < 2; j++)
+                                c[x * n / 8 + i * n / 8 + y / 8 + j]
+                                += (vector{} + a[x * n + i * n + k])
+                                   * b[n / 8 * k + y / 8 + j];
+```
+
 ### Generalizations
 
 Given a matrix $D$, we need to calculate its "min-plus matrix multiplication" defined as:
@@ -219,3 +245,15 @@ Then we can find all-pairs shortest distances in $O(\log n)$ steps
 (but recall that there are [more direct ways](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm) to solve it)
 
 Which is an exercise.
+
+Strassen algorithm is only useful for large matrices.
+
+https://arxiv.org/pdf/1605.01078.pdf
+
+[cache-oblivious](/hpc/external-memory/oblivious/#matrix-multiplication) algorithms
+
+## Acknowledgements
+
+"[Anatomy of High-Performance Matrix Multiplication](https://www.cs.utexas.edu/~flame/pubs/GotoTOMS_revision.pdf)" by Kazushige Goto and Robert van de Geijn.
+
+Inspired by "[Programming Parallel Computers](http://ppc.cs.aalto.fi/ch2/)" course.
