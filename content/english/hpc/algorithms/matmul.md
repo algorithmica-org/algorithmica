@@ -122,6 +122,9 @@ void matmul(const float *_a, const float *_b, float *c, int n) {
                 c[i * n + j] += s[k];
         }
     }
+
+    std::free(a);
+    std::free(b);
 }
 ```
 
@@ -147,21 +150,13 @@ Now, what is interesting is that the implementation efficiency depends on the pr
 
 ![](../img/mm-vectorized-plot.svg)
 
-[memory bandwidth](/hpc/cpu-cache/bandwidth/) is not the problem.
+First, the performance (in terms of useful operations per second) increases, as the overhead of the loop management and horizontal reduction decreases. However, at around $n=256$, it starts smoothly decreasing as the matrices stop fitting into the [cache](/hpc/cpu-cache/) ($2 \times 256^2 \times 4 = 512$ KB is the size of the L2 cache), and the performance becomes bottlenecked by the [memory bandwidth](/hpc/cpu-cache/bandwidth/).
 
-[Cache associativity](/hpc/cpu-cache/associativity/) strikes again. This is also an issue, but we will not address it for now.
+It is also interesting that the naive implementation is mostly on par with the non-vectorized transposed version — and actually slightly better because of the transpose itself — for all but few data points, where the performance deteriorates. This is because of [cache associativity](/hpc/cpu-cache/associativity/): when $n$ is divisible by a large power of two, we are fetching addresses of `b` that all likely map to the same cache line, reducing the effective cache size. This explains the 30% performance dip for $n = 1920 = 2^7 \times 3 \times 5$, and you can see an even more noticeable one for $1536 = 2^9 \times 3$: it is roughly 3 times slower than for $n=1535$.
 
-You can see an even more noticeable dip at $1536 = 2^9 \times 3$.
+One may think that there would be at least some general performance gain from full sequential reads since we are fetching fewer cache lines, but this is not the case: fetching the first column of `b` is painful, but the next 15 columns will actually be in the same cache lines as the first one, so they will be cached — unless the matrix is so large that it can't even fit `n * cache_line_size` bytes into the cache, which is not the case for all practical problem sizes.
 
-$1920 = 2^7 \times 3 \times 5$, so it is divisible by a large power of two.
-
-Slightly slower than.
-
-3.5s for 1025 ad 12s for 1024.
-
-Now it is clear that we are really bottlenecked by the memory system.
-
-However, now we *really* hit the memory limit.
+So, counterintuitively, transposing the matrix doesn't help the memory bandwidth — and in the naive implementation, we are not really bottlenecked by it anyway. But for our vectorize implementation, we certainly are, so let's tackle it.
 
 ## Register reuse
 
