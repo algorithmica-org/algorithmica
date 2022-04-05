@@ -44,7 +44,7 @@ void matmul(const float *a, const float *b, float *c, int n) {
 
 For reasons that will become apparent later, we only use matrix sizes that are multiples of $48$ for benchmarking, but the implementations are still correct for all other sizes. We also use [32-bit floats](/hpc/arithmetic/ieee-754) specifically, although it can be [generalized](#generalizations) to other types and operations.
 
-Compiled with `g++ -O3 -march=native -funroll-loops`, the naive approach multiplies two matrices of size $n = 1920$ in ~16.7 seconds. That is approximately $\frac{1920^3}{16.7 \times 10^9} \approx 0.42$ useful operations per nanosecond (GFLOPS), or roughly 5 CPU cycles per multiplication.
+Compiled with `g++ -O3 -march=native -ffast-math -funroll-loops`, the naive approach multiplies two matrices of size $n = 1920 = 48 \times 40$ in ~16.7 seconds. That is approximately $\frac{1920^3}{16.7 \times 10^9} \approx 0.42$ useful operations per nanosecond (GFLOPS), or roughly 5 CPU cycles per multiplication.
 
 ## Transposition
 
@@ -79,9 +79,59 @@ This code runs in ~12.4s, or about 30% faster. As we will see in a bit, there ar
 
 ## Vectorization
 
-/hpc/compilation/contracts/#memory-aliasing
+Now that we are just sequentially reading the elements of `a` and `b`, multiplying them, and adding the result to an accumulator variable, we can use [SIMD](/hpc/simd/) instructions to speed it up like [any other reduction](/hpc/simd/reduction/).
 
-/hpc/simd/auto-vectorization/
+We can use [GCC vector types](/hpc/simd/intrinsics/#gcc-vector-extensions) to implement it:
+
+```c++
+// a vector of 256 / 32 = 8 floats
+typedef float vec __attribute__ (( vector_size(32) ));
+
+// helper function that allocates n vectors and initializes them with zeros
+vec* alloc(int n) {
+    vec* ptr = (vec*) std::aligned_alloc(32, 32 * n);
+    memset(ptr, 0, 32 * n);
+    return ptr;
+}
+
+void matmul(const float *_a, const float *_b, float *c, int n) {
+    // first, we need to align rows and pad them with zeros
+    int nB = (n + 7) / 8; // number of 8-element vectors in a row (rounded up)
+
+    vec *a = alloc(n * nB);
+    vec *b = alloc(n * nB);
+
+    // move both matrices
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            a[i * nB + j / 8][j % 8] = _a[i * n + j];
+            b[i * nB + j / 8][j % 8] = _b[j * n + i]; // <- b is still transposed
+        }
+    }
+
+    for (int i = 0; i < n; i++) {
+        for (int j = 0; j < n; j++) {
+            vec s{}; // initialize the accumulator with zeros
+
+            // vertical summation
+            for (int k = 0; k < nB; k++)
+                s += a[i * nB + k] * b[j * nB + k];
+            
+            // horizontal summation
+            for (int k = 0; k < 8; k++)
+                c[i * n + j] += s[k];
+        }
+    }
+}
+```
+
+The performance for $n = 1920$ is now around 2.3 GFLOPS — or another ~4 times higher.
+
+![](../img/mm-vectorized-barplot.svg)
+
+This optimization looks neither too complex or specific to matrix multiplication. Why can't the compiler simply [auto-vectorizate](/hpc/simd/auto-vectorization/) the inner loop? It actually can — the only thing preventing that is the possibility that `c` overlaps with either `a` or `b`. The only thing that you need to do is to guarantee that `c` is not [aliased](/hpc/compilation/contracts/#memory-aliasing) with anything by adding the `__restrict__` keyword to it:
+
+<!-- (the compiler already knows that reading `a` and `b` is safe in any order because they are marked as `const`): -->
 
 ```c++
 void matmul(const float *a, const float *_b, float * __restrict__ c, int n) {
@@ -89,49 +139,11 @@ void matmul(const float *a, const float *_b, float * __restrict__ c, int n) {
 }
 ```
 
-![](../img/mm-vectorized-barplot.svg)
+Both manually and auto-vectorized implementations perform roughly the same.
 
-```c++
-const int B = 8; // number of elements in a vector
-const int vecsize = B * sizeof(float); // size of a vector in bytes
-typedef float vector __attribute__ (( vector_size(vecsize) ));
+## Memory efficiency
 
-vector* alloc(int n) {
-    vector* ptr = (vector*) std::aligned_alloc(vecsize, vecsize * n);
-    memset(ptr, 0, vecsize * n);
-    return ptr;
-}
-
-float hsum(vector s) {
-    float res = 0;
-    for (int i = 0; i < B; i++)
-        res += s[i];
-    return res;
-}
-
-void matmul(const float *_a, const float *_b, float *c, int n) {
-    int nB = (n + B - 1) / B;
-
-    vector *a = alloc(n * nB);
-    vector *b = alloc(n * nB);
-
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            a[i * nB + j / 8][j % 8] = _a[i * n + j];
-            b[i * nB + j / 8][j % 8] = _b[j * n + i]; // <- still transposed
-        }
-    }
-
-    for (int i = 0; i < n; i++) {
-        for (int j = 0; j < n; j++) {
-            vector s = {0};
-            for (int k = 0; k < nB; k++)
-                s += a[i * nB + k] * b[j * nB + k];
-            c[i * n + j] = hsum(s);
-        }
-    }
-}
-```
+Now, what is interesting is that the implementation efficiency depends on the problem size:
 
 ![](../img/mm-vectorized-plot.svg)
 
@@ -139,15 +151,59 @@ void matmul(const float *_a, const float *_b, float *c, int n) {
 
 [Cache associativity](/hpc/cpu-cache/associativity/) strikes again. This is also an issue, but we will not address it for now.
 
+You can see an even more noticeable dip at $1536 = 2^9 \times 3$.
+
 $1920 = 2^7 \times 3 \times 5$, so it is divisible by a large power of two.
 
 Slightly slower than.
 
 3.5s for 1025 ad 12s for 1024.
 
+Now it is clear that we are really bottlenecked by the memory system.
+
 However, now we *really* hit the memory limit.
 
 ## Register reuse
+
+If we 
+
+Here is a proof of concept:
+
+```c++
+void update(int x, int y) {
+    int c00 = 0, c01 = 0, c10 = 0, c11 = 0;
+
+    for (int k = 0; k < n; k++) {
+        int a0 = a[x][k];
+        int a1 = a[x + 1][k];
+
+        int b0 = b[k][y];
+        int b1 = b[k][y + 1];
+
+        c00 += a0 * b0;
+        c01 += a0 * b0;
+        c10 += a0 * b0;
+        c11 += a1 * b1;
+    }
+
+    c[x][y]         += c00;
+    c[x][y + 1]     += c01;
+    c[x + 1][y]     += c10;
+    c[x + 1][y + 1] += c11;
+}
+```
+
+Before, we were reading $2 n$ elements to update one cell, and now we are reading $4n$ elements to update four cells: that is $\frac{2n / 1}{4n / 4} = 2$ times better in terms of I/O efficiency.
+
+It also boosts instruction-level parallelism and saves some instructions from execcuting the read instructions.
+
+We are not going to really try it. Instead, we will generalize it right away.
+
+Of course, this would not beat SIMD.
+
+## Micro-kernel
+
+*micro-kernel*.
 
 This CPU importantly supports the [FMA3](https://en.wikipedia.org/wiki/FMA_instruction_set) SIMD extension that we will utilize in later implementations.
 
@@ -156,14 +212,14 @@ RAM bandwidth is lower than that
 The latency of FMA is 5 cycles, while its reciprocal throughput is ½. 
 
 ```c++
-void kernel(float *a, vector *b, vector *c, int x, int y, int l, int r, int n) {
-    vector t[6][2]{};
+void kernel(float *a, vec *b, vec *c, int x, int y, int l, int r, int n) {
+    vec t[6][2]{}; // will be stored in ymm registers
 
     for (int k = l; k < r; k++) {
         for (int i = 0; i < 6; i++) {
-            vector alpha = vector{} + a[(x + i) * n + k];
+            vec alpha = vec{} + a[(x + i) * n + k];  // broadcast
             for (int j = 0; j < 2; j++)
-                t[i][j] += alpha * b[(k * n + y) / 8 + j];
+                t[i][j] += alpha * b[(k * n + y) / 8 + j]; // fused multiply-add
         }
     }
 
@@ -172,6 +228,8 @@ void kernel(float *a, vector *b, vector *c, int x, int y, int l, int r, int n) {
             c[((x + i) * n + y) / 8 + j] += t[i][j];
 }
 ```
+
+## Macro-kernel
 
 ```c++
 void matmul(const float *_a, const float *_b, float *_c, int n) {
@@ -189,7 +247,7 @@ void matmul(const float *_a, const float *_b, float *_c, int n) {
 
     for (int x = 0; x < nx; x += 6)
         for (int y = 0; y < ny; y += 16)
-            kernel(a, (vector*) b, (vector*) c, x, y, 0, n, ny);
+            kernel(a, (vec*) b, (vec*) c, x, y, 0, n, ny);
 
     for (int i = 0; i < n; i++)
         memcpy(&_c[i * n], &c[i * ny], 4 * n);
@@ -203,6 +261,10 @@ void matmul(const float *_a, const float *_b, float *_c, int n) {
 ![](../img/mm-kernel-barplot.svg)
 
 ![](../img/mm-kernel-plot.svg)
+
+There is still a memory bandwidth problem.
+
+## Blocking
 
 ```c++
 const int s3 = 64;
@@ -219,7 +281,7 @@ for (int i3 = 0; i3 < ny; i3 += s3)
             // with [l:r] = [i1:i1+s1]
             for (int x = i2; x < std::min(i2 + s2, nx); x += 6)
                 for (int y = i3; y < std::min(i3 + s3, ny); y += 16)
-                    kernel(a, (vector*) b, (vector*) c, x, y, i1, std::min(i1 + s1, n), ny);
+                    kernel(a, (vec*) b, (vec*) c, x, y, i1, std::min(i1 + s1, n), ny);
 ```
 
 ![](../img/mm-blocked-plot.svg)
@@ -233,6 +295,13 @@ Avoid moving anything:
 $$
 \underbrace{4}_{CPUs} \cdot \underbrace{8}_{SIMD} \cdot \underbrace{2}_{1/thr} \cdot \underbrace{3.6 \cdot 10^9}_{cycles/sec} = 230.4 \; GFLOPS \;\; (2.3 \cdot 10^{11})
 $$
+
+(and also getting rid of `std::min` in the macro-kernel)
+
+
+[https://www.openblas.net/](OpenBLAS)
+
+[numpy](/hpc/complexity/languages/#blas)
 
 ![](../img/mm-blas.svg)
 
@@ -250,11 +319,13 @@ for (int i3 = 0; i3 < n; i3 += s3)
                         for (int i = 0; i < 6; i++)
                             for (int j = 0; j < 2; j++)
                                 c[x * n / 8 + i * n / 8 + y / 8 + j]
-                                += (vector{} + a[x * n + i * n + k])
+                                += (vec{} + a[x * n + i * n + k])
                                    * b[n / 8 * k + y / 8 + j];
 ```
 
-### Generalizations
+Register spilling.
+
+## Generalizations
 
 Given a matrix $D$, we need to calculate its "min-plus matrix multiplication" defined as:
 
