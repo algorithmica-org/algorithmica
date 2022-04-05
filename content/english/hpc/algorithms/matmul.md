@@ -144,13 +144,15 @@ void matmul(const float *a, const float *_b, float * __restrict__ c, int n) {
 
 Both manually and auto-vectorized implementations perform roughly the same.
 
+The performance is bottlenecked by using a single variable. We could use multiple variables similar to other reductions, but we will solve it later anyway.
+
 ## Memory efficiency
 
-Now, what is interesting is that the implementation efficiency depends on the problem size:
+Now, what is interesting is that the implementation efficiency depends on the problem size. 
+
+At first, the performance (in terms of useful operations per second) increases, as the overhead of the loop management and horizontal reduction decreases. Then, at around $n=256$, it starts smoothly decreasing as the matrices stop fitting into the [cache](/hpc/cpu-cache/) ($2 \times 256^2 \times 4 = 512$ KB is the size of the L2 cache), and the performance becomes bottlenecked by the [memory bandwidth](/hpc/cpu-cache/bandwidth/).
 
 ![](../img/mm-vectorized-plot.svg)
-
-First, the performance (in terms of useful operations per second) increases, as the overhead of the loop management and horizontal reduction decreases. However, at around $n=256$, it starts smoothly decreasing as the matrices stop fitting into the [cache](/hpc/cpu-cache/) ($2 \times 256^2 \times 4 = 512$ KB is the size of the L2 cache), and the performance becomes bottlenecked by the [memory bandwidth](/hpc/cpu-cache/bandwidth/).
 
 It is also interesting that the naive implementation is mostly on par with the non-vectorized transposed version — and actually slightly better because of the transpose itself — for all but few data points, where the performance deteriorates. This is because of [cache associativity](/hpc/cpu-cache/associativity/): when $n$ is divisible by a large power of two, we are fetching addresses of `b` that all likely map to the same cache line, reducing the effective cache size. This explains the 30% performance dip for $n = 1920 = 2^7 \times 3 \times 5$, and you can see an even more noticeable one for $1536 = 2^9 \times 3$: it is roughly 3 times slower than for $n=1535$.
 
@@ -160,13 +162,20 @@ So, counterintuitively, transposing the matrix doesn't help the memory bandwidth
 
 ## Register reuse
 
-If we 
+To compute the cell $C[i][j]$, we need to compute the dot product of $A[i][:]$ and $B[:][j]$ (we are using the Python notation here to select rows and columns), which requires fetching $2n$ elements, even when $B$ is stored in column-major order.
+
+What if we were to compute $C[i:i+2][j:j+2]$, a $2 \times 2$ submatrix of $C$? We would need $A[i:i+2][:]$ and $B[:][j:j+2]$, which is $4n$ elements in total: that is $\frac{2n / 1}{4n / 4} = 2$ times better in terms of I/O efficiency.
+
+To actually avoid reading more data, we need to read these $2+2$ rows and columns in parallel and update all $2 \times 2$ cells at once using all possible combinations of products.
 
 Here is a proof of concept:
 
 ```c++
-void update(int x, int y) {
-    int c00 = 0, c01 = 0, c10 = 0, c11 = 0;
+void update_2x2(int x, int y) {
+    int c00 = c[x][y],
+        c01 = c[x][y + 1],
+        c10 = c[x + 1][y],
+        c11 = c[x + 1][y + 1];
 
     for (int k = 0; k < n; k++) {
         int a0 = a[x][k];
@@ -176,25 +185,21 @@ void update(int x, int y) {
         int b1 = b[k][y + 1];
 
         c00 += a0 * b0;
-        c01 += a0 * b0;
-        c10 += a0 * b0;
+        c01 += a0 * b1;
+        c10 += a1 * b0;
         c11 += a1 * b1;
     }
 
-    c[x][y]         += c00;
-    c[x][y + 1]     += c01;
-    c[x + 1][y]     += c10;
-    c[x + 1][y + 1] += c11;
+    c[x][y]         = c00;
+    c[x][y + 1]     = c01;
+    c[x + 1][y]     = c10;
+    c[x + 1][y + 1] = c11;
 }
 ```
 
-Before, we were reading $2 n$ elements to update one cell, and now we are reading $4n$ elements to update four cells: that is $\frac{2n / 1}{4n / 4} = 2$ times better in terms of I/O efficiency.
+It also boosts instruction-level parallelism (we don't have to wait between iterations to update the loop state) and saves some cycles from executing the read instructions.
 
-It also boosts instruction-level parallelism and saves some instructions from execcuting the read instructions.
-
-We are not going to really try it. Instead, we will generalize it right away.
-
-Of course, this would not beat SIMD.
+Of course, although better in terms of I/O, this $2 \times 2$ update would not beat our vectorized implementation, so we are not going to try this version in particular and instead will scale the idea right away.
 
 ## Micro-kernel
 
@@ -224,7 +229,7 @@ void kernel(float *a, vec *b, vec *c, int x, int y, int l, int r, int n) {
 }
 ```
 
-## Macro-kernel
+The rest of the implementaiton:
 
 ```c++
 void matmul(const float *_a, const float *_b, float *_c, int n) {
@@ -260,6 +265,8 @@ void matmul(const float *_a, const float *_b, float *_c, int n) {
 There is still a memory bandwidth problem.
 
 ## Blocking
+
+*Macro-kernel*
 
 ```c++
 const int s3 = 64;
