@@ -282,12 +282,24 @@ If you've read the section on [cache-oblivious algorithms](/hpc/external-memory/
 
 ## Blocking
 
-Note that we are reading.
+Alternative to divide-and-conquer is *cache blocking*: selecting a subset of data and processing it, and then going to the next block. Sometimes blocking is hierarchical: we first select a block of data that fits into the L3 cache, then we split it into blocks that fit into the L2 cache, and so on.
+
+It is less trivial to do for matrices than for arrays, but the trick is like this:
+
+- Let's select a subset of B that fits into the L3 cache (say, a subset of its columns).
+- Now, let's select a submatrix of A that fits into the L2 cache (a subset of its rows).
+- Select a submatrix of previously selected submatrix of B that fits into the L1 cache, and use it to do the kernel update (a subset of its rows).
+
+Here is a good [visualization](https://jukkasuomela.fi/cache-blocking-demo/) by Jukka Suomela (it shows different approaches; we use the last one).
+
+We could have started with A, but this would be slower. Note that during the kernel execution, we are reading the elements of $A$ slower than elements of $B$: we are fetching and broadcasting just one element, and then we multiply it with $16$ elements of $B$, so we need to store $B$ in cache, and the last stage be about selecting B in cache.
+
+We can implement it with three more outer `for` loops:
 
 ```c++
-const int s3 = 64;
-const int s2 = 120;
-const int s1 = 240;
+const int s3 = 64;  // how many columns of B to select
+const int s2 = 120; // how many rows of A to select 
+const int s1 = 240; // how many rows of B to select
 
 for (int i3 = 0; i3 < ny; i3 += s3)
     // now we are working with b[:][i3:i3+s3]
@@ -302,13 +314,29 @@ for (int i3 = 0; i3 < ny; i3 += s3)
                     kernel(a, (vec*) b, (vec*) c, x, y, i1, std::min(i1 + s1, n), ny);
 ```
 
-This part is sometimes called *macro-kernel* (as opposed to the *micro-kernel* that only updates a 6x16 submatrix).
+These outer `for` loops are sometimes called *macro-kernel* (as opposed to the *micro-kernel* that only updates a 6x16 submatrix).
+
+It completely removes the memory bottleneck:
 
 ![](../img/mm-blocked-plot.svg)
 
+The performance is no longer seriously affected by the problem size:
+
 ![](../img/mm-blocked-barplot.svg)
 
-Avoid moving anything:
+Notice the dip at $1536$ is still there. Cache associativity affects the effective cache size. We need to adjust the step constants or insert holes into the layout to mitigate this.
+
+## Optimization
+
+We need a few more optimizations to reach the performance limit:
+
+- Remove memory allocation and just operate on the arrays that we are given (note that we don't need to do anything with `a` as we are reading just one element at a time, and we can use unaligned `store` for `c` as we only use it rarely).
+- Get rid of the `std::min` so that the size parameters are mostly constant and can be embedded into the machine code.
+- Rewrite the micro-kernel using 12 variables (the compiler seems to have a problem with keeping them fully in registers).
+
+Effectively supporting weird sizes requires a bit more work, and this is the reason why we benchmarked at an array sizes that are divisible by $48 = \frac{6 \cdot 16}{\gcd(6, 16)}$.
+
+Avoiding moving anything pays off:
 
 ![](../img/mm-noalloc.svg)
 
