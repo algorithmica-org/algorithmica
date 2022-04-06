@@ -316,19 +316,20 @@ Now, if you've read the section on [cache-oblivious algorithms](/hpc/external-me
 
 ## Blocking
 
-Alternative to divide-and-conquer is *cache blocking*: selecting a subset of data and processing it, and then going to the next block. Sometimes blocking is hierarchical: we first select a block of data that fits into the L3 cache, then we split it into blocks that fit into the L2 cache, and so on.
+The *cache-aware* alternative to this divide-and-conquer trick is *cache blocking*: splitting the data into blocks that can fit into the cache and processing them one by one. If we have more than one layer of cache, we can do hierarchical blocking: we first select a block of data that fits into the L3 cache, then we split it into blocks that fit into the L2 cache, and so on. This requires knowing the cache sizes in advance, but it is usually easier to implement and also faster in practice.
 
-It is less trivial to do for matrices than for arrays, but the trick is like this:
+Cache blocking is less trivial to do with matrices than with arrays, but the general idea is this:
 
-- Let's select a subset of B that fits into the L3 cache (say, a subset of its columns).
-- Now, let's select a submatrix of A that fits into the L2 cache (a subset of its rows).
-- Select a submatrix of previously selected submatrix of B that fits into the L1 cache, and use it to do the kernel update (a subset of its rows).
+- Select a submatrix of $B$ that fits into the L3 cache (say, a subset of its columns).
+- Select a submatrix of $A$ that fits into the L2 cache (say, a subset of its rows).
+- Select a submatrix of the previously selected submatrix of $B$ (a subset of its rows) that fits into the L1 cache.
+- Update the relevant submatrix of $C$ using the kernel.
 
-Here is a good [visualization](https://jukkasuomela.fi/cache-blocking-demo/) by Jukka Suomela (it shows different approaches; we use the last one).
+Here is a good [visualization](https://jukkasuomela.fi/cache-blocking-demo/) by Jukka Suomela (it features many different approaches; you are interested in the last one).
 
-We could have started with A, but this would be slower. Note that during the kernel execution, we are reading the elements of $A$ slower than elements of $B$: we are fetching and broadcasting just one element, and then we multiply it with $16$ elements of $B$, so we need to store $B$ in cache, and the last stage be about selecting B in cache.
+Note that the decision to start this process with matrix $B$ is not arbitrary. During the kernel execution, we are reading the elements of $A$ much slower than the elements of $B$: we fetch and broadcast just one element of $A$ and then multiply it with $16$ elements of $B$. Therefore, we want $B$ to be in the L1 cache while $A$ can stay in the L2 cache and not the other way around.
 
-We can implement it with three more outer `for` loops:
+This sounds complicated, but we can implement it with just three more outer `for` loops, which are collectively called *macro-kernel* (and the highly optimized low-level function that updates a 6x16 submatrix is called *micro-kernel*):
 
 ```c++
 const int s3 = 64;  // how many columns of B to select
@@ -341,24 +342,21 @@ for (int i3 = 0; i3 < ny; i3 += s3)
         // now we are working with a[i2:i2+s2][:]
         for (int i1 = 0; i1 < ny; i1 += s1)
             // now we are working with b[i1:i1+s1][i3:i3+s3]
-            // this equates to updating c[i2:i2+s2][i3:i3+s3]
-            // with [l:r] = [i1:i1+s1]
+            // and we need to update c[i2:i2+s2][i3:i3+s3] with [l:r] = [i1:i1+s1]
             for (int x = i2; x < std::min(i2 + s2, nx); x += 6)
                 for (int y = i3; y < std::min(i3 + s3, ny); y += 16)
                     kernel(a, (vec*) b, (vec*) c, x, y, i1, std::min(i1 + s1, n), ny);
 ```
 
-These outer `for` loops are sometimes called *macro-kernel* (as opposed to the *micro-kernel* that only updates a 6x16 submatrix).
-
-It completely removes the memory bottleneck:
-
-![](../img/mm-blocked-plot.svg)
-
-The performance is no longer seriously affected by the problem size:
+Cache blocking completely removes the memory bottleneck:
 
 ![](../img/mm-blocked-barplot.svg)
 
-Notice the dip at $1536$ is still there. Cache associativity affects the effective cache size. We need to adjust the step constants or insert holes into the layout to mitigate this.
+The performance is no longer significantly affected by the problem size:
+
+![](../img/mm-blocked-plot.svg)
+
+Notice that the dip at $1536$ is still there: cache associativity still affects the effective cache size. To mitigate this, we can adjust the step constants or insert holes into the layout, but we are not going to bother doing that for now.
 
 ## Optimization
 
