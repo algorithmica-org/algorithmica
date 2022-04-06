@@ -17,13 +17,15 @@ nomove 0.303826 23.295860130469414
 blas 0.27489790320396423 25.747333528217077
 -->
 
-In this case study, we will design and implement several algorithms for matrix multiplication. We start with the naive "for-for-for" algorithm and incrementally improve it, eventually developing an implementation that is 50 times faster and matches the performance of BLAS libraries while being under 40 lines of C.
+In this case study, we will design and implement several algorithms for matrix multiplication.
 
-We compile our implementations with GCC 13 and run them on Zen 2 clocked at 2GHz.
+We start with the naive "for-for-for" algorithm and incrementally improve it, eventually arriving at a version that is 50 times faster and matches the performance of BLAS libraries while being under 40 lines of C.
+
+All implementations are compiled with GCC 13 and run on a [Zen 2](https://en.wikichip.org/wiki/amd/microarchitectures/zen_2) CPU clocked at 2GHz.
 
 ## Baseline
 
-The result of multiplying an $l \times n$ matrix $A$ by an $n \times m$ matrix $B$ is an $l \times m$ matrix $C$ calculated as:
+The result of multiplying an $l \times n$ matrix $A$ by an $n \times m$ matrix $B$ is defined as an $l \times m$ matrix $C$ calculated as
 
 $$
 C_{ij} = \sum_{k=1}^{n} A_{ik} \cdot B_{kj}
@@ -31,7 +33,7 @@ $$
 
 For simplicity, we will only consider *square* matrices, where $l = m = n$.
 
-To implement matrix multiplication, we can just transfer this definition into code — but instead of two-dimensional arrays (aka matrices), we will be using one-dimensional arrays, to be explicit about memory addressing:
+To implement matrix multiplication, we can simply transfer this definition into code — but instead of two-dimensional arrays (aka matrices), we will be using one-dimensional arrays to be explicit about pointer arithmetic:
 
 ```c++
 void matmul(const float *a, const float *b, float *c, int n) {
@@ -42,17 +44,17 @@ void matmul(const float *a, const float *b, float *c, int n) {
 }
 ```
 
-For reasons that will become apparent later, we only use matrix sizes that are multiples of $48$ for benchmarking, but the implementations are still correct for all other sizes. We also use [32-bit floats](/hpc/arithmetic/ieee-754) specifically, although it can be [generalized](#generalizations) to other types and operations.
+For reasons that will become apparent later, we only use matrix sizes that are multiples of $48$ for benchmarking, but the implementations remain correct for all other sizes. We also use [32-bit floats](/hpc/arithmetic/ieee-754) specifically, although all implementations can be easily [generalized](#generalizations) to other data types and operations.
 
-Compiled with `g++ -O3 -march=native -ffast-math -funroll-loops`, the naive approach multiplies two matrices of size $n = 1920 = 48 \times 40$ in ~16.7 seconds. That is approximately $\frac{1920^3}{16.7 \times 10^9} \approx 0.42$ useful operations per nanosecond (GFLOPS), or roughly 5 CPU cycles per multiplication.
+Compiled with `g++ -O3 -march=native -ffast-math -funroll-loops`, the naive approach multiplies two matrices of size $n = 1920 = 48 \times 40$ in ~16.7 seconds. Put in perspective, it is approximately $\frac{1920^3}{16.7 \times 10^9} \approx 0.42$ useful operations per nanosecond (GFLOPS), or roughly 5 CPU cycles per multiplication, which doesn't look that good yet.
 
 ## Transposition
 
 In general, when you optimize an algorithm that processes large quantities of data — and $1920^2 \times 3 \times 4 \approx 42$ MB clearly is a large quantity as it can't fit into any of the [CPU caches](/hpc/cpu-cache) — you should always start with memory before optimizing arithmetic, as it is much more likely to be the bottleneck.
 
-Note that the field $C_{ij}$ can be viewed as the dot product of row $i$ in matrix $A$ and column $j$ in matrix $B$. As we are incrementing the `k` variable in the inner loop above, we are reading the matrix `a` sequentially, but we are jumping over $n$ elements as we iterate over a column of `b`, which is [not as fast](/hpc/cpu-cache/aos-soa).
+The field $C_{ij}$ can be seen as the dot product of row $i$ of matrix $A$ and column $j$ of matrix $B$. As we increment `k` in the inner loop above, we are reading the matrix `a` sequentially, but we are jumping over $n$ elements as we iterate over a column of `b`, which is [not as fast](/hpc/cpu-cache/aos-soa) as sequential iteration.
 
-One [well-known optimization](/hpc/external-memory/oblivious/#matrix-multiplication) that mitigates this problem is to either store matrix $B$ in *column-major* order or to *transpose* it before the matrix multiplication — spending $O(n^2)$ additional operations, but ensuring sequential reads in the hot loop:
+One [well-known](/hpc/external-memory/oblivious/#matrix-multiplication) optimization that tackles this problem is to store matrix $B$ in *column-major* order — or, alternatively, to *transpose* it before the matrix multiplication. This requires $O(n^2)$ additional operations but ensures sequential reads in the innermost loop:
 
 <!--
 
@@ -79,15 +81,13 @@ This code runs in ~12.4s, or about 30% faster. As we will see in a bit, there ar
 
 ## Vectorization
 
-Now that we are just sequentially reading the elements of `a` and `b`, multiplying them, and adding the result to an accumulator variable, we can use [SIMD](/hpc/simd/) instructions to speed it up like [any other reduction](/hpc/simd/reduction/).
-
-We can use [GCC vector types](/hpc/simd/intrinsics/#gcc-vector-extensions) to implement it:
+Now that all we do is just sequentially read the elements of `a` and `b`, multiply them, and add the result to an accumulator variable, we can use [SIMD](/hpc/simd/) instructions to speed it all up. It is pretty straightforward to implement using [GCC vector types](/hpc/simd/intrinsics/#gcc-vector-extensions) — we can [memory-align](/hpc/cpu-cache/alignment/) matrix rows, pad them with zeros, and then just compute the multiply-sum as we would normally compute [any other reduction](/hpc/simd/reduction/):
 
 ```c++
 // a vector of 256 / 32 = 8 floats
 typedef float vec __attribute__ (( vector_size(32) ));
 
-// helper function that allocates n vectors and initializes them with zeros
+// a helper function that allocates n vectors and initializes them with zeros
 vec* alloc(int n) {
     vec* ptr = (vec*) std::aligned_alloc(32, 32 * n);
     memset(ptr, 0, 32 * n);
@@ -95,13 +95,12 @@ vec* alloc(int n) {
 }
 
 void matmul(const float *_a, const float *_b, float *c, int n) {
-    // first, we need to align rows and pad them with zeros
     int nB = (n + 7) / 8; // number of 8-element vectors in a row (rounded up)
 
     vec *a = alloc(n * nB);
     vec *b = alloc(n * nB);
 
-    // move both matrices
+    // move both matrices to the aligned region
     for (int i = 0; i < n; i++) {
         for (int j = 0; j < n; j++) {
             a[i * nB + j / 8][j % 8] = _a[i * n + j];
@@ -128,11 +127,13 @@ void matmul(const float *_a, const float *_b, float *c, int n) {
 }
 ```
 
-The performance for $n = 1920$ is now around 2.3 GFLOPS — or another ~4 times higher.
+The performance for $n = 1920$ is now around 2.3 GFLOPS — or another ~4 times higher compared to the transposed but not vectorized version.
 
 ![](../img/mm-vectorized-barplot.svg)
 
-This optimization looks neither too complex or specific to matrix multiplication. Why can't the compiler simply [auto-vectorizate](/hpc/simd/auto-vectorization/) the inner loop? It actually can — the only thing preventing that is the possibility that `c` overlaps with either `a` or `b`. The only thing that you need to do is to guarantee that `c` is not [aliased](/hpc/compilation/contracts/#memory-aliasing) with anything by adding the `__restrict__` keyword to it:
+This optimization looks neither too complex nor specific to matrix multiplication. Why can't the compiler [auto-vectorizee](/hpc/simd/auto-vectorization/) the inner loop by itself?
+
+It actually can — the only thing preventing that is the possibility that `c` overlaps with either `a` or `b`. The only thing that you need to do is to guarantee that `c` is not [aliased](/hpc/compilation/contracts/#memory-aliasing) with anything by adding the `__restrict__` keyword to it:
 
 <!-- (the compiler already knows that reading `a` and `b` is safe in any order because they are marked as `const`): -->
 
@@ -144,21 +145,27 @@ void matmul(const float *a, const float *_b, float * __restrict__ c, int n) {
 
 Both manually and auto-vectorized implementations perform roughly the same.
 
+<!--
+
 The performance is bottlenecked by using a single variable. We could use multiple variables similar to other reductions, but we will solve it later anyway.
+
+-->
 
 ## Memory efficiency
 
-Now, what is interesting is that the implementation efficiency depends on the problem size. 
+What is interesting is that the implementation efficiency depends on the problem size. 
 
-At first, the performance (in terms of useful operations per second) increases, as the overhead of the loop management and horizontal reduction decreases. Then, at around $n=256$, it starts smoothly decreasing as the matrices stop fitting into the [cache](/hpc/cpu-cache/) ($2 \times 256^2 \times 4 = 512$ KB is the size of the L2 cache), and the performance becomes bottlenecked by the [memory bandwidth](/hpc/cpu-cache/bandwidth/).
+At first, the performance (in terms of useful operations per second) increases as the overhead of the loop management and horizontal reduction decreases. Then, at around $n=256$, it starts smoothly decreasing as the matrices stop fitting into the [cache](/hpc/cpu-cache/) ($2 \times 256^2 \times 4 = 512$ KB is the size of the L2 cache), and the performance becomes bottlenecked by the [memory bandwidth](/hpc/cpu-cache/bandwidth/).
 
 ![](../img/mm-vectorized-plot.svg)
 
-It is also interesting that the naive implementation is mostly on par with the non-vectorized transposed version — and actually slightly better because of the transpose itself — for all but few data points, where the performance deteriorates. This is because of [cache associativity](/hpc/cpu-cache/associativity/): when $n$ is divisible by a large power of two, we are fetching addresses of `b` that all likely map to the same cache line, reducing the effective cache size. This explains the 30% performance dip for $n = 1920 = 2^7 \times 3 \times 5$, and you can see an even more noticeable one for $1536 = 2^9 \times 3$: it is roughly 3 times slower than for $n=1535$.
+It is also interesting that the naive implementation is mostly on par with the non-vectorized transposed version — and even slightly better because it doesn't need to perform a transposition.
 
-One may think that there would be at least some general performance gain from full sequential reads since we are fetching fewer cache lines, but this is not the case: fetching the first column of `b` is painful, but the next 15 columns will actually be in the same cache lines as the first one, so they will be cached — unless the matrix is so large that it can't even fit `n * cache_line_size` bytes into the cache, which is not the case for all practical problem sizes.
+One might think that there would be some *general* performance gain from doing sequential reads since we are fetching fewer cache lines, but this is not the case: fetching the first column of `b` indeed takes more time, but the next 15 column reads will be in the same cache lines as the first one, so they will be cached — unless the matrix is so large that it can't even fit `n * cache_line_size` bytes into the cache, which is not the case for any practical matrix sizes.
 
-So, counterintuitively, transposing the matrix doesn't help the memory bandwidth — and in the naive implementation, we are not really bottlenecked by it anyway. But for our vectorize implementation, we certainly are, so let's tackle it.
+Instead, the performance deteriorates on only a few specific matrix sizes due to the effects of [cache associativity](/hpc/cpu-cache/associativity/): when $n$ is a multiple of a large power of two, we are fetching the addresses of `b` that all likely map to the same cache line, which reduces the effective cache size. This explains the 30% performance dip for $n = 1920 = 2^7 \times 3 \times 5$, and you can see an even more noticeable one for $1536 = 2^9 \times 3$: it is roughly 3 times slower than for $n=1535$.
+
+So, counterintuitively, transposing the matrix doesn't help with caching — and in the naive implementation, we are not really bottlenecked by the memory bandwidth anyway. But our vectorized implementation certainly is, so let's work on its I/O efficiency.
 
 ## Register reuse
 
