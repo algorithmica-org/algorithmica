@@ -169,36 +169,41 @@ So, counterintuitively, transposing the matrix doesn't help with caching — and
 
 ## Register reuse
 
-Any two cells of A and B are used to update some cell of C.
+Using a Python-like notation to refer to submatrices, to compute the cell $C[x][y]$, we need to calculate the dot product of $A[x][:]$ and $B[:][y]$, which requires fetching $2n$ elements, even if we store $B$ in column-major order.
 
-To compute the cell $C[i][j]$, we need to compute the dot product of $A[i][:]$ and $B[:][j]$ (we are using the Python notation here to select rows and columns), which requires fetching $2n$ elements, even when $B$ is stored in column-major order.
+<!-- Any two cells of A and B are used to update some cell of C. -->
 
-What if we were to compute $C[i:i+2][j:j+2]$, a $2 \times 2$ submatrix of $C$? We would need $A[i:i+2][:]$ and $B[:][j:j+2]$, which is $4n$ elements in total: that is $\frac{2n / 1}{4n / 4} = 2$ times better in terms of I/O efficiency.
+To compute $C[x:x+2][y:y+2]$, a $2 \times 2$ submatrix of $C$, we would need two rows from $A$ and two columns from $B$, namely $A[x:x+2][:]$ and $B[:][y:y+2]$, containing $4n$ elements in total, to update four elements instead of one — which is $\frac{2n / 1}{4n / 4} = 2$ times better in terms of I/O efficiency.
+
+<!--
 
 To actually avoid reading more data, we need to read these $2+2$ rows and columns in parallel and update all $2 \times 2$ cells at once using all possible combinations of products.
 
-Here is a proof of concept:
+-->
+
+To avoid re-fetching data, we need to iterate these rows and columns in parallel and calculate all $2 \times 2$ possible combinations of products. Here is a proof of concept:
 
 ```c++
-void update_2x2(int x, int y) {
-    int c00 = c[x][y],
-        c01 = c[x][y + 1],
-        c10 = c[x + 1][y],
-        c11 = c[x + 1][y + 1];
+void kernel_2x2(int x, int y) {
+    int c00 = 0, c01 = 0, c10 = 0, c11 = 0;
 
     for (int k = 0; k < n; k++) {
+        // read rows
         int a0 = a[x][k];
         int a1 = a[x + 1][k];
 
+        // read columns
         int b0 = b[k][y];
         int b1 = b[k][y + 1];
 
+        // update all combinations
         c00 += a0 * b0;
         c01 += a0 * b1;
         c10 += a1 * b0;
         c11 += a1 * b1;
     }
 
+    // write the results to C
     c[x][y]         = c00;
     c[x][y + 1]     = c01;
     c[x + 1][y]     = c10;
@@ -206,52 +211,74 @@ void update_2x2(int x, int y) {
 }
 ```
 
-It also boosts instruction-level parallelism (we don't have to wait between iterations to update the loop state) and saves some cycles from executing the read instructions.
+We can now simply call this kernel on all 2x2 submatrices of $C$, but we won't bother evaluating it: although this algorithm is better in terms of I/O operations, it would still not beat our SIMD-based implementation. Instead, we will extend this approach and develop a similar *vectorized* kernel right away.
+
+<!-- It also boosts instruction-level parallelism (we don't have to wait between iterations to update the loop state) and saves some cycles from executing the read instructions.
 
 Of course, although better in terms of I/O, this $2 \times 2$ update would not beat our vectorized implementation, so we are not going to try this version in particular and instead will scale the idea right away.
 
+-->
+
 ## Designing the kernel
 
-We follow this approach and design a general kernel that updates a $h \times w$ submatrix of C using columns from $l$ to $r$ of $A$ and rows from $l$ to $r$ of $B$ (i. e. not a full computation, but only a partial update — it will be clear why later). We have several considerations:
+Instead of designing a kernel that computes an $h \times w$ submatrix of $C$ from scratch, we will declare a function that *updates* it using columns from $l$ to $r$ of $A$ and rows from $l$ to $r$ of $B$. For now, this seems like an over-generalization, but this API will be useful later.
 
-- In general, if we are updating an $h \times w$ submatrix, we will be fetching $2 \cdot n \cdot (h + w)$ elements to update $h \cdot w$ elements. We want that ratio of $\frac{h \cdot w}{2 \cdot n \cdot (h + w)}$ to be as high as possible, which is achieved with large square-ish submatrices.
-- We want to use the [FMA](https://en.wikipedia.org/wiki/FMA_instruction_set) ("fused multiply-add") instructions that are available on all modern x86 architectures. As you can guess from the name, they perform a vector `c += a * b` operation in one go, which is the core of our computation.
-- We want to be able to exploit [instruction-level parallelism](/hpc/pipelining/) to achieve better utilizaiton of this instruction. On Zen 2, the `fma` instruction has the latency of 5 and the throughput of 2, meaning that we need to concurrently execute at least $5 \times 2 = 10$ of them to fully saturate its execution ports.
-- We only have $16$ logical vector registers that we can use as accumulators, and we want to avoid register spill.
+<!--
 
-For these reasons, we settle on a $6 \times 16$ kernel. We process $96$ elements at once, which can be stored in $6 \times 2 = 12$ vector registers (we need some more to store temporary values). We [broadcast](/hpc/simd/moving/#broadcast) an element of A, and then use it to update the first row ($8 + 8$ elements). Then we load the one below it, and so on. When we have updated the last row, we move to the next $6$ elements to the right.
+We follow this approach and design a general kernel that updates a $h \times w$ submatrix of C using columns from $l$ to $r$ of $A$ and rows from $l$ to $r$ of $B$ (i. e. not a full computation, but only a partial update — it will be clear why later). 
+
+-->
+
+To determine $h$ and $w$, we have several performance considerations:
+
+- In general, to compute an $h \times w$ submatrix, we need to fetch $2 \cdot n \cdot (h + w)$ elements. To optimize the I/O efficiency, we would want the $\frac{h \cdot w}{h + w}$ ratio to be high, which is achieved with large and square-ish submatrices.
+- We want to use the [FMA](https://en.wikipedia.org/wiki/FMA_instruction_set) ("fused multiply-add") instruction available on all modern x86 architectures. As you can guess from the name, it performs the `c += a * b` operation — which is the core of a dot product — on 8-element vectors in one go, which saves us from executing vector multiplication and addition separately.
+- To achieve better utilization of this instruction, we want to make use of [instruction-level parallelism](/hpc/pipelining/). On Zen 2, the `fma` instruction has a latency of 5 and a throughput of 2, meaning that we need to concurrently execute at least $5 \times 2 = 10$ of them to saturate its execution ports.
+- We want to avoid register spill, and we only have $16$ logical vector registers that we can use as accumulators.
+
+For these reasons, we settle on a $6 \times 16$ kernel. This way, we process $96$ elements at once, which can be stored in $6 \times 2 = 12$ vector registers (we can't use an $8 \times 16$ kernel and use all 16 vector registers because we need some to hold temporary values).
+
+To update them efficiently, we use the following procedure:
+
+<!--
+
+We [broadcast](/hpc/simd/moving/#broadcast) an element of A, and then use it to update the first row ($8 + 8$ elements). Then we load the one below it, and so on. When we have updated the last row, we move to the next $6$ elements to the right.
 
 The final implementation is simpler than it sounds:
+
+-->
 
 ```c++
 // update 6x16 submatrix C[x:x+6][y:y+16]
 // using A[x:x+6][l:r] and B[l:r][y:y+16]
 void kernel(float *a, vec *b, vec *c, int x, int y, int l, int r, int n) {
-    vec t[6][2]{}; // will be stored in ymm registers
+    vec t[6][2]{}; // will be zero-filled and stored in ymm registers
 
     for (int k = l; k < r; k++) {
         for (int i = 0; i < 6; i++) {
-            vec alpha = vec{} + a[(x + i) * n + k];  // broadcast
+            // broadcast a[x + i][k] into a register
+            vec alpha = vec{} + a[(x + i) * n + k]; // converts to a broadcast
+            // multiply b[k][y:y+16] by it and update t[i][0] and t[i][1]
             for (int j = 0; j < 2; j++)
-                t[i][j] += alpha * b[(k * n + y) / 8 + j]; // fused multiply-add
+                t[i][j] += alpha * b[(k * n + y) / 8 + j]; // converts to an fma
         }
     }
 
+    // write the results back to C
     for (int i = 0; i < 6; i++)
         for (int j = 0; j < 2; j++)
             c[((x + i) * n + y) / 8 + j] += t[i][j];
 }
 ```
 
-We need `t` so that the compiler stores these elements in vector registers. We could just update the final destinations, but unfortunately, the compiler re-writes them back to memory, causing a huge slowdown — and wrapping everything in `__restrict__` keywords doesn't help.
+We need `t` so that the compiler stores these elements in vector registers. We could just update the final destinations, but, unfortunately, the compiler re-writes them back to memory, causing a slowdown (wrapping everything in `__restrict__` keywords doesn't help).
 
-The rest of the implementaiton is straightforward. Similar to the previous vectorized implementation, we just allocate aligned arrays and call the kernel instead of the innermost loop:
+The rest of the implementation is straightforward. Similar to the previous vectorized implementation, we just allocate aligned arrays and call the kernel instead of the innermost loop:
 
 ```c++
 void matmul(const float *_a, const float *_b, float *_c, int n) {
-    // to avoid implementing partials,
-    // we pad height to nearest 6 and width to 16
-    
+    // to simplify the implementation, we pad the height and width
+    // so that they are divisible by 6 and 16 respectively
     int nx = (n + 5) / 6 * 6;
     int ny = (n + 15) / 16 * 16;
     
@@ -277,15 +304,15 @@ void matmul(const float *_a, const float *_b, float *_c, int n) {
 }
 ```
 
-This improves the performance by another ~40%:
+This improves the benchmark performance, but only by ~40%:
 
 ![](../img/mm-kernel-barplot.svg)
 
-The speedup is much better (2-3x) on smaller arrays, indicating that there is still a bandwidth problem:
+The speedup is much higher (2-3x) on smaller arrays, indicating that there is still a bandwidth problem:
 
 ![](../img/mm-kernel-plot.svg)
 
-If you've read the section on [cache-oblivious algorithms](/hpc/external-memory/oblivious/), you know that one universal solution to these types of things is to split matrices in four parts, do eight recursive block matrix multiplications until the matrix fits into cache, and carefully combine the results together. We will follow a different, simpler approach.
+Now, if you've read the section on [cache-oblivious algorithms](/hpc/external-memory/oblivious/), you know that one universal solution to these types of things is to split all matrices into four parts, perform eight recursive block matrix multiplications, and carefully combine the results together. This solution is okay in practice, but there is some [overhead to recursion](/hpc/architecture/functions/), and it also doesn't allow us to fine-tune the algorithm, so instead, we will follow a different, simpler approach.
 
 ## Blocking
 
@@ -418,6 +445,8 @@ for (int k = 0; k < n; k++)
         for (int j = 0; j < n; j++)
             d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
 ```
+
+Vectorizing the distance product and executing it $O(\log n)$ times is faster than than naively executing the Floyd-Warshall algorithm, although not by a lot.
 
 As an exercise, try to think of ways of speeding up this "for-for-for" computation. It will be harder than matrix multiplication because you need to perform updates in this particular order.
 
