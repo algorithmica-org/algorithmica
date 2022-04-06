@@ -391,7 +391,7 @@ It is more representative to compare against some practical library, such as [Op
 
 We've reached ~93% of BLAS performance and ~75% of the theoretical performance limit, which is really great for what is essentially just 40 lines of C.
 
-Interestingly, the whole thing can be rolled into just one deeply nested `for` loop with a BLAS-level of performance (assuming that we're in 2050 and using GCC version 35, which finally stopped screwing up with register spilling):
+Interestingly, the whole thing can be rolled into just one deeply nested `for` loop with a BLAS level of performance (assuming that we're in 2050 and using GCC version 35, which finally stopped screwing up with register spilling):
 
 ```c++
 for (int i3 = 0; i3 < n; i3 += s3)
@@ -408,8 +408,6 @@ for (int i3 = 0; i3 < n; i3 += s3)
 ```
 
 There is also an approach that performs asymptotically fewer arithmetic operations — [the Strassen algorithm](/hpc/external-memory/oblivious/#strassen-algorithm) — but it has a large constant factor, and it is only efficient for [very large matrices](https://arxiv.org/pdf/1605.01078.pdf) ($n > 4000$), where we typically have to use either multiprocessing or some approximate dimensionality-reducing methods anyway.
-
-<!-- for which we typically use multi-threading anyway -->
 
 ## Generalizations
 
