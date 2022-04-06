@@ -1,7 +1,6 @@
 ---
 title: Matrix Multiplication
 weight: 20
-draft: true
 ---
 
 <!--
@@ -392,7 +391,7 @@ It is more useful to compare against some practical library, such as [OpenBLAS](
 
 We've reached ~93% of BLAS performance and ~75% of the theoretical performance limit, which is really great for what is essentially just 40 lines of C.
 
-Interestingly, the whole thing can be rolled into just one deeply nested `for` loop (assuming that we are in 2050 and using the 35th version of GCC, which finally does not screw up with register spilling.):
+Interestingly, the whole thing can be rolled into just one deeply nested `for` loop with a BLAS-level of performance (assuming that we're in 2050 and using GCC 35, which finally does not screw up with register spilling):
 
 ```c++
 for (int i3 = 0; i3 < n; i3 += s3)
