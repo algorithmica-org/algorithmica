@@ -24,7 +24,7 @@ All implementations are compiled with GCC 13 and run on a [Zen 2](https://en.wik
 
 ## Baseline
 
-The result of multiplying an $l \times n$ matrix $A$ by an $n \times m$ matrix $B$ is defined as an $l \times m$ matrix $C$ calculated as
+The result of multiplying an $l \times n$ matrix $A$ by an $n \times m$ matrix $B$ is defined as an $l \times m$ matrix $C$ such that:
 
 $$
 C_{ij} = \sum_{k=1}^{n} A_{ik} \cdot B_{kj}
@@ -32,7 +32,7 @@ $$
 
 For simplicity, we will only consider *square* matrices, where $l = m = n$.
 
-To implement matrix multiplication, we can simply transfer this definition into code — but instead of two-dimensional arrays (aka matrices), we will be using one-dimensional arrays to be explicit about pointer arithmetic:
+To implement matrix multiplication, we can simply transfer this definition into code, but instead of two-dimensional arrays (aka matrices), we will be using one-dimensional arrays to be explicit about pointer arithmetic:
 
 ```c++
 void matmul(const float *a, const float *b, float *c, int n) {
@@ -43,15 +43,15 @@ void matmul(const float *a, const float *b, float *c, int n) {
 }
 ```
 
-For reasons that will become apparent later, we only use matrix sizes that are multiples of $48$ for benchmarking, but the implementations remain correct for all other sizes. We also use [32-bit floats](/hpc/arithmetic/ieee-754) specifically, although all implementations can be easily [generalized](#generalizations) to other data types and operations.
+For reasons that will become apparent later, we will only use matrix sizes that are multiples of $48$ for benchmarking, but the implementations remain correct for all others. We also use [32-bit floats](/hpc/arithmetic/ieee-754) specifically, although all implementations can be easily [generalized](#generalizations) to other data types and operations.
 
-Compiled with `g++ -O3 -march=native -ffast-math -funroll-loops`, the naive approach multiplies two matrices of size $n = 1920 = 48 \times 40$ in ~16.7 seconds. Put in perspective, it is approximately $\frac{1920^3}{16.7 \times 10^9} \approx 0.42$ useful operations per nanosecond (GFLOPS), or roughly 5 CPU cycles per multiplication, which doesn't look that good yet.
+Compiled with `g++ -O3 -march=native -ffast-math -funroll-loops`, the naive approach multiplies two matrices of size $n = 1920 = 48 \times 40$ in ~16.7 seconds. To put it in perspective, this is approximately $\frac{1920^3}{16.7 \times 10^9} \approx 0.42$ useful operations per nanosecond (GFLOPS), or roughly 5 CPU cycles per multiplication, which doesn't look that good yet.
 
 ## Transposition
 
-In general, when you optimize an algorithm that processes large quantities of data — and $1920^2 \times 3 \times 4 \approx 42$ MB clearly is a large quantity as it can't fit into any of the [CPU caches](/hpc/cpu-cache) — you should always start with memory before optimizing arithmetic, as it is much more likely to be the bottleneck.
+In general, when optimizing an algorithm that processes large quantities of data — and $1920^2 \times 3 \times 4 \approx 42$ MB clearly is a large quantity as it can't fit into any of the [CPU caches](/hpc/cpu-cache) — one should always start with memory before optimizing arithmetic, as it is much more likely to be the bottleneck.
 
-The field $C_{ij}$ can be seen as the dot product of row $i$ of matrix $A$ and column $j$ of matrix $B$. As we increment `k` in the inner loop above, we are reading the matrix `a` sequentially, but we are jumping over $n$ elements as we iterate over a column of `b`, which is [not as fast](/hpc/cpu-cache/aos-soa) as sequential iteration.
+The field $C_{ij}$ can be thought of as the dot product of row $i$ of matrix $A$ and column $j$ of matrix $B$. As we increment `k` in the inner loop above, we are reading the matrix `a` sequentially, but we are jumping over $n$ elements as we iterate over a column of `b`, which is [not as fast](/hpc/cpu-cache/aos-soa) as sequential iteration.
 
 One [well-known](/hpc/external-memory/oblivious/#matrix-multiplication) optimization that tackles this problem is to store matrix $B$ in *column-major* order — or, alternatively, to *transpose* it before the matrix multiplication. This requires $O(n^2)$ additional operations but ensures sequential reads in the innermost loop:
 
@@ -76,11 +76,13 @@ void matmul(const float *a, const float *_b, float *c, int n) {
 }
 ```
 
-This code runs in ~12.4s, or about 30% faster. As we will see in a bit, there are more important benefits to transposing it than just the sequential memory reads.
+This code runs in ~12.4s, or about 30% faster.
+
+As we will see in a bit, there are more important benefits to transposing it than just the sequential memory reads.
 
 ## Vectorization
 
-Now that all we do is just sequentially read the elements of `a` and `b`, multiply them, and add the result to an accumulator variable, we can use [SIMD](/hpc/simd/) instructions to speed it all up. It is pretty straightforward to implement using [GCC vector types](/hpc/simd/intrinsics/#gcc-vector-extensions) — we can [memory-align](/hpc/cpu-cache/alignment/) matrix rows, pad them with zeros, and then just compute the multiply-sum as we would normally compute [any other reduction](/hpc/simd/reduction/):
+Now that all we do is just sequentially read the elements of `a` and `b`, multiply them, and add the result to an accumulator variable, we can use [SIMD](/hpc/simd/) instructions to speed it all up. It is pretty straightforward to implement using [GCC vector types](/hpc/simd/intrinsics/#gcc-vector-extensions) — we can [memory-align](/hpc/cpu-cache/alignment/) matrix rows, pad them with zeros, and then compute the multiply-sum as we would normally compute any other [reduction](/hpc/simd/reduction/):
 
 ```c++
 // a vector of 256 / 32 = 8 floats
@@ -132,7 +134,7 @@ The performance for $n = 1920$ is now around 2.3 GFLOPS — or another ~4 times 
 
 This optimization looks neither too complex nor specific to matrix multiplication. Why can't the compiler [auto-vectorizee](/hpc/simd/auto-vectorization/) the inner loop by itself?
 
-It actually can — the only thing preventing that is the possibility that `c` overlaps with either `a` or `b`. The only thing that you need to do is to guarantee that `c` is not [aliased](/hpc/compilation/contracts/#memory-aliasing) with anything by adding the `__restrict__` keyword to it:
+It actually can; the only thing preventing that is the possibility that `c` overlaps with either `a` or `b`. To rule it out, you can communicate to the compiler that you guarantee `c` is not [aliased](/hpc/compilation/contracts/#memory-aliasing) with anything by adding the `__restrict__` keyword to it:
 
 <!-- (the compiler already knows that reading `a` and `b` is safe in any order because they are marked as `const`): -->
 
@@ -154,17 +156,17 @@ The performance is bottlenecked by using a single variable. We could use multipl
 
 What is interesting is that the implementation efficiency depends on the problem size. 
 
-At first, the performance (in terms of useful operations per second) increases as the overhead of the loop management and horizontal reduction decreases. Then, at around $n=256$, it starts smoothly decreasing as the matrices stop fitting into the [cache](/hpc/cpu-cache/) ($2 \times 256^2 \times 4 = 512$ KB is the size of the L2 cache), and the performance becomes bottlenecked by the [memory bandwidth](/hpc/cpu-cache/bandwidth/).
+At first, the performance (defined as the number of useful operations per second) increases as the overhead of the loop management and the horizontal reduction decreases. Then, at around $n=256$, it starts smoothly decreasing as the matrices stop fitting into the [cache](/hpc/cpu-cache/) ($2 \times 256^2 \times 4 = 512$ KB is the size of the L2 cache), and the performance becomes bottlenecked by the [memory bandwidth](/hpc/cpu-cache/bandwidth/).
 
 ![](../img/mm-vectorized-plot.svg)
 
 It is also interesting that the naive implementation is mostly on par with the non-vectorized transposed version — and even slightly better because it doesn't need to perform a transposition.
 
-One might think that there would be some *general* performance gain from doing sequential reads since we are fetching fewer cache lines, but this is not the case: fetching the first column of `b` indeed takes more time, but the next 15 column reads will be in the same cache lines as the first one, so they will be cached — unless the matrix is so large that it can't even fit `n * cache_line_size` bytes into the cache, which is not the case for any practical matrix sizes.
+One might think that there would be some general performance gain from doing sequential reads since we are fetching fewer cache lines, but this is not the case: fetching the first column of `b` indeed takes more time, but the next 15 column reads will be in the same cache lines as the first one, so they will be cached anyway — unless the matrix is so large that it can't even fit `n * cache_line_size` bytes into the cache, which is not the case for any practical matrix sizes.
 
 Instead, the performance deteriorates on only a few specific matrix sizes due to the effects of [cache associativity](/hpc/cpu-cache/associativity/): when $n$ is a multiple of a large power of two, we are fetching the addresses of `b` that all likely map to the same cache line, which reduces the effective cache size. This explains the 30% performance dip for $n = 1920 = 2^7 \times 3 \times 5$, and you can see an even more noticeable one for $1536 = 2^9 \times 3$: it is roughly 3 times slower than for $n=1535$.
 
-So, counterintuitively, transposing the matrix doesn't help with caching — and in the naive implementation, we are not really bottlenecked by the memory bandwidth anyway. But our vectorized implementation certainly is, so let's work on its I/O efficiency.
+So, counterintuitively, transposing the matrix doesn't help with caching — and in the naive scalar implementation, we are not really bottlenecked by the memory bandwidth anyway. But our vectorized implementation certainly is, so let's work on its I/O efficiency.
 
 ## Register reuse
 
@@ -172,7 +174,7 @@ Using a Python-like notation to refer to submatrices, to compute the cell $C[x][
 
 <!-- Any two cells of A and B are used to update some cell of C. -->
 
-To compute $C[x:x+2][y:y+2]$, a $2 \times 2$ submatrix of $C$, we would need two rows from $A$ and two columns from $B$, namely $A[x:x+2][:]$ and $B[:][y:y+2]$, containing $4n$ elements in total, to update four elements instead of one — which is $\frac{2n / 1}{4n / 4} = 2$ times better in terms of I/O efficiency.
+To compute $C[x:x+2][y:y+2]$, a $2 \times 2$ submatrix of $C$, we would need two rows from $A$ and two columns from $B$, namely $A[x:x+2][:]$ and $B[:][y:y+2]$, containing $4n$ elements in total, to update *four* elements instead of *one* — which is $\frac{2n / 1}{4n / 4} = 2$ times better in terms of I/O efficiency.
 
 <!--
 
@@ -180,7 +182,7 @@ To actually avoid reading more data, we need to read these $2+2$ rows and column
 
 -->
 
-To avoid re-fetching data, we need to iterate these rows and columns in parallel and calculate all $2 \times 2$ possible combinations of products. Here is a proof of concept:
+To avoid fetching data more than once, we need to iterate over these rows and columns in parallel and calculate all $2 \times 2$ possible combinations of products. Here is a proof of concept:
 
 ```c++
 void kernel_2x2(int x, int y) {
@@ -220,7 +222,7 @@ Of course, although better in terms of I/O, this $2 \times 2$ update would not b
 
 ## Designing the kernel
 
-Instead of designing a kernel that computes an $h \times w$ submatrix of $C$ from scratch, we will declare a function that *updates* it using columns from $l$ to $r$ of $A$ and rows from $l$ to $r$ of $B$. For now, this seems like an over-generalization, but this API will be useful later.
+Instead of designing a kernel that computes an $h \times w$ submatrix of $C$ from scratch, we will declare a function that *updates* it using columns from $l$ to $r$ of $A$ and rows from $l$ to $r$ of $B$. For now, this seems like an over-generalization, but this function interface will prove useful later.
 
 <!--
 
@@ -230,14 +232,12 @@ We follow this approach and design a general kernel that updates a $h \times w$ 
 
 To determine $h$ and $w$, we have several performance considerations:
 
-- In general, to compute an $h \times w$ submatrix, we need to fetch $2 \cdot n \cdot (h + w)$ elements. To optimize the I/O efficiency, we would want the $\frac{h \cdot w}{h + w}$ ratio to be high, which is achieved with large and square-ish submatrices.
-- We want to use the [FMA](https://en.wikipedia.org/wiki/FMA_instruction_set) ("fused multiply-add") instruction available on all modern x86 architectures. As you can guess from the name, it performs the `c += a * b` operation — which is the core of a dot product — on 8-element vectors in one go, which saves us from executing vector multiplication and addition separately.
+- In general, to compute an $h \times w$ submatrix, we need to fetch $2 \cdot n \cdot (h + w)$ elements. To optimize the I/O efficiency, we want the $\frac{h \cdot w}{h + w}$ ratio to be high, which is achieved with large and square-ish submatrices.
+- We want to use the [FMA](https://en.wikipedia.org/wiki/FMA_instruction_set) ("fused multiply-add") instruction available on all modern x86 architectures. As you can guess from the name, it performs the `c += a * b` operation — which is the core of a dot product — on 8-element vectors in one go, which saves us from executing vector multiplication and addition separately. <!-- saxpy: Single-Precision A·X Plus Y -->
 - To achieve better utilization of this instruction, we want to make use of [instruction-level parallelism](/hpc/pipelining/). On Zen 2, the `fma` instruction has a latency of 5 and a throughput of 2, meaning that we need to concurrently execute at least $5 \times 2 = 10$ of them to saturate its execution ports.
-- We want to avoid register spill, and we only have $16$ logical vector registers that we can use as accumulators.
+- We want to avoid register spill (move data to and from registers more than necessary), and we only have $16$ logical vector registers that we can use as accumulators (minus those that we need to hold temporary values).
 
-For these reasons, we settle on a $6 \times 16$ kernel. This way, we process $96$ elements at once, which can be stored in $6 \times 2 = 12$ vector registers (we can't use an $8 \times 16$ kernel and use all 16 vector registers because we need some to hold temporary values).
-
-To update them efficiently, we use the following procedure:
+For these reasons, we settle on a $6 \times 16$ kernel. This way, we process $96$ elements at once that are stored in $6 \times 2 = 12$ vector registers. To update them efficiently, we use the following procedure:
 
 <!--
 
@@ -270,9 +270,9 @@ void kernel(float *a, vec *b, vec *c, int x, int y, int l, int r, int n) {
 }
 ```
 
-We need `t` so that the compiler stores these elements in vector registers. We could just update the final destinations, but, unfortunately, the compiler re-writes them back to memory, causing a slowdown (wrapping everything in `__restrict__` keywords doesn't help).
+We need `t` so that the compiler stores these elements in vector registers. We could just update their final destinations in `c`, but, unfortunately, the compiler re-writes them back to memory, causing a slowdown (wrapping everything in `__restrict__` keywords doesn't help).
 
-The rest of the implementation is straightforward. Similar to the previous vectorized implementation, we just allocate aligned arrays and call the kernel instead of the innermost loop:
+The rest of the implementation is straightforward. Similar to the previous vectorized implementation, we just move the matrices to memory-aligned arrays and call the kernel instead of the innermost loop:
 
 ```c++
 void matmul(const float *_a, const float *_b, float *_c, int n) {
@@ -307,7 +307,7 @@ This improves the benchmark performance, but only by ~40%:
 
 ![](../img/mm-kernel-barplot.svg)
 
-The speedup is much higher (2-3x) on smaller arrays, indicating that there is still a bandwidth problem:
+The speedup is much higher (2-3x) on smaller arrays, indicating that there is still a memory bandwidth problem:
 
 ![](../img/mm-kernel-plot.svg)
 
@@ -315,7 +315,7 @@ Now, if you've read the section on [cache-oblivious algorithms](/hpc/external-me
 
 ## Blocking
 
-The *cache-aware* alternative to this divide-and-conquer trick is *cache blocking*: splitting the data into blocks that can fit into the cache and processing them one by one. If we have more than one layer of cache, we can do hierarchical blocking: we first select a block of data that fits into the L3 cache, then we split it into blocks that fit into the L2 cache, and so on. This requires knowing the cache sizes in advance, but it is usually easier to implement and also faster in practice.
+The *cache-aware* alternative to the divide-and-conquer trick is *cache blocking*: splitting the data into blocks that can fit into the cache and processing them one by one. If we have more than one layer of cache, we can do hierarchical blocking: we first select a block of data that fits into the L3 cache, then we split it into blocks that fit into the L2 cache, and so on. This approach requires knowing the cache sizes in advance, but it is usually easier to implement and also faster in practice.
 
 Cache blocking is less trivial to do with matrices than with arrays, but the general idea is this:
 
@@ -351,21 +351,21 @@ Cache blocking completely removes the memory bottleneck:
 
 ![](../img/mm-blocked-barplot.svg)
 
-The performance is no longer significantly affected by the problem size:
+The performance is no longer (significantly) affected by the problem size:
 
 ![](../img/mm-blocked-plot.svg)
 
-Notice that the dip at $1536$ is still there: cache associativity still affects the effective cache size. To mitigate this, we can adjust the step constants or insert holes into the layout, but we are not going to bother doing that for now.
+Notice that the dip at $1536$ is still there: cache associativity still affects the performance. To mitigate this, we can adjust the step constants or insert holes into the layout, but we will not bother doing that for now.
 
 ## Optimization
 
 To approach closer to the performance limit, we need a few more optimizations:
 
-- Remove memory allocation and operate on the arrays that are passed to the function. Note that we don't need to do anything with `a` as we are reading just one element at a time, and we can use an unaligned `store` for `c` as we only use it rarely.
-- Get rid of the `std::min` so that the size parameters are (mostly) constant and can be embedded into the machine code by the compiler (which also lets it [unroll](/hpc/architecture/loops/) the micro-kernel loop more efficiently without runtime checks).
-- Rewrite the micro-kernel by hand using 12 vector variables (the compiler seems to struggle with keeping them in registers and writes them first to temporary storage and only then to $C$).
+- Remove memory allocation and operate directly on the arrays that are passed to the function. Note that we don't need to do anything with `a` as we are reading just one element at a time, and we can use an [unaligned](/hpc/simd/moving/#aligned-loads-and-stores) `store` for `c` as we only use it rarely, so our only concern is reading `b`.
+- Get rid of the `std::min` so that the size parameters are (mostly) constant and can be embedded into the machine code by the compiler (which also lets it [unroll](/hpc/architecture/loops/) the micro-kernel loop more efficiently and avoid runtime checks).
+- Rewrite the micro-kernel by hand using 12 vector variables (the compiler seems to struggle with keeping them in registers and writes them first to a temporary memory location and only then to $C$).
 
-These optimizations are straightforward but quite tedious to implement, so we are not going to list [the code](https://github.com/sslotin/amh-code/blob/main/matmul/v5-unrolled.cc) in the article. It also requires some more work to effectively support "weird" matrix sizes, which is why we only run benchmarks for sizes that are multiple of $48 = \frac{6 \cdot 16}{\gcd(6, 16)}$.
+These optimizations are straightforward but quite tedious to implement, so we are not going to list [the code](https://github.com/sslotin/amh-code/blob/main/matmul/v5-unrolled.cc) here in the article. It also requires some more work to effectively support "weird" matrix sizes, which is why we only run benchmarks for sizes that are multiple of $48 = \frac{6 \cdot 16}{\gcd(6, 16)}$.
 
 <!--
 
@@ -375,23 +375,23 @@ But avoiding moving anything pays off.
 
 -->
 
-These individually small improvements sum up and result in another 50% improvement:
+These individually small improvements compound and result in another 50% improvement:
 
 ![](../img/mm-noalloc.svg)
 
-We are actually not that far from the theoretical performance limit — which can be calculated as the width of a SIMD lane times the `fma` instruction throughput times the clock frequency:
+We are actually not that far from the theoretical performance limit — which can be calculated as the SIMD width times the `fma` instruction throughput times the clock frequency:
 
 $$
 \underbrace{8}_{SIMD} \cdot \underbrace{2}_{thr.} \cdot \underbrace{2 \cdot 10^9}_{cycles/sec} = 32 \; GFLOPS \;\; (3.2 \cdot 10^{10})
 $$
 
-It is more useful to compare against some practical library, such as [OpenBLAS](https://www.openblas.net/). The laziest way is to simply invoke matrix multiplication from Python with [numpy](/hpc/complexity/languages/#blas). There may be some minor overhead, but it ends up reaching 80% of the theoretical limit, which seems plausible (this overhead is typical, as matrix multiplication is not the only thing that CPUs are made for):
+It is more representative to compare against some practical library, such as [OpenBLAS](https://www.openblas.net/). The laziest way to do it is to simply [invoke matrix multiplication from NumPy](/hpc/complexity/languages/#blas). There may be some minor overhead due to Python, but it ends up reaching 80% of the theoretical limit, which seems plausible (a 20% overhead is okay: matrix multiplication is not the only thing that CPUs are made for).
 
 ![](../img/mm-blas.svg)
 
 We've reached ~93% of BLAS performance and ~75% of the theoretical performance limit, which is really great for what is essentially just 40 lines of C.
 
-Interestingly, the whole thing can be rolled into just one deeply nested `for` loop with a BLAS-level of performance (assuming that we're in 2050 and using GCC 35, which finally does not screw up with register spilling):
+Interestingly, the whole thing can be rolled into just one deeply nested `for` loop with a BLAS-level of performance (assuming that we're in 2050 and using GCC version 35, which finally stopped screwing up with register spilling):
 
 ```c++
 for (int i3 = 0; i3 < n; i3 += s3)
@@ -407,13 +407,13 @@ for (int i3 = 0; i3 < n; i3 += s3)
                                    * b[n / 8 * k + y / 8 + j];
 ```
 
-There is also a way to do fewer arithmetic operations — [the Strassen algorithm](/hpc/external-memory/oblivious/#strassen-algorithm) — but it has a large constant factor, and it is only efficient for [very large matrices](https://arxiv.org/pdf/1605.01078.pdf) ($n > 4000$), where we typically have to use either multiprocessing or some approximate dimensionality-reducing methods anyway.
+There is also an approach that performs asymptotically fewer arithmetic operations — [the Strassen algorithm](/hpc/external-memory/oblivious/#strassen-algorithm) — but it has a large constant factor, and it is only efficient for [very large matrices](https://arxiv.org/pdf/1605.01078.pdf) ($n > 4000$), where we typically have to use either multiprocessing or some approximate dimensionality-reducing methods anyway.
 
 <!-- for which we typically use multi-threading anyway -->
 
 ## Generalizations
 
-FMA also supports 64-bit floating-point numbers, but it does not support integers: you need to perform addition and multiplication separately, which projects to decreased performance. If you can guarantee that all intermediate results can be represented exactly as a 32- or 64-bit floating-point number (which is [often the case](/hpc/arithmetic/errors/)), it may be better to convert them to and from floats.
+FMA also supports 64-bit floating-point numbers, but it does not support integers: you need to perform addition and multiplication separately, which results in decreased performance. If you can guarantee that all intermediate results can be represented exactly as 32- or 64-bit floating-point numbers (which is [often the case](/hpc/arithmetic/errors/)), it may be faster to just convert them to and from floats.
 
 You can also apply the same trick to other similar computations. One example is the "min-plus matrix multiplication," which is defined as:
 
@@ -453,7 +453,7 @@ for (int k = 0; k < n; k++)
 
 Interestingly, vectorizing the distance product and executing it $O(\log n)$ times in $O(n^3 \log n)$ total operations is faster than naively executing the Floyd-Warshall algorithm in $O(n^3)$ operations, although not by a lot.
 
-As an exercise, try to speed up this "for-for-for" computation. It is harder to do than in the matrix multiplication case because you need to perform updates in a particular order, but it is still possible to design a similar kernel and an iteration order that achieves a 30-50x total speedup.
+As an exercise, try to speed up this "for-for-for" computation. It is harder to do than in the matrix multiplication case because now there is a logical dependency between the iterations, and you need to perform updates in a particular order, but it is still possible to design a similar kernel and a block iteration order that achieves a 30-50x total speedup.
 
 ## Acknowledgements
 
