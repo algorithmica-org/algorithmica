@@ -334,7 +334,9 @@ We need a few more optimizations to reach the performance limit:
 - Get rid of the `std::min` so that the size parameters are mostly constant and can be embedded into the machine code.
 - Rewrite the micro-kernel by hand using 12 variables (the compiler seems to have a problem with keeping them fully in registers).
 
-Effectively supporting weird sizes requires a bit more work, and this is the reason why we benchmarked at an array sizes that are divisible by $48 = \frac{6 \cdot 16}{\gcd(6, 16)}$.
+Effectively supporting weird sizes requires a bit more work, and this is the reason why we benchmarked at an array sizes that are divisible by $48 = \frac{6 \cdot 16}{\gcd(6, 16)}$. We leave the code out, because the change is large and tedious and involves slightly modifying the benchmarking code itself. It is straightforward, but we only implement the version for this particular size, whithout any safety checks. Cheating on the benchmark.
+
+https://github.com/sslotin/amh-code/blob/main/matmul/v5-unrolled.cc
 
 Avoiding moving anything pays off. These improvements sum up and give us a 50% improvement:
 
@@ -350,9 +352,9 @@ A more realistic comparison is some practical library, such as [https://www.open
 
 ![](../img/mm-blas.svg)
 
-We've reached ~93% of BLAS and ~75% of the theoretical performance limit. Which is really great for what is basically 40 lines of C.
+We've reached ~93% of BLAS and ~75% of the theoretical performance limit. Which is really great for what is essentially just 40 lines of C.
 
-Interestingly, the whole thing can be rolled into one large `for` loop:
+Interestingly, the whole thing can be rolled into one large `for` loop (assuming that we are in 2050 and using the 35th version of GCC, which finally properly manager not to screwing up with register spilling.):
 
 ```c++
 for (int i3 = 0; i3 < n; i3 += s3)
@@ -368,17 +370,21 @@ for (int i3 = 0; i3 < n; i3 += s3)
                                    * b[n / 8 * k + y / 8 + j];
 ```
 
-(Assuming that we are in 2050 and using the 35th version of GCC, which finally properly manager not to screwing up with register spilling.)
+There is also a way to do fewer arithmetic operations — [the Strassen algorithm](/hpc/external-memory/oblivious/#strassen-algorithm) — but it has a large constant factor, and it is [only efficient for very large matrices](https://arxiv.org/pdf/1605.01078.pdf) ($n > 4000$) for which we typically use multi-threading anyway.
 
 ## Generalizations
 
-Given a matrix $D$, we need to calculate its "min-plus matrix multiplication" defined as:
+FMA also supports 64-bit floating point number, but it does not support integers: you need to perform addition and multiplication separately, which projects to decreased performance. If you know that all intermediate results can be represented exactly as a 32- or 64-bit floating-point number (which is [often the case](/hpc/arithmetic/errors/)), it may be better convert them to and from floats.
 
-$(D \circ D)_{ij} = \min_k(D_{ik} + D_{kj})$
+You can also apply the same trick to other similar computations. One example is the "min-plus matrix multiplication" defined as:
 
-Graph interpretation: find shortest paths of length 2 between all vertices in a fully-connected weighted graph
+$$
+(D \circ D)_{ij} = \min_{1 \le k \le n} (D_{ik} + D_{kj})
+$$
 
-A cool thing about distance product is that if if we iterate the process and calculate:
+It is also known as the "distance product" due to its graph interpretation: the result is the matrix of shortest paths of length two between all pairs of vertices in a fully-connected weighted graph.
+
+A cool thing about the distance product is that if if we iterate the process and calculate:
 
 $$
 D_2 = D \circ D \\
@@ -387,17 +393,26 @@ D_8 = D_4 \circ D_4 \\
 \ldots
 $$
 
-Then we can find all-pairs shortest distances in $O(\log n)$ steps
+Then we can find all-pairs shortest distances in $O(\log n)$ steps:
 
-(but recall that there are [more direct ways](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm) to solve it)
+```c++
+for (int l = 0; l < logn; l++)
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            for (int k = 0; k < n; k++)
+                d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
+```
 
-Which is an exercise.
+This requires $O(n^3 \log n)$ operations, but if we do these two-edge relaxations in a particular order, we can do it with just one pass, which is known as the [Floyd-Warshall algorithm](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm):
 
-Strassen algorithm is only useful for large matrices.
+```c++
+for (int k = 0; k < n; k++)
+    for (int i = 0; i < n; i++)
+        for (int j = 0; j < n; j++)
+            d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
+```
 
-https://arxiv.org/pdf/1605.01078.pdf
-
-[cache-oblivious](/hpc/external-memory/oblivious/#matrix-multiplication) algorithms
+As an exercise, try to think of ways of speeding up this "for-for-for" computation. It will be harder than matrix multiplication because you need to perform updates in this particular order.
 
 ## Acknowledgements
 
