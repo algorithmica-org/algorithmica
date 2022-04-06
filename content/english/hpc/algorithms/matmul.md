@@ -162,6 +162,8 @@ So, counterintuitively, transposing the matrix doesn't help the memory bandwidth
 
 ## Register reuse
 
+Any two cells of A and B are used to update some cell of C.
+
 To compute the cell $C[i][j]$, we need to compute the dot product of $A[i][:]$ and $B[:][j]$ (we are using the Python notation here to select rows and columns), which requires fetching $2n$ elements, even when $B$ is stored in column-major order.
 
 What if we were to compute $C[i:i+2][j:j+2]$, a $2 \times 2$ submatrix of $C$? We would need $A[i:i+2][:]$ and $B[:][j:j+2]$, which is $4n$ elements in total: that is $\frac{2n / 1}{4n / 4} = 2$ times better in terms of I/O efficiency.
@@ -201,17 +203,22 @@ It also boosts instruction-level parallelism (we don't have to wait between iter
 
 Of course, although better in terms of I/O, this $2 \times 2$ update would not beat our vectorized implementation, so we are not going to try this version in particular and instead will scale the idea right away.
 
-## Micro-kernel
+## Designing the kernel
 
-*micro-kernel*.
+We follow this approach and design a general kernel that updates a $h \times w$ submatrix of C using columns from $l$ to $r$ of $A$ and rows from $l$ to $r$ of $B$ (i. e. not a full computation, but only a partial update — it will be clear why later). We have several considerations:
 
-This CPU importantly supports the [FMA3](https://en.wikipedia.org/wiki/FMA_instruction_set) SIMD extension that we will utilize in later implementations.
+- In general, if we are updating an $h \times w$ submatrix, we will be fetching $2 \cdot n \cdot (h + w)$ elements to update $h \cdot w$ elements. We want that ratio of $\frac{h \cdot w}{2 \cdot n \cdot (h + w)}$ to be as high as possible, which is achieved with large square-ish submatrices.
+- We want to use the [FMA](https://en.wikipedia.org/wiki/FMA_instruction_set) ("fused multiply-add") instructions that are available on all modern x86 architectures. As you can guess from the name, they perform a vector `c += a * b` operation in one go, which is the core of our computation.
+- We want to be able to exploit [instruction-level parallelism](/hpc/pipelining/) to achieve better utilizaiton of this instruction. On Zen 2, the `fma` instruction has the latency of 5 and the throughput of 2, meaning that we need to concurrently execute at least $5 \times 2 = 10$ of them to fully saturate its execution ports.
+- We only have $16$ logical vector registers that we can use as accumulators, and we want to avoid register spill.
 
-RAM bandwidth is lower than that
+For these reasons, we settle on a $6 \times 16$ kernel. We process $96$ elements at once, which can be stored in $6 \times 2 = 12$ vector registers (we need some more to store temporary values). We [broadcast](/hpc/simd/moving/#broadcast) an element of A, and then use it to update the first row ($8 + 8$ elements). Then we load the one below it, and so on. When we have updated the last row, we move to the next $6$ elements to the right.
 
-The latency of FMA is 5 cycles, while its reciprocal throughput is ½. 
+The final implementation is simpler than it sounds:
 
 ```c++
+// update 6x16 submatrix C[x:x+6][y:y+16]
+// using A[x:x+6][l:r] and B[l:r][y:y+16]
 void kernel(float *a, vec *b, vec *c, int x, int y, int l, int r, int n) {
     vec t[6][2]{}; // will be stored in ymm registers
 
@@ -229,10 +236,15 @@ void kernel(float *a, vec *b, vec *c, int x, int y, int l, int r, int n) {
 }
 ```
 
-The rest of the implementaiton:
+We need `t` so that the compiler stores these elements in vector registers. We could just update the final destinations, but unfortunately, the compiler re-writes them back to memory, causing a huge slowdown — and wrapping everything in `__restrict__` keywords doesn't help.
+
+The rest of the implementaiton is straightforward. Similar to the previous vectorized implementation, we just allocate aligned arrays and call the kernel instead of the innermost loop:
 
 ```c++
 void matmul(const float *_a, const float *_b, float *_c, int n) {
+    // to avoid implementing partials,
+    // we pad height to nearest 6 and width to 16
+    
     int nx = (n + 5) / 6 * 6;
     int ny = (n + 15) / 16 * 16;
     
@@ -242,7 +254,7 @@ void matmul(const float *_a, const float *_b, float *_c, int n) {
 
     for (int i = 0; i < n; i++) {
         memcpy(&a[i * ny], &_a[i * n], 4 * n);
-        memcpy(&b[i * ny], &_b[i * n], 4 * n);
+        memcpy(&b[i * ny], &_b[i * n], 4 * n); // we don't need to transpose b this time
     }
 
     for (int x = 0; x < nx; x += 6)
@@ -258,15 +270,19 @@ void matmul(const float *_a, const float *_b, float *_c, int n) {
 }
 ```
 
+This improves the performance by another ~40%:
+
 ![](../img/mm-kernel-barplot.svg)
+
+The speedup is much better (2-3x) on smaller arrays, indicating that there is still a bandwidth problem:
 
 ![](../img/mm-kernel-plot.svg)
 
-There is still a memory bandwidth problem.
+If you've read the section on [cache-oblivious algorithms](/hpc/external-memory/oblivious/), you know that one universal solution to these types of things is to split matrices in four parts, do eight recursive block matrix multiplications until the matrix fits into cache, and carefully combine the results together. We will follow a different, simpler approach.
 
 ## Blocking
 
-*Macro-kernel*
+Note that we are reading.
 
 ```c++
 const int s3 = 64;
@@ -286,6 +302,8 @@ for (int i3 = 0; i3 < ny; i3 += s3)
                     kernel(a, (vec*) b, (vec*) c, x, y, i1, std::min(i1 + s1, n), ny);
 ```
 
+This part is sometimes called *macro-kernel* (as opposed to the *micro-kernel* that only updates a 6x16 submatrix).
+
 ![](../img/mm-blocked-plot.svg)
 
 ![](../img/mm-blocked-barplot.svg)
@@ -294,8 +312,10 @@ Avoid moving anything:
 
 ![](../img/mm-noalloc.svg)
 
+The theoretical performance limit is:
+
 $$
-\underbrace{4}_{CPUs} \cdot \underbrace{8}_{SIMD} \cdot \underbrace{2}_{1/thr} \cdot \underbrace{3.6 \cdot 10^9}_{cycles/sec} = 230.4 \; GFLOPS \;\; (2.3 \cdot 10^{11})
+\underbrace{8}_{SIMD} \cdot \underbrace{2}_{1/thr} \cdot \underbrace{2 \cdot 10^9}_{cycles/sec} = 32 \; GFLOPS \;\; (3.2 \cdot 10^{10})
 $$
 
 (and also getting rid of `std::min` in the macro-kernel)
@@ -325,7 +345,7 @@ for (int i3 = 0; i3 < n; i3 += s3)
                                    * b[n / 8 * k + y / 8 + j];
 ```
 
-Register spilling.
+(Assuming that we are in 2050 and using the 35th version of GCC, which finally properly manager not to screwing up with register spilling.)
 
 ## Generalizations
 
