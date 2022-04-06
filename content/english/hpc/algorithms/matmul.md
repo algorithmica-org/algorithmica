@@ -360,33 +360,39 @@ Notice that the dip at $1536$ is still there: cache associativity still affects 
 
 ## Optimization
 
-We need a few more optimizations to reach the performance limit:
+To approach closer to the performance limit, we need a few more optimizations:
 
-- Remove memory allocation and just operate on the arrays that we are given (note that we don't need to do anything with `a` as we are reading just one element at a time, and we can use unaligned `store` for `c` as we only use it rarely).
-- Get rid of the `std::min` so that the size parameters are mostly constant and can be embedded into the machine code.
-- Rewrite the micro-kernel by hand using 12 variables (the compiler seems to have a problem with keeping them fully in registers).
+- Remove memory allocation and operate on the arrays that are passed to the function. Note that we don't need to do anything with `a` as we are reading just one element at a time, and we can use an unaligned `store` for `c` as we only use it rarely.
+- Get rid of the `std::min` so that the size parameters are (mostly) constant and can be embedded into the machine code by the compiler (which also lets it [unroll](/hpc/architecture/loops/) the micro-kernel loop more efficiently without runtime checks).
+- Rewrite the micro-kernel by hand using 12 vector variables (the compiler seems to struggle with keeping them in registers and writes them first to temporary storage and only then to $C$).
+
+These optimizations are straightforward but quite tedious to implement, so we are not going to list [the code](https://github.com/sslotin/amh-code/blob/main/matmul/v5-unrolled.cc) in the article. It also requires some more work to effectively support "weird" matrix sizes, which is why we only run benchmarks for sizes that are multiple of $48 = \frac{6 \cdot 16}{\gcd(6, 16)}$.
+
+<!--
 
 Effectively supporting weird sizes requires a bit more work, and this is the reason why we benchmarked at an array sizes that are divisible by $48 = \frac{6 \cdot 16}{\gcd(6, 16)}$. We leave the code out, because the change is large and tedious and involves slightly modifying the benchmarking code itself. It is straightforward, but we only implement the version for this particular size, whithout any safety checks. Cheating on the benchmark.
 
-https://github.com/sslotin/amh-code/blob/main/matmul/v5-unrolled.cc
+But avoiding moving anything pays off. 
 
-Avoiding moving anything pays off. These improvements sum up and give us a 50% improvement:
+-->
+
+These individually small improvements sum up and result in another 50% improvement:
 
 ![](../img/mm-noalloc.svg)
 
-We are actually not that far from the theoretical performance limit — which can be calculated as the throughput of the SIMD lane width times the fma instruction times the clock frequency:
+We are actually not that far from the theoretical performance limit — which can be calculated as the width of a SIMD lane times the `fma` instruction throughput times the clock frequency:
 
 $$
 \underbrace{8}_{SIMD} \cdot \underbrace{2}_{thr.} \cdot \underbrace{2 \cdot 10^9}_{cycles/sec} = 32 \; GFLOPS \;\; (3.2 \cdot 10^{10})
 $$
 
-A more realistic comparison is some practical library, such as [https://www.openblas.net/](OpenBLAS). We just call it from Python using [numpy](/hpc/complexity/languages/#blas), so there may be some minor overhead, but reaching 80% of theoretical performance seems plausible (matrix multiplication is not the only thing that CPUs are made for):
+It is more useful to compare against some practical library, such as [OpenBLAS](https://www.openblas.net/). The laziest way is to simply invoke matrix multiplication from Python with [numpy](/hpc/complexity/languages/#blas). There may be some minor overhead, but it ends up reaching 80% of the theoretical limit, which seems plausible (this overhead is typical, as matrix multiplication is not the only thing that CPUs are made for):
 
 ![](../img/mm-blas.svg)
 
-We've reached ~93% of BLAS and ~75% of the theoretical performance limit. Which is really great for what is essentially just 40 lines of C.
+We've reached ~93% of BLAS performance and ~75% of the theoretical performance limit, which is really great for what is essentially just 40 lines of C.
 
-Interestingly, the whole thing can be rolled into one large `for` loop (assuming that we are in 2050 and using the 35th version of GCC, which finally properly manager not to screwing up with register spilling.):
+Interestingly, the whole thing can be rolled into just one deeply nested `for` loop (assuming that we are in 2050 and using the 35th version of GCC, which finally does not screw up with register spilling.):
 
 ```c++
 for (int i3 = 0; i3 < n; i3 += s3)
@@ -402,21 +408,23 @@ for (int i3 = 0; i3 < n; i3 += s3)
                                    * b[n / 8 * k + y / 8 + j];
 ```
 
-There is also a way to do fewer arithmetic operations — [the Strassen algorithm](/hpc/external-memory/oblivious/#strassen-algorithm) — but it has a large constant factor, and it is [only efficient for very large matrices](https://arxiv.org/pdf/1605.01078.pdf) ($n > 4000$) for which we typically use multi-threading anyway.
+There is also a way to do fewer arithmetic operations — [the Strassen algorithm](/hpc/external-memory/oblivious/#strassen-algorithm) — but it has a large constant factor, and it is only efficient for [very large matrices](https://arxiv.org/pdf/1605.01078.pdf) ($n > 4000$), where we typically have to use either multiprocessing or some approximate dimensionality-reducing methods anyway.
+
+<!-- for which we typically use multi-threading anyway -->
 
 ## Generalizations
 
-FMA also supports 64-bit floating point number, but it does not support integers: you need to perform addition and multiplication separately, which projects to decreased performance. If you know that all intermediate results can be represented exactly as a 32- or 64-bit floating-point number (which is [often the case](/hpc/arithmetic/errors/)), it may be better convert them to and from floats.
+FMA also supports 64-bit floating-point numbers, but it does not support integers: you need to perform addition and multiplication separately, which projects to decreased performance. If you can guarantee that all intermediate results can be represented exactly as a 32- or 64-bit floating-point number (which is [often the case](/hpc/arithmetic/errors/)), it may be better to convert them to and from floats.
 
-You can also apply the same trick to other similar computations. One example is the "min-plus matrix multiplication" defined as:
+You can also apply the same trick to other similar computations. One example is the "min-plus matrix multiplication," which is defined as:
 
 $$
-(D \circ D)_{ij} = \min_{1 \le k \le n} (D_{ik} + D_{kj})
+(A \circ B)_{ij} = \min_{1 \le k \le n} (A_{ik} + B_{kj})
 $$
 
-It is also known as the "distance product" due to its graph interpretation: the result is the matrix of shortest paths of length two between all pairs of vertices in a fully-connected weighted graph.
+It is also known as the "distance product" due to its graph interpretation: when applied to itself $(D \circ D)$, the result is the matrix of shortest paths of length two between all pairs of vertices in a fully-connected weighted graph specified by the edge weight matrix $D$.
 
-A cool thing about the distance product is that if if we iterate the process and calculate:
+A cool thing about the distance product is that if we iterate the process and calculate
 
 $$
 D_2 = D \circ D \\
@@ -425,7 +433,7 @@ D_8 = D_4 \circ D_4 \\
 \ldots
 $$
 
-Then we can find all-pairs shortest distances in $O(\log n)$ steps:
+…we can find all-pairs shortest paths in $O(\log n)$ steps:
 
 ```c++
 for (int l = 0; l < logn; l++)
@@ -435,7 +443,7 @@ for (int l = 0; l < logn; l++)
                 d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
 ```
 
-This requires $O(n^3 \log n)$ operations, but if we do these two-edge relaxations in a particular order, we can do it with just one pass, which is known as the [Floyd-Warshall algorithm](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm):
+This requires $O(n^3 \log n)$ operations. If we do these two-edge relaxations in a particular order, we can do it with just one pass, which is known as the [Floyd-Warshall algorithm](https://en.wikipedia.org/wiki/Floyd%E2%80%93Warshall_algorithm):
 
 ```c++
 for (int k = 0; k < n; k++)
@@ -444,12 +452,12 @@ for (int k = 0; k < n; k++)
             d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
 ```
 
-Vectorizing the distance product and executing it $O(\log n)$ times is faster than than naively executing the Floyd-Warshall algorithm, although not by a lot.
+Interestingly, vectorizing the distance product and executing it $O(\log n)$ times in $O(n^3 \log n)$ total operations is faster than naively executing the Floyd-Warshall algorithm in $O(n^3)$ operations, although not by a lot.
 
-As an exercise, try to think of ways of speeding up this "for-for-for" computation. It will be harder than matrix multiplication because you need to perform updates in this particular order.
+As an exercise, try to speed up this "for-for-for" computation. It is harder to do than in the matrix multiplication case because you need to perform updates in a particular order, but it is still possible to design a similar kernel and an iteration order that achieves a 30-50x total speedup.
 
 ## Acknowledgements
 
-The algorithm was originally designed by Kazushige Goto, and it is the basis of GotoBLAS and OpenBLAS. The author himself described it and some other aspects in more detail in "[Anatomy of High-Performance Matrix Multiplication](https://www.cs.utexas.edu/~flame/pubs/GotoTOMS_revision.pdf)".
+The final algorithm was originally designed by Kazushige Goto, and it is the basis of GotoBLAS and OpenBLAS. The author himself describes it in more detail in "[Anatomy of High-Performance Matrix Multiplication](https://www.cs.utexas.edu/~flame/pubs/GotoTOMS_revision.pdf)".
 
-The exposition style is inspired by "[Programming Parallel Computers](http://ppc.cs.aalto.fi/)" course by Jukka Suomela, which features a [similar case study](http://ppc.cs.aalto.fi/ch2/) on speeding up the distance product.
+The exposition style is inspired by the "[Programming Parallel Computers](http://ppc.cs.aalto.fi/)" course by Jukka Suomela, which features a [similar case study](http://ppc.cs.aalto.fi/ch2/) on speeding up the distance product.
