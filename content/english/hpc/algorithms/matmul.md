@@ -332,32 +332,27 @@ We need a few more optimizations to reach the performance limit:
 
 - Remove memory allocation and just operate on the arrays that we are given (note that we don't need to do anything with `a` as we are reading just one element at a time, and we can use unaligned `store` for `c` as we only use it rarely).
 - Get rid of the `std::min` so that the size parameters are mostly constant and can be embedded into the machine code.
-- Rewrite the micro-kernel using 12 variables (the compiler seems to have a problem with keeping them fully in registers).
+- Rewrite the micro-kernel by hand using 12 variables (the compiler seems to have a problem with keeping them fully in registers).
 
 Effectively supporting weird sizes requires a bit more work, and this is the reason why we benchmarked at an array sizes that are divisible by $48 = \frac{6 \cdot 16}{\gcd(6, 16)}$.
 
-Avoiding moving anything pays off:
+Avoiding moving anything pays off. These improvements sum up and give us a 50% improvement:
 
 ![](../img/mm-noalloc.svg)
 
-The theoretical performance limit is:
+We are actually not that far from the theoretical performance limit — which can be calculated as the throughput of the SIMD lane width times the fma instruction times the clock frequency:
 
 $$
-\underbrace{8}_{SIMD} \cdot \underbrace{2}_{1/thr} \cdot \underbrace{2 \cdot 10^9}_{cycles/sec} = 32 \; GFLOPS \;\; (3.2 \cdot 10^{10})
+\underbrace{8}_{SIMD} \cdot \underbrace{2}_{thr.} \cdot \underbrace{2 \cdot 10^9}_{cycles/sec} = 32 \; GFLOPS \;\; (3.2 \cdot 10^{10})
 $$
 
-(and also getting rid of `std::min` in the macro-kernel)
-
-
-[https://www.openblas.net/](OpenBLAS)
-
-[numpy](/hpc/complexity/languages/#blas)
+A more realistic comparison is some practical library, such as [https://www.openblas.net/](OpenBLAS). We just call it from Python using [numpy](/hpc/complexity/languages/#blas), so there may be some minor overhead, but reaching 80% of theoretical performance seems plausible (matrix multiplication is not the only thing that CPUs are made for):
 
 ![](../img/mm-blas.svg)
 
-We hit about 95.
+We've reached ~93% of BLAS and ~75% of the theoretical performance limit. Which is really great for what is basically 40 lines of C.
 
-Which is fine, considering that this is not the only thing that CPUs are made for.
+Interestingly, the whole thing can be rolled into one large `for` loop:
 
 ```c++
 for (int i3 = 0; i3 < n; i3 += s3)
@@ -406,6 +401,6 @@ https://arxiv.org/pdf/1605.01078.pdf
 
 ## Acknowledgements
 
-"[Anatomy of High-Performance Matrix Multiplication](https://www.cs.utexas.edu/~flame/pubs/GotoTOMS_revision.pdf)" by Kazushige Goto and Robert van de Geijn.
+The algorithm was originally designed by Kazushige Goto, and it is the basis of GotoBLAS and OpenBLAS. The author himself described it and some other aspects in more detail in "[Anatomy of High-Performance Matrix Multiplication](https://www.cs.utexas.edu/~flame/pubs/GotoTOMS_revision.pdf)".
 
-Inspired by "[Programming Parallel Computers](http://ppc.cs.aalto.fi/ch2/)" course.
+The exposition style is inspired by "[Programming Parallel Computers](http://ppc.cs.aalto.fi/)" course by Jukka Suomela, which features a [similar case study](http://ppc.cs.aalto.fi/ch2/) on speeding up the distance product.
