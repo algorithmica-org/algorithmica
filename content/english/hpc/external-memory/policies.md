@@ -33,7 +33,7 @@ $$
 
 The main idea of the proof is to consider the worst case scenario. For LRU it would be the repeating series of $\frac{M}{B}$ distinct blocks: each block is new and so LRU has 100% cache misses. Meanwhile, $OPT_{M/2}$ would be able to cache half of them (but not more, because it only has half the memory). Thus $LRU_M$ needs to fetch double the number of blocks that $OPT_{M/2}$ does, which is basically what is expressed in the inequality, and anything better for $LRU$ would only weaken it.
 
-![Dimmed are the blocks cached by OPT (but note cached by LRU)](../img/opt.png)
+![Dimmed are the blocks cached by OPT (but not cached by LRU)](../img/opt.png)
 
 This is a very relieving result. It means that, at least in terms of asymptotic I/O complexity, you can just assume that the eviction policy is either LRU or OPT — whichever is easier for you — do complexity analysis with it, and the result you get will normally transfer to any other reasonable cache replacement policy.
 
