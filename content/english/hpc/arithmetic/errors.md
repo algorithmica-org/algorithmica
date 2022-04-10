@@ -125,7 +125,7 @@ $$
 f(x, y) = x^2 - y^2 = (x + y) \cdot (x - y)
 $$
 
-In this one, it is easy to show that the error is be bound by $\epsilon \cdot |x - y|$. It is also faster because it needs 2 additions and 1 multiplication: one fast addition more and one slow multiplication less compared to the original.
+In this one, it is easy to show that the error is bound by $\epsilon \cdot |x - y|$. It is also faster because it needs 2 additions and 1 multiplication: one fast addition more and one slow multiplication less compared to the original.
 
 ### Kahan Summation
 
