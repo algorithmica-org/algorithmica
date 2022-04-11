@@ -77,13 +77,13 @@ $$
 \log_2 x = e_x + \log_2 (1 + m_x) \approx e_x + m_x + \sigma
 $$
 
-Now, having this approximation in mind and defining $L=23$ as the number of mantissa bits in a `float` and $B=127$ for the exponent bias, when we reinterpret the bit-pattern of $x$ as an integer $I_x$, we get
+Now, having this approximation in mind and defining $L=2^{23}$ (the number of mantissa bits in a `float`) and $B=127$ (the exponent bias), when we reinterpret the bit-pattern of $x$ as an integer $I_x$, we get
 
 $$
 \begin{aligned}
-I_x &= L(e_x + B + m_x)
-\\  &= L(e_x + m_x + \sigma +B-\sigma )
-\\  &\approx L\log_2 (x) + L (B-\sigma )
+I_x &= L \cdot (e_x + B + m_x)
+\\  &= L \cdot (e_x + m_x + \sigma +B-\sigma )
+\\  &\approx L \cdot \log_2 (x) + L \cdot (B-\sigma )
 \end{aligned}
 $$
 
