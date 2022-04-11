@@ -77,7 +77,7 @@ $$
 \log_2 x = e_x + \log_2 (1 + m_x) \approx e_x + m_x + \sigma
 $$
 
-Now, having this approximation in mind and defining $L=2^{23}$ (the number of mantissa bits in a `float`) and $B=127$ (the exponent bias), when we reinterpret the bit-pattern of $x$ as an integer $I_x$, we get
+Now, having this approximation in mind and defining $L=2^{23}$ (the number of mantissa bits in a `float`) and $B=127$ (the exponent bias), when we reinterpret the bit-pattern of $x$ as an integer $I_x$, we essentially get
 
 $$
 \begin{aligned}
@@ -87,9 +87,11 @@ I_x &= L \cdot (e_x + B + m_x)
 \end{aligned}
 $$
 
+(Multiplying a number by $L=2^{23}$ is equivalent to left-shifting it by 23.)
+
 When you tune $\sigma$ to minimize the mean square error, this results in a surprisingly accurate approximation.
 
-![](../img/approx.svg)
+![Reinterpreting a floating-point number $x$ as an integer (blue) compared to its scaled and shifted logarithm (gray)](../img/approx.svg)
 
 Now, expressing the logarithm from the approximation, we get
 
