@@ -53,7 +53,7 @@ always [madvise] never
 #include <sys/mman.h>
 
 void *ptr = std::aligned_alloc(page_size, array_size);
-madvise(pre, array_size, MADV_HUGEPAGE);
+madvise(ptr, array_size, MADV_HUGEPAGE);
 ```
 
 You can only request a memory region to be allocated using huge pages if it has the corresponding alignment.
