@@ -15,7 +15,7 @@ When we designed our [DIY floating-point type](../float), we omitted quite a lot
 - What happens if we increment the largest representable number?
 - Can we somehow detect if one of the above three happened?
 
-Most of the early computers didn't have floating-point arithmetic, and when vendors started adding floating-point coprocessors, they had slightly different visions for what answers to those questions should be. Diverse implementations made it difficult to use floating-point arithmetic reliably and portably — particularly for people developing compilers.
+Most of the early computers didn't support floating-point arithmetic, and when vendors started adding floating-point coprocessors, they had slightly different visions for what the answers to these questions should be. Diverse implementations made it difficult to use floating-point arithmetic reliably and portably — especially for the people who develop compilers.
 
 In 1985, the Institute of Electrical and Electronics Engineers published a standard (called [IEEE 754](https://en.wikipedia.org/wiki/IEEE_754)) that provided a formal specification of how floating-point numbers should work, which was quickly adopted by the vendors and is now used in virtually all general-purpose computers.
 
@@ -26,6 +26,15 @@ Similar to our handmade float implementation, hardware floats use one bit for si
 ![](../img/float.svg)
 
 One of the reasons why they are stored in this exact order is that it is easier to compare and sort them: you can use mostly the same comparator circuit as for [unsigned integers](../integer), except for maybe flipping some bits in case one of the numbers is negative.
+
+For the same reason, the exponent is *biased:* the actual value is 127 less than the stored unsigned integer, which lets us also cover the values less than one (with negative exponents). In the example above:
+
+$$
+(-1)^0 \times 2^{01111100_2 - 127} \times (1 + 2^{-2})
+= 2^{124 - 127} \times 1.25
+= \frac{1.25}{8}
+= 0.15625
+$$
 
 IEEE 754 and a few consequent standards define not one but *several* representations that differ in sizes, most notably:
 
@@ -46,11 +55,11 @@ Their availability ranges from chip to chip:
 - Half-precision arithmetic only supports a small subset of operations and is generally used for machine learning applications, especially neural networks, because they tend to do a large amount of calculation, but don't require a high level of precision.
 - Half-precision is being gradually replaced by bfloat, which trades off 3 mantissa bits to have the same range as single-precision, enabling interoperability with it. It is mostly being adopted by specialized hardware: TPUs, FGPAs, and GPUs. The name stands for "[Brain](https://en.wikipedia.org/wiki/Google_Brain) float."
 
-Lower precision types need less memory bandwidth to move them around and usually take fewer cycles to operate on (e. g. the division instruction may take $x$, $y$, or $z$ cycles depending on the type), which is why they are preferred when error tolerance allows it.
+Lower-precision types need less memory bandwidth to move them around and usually take fewer cycles to operate on (e. g. the division instruction may take $x$, $y$, or $z$ cycles depending on the type), which is why they are preferred when error tolerance allows it.
 
 Deep learning, emerging as a very popular and computationally-intensive field, created a huge demand for low-precision matrix multiplication, which led to manufacturers developing separate hardware or at least adding specialized instructions that support these types of computations — most notably, Google developing a custom chip called TPU (*tensor processing unit*) that specializes on multiplying 128-by-128 bfloat matrices, and NVIDIA adding "tensor cores," capable of performing 4-by-4 matrix multiplication in one go, to all their newer GPUs.
 
-Apart from their sizes, most of the behavior is exactly the same between all floating-point types, which we will now clarify.
+Apart from their sizes, most of the behavior is the same between all floating-point types, which we will now clarify.
 
 ## Handling Corner Cases
 
