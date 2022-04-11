@@ -38,7 +38,7 @@ All CPU cache layers are placed on the same microchip as the processor, so the b
 
 ![](../img/boost.svg)
 
-This detail comes into play when comparing algorithm implementations. Unless the dataset fits entirely in the cache, the relative performance of the two implementations may be different depending on the CPU clock rate because the RAM remains unaffected by it, while everything else does.
+This detail comes into play when comparing algorithm implementations. When the working dataset fits in the cache, the relative performance of the two implementations may be different depending on the CPU clock rate because the RAM remains unaffected by it (while everything else does not).
 
 For this reason, it is [advised](/hpc/profiling/noise) to keep the clock rate fixed, and as the turbo boost isn't stable enough, we run most of the benchmarks in this book at plain 2GHz.
 
