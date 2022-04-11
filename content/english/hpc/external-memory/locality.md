@@ -47,44 +47,51 @@ In practice, there is still some overhead associated with the recursion, and for
 
 ### Dynamic Programming
 
-Similar reasoning can be applied to the implementations of dynamic programming algorithms but leading to the reverse result. Consider the classic knapsack problem, where we got $n$ items with integer costs $c_i$, and we need to pick a subset of items with the maximum total cost that does not exceed a given constant $w$.
+Similar reasoning can be applied to the implementations of dynamic programming algorithms but leading to the reverse result. Consider the classic *knapsack problem:* given $N$ items with positive integer costs $c_i$, pick a subset of items with the maximum total cost that does not exceed a given constant $W$.
 
-The way to solve it is to introduce the *state* $f[i, k]$, which corresponds to the maximum total cost not exceeding $k$ that can be achieved having already considered and excluded the first $i$ items. The state can be updated in $O(1)$ time per entry if consider either taking or not taking the $i$-th item and using further states of the dynamic to compute the optimal decision for each state.
+The way to solve it is to introduce the *state* $f[n, w]$, which corresponds to the maximum total cost not exceeding $w$ that can be achieved using only the first $n$ items. These values can be computed in $O(1)$ time per entry if we consider either taking or not taking the $n$-th item and using the previous states of the dynamic to make the optimal decision.
 
-Python has a handy `lru_cache` decorator, which can be used for implementing it with memoized recursion:
+Python has a handy `lru_cache` decorator which can be used for implementing it with memoized recursion:
 
 ```python
 @lru_cache
-def f(i, k):
-    if i == n or k == 0:
+def f(n, w):
+    # check if we have no items to choose
+    if n == 0:
         return 0
-    if w[i] > k:
-        return f(i + 1, k)
-    return max(f(i + 1, k), c[i] + f(i + 1, k - w[i]))
+    
+    # check if we can't pick the last item (note zero-based indexing)
+    if c[n - 1] > w:
+        return f(n - 1, w)
+    
+    # otherwise, we can either pick the last item or not
+    return max(f(n - 1, w), c[n - 1] + f(n - 1, w - c[n - 1]))
 ```
 
-When computing $f[n, w]$, the recursion may visit up to $O(n \cdot w)$ different states, which is asymptotically efficient, but rather slow in reality. Even after nullifying the overhead of Python recursion and all the hash table queries required for the LRU cache to work, it would still be slow because it does random I/O throughout most of the execution.
+When computing $f[N, W]$, the recursion may visit up to $O(N \cdot W)$ different states, which is asymptotically efficient, but rather slow in reality. Even after nullifying the overhead of Python recursion and all the [hash table queries](../policies/#implementing-caching) required for the LRU cache to work, it would still be slow because it does random I/O throughout most of the execution.
 
 What we can do instead is to create a two-dimensional array for the dynamic and replace the recursion with a nice nested loop like this:
 
 ```cpp
-int f[N + 1][W + 1];
+int f[N + 1][W + 1] = {0}; // this zero-fills the array
 
-for (int i = n - 1; i >= 0; i++)
-    for (int k = 0; k <= W; k++)
-        f[i][k] = w[i] > k ? f[i + 1][k] : max(f[i + 1][k], c[i] + f[i + 1][k - w[i]]);
+for (int n = 1; n <= N; n++)
+    for (int w = 0; w <= W; w++)
+        f[n][w] = c[n - 1] > w ?
+                  f[n - 1][w] :
+                  max(f[n - 1][k], c[n - 1] + f[n - 1][w - c[n - 1]]);
 ```
 
-Notice that we are only using the previous layer of the dynamic to calculate the next one. This means that if we can store one layer in the cache, we would only need to write $O(\frac{n \cdot w}{B})$ blocks in external memory.
+Notice that we are only using the previous layer of the dynamic to calculate the next one. This means that if we can store one layer in the cache, we would only need to write $O(\frac{N \cdot W}{B})$ blocks in external memory.
 
-Moreover, if we only need the answer, we don't actually have to store the whole 2d array but only the last layer. This lets us use just $O(w)$ memory by maintaining a single array of $w$ values. To simplify the code, we can slightly change the dynamic to store a binary value: whether it is possible to get the sum of exactly $k$ using the items that we have already considered. This dynamic is even faster to compute:
+Moreover, if we only need the answer, we don't actually have to store the whole 2d array but only the last layer. This lets us use just $O(W)$ memory by maintaining a single array of $W$ values. To simplify the code, we can slightly change the dynamic to store a binary value: whether it is possible to get the sum of exactly $w$ using the items that we have already considered. This dynamic is even faster to compute:
 
 ```cpp
-bool f[W + 1] = {}; // this zero-fills the array
+bool f[W + 1] = {0};
 f[0] = 1;
-for (int i = 0; i < n; i++)
-    for (int x = W - a[i]; x >= 0; x--)
-        f[x + a[i]] |= f[x];
+for (int n = 0; n < N; n++)
+    for (int x = W - c[n]; x >= 0; x--)
+        f[x + c[n]] |= f[x];
 ```
 
 As a side note, now that it only uses simple bitwise operations, it can be optimized further by using a bitset:
@@ -92,8 +99,8 @@ As a side note, now that it only uses simple bitwise operations, it can be optim
 ```cpp
 std::bitset<W + 1> b;
 b[0] = 1;
-for (int i = 0; i < n; i++)
-    b |= b << c[i];
+for (int n = 0; n < N; n++)
+    b |= b << c[n];
 ```
 
 Surprisingly, there is still some room for improvement, and we will come back to this problem later.
