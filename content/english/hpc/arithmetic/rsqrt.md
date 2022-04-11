@@ -87,7 +87,7 @@ I_x &= L \cdot (e_x + B + m_x)
 \end{aligned}
 $$
 
-(Multiplying a number by $L=2^{23}$ is equivalent to left-shifting it by 23.)
+(Multiplying an integer by $L=2^{23}$ is equivalent to left-shifting it by 23.)
 
 When you tune $\sigma$ to minimize the mean square error, this results in a surprisingly accurate approximation.
 
