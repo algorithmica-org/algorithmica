@@ -272,6 +272,31 @@ void kernel(float *a, vec *b, vec *c, int x, int y, int l, int r, int n) {
 
 We need `t` so that the compiler stores these elements in vector registers. We could just update their final destinations in `c`, but, unfortunately, the compiler re-writes them back to memory, causing a slowdown (wrapping everything in `__restrict__` keywords doesn't help).
 
+After unrolling these loops and hoisting `b` out of the `i` loop (`b[(k * n + y) / 8 + j]` does not depend on `i` and can be loaded once and reused in all 6 iterations), the compiler generates something more similar to this:
+
+<!-- /hpc/simd/intrinsics/#simd-intrinsics -->
+
+```c++
+for (int k = l; k < r; k++) {
+    __m256 b0 = _mm256_load_ps((__m256*) &b[k * n + y];
+    __m256 b1 = _mm256_load_ps((__m256*) &b[k * n + y + 8];
+    
+    __m256 a0 = _mm256_broadcast_ps((__m128*) &a[x * n + k]);
+    t00 = _mm256_fmadd_ps(a0, b0, t00);
+    t01 = _mm256_fmadd_ps(a0, b1, t01);
+
+    __m256 a1 = _mm256_broadcast_ps((__m128*) &a[(x + 1) * n + k]);
+    t10 = _mm256_fmadd_ps(a1, b0, t10);
+    t11 = _mm256_fmadd_ps(a1, b1, t11);
+
+    // ...
+}
+```
+
+We are using $12+3=15$ vector registers and a total of $6 \times 3 + 2 = 20$ instructions to perform $16 \times 6 = 96$ updates. Assuming that there are no other bottleneks, we should be hitting the throughput of `_mm256_fmadd_ps`.
+
+Note that this kernel is architecture-specific. If we didn't have `fma`, or if its throughput/latency were different, or if the SIMD width was 128 or 512 bits, we would have made different design choices. Multi-platform BLAS implementations ship [many kernels](https://github.com/xianyi/OpenBLAS/tree/develop/kernel), each written in assembly by hand and optimized for a particular architecture.
+
 The rest of the implementation is straightforward. Similar to the previous vectorized implementation, we just move the matrices to memory-aligned arrays and call the kernel instead of the innermost loop:
 
 ```c++
