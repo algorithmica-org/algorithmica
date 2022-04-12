@@ -70,7 +70,7 @@ There is some overhead to computing the next address, but for arrays large enoug
 
 ![](../img/sw-prefetch.svg)
 
-Interestingly, we can prefetch more than just two elements ahead, making use of this pattern in the LCG function:
+Interestingly, we can prefetch more than just one element ahead, making use of this pattern in the LCG function:
 
 $$
 \begin{aligned}
@@ -82,17 +82,17 @@ $$
 \end{aligned}
 $$
 
-Hence, in order to load `D` elements ahead, we can do this:
+Hence, to load the `D`-th element ahead, we can do this:
 
 ```cpp
 __builtin_prefetch(&q[((1 << D) * k + (1 << D) - 1) % n]);
 ```
 
-Ignoring some issues such as the integer overflow, this way we can reduce the latency arbitrarily close to the cost of computing the next index (which in this case is dominated by the [modulo operation](/hpc/arithmetic/division)).
+If we execute this request on every iteration, we will be simultaneously prefetching `D` elements ahead on average, increasing the throughput by `D` times. Ignoring some issues such as the integer overflow when `D` is too large, this way, we can reduce the average latency arbitrarily close to the cost of computing the next index (which, in this case, is dominated by the [modulo operation](/hpc/arithmetic/division)).
 
 ![](../img/sw-prefetch-others.svg)
 
-Note that this is an artificial example, and you actually fail more often than not when trying to insert software prefetching into practical programs. This is largely due to the fact that you need to issue a separate memory instruction that may compete for resources with the others. At the same time, hardware prefetching is 100% harmless as it only activates when the memory and cache buses are not busy.
+Note that this is an artificial example, and you actually fail more often than not when trying to insert software prefetching into practical programs. This is largely because you need to issue a separate memory instruction that may compete for resources with the others. At the same time, hardware prefetching is 100% harmless as it only activates when the memory and cache buses are not busy.
 
 You can also specify a specific level of cache the data needs to be brought to when doing software prefetching — when you aren't sure if you will be using it and don't want to kick out what is already in the L1 cache. You can use it with the `_mm_prefetch` intrinsic, which takes an integer value as the second parameter, specifying the cache level. This is useful in combination with [non-temporal loads and stores](../bandwidth#bypassing-the-cache).
 
