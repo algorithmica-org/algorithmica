@@ -198,7 +198,7 @@ $$
 T(N) = O\left(\frac{(\sqrt{M})^2}{B} \cdot \left(\frac{N}{\sqrt M}\right)^3\right) = O\left(\frac{N^3}{B\sqrt{M}}\right)
 $$
 
-This is better than just $O(\frac{N^3}{B})$ and by quite a lot.
+This is better than just $O(\frac{N^3}{B})$, and by quite a lot.
 
 ### Strassen Algorithm
 
@@ -237,7 +237,7 @@ $$
 
 You can verify these formulas with simple substitution if you feel like it.
 
-As far as I know, none of the mainstream optimized linear algebra libraries use the Strassen algorithm, although there are some prototype implementations that are efficient for matrices larger than 4000 or so.
+As far as I know, none of the mainstream optimized linear algebra libraries use the Strassen algorithm, although there are [some prototype implementations](https://arxiv.org/pdf/1605.01078.pdf) that are efficient for matrices larger than 2000 or so.
 
 This technique can and actually has been extended multiple times to reduce the asymptotic even further by considering more submatrix products. As of 2020, current world record is $O(n^{2.3728596})$. Whether you can multiply matrices in $O(n^2)$ or at least $O(n^2 \log^k n)$ time is an open problem.
 
