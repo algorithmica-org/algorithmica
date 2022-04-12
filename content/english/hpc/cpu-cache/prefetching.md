@@ -30,9 +30,9 @@ for (int i = 0; i + 16 < N; i += 16) {
 }
 ```
 
-There is no point in making a graph because the latency is flat: 3ns regardless of the array size. Even though the instruction scheduler still can't tell what we are going to fetch next, the memory prefetcher can detect a pattern just by looking at the memory accesses and start loading the next cache line ahead of time, leveling out its latency.
+There is no point in making a graph because it would be just flat: the latency is 3ns regardless of the array size. Even though the instruction scheduler still can't tell what we are going to fetch next, the memory prefetcher can detect a pattern just by looking at the memory accesses and start loading the next cache line ahead of time, mitigating the latency.
 
-Hardware prefetching is usually powerful enough for most cases, but it only detects simple patterns. You can iterate forward and backward over multiple arrays in parallel, perhaps with small-to-medium strides, but that's about it. For anything more complex, the prefetcher won't figure out what's happening, and we need to help it out ourselves.
+Hardware prefetching is smart enough for most use cases, but it only detects simple patterns. You can iterate forward and backward over multiple arrays in parallel, perhaps with small-to-medium strides, but that's about it. For anything more complex, the prefetcher won't figure out what's happening, and we need to help it out ourselves.
 
 ### Software Prefetching
 
@@ -88,7 +88,7 @@ Hence, to load the `D`-th element ahead, we can do this:
 __builtin_prefetch(&q[((1 << D) * k + (1 << D) - 1) % n]);
 ```
 
-If we execute this request on every iteration, we will be simultaneously prefetching `D` elements ahead on average, increasing the throughput by `D` times. Ignoring some issues such as the integer overflow when `D` is too large, this way, we can reduce the average latency arbitrarily close to the cost of computing the next index (which, in this case, is dominated by the [modulo operation](/hpc/arithmetic/division)).
+If we execute this request on every iteration, we will be simultaneously prefetching `D` elements ahead on average, increasing the throughput by `D` times. Ignoring some issues such as the integer overflow when `D` is too large, we can reduce the average latency arbitrarily close to the cost of computing the next index (which, in this case, is dominated by the [modulo operation](/hpc/arithmetic/division)).
 
 ![](../img/sw-prefetch-others.svg)
 
