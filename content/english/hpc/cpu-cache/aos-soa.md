@@ -99,8 +99,8 @@ As the performance on smaller arrays sizes is not affected, this clearly has som
 From the performance analysis point of view, all data in RAM is physically stored in a two-dimensional array of tiny capacitor cells, which is split into rows and columns. To read or write any cell, you need to perform one, two, or three actions:
 
 1. Read the contents of a row in a *row buffer*, which temporarily discharges the capacitors. 
-2. Read or write a specific column in this buffer.
-3. Write the contents of a row buffer back into the capacitors, so that the data is preserved, and the row buffer can be used for other memory accesses.
+2. Read or write a specific cell in this buffer.
+3. Write the contents of a row buffer back into the capacitors so that the data is preserved and the row buffer can be used for other memory accesses.
 
 Here is the punchline: you don't have to perform steps 1 and 3 between two memory accesses that correspond to the same row — you can just use the row buffer as a temporary cache. These three actions take roughly the same time, so this optimization makes long sequences of row-local accesses run thrice as fast compared to dispersed access patterns.
 
