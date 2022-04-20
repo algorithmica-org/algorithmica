@@ -20,7 +20,7 @@ The first algorithm achieves that by removing [branches](/hpc/pipelining/branchi
 
 -->
 
-The usual disclaimer: the CPU is a [Zen 2](https://www.7-cpu.com/cpu/Zen2.html), the RAM is a [DDR4-2666](http://localhost:1313/hpc/cpu-cache/), and the compiler we will be using by default is Clang 10. The performance on your machine may be different, so I highly encourage to [go and test it](https://godbolt.org/z/14rd5Pnve) for yourself.
+The usual disclaimer: the CPU is a [Zen 2](https://www.7-cpu.com/cpu/Zen2.html), the RAM is a [DDR4-2666](/hpc/cpu-cache/), and the compiler we will be using by default is Clang 10. The performance on your machine may be different, so I highly encourage to [go and test it](https://godbolt.org/z/14rd5Pnve) for yourself.
 
 <!--
 
