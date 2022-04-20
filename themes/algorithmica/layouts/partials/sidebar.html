@@ -24,13 +24,13 @@
         {{ if isset .Params "part" }}
           <li class='part'>{{.Params.Part}}</li>
         {{ end }}
-        <li {{ if .Params.IgnoreIndexing }}class='ignore-indexing'{{end}}><a href='{{ .RelPermalink }}'
+        <li {{ if .Draft }}class='draft'{{end}} {{ if .Params.IgnoreIndexing }}class='ignore-indexing'{{end}}><a href='{{ .RelPermalink }}'
           {{ if eq $currentPage . }}id='active-element'{{ end }}
           >{{ .Title }}</a></li>
         {{ if .IsSection }}
           <ol>
             {{ range .Pages }}
-              <li><a href='{{ .RelPermalink }}'
+              <li {{ if .Draft }}class='draft'{{end}}><a href='{{ .RelPermalink }}'
                 {{ if eq $currentPage . }}id='active-element'{{ end }}
                 >{{ .Title }}</a></li>
             {{ end }}
