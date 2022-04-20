@@ -93,7 +93,7 @@ This way you can eliminate branching, but this comes at the cost of evaluating *
 
 ### When It Is Beneficial
 
-Using predication eliminates [a control hazard](../hazard) but introduces a data hazard. There is still a pipeline stall, but it is a cheaper one: you only need to wait for `cmov` to be resolved and not flush the entire pipeline in case of a mispredict.
+Using predication eliminates [a control hazard](../hazards) but introduces a data hazard. There is still a pipeline stall, but it is a cheaper one: you only need to wait for `cmov` to be resolved and not flush the entire pipeline in case of a mispredict.
 
 However, there are many situations when it is more efficient to leave branchy code as it is. This is the case when the cost of computing *both* branches instead of just *one* outweighs the penalty for the potential branch mispredictions.
 
@@ -103,7 +103,7 @@ In our example, the branchy code wins when the branch can be predicted with a pr
 
 This 75% threshold is commonly used by the compilers as a heuristic for determining whether to use the `cmov` or not. Unfortunately, this probability is usually unknown at the compile-time, so it needs to be provided in one of several ways:
 
-- We can use [profile-guided optimization](/hpc/compilation/pgo) which will decide for itself whether to use predication or not.
+- We can use [profile-guided optimization](/hpc/compilation/situational/#profile-guided-optimization) which will decide for itself whether to use predication or not.
 - We can use [likeliness attributes](../branching#hinting-likeliness-of-branches) and [compiler-specific intrinsics](/hpc/compilation/situational) to hint at the likeliness of branches: `__builtin_expect_with_probability` in GCC and `__builtin_unpredictable` in Clang.
 - We can rewrite branchy code using the ternary operator or various arithmetic tricks, which acts as sort of an implicit contract between programmers and compilers: if the programmer wrote the code this way, then it was probably meant to be branchless.
 

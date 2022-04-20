@@ -24,7 +24,7 @@ Instead of making small incremental improvements like we usually do in other cas
 - Nodes in the B− tree do not store pointers or any metadata except for the pointers to internal node children (while the B+ tree leaf nodes store a pointer to the next leaf node). This lets us perfectly place the keys in the leaf nodes on cache lines.
 - We define key $i$ to be the *maximum* key in the subtree of the child $i$ instead of the *minimum* key in the subtree of the child $(i + 1)$. This lets us not fetch any other nodes after we reach a leaf (in the B+ tree, all keys in the leaf node may be less than the search key, so we need to go to the next leaf node to fetch its first element).
 
-We also use a node size of $B=32$, which is smaller than typical. The reason why it is not $16$, which was [optimal for the S+ tree](s-tree/#modifications-and-further-optimizations), is because we have the additional overhead associated with fetching the pointer, and the benefit of reducing the tree height by ~20% outweighs the cost of processing twice the elements per node, and also because it improves the running time of the `insert` query that needs to perform a costly node split every $\frac{B}{2}$ insertions on average.
+We also use a node size of $B=32$, which is smaller than typical. The reason why it is not $16$, which was [optimal for the S+ tree](../s-tree/#modifications-and-further-optimizations), is because we have the additional overhead associated with fetching the pointer, and the benefit of reducing the tree height by ~20% outweighs the cost of processing twice the elements per node, and also because it improves the running time of the `insert` query that needs to perform a costly node split every $\frac{B}{2}$ insertions on average.
 
 <!--
 
@@ -83,7 +83,7 @@ To "allocate" a new node, we simply increase `n_tree` by $B$ if it is a leaf nod
 
 Since new nodes can only be created by splitting a full node, each node except for the root will be at least half full. This implies that we need between 4 and 8 bytes per integer element (the internal nodes will contribute $\frac{1}{16}$-th or so to that number), the former being the case when the inserts are sequential, and the latter being the case when the input is adversarial. When the queries are uniformly distributed, the nodes are ~75% full on average, projecting to ~5.2 bytes per element.
 
-B-trees are very memory-efficient compared to the pointer-based binary trees. For example, `std::set` needs at least three pointers (the left child, the right child, and the parent), alone costing $3 \times 8 = 24$ bytes, plus at least another $8$ bytes to store the key and the meta-information due to [structure padding](hpc/cpu-cache/alignment/).
+B-trees are very memory-efficient compared to the pointer-based binary trees. For example, `std::set` needs at least three pointers (the left child, the right child, and the parent), alone costing $3 \times 8 = 24$ bytes, plus at least another $8$ bytes to store the key and the meta-information due to [structure padding](/hpc/cpu-cache/alignment/).
 
 ### Searching
 

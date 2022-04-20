@@ -57,7 +57,7 @@ Most instructions write their result into the first operand, which can also be i
 
 There are also 32-, 16-bit and 8-bit registers that have similar names (`rax` → `eax` → `ax` → `al`). They are not fully separate but *aliased*: the first 32 bits of `rax` are `eax`, the first 16 bits of `eax` are `ax`, and so on. This is made to save die space while maintaining compatibility, and it is also the reason why basic type casts in compiled programming languages are usually free. 
 
-These are just the *general-purpose* registers that you can, with [some exceptions](../functions), use however you like in most instructions. There is also a separate set of registers for [floating-point arithmetic](/hpc/arithmetic/float), a bunch of very wide registers used in [vector extensions](/hpc/simd), and a few special ones that are needed for [control flow](../jumps), but we'll get there in time.
+These are just the *general-purpose* registers that you can, with [some exceptions](../functions), use however you like in most instructions. There is also a separate set of registers for [floating-point arithmetic](/hpc/arithmetic/float), a bunch of very wide registers used in [vector extensions](/hpc/simd), and a few special ones that are needed for [control flow](../loops), but we'll get there in time.
 
 **Constants** are just integer or floating-point values: `42`, `0x2a`, `3.14`, `6.02e23`. They are more commonly called *immediate values* because they are embedded right into the machine code. Because it may considerably increase the complexity of the instruction encoding, some instructions don't support immediate values or allow just a fixed subset of them. In some cases, you have to load a constant value into a register and then use it instead of an immediate value.
 

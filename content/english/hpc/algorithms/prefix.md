@@ -61,7 +61,7 @@ for (int l = 0; l < logn; l++)
 
 We can prove that this algorithm works by induction: if on $k$-th iteration every element $a_i$ is equal to the sum of the $(i - 2^k, i]$ segment of the original array, then after adding $a_{i - 2^k}$ to it, it will be equal to the sum of $(i - 2^{k+1}, i]$. After $O(\log n)$ iterations, the array will turn into its prefix sum.
 
-To implement it in SIMD, we could use [permutations](/hpc/simd/shuffles) to place $i$-th element against $(i-2^k)$-th, but they are too slow. Instead, we will use the `sll` ("shift lanes left") instruction that does exactly that and also replaces the unmatched elements with zeros:
+To implement it in SIMD, we could use [permutations](/hpc/simd/shuffling) to place $i$-th element against $(i-2^k)$-th, but they are too slow. Instead, we will use the `sll` ("shift lanes left") instruction that does exactly that and also replaces the unmatched elements with zeros:
 
 ```c++
 typedef __m128i v4i;

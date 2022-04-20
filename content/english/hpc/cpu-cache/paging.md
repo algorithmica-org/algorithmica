@@ -81,7 +81,7 @@ Enabling huge pages also improves [latency](../latency) by up to 10-15% for arra
 
 In general, enabling huge pages is a good idea when you have any sort of sparse reads, as they usually slightly improve and ([almost](../aos-soa)) never hurt performance.
 
-That said, you shouldn't rely on huge pages if possible, as they aren't always available due to either hardware or computing environment restrictions. There are [many](../cache-lines) [other](../hw-prefetching) [reasons](../aos-soa) why grouping data accesses spatially may be beneficial, which automatically solves the paging problem.
+That said, you shouldn't rely on huge pages if possible, as they aren't always available due to either hardware or computing environment restrictions. There are [many](../cache-lines) [other](../prefetching) [reasons](../aos-soa) why grouping data accesses spatially may be beneficial, which automatically solves the paging problem.
 
 <!--
 

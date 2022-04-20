@@ -301,7 +301,7 @@ It doesn't feel very satisfying so far, but we will reuse these optimization ide
 There are two main problems with the current implementation:
 
 - The `update` procedure is quite costly, especially considering that it is very likely going to be useless: 16 out of 17 times, we can just fetch the result from the last block.
-- We do a non-constant number of iterations, causing branch prediction problems similar to how it did for the [Eytzinger binary search](/binary-search/#removing-the-last-branch); you can also see it on the graph this time, but the latency bumps have a period of $2^4$.
+- We do a non-constant number of iterations, causing branch prediction problems similar to how it did for the [Eytzinger binary search](../binary-search/#removing-the-last-branch); you can also see it on the graph this time, but the latency bumps have a period of $2^4$.
 
 To address these problems, we need to change the layout a little bit.
 

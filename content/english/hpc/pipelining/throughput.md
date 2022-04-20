@@ -21,7 +21,7 @@ for (int i = 0; i < n; i++)
     s += a[i];
 ```
 
-Let's assume for a moment that the compiler doesn't [vectorize](/hpc/simd) this loop, [the memory bandwidth](/hpc/memory/bandwidth) isn't a concern, and that the loop is [unrolled](/hpc/architecture/loops) so that we don't pay any additional cost associated with maintaining the loop variables. In this case, the computation becomes very simple:
+Let's assume for a moment that the compiler doesn't [vectorize](/hpc/simd) this loop, [the memory bandwidth](/hpc/cpu-cache/bandwidth) isn't a concern, and that the loop is [unrolled](/hpc/architecture/loops) so that we don't pay any additional cost associated with maintaining the loop variables. In this case, the computation becomes very simple:
 
 ```c++
 int s = 0;

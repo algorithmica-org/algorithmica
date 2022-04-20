@@ -106,7 +106,7 @@ During a virtual method call, that offset field is fetched from the instance of 
 
 Of course, this adds some overhead:
 
-- You may need to spend another 15 cycles or so for the same pipeline flushing reasons as for [branch misprediction](../pipelining).
+- You may need to spend another 15 cycles or so for the same pipeline flushing reasons as for [branch misprediction](/hpc/pipelining).
 - The compiler most likely won't be able to inline the function call itself.
 - Class size increases by a couple of bytes or so (this is implementation-specific).
 - The binary size itself increases a little bit.
