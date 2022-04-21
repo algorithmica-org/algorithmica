@@ -15,6 +15,15 @@ other = "updated"
 [sections]
 other = "sections"
 
+[search]
+other = "Search this book…"
+
+[searchCountPrefix]
+other = "Found"
+
+[searchCountSuffix]
+other = "pages"
+
 [prerequisites]
 other = "prerequisites"
 

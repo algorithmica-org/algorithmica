@@ -21,6 +21,15 @@ other = "обновлено"
 [sections]
 other = "статьи раздела"
 
+[search]
+other = "Поиск по сайту…"
+
+[searchCountPrefix]
+other = "Найдено"
+
+[searchCountSuffix]
+other = "страниц"
+
 [prerequisites]
 other = "пререквизиты"
 
