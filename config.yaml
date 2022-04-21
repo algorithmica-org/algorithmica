@@ -8,6 +8,15 @@ outputFormats:
     baseName: index
     mediaType: text/html
     isHTML: true
+  SearchIndex:
+    mediaType: "application/json"
+    baseName: "searchindex"
+    isPlainText: true
+    notAlternative: true
+outputs:
+  home:
+  - HTML
+  - SearchIndex
 markup:
   goldmark:
     footnote: false  # katex conflict
