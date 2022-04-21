@@ -3,16 +3,21 @@
   {{ with .File }}{{ $path = .Path }}{{ end }}
   <div class='left'>
     <a>
-      <img src='/icons/bars-solid.svg' onclick='toggleSidebar()' title='open table of contents'>
+      <img src='/icons/bars-solid.svg'
+           onclick='toggleSidebar()'
+           title='open table of contents'>
     </a>
     <a>
-      <img src='/icons/adjust-solid.svg' onclick='switchTheme(localStorage.getItem("theme") == "dark" ? "light" : "dark")' title='dark theme'>
+      <img src='/icons/adjust-solid.svg'
+           style='position: relative; top: -1px'
+           onclick='switchTheme(localStorage.getItem("theme") == "dark" ? "light" : "dark")'
+           title='dark theme'>
     </a>
-    <!--
     <a>
-      <img src='/icons/search-solid.svg'>
+      <img src='/icons/search-solid.svg'
+           onclick='toggleSearch()'
+           title='search'>
     </a>
-    -->
   </div>
   <div class='title'>{{.Title}}</div>
   <div class='right'>
@@ -20,7 +25,9 @@
       <img src='/icons/print-solid.svg' title='print'>
     </a>
     <a href='https://prose.io/#algorithmica-org/algorithmica/edit/master/{{.Site.Params.ContentDir}}/{{$path}}'>
-      <img src='/icons/edit-solid.svg' title='edit'>
+      <img src='/icons/edit-solid.svg'
+           title='edit'
+           style='width: 18px; position: relative; right: -2px; top: -1px'>
     </a>
     <a href='{{.Site.Params.Repo}}/blob/master/{{.Site.Params.ContentDir}}/{{$path}}' class='github-main'>
       <img src='/icons/github-brands.svg' title='view on github'>
