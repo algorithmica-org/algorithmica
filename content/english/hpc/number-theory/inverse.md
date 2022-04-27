@@ -3,39 +3,79 @@ title: Modular Inverse
 weight: 1
 ---
 
-```c++
-mint inv() const {
-    uint t = x;
-    uint res = 1;
-    while (t != 1) {
-        uint z = mod / t;
-        res = (ull) res * (mod - z) % mod;
-        t = mod - t * z;
-    }
-    return res;
-}
-```
+<!--
 
 In this section, we are going to discuss some preliminaries before discussing more advanced topics.
 
-In computers, we use the 1st of January, 1970 as the start of the "Unix era," and all time computations are usually done relative to that timestamp.
+we use the 1st of January, 1970 as the start of the "Unix era," and all time computations are usually done relative to that timestamp.
 
-We humans also keep track of time relative to some point in the past, which usually has a political or religious significance. At the moment of writing, approximately 63882260594 seconds have passed since 0 AD.
-
-But for daily tasks, we do not really need that information. Depending on the situation, the relevant part may be that it is 2 pm right now and it's time to go to dinner, or that it's Thursday and so Subway's sub of the day is an Italian BMT. What we do is instead of using a timestamp we use its remainder, which contains just the information we need. And the beautiful thing about it is that remainders are small and cyclic. Think the hour clock: after 12 there comes 1 again, so the number is always small.
+And the beautiful thing about it is that remainders are small and cyclic. Think the hour clock: after 12 there comes 1 again, so the number is always small.
 
 ![](../img/clock.gif)
 
-It is much easier to deal with 1- or 2-digit numbers than 11-digit ones. If we encode each day of the weak starting with Monday from 0 to 6 inclusive, Thursday is going to get number 3. But what day of the week is it going to be in one year? We need to add 365 to it and then reduce modulo 7. It is convenient that `365 % 7` is 1, so we will know that it's Friday unless it is a leap year (in which case it will be Saturday).
+-->
 
-Modular arithmetic studies the way these sets of remainders behave, and it has fundamental applications in number theory, cryptography and data compression.
+Computers usually store time as the number of seconds that have passed since the 1st of January, 1970 — the start of the "Unix era" — and use these timestamps in all computations that have to do with time.
 
+We humans also keep track of time relative to some point in the past, which usually has a political or religious significance. For example, at the moment of writing, approximately 63882260594 seconds have passed since 0 AD.
 
-Consider the following problem: our "week" now consists of $m$ days, and we cycle through it with a steps of $a > 0$. How many distinct days there will be?
+But unlike computers, we do not always need *all* that information. Depending on the task at hand, the relevant part may be that it's 2 pm right now and it's time to go to dinner, or that it's Thursday and so Subway's sub of the day is an Italian BMT. Instead of the whole timestamp, we use its *remainer* containing just the information we need: it is much easier to deal with 1- or 2-digit numbers than 11-digit ones.
 
-Let's assume that the first day is always Monday. At some point the sequence of day is going to cycle. The days will be representable as $k a \mod m$, so we need to find the first $k$ such as $k a$ is divisible by $m$. In the case of $m=7$, $m$ is prime, so the cycle length will be 7 exactly for any $a$.
+### Modular Arithmetic
 
-Now, if $m$ is not prime, but it is still coprime with $a$. For $ka$ to be divisible by $m$, $k$ needs to be divisible by $m$. In general, the answer is $\frac{m}{gcd(a, m)}$. For example, if the week is 10 days long, if the starting number is even, then it will cycle through all even numbers, and if the number is 5, then it will only cycle between 0 and 5. Otherwise it will go through all 10 remainders.
+Two integers $a$ and $b$ are said to be *congruent* modulo $m$ if $m$ divides their difference:
+
+$$
+m \mid (a - b) \; \Longleftrightarrow \; a \equiv b \pmod m
+$$
+
+Congruence modulo $m$ is an equivalence relation, which splits all integers into equivalence classes, called *residues*. Each residue class modulo $m$ may be represented by any one of its members — although we commonly use the smallest nonnegative integer of that class (equal to the remainder $x \bmod m$ for all nonnegative $x$).
+
+<!--
+
+Equivalently, the *remainders* of their division by $m$ should be equal:
+
+a \bmod m = b \bmod m
+
+Here are a few example of how this can be useful.
+
+-->
+
+*Modular arithmetic* studies these sets of residues, which are fundamental for number theory.
+
+**Problem.** Today is Thursday. What day of the week it will be exactly in a year?
+
+If we enumerate each day of the week starting with Monday from $0$ to $6$ inclusive, Thursday gets number $3$. To find out what day it is going to be in a year from now, we need to add $365$ to it and then reduce modulo $7$. Conveniently, $365 \bmod 7 = 1$, so we know that it will be Friday unless it is a leap year (in which case it will be Saturday).
+
+**Problem.** Our "week" now consists of $m$ days, and our year consists of $a$ days (no leap years). How many distinct days of the week there will be among one, two, three and so on whole years from now?
+
+For simplicity, assume that today is Monday, so that the initial day number $d_0$ is zero and after each year, it changes to
+
+$$
+d_{k + 1} = (d_k + a) \bmod m
+$$
+
+After $k$ years, it will be
+
+$$
+d_k = k \cdot a \bmod m
+$$
+
+Since there are only $m$ days in a week, at some point it will be Monday again, and the sequence of day numbers is going to cycle. The number of distinct days is the length of this cycle, so we need to find the smallest $k$ such that
+
+$$
+k \cdot a \equiv 0 \pmod m
+$$
+
+First of all, if $a \equiv 0$, it will be ethernal Monday. We now assume the non-trivial case of $a \not \equiv 0$.
+
+For a seven-day week, $m = 7$ is prime. There is no $k$ smaller than $m$ such that $k \cdot a$ is divisible by $m$ because $m$ can not be decomposed in such a product by the definition of primality. So, if $m$ is prime, we will cycle through all of $m$ week days.
+
+If $m$ is not prime, but $a$ is *coprime* with it (that is, $a$ and $m$ do not have common divisors), then the answer is still $m$ for the same reason: the divisors of $a$ do not help in zeroing out the product any faster.
+
+If $a$ and $m$ share some divisors, then it is only possible to get residues that are also divisible by them. For example, if the week is $m = 10$ days long, and the year has $a = 42$ or any other even number of days, then we will cycle through all even day numbers, and if the number of days is a multiple of $5$, then we will only oscillate between $0$ and $5$. Otherwise, we will go through all the $10$ remainders.
+
+Therefore, in general, the answer is $\frac{m}{\gcd(a, m)}$, where $\gcd(a, m)$ is the [greatest common divisor](/hpc/algorithms/gcd/) of $a$ and $m$.
 
 ### Fermat's Theorem
 
@@ -64,6 +104,17 @@ a^{\phi(m)} \equiv 1 \pmod m
 $$
 
 where $\phi(m)$ is called Euler's totient function and is equal to the number of residues of $m$ that is coprime with it. In particular case of when $m$ is prime, $\phi(p) = p - 1$ and we get Fermat's theorem, which is just a special case.
+
+Несколько причин:
+
+Это выражение довольно легко вбивать (1e9+7).
+Простое число.
+Достаточно большое.
+int не переполняется при сложении.
+long long не переполняется при умножении.
+Кстати, 10^9 + 910 
+9
+ +9 обладает всеми теми же свойствами. Иногда используют и его.
 
 ### Primality Testing
 
@@ -105,7 +156,26 @@ int binpow(int a, int n) {
 }
 ```
 
+179.64
+
 This helps if `n` or `mod` is a constant.
+
+```c++
+int inverse(int _a) {
+    long long a = _a, r = 1;
+    
+    #pragma GCC unroll(30)
+    for (int l = 0; l < 30; l++) {
+        if ( (M - 2) >> l & 1 )
+            r = r * a % M;
+        a = a * a % M;
+    }
+
+    return r;
+}
+```
+
+171.68
 
 ### Modular Division
 
@@ -180,7 +250,32 @@ int gcd(int a, int b, int &x, int &y) {
     y = x1;
     return d;
 }
+
+int inverse(int a) {
+    int x, y;
+    gcd(a, M, x, y);
+    if (x < 0)
+        x += M;
+    return x;
+}
 ```
+
+159.28
+
+```c++
+int inverse(int a) {
+    int b = M, x = 1, y = 0;
+    while (a != 1) {
+        y -= b / a * x;
+        b %= a;
+        swap(a, b);
+        swap(x, y);
+    }
+    return x < 0 ? x + M : x;
+}
+```
+
+134.33
 
 Another application is the exact division modulo $2^k$.
 
