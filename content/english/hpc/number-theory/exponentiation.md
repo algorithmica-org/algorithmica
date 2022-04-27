@@ -1,9 +1,16 @@
 ---
 title: Binary Exponentiation
 weight: 2
+draft: true
 ---
 
-### Binary Exponentiation
+You can calculate $a^{p-2}$ in $O(\log p)$ time using binary exponentiation:
+
+```c++
+int inv(int x) {
+    return binpow(x, mod - 2);
+}
+```
 
 To perform the Fermat test, we need to raise a number to power $n-1$, preferrably using less than $n-2$ modular multiplications. We can use the fact that multiplication is associative:
 
