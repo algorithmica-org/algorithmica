@@ -1,6 +1,6 @@
 ---
 title: Montgomery Multiplication
-weight: 2
+weight: 4
 ---
 
 When we talked about [integers](../integer) in general, we discussed how to perform division and modulo by multiplication, and, unsurprisingly, in modular arithmetic 90% of its time is spent calculating modulo. Apart from using the general tricks described in the previous article, there is another method specifically for modular arithmetic, called *Montgomery multiplication*.
@@ -79,6 +79,9 @@ Since $x < n \cdot n < r \cdot n$ (as $x$ is a product of multiplicatio) and $q 
 Here is an equivalent C implementation for 64-bit integers:
 
 ```c++
+typedef unsigned long long u64;
+typedef __uint128_t u128;
+
 u64 reduce(u128 x) {
     u64 q = u64(x) * nr;
     u64 m = ((u128) q * n) >> 64;
@@ -134,7 +137,6 @@ Transforming a number into the space is just a multiplication inside the space o
 ### Complete Implementation
 
 ```c++
-// TODO fix me and prettify me
 struct montgomery {
     u64 n, nr;
     
@@ -148,6 +150,9 @@ struct montgomery {
         u64 q = u64(x) * nr;
         u64 m = ((u128) q * n) >> 64;
         u64 xhi = (x >> 64);
+        //cout << u64(x>>64) << " " << u64(x) << " " << q << endl;
+        //cout << u64(m>>64) << " " << u64(m) << endl;
+        //exit(0);
         if (xhi >= m)
             return (xhi - m);
         else
@@ -162,4 +167,9 @@ struct montgomery {
         return (u128(x) << 64) % n;
     }
 };
+```
+
+```c++
+montgomery m(n);
+m.transform(x);
 ```
