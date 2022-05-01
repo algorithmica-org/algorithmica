@@ -1,6 +1,6 @@
 ---
 title: Modular Arithmetic
-weight: -1
+weight: 1
 ---
 
 

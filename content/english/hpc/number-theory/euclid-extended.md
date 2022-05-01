@@ -91,6 +91,8 @@ int inverse(int a) {
 
 134.33
 
+250 (there is probably a worse input if we change modulo or aternate between inputs to make )
+
 Another application is the exact division modulo $2^k$.
 
 **Exercise**. Try to adapt the technique for binary GCD.
