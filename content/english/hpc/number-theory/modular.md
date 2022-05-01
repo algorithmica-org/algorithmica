@@ -3,6 +3,7 @@ title: Modular Arithmetic
 weight: 1
 ---
 
+TODO: use it in binary exponentiation.
 
 <!--
 

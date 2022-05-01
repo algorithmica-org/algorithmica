@@ -3,6 +3,8 @@ title: Number Theory
 weight: 7
 ---
 
+*Disclaimer: this chapter is a very early draft that is probably not worth reading yet.*
+
 In 1940, a British mathematician [G. H. Hardy](https://en.wikipedia.org/wiki/G._H._Hardy) published a famous essay titled "[A Mathematician's Apology](https://en.wikipedia.org/wiki/A_Mathematician%27s_Apology)" discussing the notion that mathematics should be pursued for its own sake rather than for the sake of its applications.
 
 I personally don't agree — and I wrote this book partially to show that there are way too few people working on practical algorithm design instead of theoretical computer science — but I understand where Hardy is coming from. Being 62 years old, he witnessed the devastation caused by the First and the ongoing Second World War that was greatly amplified by the weaponization of science.
