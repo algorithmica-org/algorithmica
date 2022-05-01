@@ -27,9 +27,9 @@ $$
 
 Since $n$ is at least halved every two recursive transitions, the depth of this recurrence and the total number of multiplications will be at most $O(\log n)$.
 
-### Implementation
+### Recursive Implementation
 
-Since we already have a recurrence, it is natural to implement the algorithm as a case matching recursive function:
+As we already have a recurrence, it is natural to implement the algorithm as a case matching recursive function:
 
 ```c++
 const int M = 1e9 + 7; // modulo
@@ -41,15 +41,13 @@ u64 binpow(u64 a, u64 n) {
     if (n % 2 == 1)
         return binpow(a, n - 1) * a % M;
     else {
-        u64 b = binpow(a, n / 2) % M;
-        return b * b % m;
+        u64 b = binpow(a, n / 2);
+        return b * b % M;
     }
 }
 ```
 
-Since $m$ is a compile-time constant, the compiler can optimize the modulo by [replacing it with multiplication](/hpc/arithmetic/division/) (even if it is not a compile-time constant, it is still cheaper to compute the magic constants by hand once).
-
-The execution path and hence the running time depends on the value of $n$. In our benchmark, we use $m = 10^9+7$ and $n = m - 2$ so that we compute the [multiplicative inverse](../modular/#modular-division) of $a$ modulo $m$. This modulo is commonly used in competitive programming to calculate checksums in combinatorial problems because it is prime (allowing inverse via binary exponentiation), sufficiently large, doesn't overflow `int` for addition, doesn't overflow `long long` for multiplication, and is easy to type as `1e9 + 7`.
+In our benchmark, we use $n = m - 2$ so that we compute the [multiplicative inverse](../modular/#modular-division) of $a$ modulo $m$:
 
 ```c++
 u64 inverse(u64 a) {
@@ -57,38 +55,19 @@ u64 inverse(u64 a) {
 }
 ```
 
-For this particular $n$, the recursive implementation takes around 400ns per call.
+We use $m = 10^9+7$, which is a modulo value is commonly used in *competitive programming* to calculate checksums in combinatorial problems because it is prime (allowing inverse via binary exponentiation), sufficiently large while not overflowing `int` in addition or `long long` in multiplication, and is easy to type as `1e9 + 7`. Since it is a compile-time constant, the compiler can optimize the modulo by [replacing it with multiplication](/hpc/arithmetic/division/) (even if it is not a compile-time constant, it is still cheaper to compute the magic constants by hand once and use them for fast reduction).
 
-As recursion introduces some [overhead](/hpc/architecture/functions/)
+The execution path and hence the running time depends on the value of $n$. For this particular $n$, the baseline implementation takes around 330ns per call. As recursion introduces some [overhead](/hpc/architecture/functions/), it makes sense to unroll it into an iterative one.
 
-Эта реализация рекурсивная, что работает долго. Попробуем «развернуть» рекурсию и получить итеративную.
+### Iterative Implementation
 
-Рассмотрим двоичное представление числа $n$. Результат $a^n$ можно представить как произведение $a$ в степенях каких-то степеней двоек. Например, если $n = 42 = 32 + 8 + 2$, то
+The result of $a^n$ can be represented as the product of $a$ to some powers of two — those that correspond to 1s in the binary representation of $n$. For example, if $n = 42 = 32 + 8 + 2$, then
 
 $$
 a^{42} = a^{32+8+2} = a^{32} \cdot a^8 \cdot a^2 
 $$
 
-Чтобы посчитать это произведение итеративно, пройдемся по всем битам числа $n$, поддерживая две переменные: непосредственно результат и текущее значение $a^{2^k}$, где $k$ это номер текущей итерации. На каждом шаге будем домножать $a^{2^k}$ на текущий результат, если $k$-тый бит числа $n$ единичный, и в любом случае возводить её в квадрат, получая $a^{2^k \cdot 2} = a^{2^{k+1}}$ для следующей итерации.
-
-Стоит отметить, что во многих языках программирования бинарное возведение в степень уже реализовано. Но не в C++: функция `pow` из стандартной библиотеки реализована только для действительных чисел и использует приближенные методы, и поэтому не дает точных результатов для целочисленных аргументов.
-
-
-
-We essentially group it like this:
-
-$$
-a^8 = (aaaa) \cdot (aaaa) = ((aa)(aa))((aa)(aa))
-$$
-
-This allows using only $O(\log n)$ operations (or, more specifically, at most $2 \cdot \log_2 n$ modular multiplications).
-
-
-
-You can calculate $a^{p-2}$ in $O(\log p)$ time using binary exponentiation:
-
-
-To perform the Fermat test, we need to raise a number to power $n-1$, preferrably using less than $n-2$ modular multiplications.
+To calculate this product, we can iterate over the bits of $n$ maintaining two variables: the value of $a^{2^k}$ and the current product after considering $k$ lowest bits. On each step, we multiply the current product by $a^{2^k}$ if the $k$-th bit of $n$ is set, and, in either case, square $a^k$ to get $a^{2^k \cdot 2} = a^{2^{k+1}}$ that will be used on the next iteration.
 
 ```c++
 u64 binpow(u64 a, u64 n) {
@@ -105,9 +84,9 @@ u64 binpow(u64 a, u64 n) {
 }
 ```
 
-179.64
+The iterative implementation takes about 180ns per call. The heavy calculations are the same; the improvement mainly comes from the reduced dependency chain: `a = a * a % M` needs to finish before the loop can proceed, and it can now execute concurrently with `r = res * a % M`.
 
-This helps if `n` or `mod` is a constant.
+The performance also benefits from $n$ being a constant, [making all branches predictable](/hpc/pipelining/branching/) and letting the scheduler know what needs to be executed in advance. The compiler, however, does not take advantage of it and does not unroll the `while(n) n >>= 1` loop. We can rewrite it as a `for` loop that takes constant 30 iterations:
 
 ```c++
 u64 inverse(u64 a) {
@@ -124,4 +103,4 @@ u64 inverse(u64 a) {
 }
 ```
 
-171.68
+This forces the compiler to generate only the instructions we need, shoving off another 10ns and making the total running time ~170ns.
