@@ -1,7 +1,6 @@
 ---
 title: Binary Exponentiation
 weight: 2
-draft: true
 ---
 
 In modular arithmetic and computational algebra in general, you often need to raise a number to the $n$-th power — to do [modular division](../modular/#modular-division), perform [primality tests](../modular/#fermats-theorem), or compute some combinatorial values — ­and you usually want to spend fewer than $\Theta(n)$ operations calculating it.
