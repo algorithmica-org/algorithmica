@@ -1,23 +1,21 @@
 ---
 title: Extended Euclidean Algorithm
 weight: 3
-draft: true
 ---
 
-
-If the modulo is not prime, then we can still get by calculating $\phi(m)$ and invoking Euler's theorem. But calculating $\phi(m)$ is as difficult as factoring it, which is not fast. There is a more general method.
-
-Note that this is only true for prime $p$. Euler's theorem handles the case of arbitary $m$, and states that
+[Fermat’s theorem](../modular/#fermats-theorem) allows us to calculate modular multiplicative inverses through [binary exponentiation](..exponentiation/) in $O(\log n)$ operations, but it only works with prime modula. There is a generalization of it, [Euler's theorem](https://en.wikipedia.org/wiki/Euler%27s_theorem), stating that if $m$ and $a$ are coprime, then
 
 $$
 a^{\phi(m)} \equiv 1 \pmod m
 $$
 
-where $\phi(m)$ is called [Euler's totient function](https://en.wikipedia.org/wiki/Euler%27s_totient_function) and is equal to the number of residues of $m$ that is coprime with it. In particular case of when $m$ is prime, $\phi(p) = p - 1$ and we get Fermat's theorem, which is just a special case.
+where $\phi(m)$ is [Euler's totient function](https://en.wikipedia.org/wiki/Euler%27s_totient_function) defined as the number of positive integers $x < m$ that are coprime with $m$. In particular case when $m$ is a prime, then all the $m - 1$ residues are coprime and $\phi(m) = m - 1$, yielding the Fermat's theorem.
 
----
+This lets us calculate the inverse of $a$ as $a^{\phi(m) - 1}$ if we know $\phi(m)$, but calculating it is, in turn, not so fast: you usually need to obtain the factorization of $m$. There is a more general method that works by modifying the [the Euclidean algorthm](/hpc/algorithms/gcd/).
 
-*Extended Euclidean algorithm* apart from finding $g = \gcd(a, b)$ also finds integers $x$ and $y$ such that
+### Algorithm
+
+*Extended Euclidean algorithm*, apart from finding $g = \gcd(a, b)$, also finds integers $x$ and $y$ such that
 
 $$
 a \cdot x + b \cdot y = g
@@ -29,27 +27,31 @@ $$
 a^{-1} \cdot a + k \cdot m = 1
 $$
 
-Note that if $a$ is not coprime with $m$, then there will be no solution. We can still find *some* element, but it will not work for any dividend.
+Note that, if $a$ is not coprime with $m$, there is no solution since no integer combination of $a$ and $m$ can yield anything that is not a multiple of their greatest common divisor.
 
-The algorithm is also recursive. It makes a recursive call, calculates the coefficients $x'$ and $y'$ for $\gcd(b, a \bmod b)$, and restores the general solution. If we have a solution $(x', y')$ for pair $(b, a \bmod b)$:
+The algorithm is also recursive: it calculates the coefficients $x'$ and $y'$ for $\gcd(b, a \bmod b)$ and restores the solution for the original number pair. If we have a solution $(x', y')$ for the pair $(b, a \bmod b)$
 
 $$
 b \cdot x' + (a \bmod b) \cdot y' = g
 $$
 
-To get the solution for the initial input, rewrite the expression $(a \bmod b)$ as $(a - \lfloor \frac{a}{b} \rfloor \cdot b)$ and subsitute it into the aforementioned equality:
+then, to get the solution for the initial input, we can rewrite the expression $(a \bmod b)$ as $(a - \lfloor \frac{a}{b} \rfloor \cdot b)$ and subsitute it into the aforementioned equation:
 
 $$
 b \cdot x' + (a - \Big \lfloor \frac{a}{b} \Big \rfloor \cdot b) \cdot y' = g
 $$
 
-Now let's rearrange the terms (grouping by $a$ and $b$) to get
+Now we rearrange the terms grouping by $a$ and $b$ to get
 
 $$
 a \cdot \underbrace{y'}_x + b \cdot \underbrace{(x' - \Big \lfloor \frac{a}{b} \Big \rfloor \cdot y')}_y = g
 $$
 
-Comparing it with initial expression, we infer that we can just use coefficients by $a$ and $b$ for the initial $x$ and $y$.
+Comparing it with the initial expression, we infer that we can just use coefficients of $a$ and $b$ for the initial $x$ and $y$.
+
+### Implementation
+
+We implement the algorithm as a recursive function. Since its output is not one but three integers, we pass the coefficients to it by reference:
 
 ```c++
 int gcd(int a, int b, int &x, int &y) {
@@ -64,7 +66,11 @@ int gcd(int a, int b, int &x, int &y) {
     y = x1;
     return d;
 }
+```
 
+To calculate the inverse, we simply pass $a$ and $m$ and return the $x$ coefficient the algorithm finds. Since we pass two positive numbers, one of the coefficient will be positive and the other one is negative (which one depends on whether the number of iterations is odd or even), so we need to optionally check if $x$ is negative and add $m$ to get a correct residue:
+
+```c++
 int inverse(int a) {
     int x, y;
     gcd(a, M, x, y);
@@ -74,7 +80,7 @@ int inverse(int a) {
 }
 ```
 
-159.28
+It works in ~160ns — 10ns faster than inverting numbers with [binary exponentiation](../exponentiation). To optimize it further, we can similarly turn it iterative ­— which takes 135ns:
 
 ```c++
 int inverse(int a) {
@@ -89,10 +95,6 @@ int inverse(int a) {
 }
 ```
 
-134.33
+Note that, unlike binary exponentiation, the running time depends on the value of $a$. For example, for this particular value of $m$ ($10^9 + 7$), the worst input happens to be 564400443, on which the algorithm performs 37 iterations and taking 250ns.
 
-250 (there is probably a worse input if we change modulo or aternate between inputs to make )
-
-Another application is the exact division modulo $2^k$.
-
-**Exercise**. Try to adapt the technique for binary GCD.
+**Exercise**. Try to adapt the same technique for binary GCD (it won't give performance speedup though unless you are better than me at optimization).
