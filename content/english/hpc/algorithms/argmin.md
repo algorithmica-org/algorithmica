@@ -164,7 +164,7 @@ int argmin(int *a, int n) {
 
 The compiler [optimized the machine code layout](/hpc/architecture/layout), and the CPU is now able to execute the loop at around 2 GFLOPS — a slight but sizeable improvement from 1.5 GFLOPS of the non-hinted loop.
 
-Here is the idea: if we are only updating the minimum a dozen or so times during the entire computation, we can ditch all the vector-blending and index updating and just maintain the minimum and regularly check if it has changed. Inside this check, we can use however slow method of updating the argmin we want because it will only be called a few times. 
+Here is the idea: if we are only updating the minimum a dozen or so times during the entire computation, we can ditch all the vector-blending and index updating and just maintain the minimum and regularly check if it has changed. Inside this check, we can use however slow method of updating the argmin we want because it will only be called a few times.
 
 To implement it with SIMD, all we need to do on each iteration is a vector load, a comparison, and a test-if-zero:
 
