@@ -186,7 +186,7 @@ loop:
 
 Let's draw the dependency graph of this loop:
 
-@@
+<!--
 \node [draw, circle] (diff)  at (3, 10) {diff};
 \node [draw, circle] (min)   at (1.5, 8.9) {min};
 \node [draw, circle] (abs)   at (3, 8.9) {abs};
@@ -201,13 +201,15 @@ Let's draw the dependency graph of this loop:
 \path [->, dotted] (shift) edge (test);
 \path [->, dashed] (shift) edge [bend right=75] (diff);
 \path [->, dashed] (shift) edge [bend left=25] (min);
-@@
+-->
+
+![](../img/gcd-dependency1.png)
 
 Modern processors can execute many instructions in parallel, essentially meaning that the true "cost" of this computation is roughly the sum of latencies on its critical path. In this case, it is the total latency of `diff`, `abs`, `ctz`, and `shift`.
 
 We can decrease this latency using the fact that we can actually calculate `ctz` using just `diff = a - b`, because a negative number divisible by $2^k$ still has $k$ zeros at the end. This lets us not wait for `max(diff, -diff)` to be computed first, resulting in a shorter graph like this:
 
-@@
+<!--
 \node [draw, circle] (diff)  at (3, 10) {diff};
 \node [draw, circle] (min)   at (1.5, 8.9) {min};
 \node [draw, circle] (abs)   at (4.5, 8.9) {abs};
@@ -222,7 +224,9 @@ We can decrease this latency using the fact that we can actually calculate `ctz`
 \path [->, dotted] (diff) edge (test);
 \path [->, dashed] (shift) edge [bend left=25] (min);
 \path [->, dashed] (abs) edge [bend left=25] (diff);
-@@
+-->
+
+![](../img/gcd-dependency2.png)
 
 Hopefully you will be less confused when you think about how the final code will be executed:
 
