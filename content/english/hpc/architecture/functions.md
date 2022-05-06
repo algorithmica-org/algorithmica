@@ -16,7 +16,7 @@ Both of these concerns can be solved by having a dedicated location in memory wh
 The hardware stack works the same way software stacks do and is similarly implemented as just two pointers:
 
 - The *base pointer* marks the start of the stack and is conventionally stored in `rbp`.
-- The *stack pointer* marks the last element on the stack and is conventionally stored in `rsp`.
+- The *stack pointer* marks the last element of the stack and is conventionally stored in `rsp`.
 
 When you need to call a function, you push all your local variables onto the stack (which you can also do in other circumstances, e. g. when you run out of registers), push the current instruction pointer, and then jump to the beginning of the function. When exiting from a function, you look at the pointer stored on top of the stack, jump there, and then carefully read all the variables stored on the stack back into their registers.
 
