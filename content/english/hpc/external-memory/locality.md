@@ -23,7 +23,7 @@ In this article, we continue designing algorithms for the external memory model 
 
 In this context, we can talk about the degree of cache reuse primarily in two ways:
 
-- *Temporal locality* refers to the repeated access of the same data within a relatively small time duration, such that the data likely remains cached between the requests.
+- *Temporal locality* refers to the repeated access of the same data within a relatively small time period, such that the data likely remains cached between the requests.
 - *Spatial locality* refers to the use of elements relatively close to each other in terms of their memory locations, such that they are likely fetched in the same memory block.
 
 In other words, temporal locality is when it is likely that this same memory location will soon be requested again, while spatial locality is when it is likely that a nearby location will be requested right after.
@@ -136,7 +136,7 @@ $$
 t[k][i] = \min(t[k-1][i], t[k-1][i+2^{k-1}])
 $$
 
-Now, there are two design choices to make: whether the log-size $k$ should be the first or the second dimension, and whether to iterate over $k$ and then $i$ or the other way around. This means that there are of $2×2=4$ ways to build it, and here is the optimal one:
+Now, there are two design choices to make: whether the log-size $k$ should be the first or the second dimension, and whether to iterate over $k$ and then $i$ or the other way around. This means that there are $2×2=4$ ways to build it, and here is the optimal one:
 
 ```cpp
 int mn[logn][maxn];
