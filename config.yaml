@@ -42,8 +42,8 @@ languages:
 params:
   repo: "https://github.com/algorithmica-org/algorithmica"
   reveal_hugo:
-    theme: white
+    #theme: white
     slide_number: true
     transition: none
-    #custom_theme: "slides.sass"
-    #custom_theme_compile: true
+    custom_theme: "slides.sass"
+    custom_theme_compile: true
