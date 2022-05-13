@@ -175,7 +175,7 @@ With prefetching, the performance on large arrays becomes roughly the same:
 
 ![](../img/search-branchless-prefetch.svg)
 
-The graph still grows faster as the branchy version also prefetches "grandchildren," "grand-grandchildren," and so on — although the usefulness of each new speculative read diminishes exponentially as the prediction is less and less likely to be correct.
+The graph still grows faster as the branchy version also prefetches "grandchildren," "great-grandchildren," and so on — although the usefulness of each new speculative read diminishes exponentially as the prediction is less and less likely to be correct.
 
 In the branchless version, we could also fetch ahead by more than one layer, but the number of fetches we'd need also grows exponentially. Instead, we will try a different approach to optimize memory operations.
 
@@ -359,9 +359,9 @@ This observation extends to the grand-children of node $k$ — they are also sto
 \end{aligned}
 -->
 
-Their cache line can also be fetched with one instruction. Interesting… what if we continue this, and instead of fetching direct children, we fetch ahead as many descendants as we can cramp into one cache line? That would be $\frac{64}{4} = 16$ elements, our grand-grand-grandchildren with indices from $16k$ to $(16k + 15)$.
+Their cache line can also be fetched with one instruction. Interesting… what if we continue this, and instead of fetching direct children, we fetch ahead as many descendants as we can cramp into one cache line? That would be $\frac{64}{4} = 16$ elements, our great-great-grandchildren with indices from $16k$ to $(16k + 15)$.
 
-Now, if we prefetch just one of these 16 elements, we will probably only get some but not all of them, as they may cross a cache line boundary. We can prefetch the first *and* the last element, but to get away with just one memory request, we need to notice that the index of the first element, $16k$, is divisible by $16$, so its memory address will be the base address of the array plus something divisible by $16 \cdot 4 = 64$, the cache line size. If the array were to begin on a cache line, then these $16$ grand-gran-grandchildren elements will be guaranteed to be on a single cache line, which is just what we needed.
+Now, if we prefetch just one of these 16 elements, we will probably only get some but not all of them, as they may cross a cache line boundary. We can prefetch the first *and* the last element, but to get away with just one memory request, we need to notice that the index of the first element, $16k$, is divisible by $16$, so its memory address will be the base address of the array plus something divisible by $16 \cdot 4 = 64$, the cache line size. If the array were to begin on a cache line, then these $16$ great-great-grandchildren elements will be guaranteed to be on a single cache line, which is just what we needed.
 
 Therefore, we only need to [align](/hpc/cpu-cache/alignment) the array:
 
