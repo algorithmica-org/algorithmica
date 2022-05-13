@@ -60,6 +60,7 @@ int dfs(int v, int p = -1) {
             }
         }
     }
+    return -1;
 }
 ```
 
