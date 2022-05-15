@@ -305,7 +305,7 @@ The relative speedup varies with the structure size — 7-18x/3-8x over STL and 
 
 ![](../img/btree-relative.svg)
 
-Insertions are only 1.5-2 faster than for `absl::btree`, which uses scalar code to do everything. I don't know (yet) why insertions are *that* slow, but I guess it has something to do with data dependencies between queries.
+Insertions are only 1.5-2 faster than for `absl::btree`, which uses scalar code to do everything. My best guess why insertions are *that* slow is due to data dependency: since the tree nodes may change, the CPU can't start processing the next query before the previous one finishes (the [true latency](../s-tree/#comparison-with-stdlower_bound) of both queries is roughly equal and ~3x of the reciprocal throughput of `lower_bound`).
 
 ![](../img/btree-absl.svg)
 
