@@ -199,7 +199,7 @@ This works perfectly because what we do here can be interpreted as just three ch
 ```c++
 uint32_t y;
 
-uint64_t m = uint64_t(-1) / y + 1; // ceil(2^64 / d)
+uint64_t m = uint64_t(-1) / y + 1; // ceil(2^64 / y)
 
 uint32_t mod(uint32_t x) {
     uint64_t lowbits = m * x;
@@ -208,6 +208,14 @@ uint32_t mod(uint32_t x) {
 
 uint32_t div(uint32_t x) {
     return ((__uint128_t) m * x) >> 64;
+}
+```
+
+We can also check divisibility of $x$ by $y$ with just one multiplication using the fact that the remainder of division is zero if and only if the fractional part (the lower 64 bits of $m \cdot x$) does not exceed $m$ (otherwise, it would become a nonzero number when multiplied back by $y$ and right-shifted by 64).
+
+```c++
+bool is_divisible(uint32_t x) {
+    return m * x < m;
 }
 ```
 
