@@ -5,7 +5,7 @@ weight: 3
 
 When programmers hear the word *parallelism*, they mostly think about *multi-core parallelism*, the practice of explicitly splitting a computation into semi-independent *threads* that work together to solve a common problem.
 
-This type of parallelism is mainly about reducing *latency* and achieving *scalability*, but not about improving *efficiency*. You can solve a problem ten times as big with a parallel algorithm, but it would take at least ten times as many computational resources. Although parallel hardware is becoming [ever more abundant](/hpc/complexity/hardware), and parallel algorithm design is becoming an increasingly more important area, for now, we will consider the use of more than one CPU core cheating.
+This type of parallelism is mainly about reducing *latency* and achieving *scalability*, but not about improving *efficiency*. You can solve a problem ten times as big with a parallel algorithm, but it would take at least ten times as much computational resources. Although parallel hardware is becoming [ever more abundant](/hpc/complexity/hardware), and parallel algorithm design is becoming an increasingly important area, for now, we will consider the use of more than one CPU core cheating.
 
 But there are other types of parallelism, already existing inside a CPU core, that you can use *for free*.
 
@@ -42,16 +42,16 @@ Pipelining does not reduce *actual* latency but functionally makes it seem like 
 
 Having this in mind, hardware manufacturers prefer to use *cycles per instruction* (CPI) instead of something like "average instruction latency" as the main performance indicator for CPU designs. It is a [pretty good metric](/hpc/profiling/benchmarking) for algorithm designs too, if we only consider *useful* instructions.
 
-CPI of a perfectly pipelined processor should tend to one, but it can actually be even lower if we make each stage of the pipeline "wider" by duplicating it, so that more than one instruction can be processed at a time. Because the cache and most of the ALU can be shared, this ends up being cheaper than adding a fully separate core. Such architectures, capable of executing more than one instruction per cycle, are called *superscalar*, and most modern CPUs are.
+The CPI of a perfectly pipelined processor should tend to one, but it can actually be even lower if we make each stage of the pipeline "wider" by duplicating it, so that more than one instruction can be processed at a time. Because the cache and most of the ALU can be shared, this ends up being cheaper than adding a fully separate core. Such architectures, capable of executing more than one instruction per cycle, are called *superscalar*, and most modern CPUs are.
 
-You can only take advantage of superscalar processing if the stream of instructions contains groups of logically independent operations that can be processed separately. The instructions don't always arrive in the most convenient order, so, when possible, modern CPUs can execute them *out-of-order* to improve overall utilization and minimize pipeline stalls. How this magic works is a topic for a more advanced discussion<!--[a more advanced discussion](scheduling)-->, but for now, you can assume that the CPU maintains a buffer of pending instructions up to some distance in the future, and executes them as soon as the values of its operands are computed and there is an execution unit available.
+You can only take advantage of superscalar processing if the stream of instructions contains groups of logically independent operations that can be processed separately. The instructions don't always arrive in the most convenient order, so, when possible, modern CPUs can execute them *out of order* to improve overall utilization and minimize pipeline stalls. How this magic works is a topic for a more advanced discussion<!--[a more advanced discussion](scheduling)-->, but for now, you can assume that the CPU maintains a buffer of pending instructions up to some distance in the future, and executes them as soon as the values of its operands are computed and there is an execution unit available.
 
 ### An Education Analogy
 
 Consider how our education system works:
 
 1. Topics are taught to groups of students instead of individuals as broadcasting the same things to everyone at once is more efficient.
-2. An intake of students is split into groups lead by different teachers; assignments and other course materials are shared between groups.
+2. An intake of students is split into groups led by different teachers; assignments and other course materials are shared between groups.
 3. Each year the same course is taught to a new intake so that the teachers are kept busy.
 
 These innovations greatly increase the *throughput* of the whole system, although the *latency* (time to graduation for a particular student) remains unchanged (and maybe increases a little bit because personalized tutoring is more effective).

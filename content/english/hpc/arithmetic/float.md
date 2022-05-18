@@ -139,7 +139,7 @@ $$
 \{ \pm \; (1 + m) \cdot 2^e \; | \; m = \frac{x}{2^{32}}, \; x \in [0, 2^{32}) \}
 $$
 
-Since $m$ is now a nonnegative value, we will now make it unsigned integer, and instead add a separate boolean field for the sign of the number:
+Since $m$ is now a nonnegative value, we will now make it unsigned integer, and instead add a separate Boolean field for the sign of the number:
 
 ```cpp
 struct fp {

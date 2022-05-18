@@ -44,7 +44,7 @@ In the external memory model, when we read a block of size $M$, we can sort its 
 
 ![](../img/k-way.png)
 
-This effectively means that, in terms of IO operations, the first $O(\log M)$ layers of mergesort are free, and there are only $O(\log_2 \frac{N}{M})$ non-zero-cost layers, each mergeable in $O(\frac{N}{B})$ IOPS in total. This brings total I/O complexity to
+This effectively means that, in terms of I/O operations, the first $O(\log M)$ layers of mergesort are free, and there are only $O(\log_2 \frac{N}{M})$ non-zero-cost layers, each mergeable in $O(\frac{N}{B})$ IOPS in total. This brings total I/O complexity to
 
 $$
 O\left(\frac{N}{B} \log_2 \frac{N}{M}\right)

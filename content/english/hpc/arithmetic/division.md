@@ -45,7 +45,7 @@ You can also divide 128-bit integer (stored in `rdx:rax`) by a 64-bit integer:
 ```nasm
 div(u128, u64):
     ; a = rdi + rsi, b = rdx
-    mov  rcx, rdx ;
+    mov  rcx, rdx
     mov  rax, rdi
     mov  rdx, rsi
     div  edx 

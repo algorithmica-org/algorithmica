@@ -6,7 +6,7 @@ weight: 4
 Optimizing for *latency* is usually quite different from optimizing for *throughput*:
 
 - When optimizing data structure queries or small one-time or branchy algorithms, you need to [look up the latencies](../tables) of its instructions, mentally construct the execution graph of the computation, and then try to reorganize it so that the critical path is shorter. <!-- [Binary GCD](/hpc/algorithms/gcd) is a good example of that. -->
-- When optimizing hot loops and large-dataset algorithms, you need to look up the throughputs of its instructions, count how many times each one is used per iteration, determine which of them is the bottleneck, and then try to restructure the loop so that it is used less often.
+- When optimizing hot loops and large-dataset algorithms, you need to look up the throughputs of their instructions, count how many times each one is used per iteration, determine which of them is the bottleneck, and then try to restructure the loop so that it is used less often.
 
 The last advice only works for *data-parallel* loops, where each iteration is fully independent of the previous one. When there is some interdependency between consecutive iterations, there may potentially be a pipeline stall caused by a [data hazard](../hazards) as the next iteration is waiting for the previous one to complete.
 
@@ -64,7 +64,7 @@ If an instruction has a latency of $x$ and a throughput of $y$, then you would n
 
 This technique is mostly used with [SIMD](/hpc/simd) and not in scalar code. You can [generalize](/hpc/simd/reduction) the code above and compute sums and other reductions faster than the compiler.
 
-In general, when optimizing loops, you usually have just one or a few *execution ports* that you want to utilize to their fullest, and you engineer the rest of the loop around them. As different instructions may use different sets of ports, it is not always clear which one is going to be the overused. In situations like this, [machine code analyzers](/hpc/profiling/mca) can be very helpful for finding bottlenecks of small assembly loops.
+In general, when optimizing loops, you usually have just one or a few *execution ports* that you want to utilize to their fullest, and you engineer the rest of the loop around them. As different instructions may use different sets of ports, it is not always clear which one is going to be overused. In situations like this, [machine code analyzers](/hpc/profiling/mca) can be very helpful for finding the bottlenecks of small assembly loops.
 
 <!--
 

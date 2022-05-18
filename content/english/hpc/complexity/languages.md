@@ -47,7 +47,7 @@ Since running machine code in an interpreter doesn't make sense, this makes a to
 - Compiled languages with a runtime, such as Java, C#, or Erlang (and languages that work on their VMs, such as Scala, F#, or Elixir).
 - Compiled native languages, such as C, Go, or Rust.
 
-There is no "right" way of executing computer programs: each approach has its own gains and drawbacks. Interpreters and virtual machines provide flexibility and enable some nice high-level programming features such as dynamic typing, run-time code alteration, and automatic memory management, but this comes with some unavoidable performance trade-offs, which we will now talk about.
+There is no "right" way of executing computer programs: each approach has its own gains and drawbacks. Interpreters and virtual machines provide flexibility and enable some nice high-level programming features such as dynamic typing, run-time code alteration, and automatic memory management, but these come with some unavoidable performance trade-offs, which we will now talk about.
 
 ### Interpreted languages
 
@@ -94,7 +94,7 @@ This is not surprising if you consider the things that Python needs to do to fig
 - looks up its type, figures out that it's a `float`, and fetches the method implementing `*` operator;
 - does the same things for `b` and `c` and finally add-assigns the result to `c[i][j]`.
 
-Granted, the interpreters of widely-used languages such as Python are well-optimized, and they can skip through some of these steps on repeated execution of the same code. But still, some quite significant overhead is unavoidable due to the language design. If we get rid of all this type checking and pointer chasing, perhaps we can get cycles per multiplication ratio closer to 1, or whatever the "cost" of native multiplication is?
+Granted, the interpreters of widely used languages such as Python are well-optimized, and they can skip through some of these steps on repeated execution of the same code. But still, some quite significant overhead is unavoidable due to the language design. If we get rid of all this type checking and pointer chasing, perhaps we can get cycles per multiplication ratio closer to 1, or whatever the "cost" of native multiplication is?
 
 ### Managed Languages
 

@@ -19,7 +19,7 @@ Jumping right into it, here is how you add two numbers (`*c = *a + *b`) in Arm a
 ldr w0, [x0]    ; load 4 bytes from wherever x0 points into w0
 ldr w1, [x1]    ; load 4 bytes from wherever x1 points into w1
 add w0, w0, w1  ; add w0 with w1 and save the result to w0
-str w0, [x2]    ; write contents of w0 to wherever x2 points/
+str w0, [x2]    ; write contents of w0 to wherever x2 points
 ```
 
 Here is the same operation in x86 assembly:
@@ -33,7 +33,7 @@ mov DWORD PTR [rdx], eax  ; write contents of eax to wherever rdx points
 
 Assembly is very simple in the sense that it doesn't have many syntactical constructions compared to high-level programming languages. From what you can observe from the examples above:
 
-- A program is a sequence of instructions, each written as its name followed by a variable amount of operands.
+- A program is a sequence of instructions, each written as its name followed by a variable number of operands.
 - The `[reg]` syntax is used for "dereferencing" a pointer stored in a register, and on x86 you need to prefix it with size information (`DWORD` here means 32 bit).
 - The `;` sign is used for line comments, similar to `#` and `//` in other languages.
 
@@ -55,7 +55,7 @@ Most instructions write their result into the first operand, which can also be i
 
 **Registers** are named `rax`, `rbx`, `rcx`, `rdx`, `rdi`, `rsi`, `rbp`, `rsp`, and `r8`-`r15` for a total of 16 of them. The "letter" ones are named like that for historical reasons: `rax` is "accumulator," `rcx` is "counter," `rdx` is "data" and so on — but, of course, they don't have to be used only for that.
 
-There are also 32-, 16-bit and 8-bit registers that have similar names (`rax` → `eax` → `ax` → `al`). They are not fully separate but *aliased*: the first 32 bits of `rax` are `eax`, the first 16 bits of `eax` are `ax`, and so on. This is made to save die space while maintaining compatibility, and it is also the reason why basic type casts in compiled programming languages are usually free. 
+There are also 32-, 16-bit and 8-bit registers that have similar names (`rax` → `eax` → `ax` → `al`). They are not fully separate but *aliased*: the lowest 32 bits of `rax` are `eax`, the lowest 16 bits of `eax` are `ax`, and so on. This is made to save die space while maintaining compatibility, and it is also the reason why basic type casts in compiled programming languages are usually free. 
 
 These are just the *general-purpose* registers that you can, with [some exceptions](../functions), use however you like in most instructions. There is also a separate set of registers for [floating-point arithmetic](/hpc/arithmetic/float), a bunch of very wide registers used in [vector extensions](/hpc/simd), and a few special ones that are needed for [control flow](../loops), but we'll get there in time.
 
