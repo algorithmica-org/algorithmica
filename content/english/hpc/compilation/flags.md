@@ -35,7 +35,7 @@ This is useful when you need to optimize a single high-performance procedure wit
 
 ### Multiversioned Functions
 
-Sometimes you may also want to provide several architecture-specific implementations in a single library. You can use attribute-based syntax to select between multiversioned functions automatically during compile-time:
+Sometimes you may also want to provide several architecture-specific implementations in a single library. You can use attribute-based syntax to select between multiversioned functions automatically during compile time:
 
 ```c++
 __attribute__(( target("default") )) // fallback implementation

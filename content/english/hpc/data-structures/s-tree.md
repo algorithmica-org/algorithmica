@@ -325,7 +325,7 @@ The disadvantage is that this layout is not *succinct*: we need some additional 
 
 ### Implicit B+ Tree
 
-To be more explicit with pointer arithmetic, we will store the entire tree in a single one-dimensional array. To minimize index computations during run-time, we will store each layer sequentially in this array and use compile-time computed offsets to address them: the keys of the node number `k` on layer `h` start with `btree[offset(h) + k * B]`, and its `i`-th child will at `btree[offset(h - 1) + (k * (B + 1) + i) * B]`.
+To be more explicit with pointer arithmetic, we will store the entire tree in a single one-dimensional array. To minimize index computations during run time, we will store each layer sequentially in this array and use compile time computed offsets to address them: the keys of the node number `k` on layer `h` start with `btree[offset(h) + k * B]`, and its `i`-th child will at `btree[offset(h - 1) + (k * (B + 1) + i) * B]`.
 
 To implement all that, we need slightly more `constexpr` functions:
 

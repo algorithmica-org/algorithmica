@@ -167,7 +167,7 @@ There is also `drv.InOut` function, which makes it available for both reading an
 
 Most of the operations here are memory operations, so measuring performance here is useless. Don't worry, we will get to more complex examples soon enough.
 
-GPUs have very specific operations. However, in case of NVIDIA GPUs managing it is quite simple: the cards have *compute capabilities* (1.0, 1.1, 1.2, 1.3, 2.0, etc.) and all features added at capability $x$ is also available at later versions. These can be checked at run-time or compile-time.
+GPUs have very specific operations. However, in case of NVIDIA GPUs managing it is quite simple: the cards have *compute capabilities* (1.0, 1.1, 1.2, 1.3, 2.0, etc.) and all features added at capability $x$ is also available at later versions. These can be checked at run time or compile time.
 
 You can check differences in this Wikipedia article: https://en.wikipedia.org/wiki/CUDA#Version_features_and_specifications
 

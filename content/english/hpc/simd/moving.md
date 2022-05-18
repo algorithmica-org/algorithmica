@@ -39,7 +39,7 @@ for (int i = 0; i < n; i += 8) {
 
 In the first version, assuming that arrays `a`, `b` and `c` are all 64-byte *aligned* (the addresses of their first elements are divisible by 64, and so they start at the beginning of a cache line), roughly half of reads and writes will be "bad" because they cross a cache line boundary.
 
-Note that the performance difference is caused by the cache system and not by the instructions themselves. On most modern architectures, the `loadu` / `storeu` intrinsics should be equally as fast as `load` / `store` given that in both cases the blocks only span one cache line. The advantage of the latter is that they can act as free run-time assertions that all reads and writes are aligned.
+Note that the performance difference is caused by the cache system and not by the instructions themselves. On most modern architectures, the `loadu` / `storeu` intrinsics should be equally as fast as `load` / `store` given that in both cases the blocks only span one cache line. The advantage of the latter is that they can act as free run time assertions that all reads and writes are aligned.
 
 This makes it important to properly [align](/hpc/cpu-cache/alignment) arrays and other data on allocation, and it is also one of the reasons why compilers can't always [auto-vectorize](../auto-vectorization) efficiently. For most purposes, we only need to guarantee that any 32-byte SIMD block will not cross a cache line boundary, and we can specify this alignment with the `alignas` specifier:
 

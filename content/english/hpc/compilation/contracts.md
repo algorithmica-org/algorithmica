@@ -45,7 +45,7 @@ T at(size_t k) {
 }
 ```
 
-Interestingly, these checks are rarely actually executed during runtime because the compiler can often prove — during compile-time — that each access will be within bounds. For example, when iterating in a `for` loop from 1 to the array size and indexing $i$-th element on each step, nothing illegal can possibly happen, so the bounds checks can be safely optimized away.
+Interestingly, these checks are rarely actually executed during runtime because the compiler can often prove — during compile time — that each access will be within bounds. For example, when iterating in a `for` loop from 1 to the array size and indexing $i$-th element on each step, nothing illegal can possibly happen, so the bounds checks can be safely optimized away.
 
 ### Assumptions
 

@@ -47,7 +47,7 @@ Since running machine code in an interpreter doesn't make sense, this makes a to
 - Compiled languages with a runtime, such as Java, C#, or Erlang (and languages that work on their VMs, such as Scala, F#, or Elixir).
 - Compiled native languages, such as C, Go, or Rust.
 
-There is no "right" way of executing computer programs: each approach has its own gains and drawbacks. Interpreters and virtual machines provide flexibility and enable some nice high-level programming features such as dynamic typing, run-time code alteration, and automatic memory management, but these come with some unavoidable performance trade-offs, which we will now talk about.
+There is no "right" way of executing computer programs: each approach has its own gains and drawbacks. Interpreters and virtual machines provide flexibility and enable some nice high-level programming features such as dynamic typing, run time code alteration, and automatic memory management, but these come with some unavoidable performance trade-offs, which we will now talk about.
 
 ### Interpreted languages
 
