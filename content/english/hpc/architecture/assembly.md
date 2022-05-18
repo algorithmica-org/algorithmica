@@ -128,7 +128,7 @@ movl %eax, (%rdx)
 The key differences can be summarized as follows:
 
 1. The *last* operand is used to specify the destination.
-2. Registers and constants need to be prefixed by `%` and `$` respectively (e. g. `addl    $1, %rdx` increments `rdx`).
+2. Registers and constants need to be prefixed by `%` and `$` respectively (e.g., `addl $1, %rdx` increments `rdx`).
 3. Memory addressing looks like this: `displacement(%base, %index, scale)`.
 4. Both `;` and `#` can be used for line comments, and also `/* */` can be used for block comments.
 

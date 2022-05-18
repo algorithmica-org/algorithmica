@@ -226,7 +226,7 @@ Instead of designing a kernel that computes an $h \times w$ submatrix of $C$ fro
 
 <!--
 
-We follow this approach and design a general kernel that updates a $h \times w$ submatrix of C using columns from $l$ to $r$ of $A$ and rows from $l$ to $r$ of $B$ (i. e. not a full computation, but only a partial update — it will be clear why later). 
+We follow this approach and design a general kernel that updates a $h \times w$ submatrix of C using columns from $l$ to $r$ of $A$ and rows from $l$ to $r$ of $B$ (i.e., not a full computation, but only a partial update — it will be clear why later). 
 
 -->
 

@@ -14,7 +14,7 @@ There are 4 *and a half* main levels of optimization for speed in GCC:
 - `-O1` (also aliased as `-O`) does a few "low-hanging fruit" optimizations, almost not affecting the compilation time.
 - `-O2` enables all optimizations that are known to have little to no negative side effects and take reasonable time to complete (this is what most projects use for production builds).
 - `-O3` does very aggressive optimization, enabling almost all *correct* optimizations implemented in GCC.
-- `-Ofast` does everything in `-O3`, plus a few more optimizations flags that may break strict standard compliance, but not in a way that would be critical for most applications (e. g. floating-point operations may be rearranged so that the result is off by a few bits of the mantissa).
+- `-Ofast` does everything in `-O3`, plus a few more optimizations flags that may break strict standard compliance, but not in a way that would be critical for most applications (e.g., floating-point operations may be rearranged so that the result is off by a few bits in the mantissa).
 
 There are also many other optimization flags that are not included even in `-Ofast`, because they are very situational, and enabling them by default is more likely to hurt performance rather than improve it — we will talk about some of them in [the next section](../situational).
 

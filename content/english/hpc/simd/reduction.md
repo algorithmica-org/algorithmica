@@ -3,7 +3,7 @@ title: Sums and Other Reductions
 weight: 3
 ---
 
-*Reduction* (also known as *folding* in functional programming) is the action of computing the value of some associative and commutative operation (i.e. $(a \circ b) \circ c = a \circ (b \circ c)$ and $a \circ b = b \circ a$) over a range of arbitrary elements.
+*Reduction* (also known as *folding* in functional programming) is the action of computing the value of some associative and commutative operation (i.e., $(a \circ b) \circ c = a \circ (b \circ c)$ and $a \circ b = b \circ a$) over a range of arbitrary elements.
 
 The simplest example of reduction is calculating the sum an array:
 
@@ -68,7 +68,7 @@ int hsum(__m256i x) {
 }
 ```
 
-There are [other similar instructions](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#techs=AVX,AVX2&ig_expand=3037,3009,5135,4870,4870,4872,4875,833,879,874,849,848,6715,4845&text=horizontal), e. g. for integer multiplication or calculating absolute differences between adjacent elements (used in image processing).
+There are [other similar instructions](https://www.intel.com/content/www/us/en/docs/intrinsics-guide/index.html#techs=AVX,AVX2&ig_expand=3037,3009,5135,4870,4870,4872,4875,833,879,874,849,848,6715,4845&text=horizontal), e.g., for integer multiplication or calculating absolute differences between adjacent elements (used in image processing).
 
 There is also one specific instruction, `_mm_minpos_epu16`, that calculates the horizontal minimum and its index among eight 16-bit integers. This is the only horizontal reduction that works in one go: all others are computed in multiple steps.
 

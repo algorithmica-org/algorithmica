@@ -55,7 +55,7 @@ Their availability ranges from chip to chip:
 - Half-precision arithmetic only supports a small subset of operations and is generally used for machine learning applications, especially neural networks, because they tend to do a large amount of calculation, but don't require a high level of precision.
 - Half-precision is being gradually replaced by bfloat, which trades off 3 mantissa bits to have the same range as single-precision, enabling interoperability with it. It is mostly being adopted by specialized hardware: TPUs, FGPAs, and GPUs. The name stands for "[Brain](https://en.wikipedia.org/wiki/Google_Brain) float."
 
-Lower-precision types need less memory bandwidth to move them around and usually take fewer cycles to operate on (e. g. the division instruction may take $x$, $y$, or $z$ cycles depending on the type), which is why they are preferred when error tolerance allows it.
+Lower-precision types need less memory bandwidth to move them around and usually take fewer cycles to operate on (e.g., the division instruction may take $x$, $y$, or $z$ cycles depending on the type), which is why they are preferred when error tolerance allows it.
 
 Deep learning, emerging as a very popular and computationally-intensive field, created a huge demand for low-precision matrix multiplication, which led to manufacturers developing separate hardware or at least adding specialized instructions that support these types of computations — most notably, Google developing a custom chip called TPU (*tensor processing unit*) that specializes on multiplying 128-by-128 bfloat matrices, and NVIDIA adding "tensor cores," capable of performing 4-by-4 matrix multiplication in one go, to all their newer GPUs.
 

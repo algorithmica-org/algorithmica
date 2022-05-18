@@ -94,7 +94,7 @@ $$
 r \cdot r^{-1} + n \cdot n^\prime = 1
 $$
 
-and both $r^{-1}$ and $n^\prime$ can be computed e. g. using the [extended Euclidean algorithm](../euclid-extended).
+and both $r^{-1}$ and $n^\prime$ can be computed, e.g., using the [extended Euclidean algorithm](../euclid-extended).
 
 Using this identity, we can express $r \cdot r^{-1}$ as $(1 - n \cdot n^\prime)$ and write $x \cdot r^{-1}$ as
 

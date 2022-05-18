@@ -195,7 +195,7 @@ Some tasks, especially in cryptography, cannot be parallelized. But some can.
 
 ## Summing arrays in $O(\log n)$ time
 
-Assume we want to perform some associative (i. e. $A*(B*C) = (A*B)*C$) operation on an array of $n$ elements. Say, sum it up.
+Assume we want to perform some associative (i.e., $A*(B*C) = (A*B)*C$) operation on an array of $n$ elements. Say, sum it up.
 
 Normally, we would do that with a simple loop:
 
@@ -418,7 +418,7 @@ Intrinsics for that.
 
 Now, a lot of value comes from cryptocurrency and deep learning. The latter relies on two specific operations: matrix multiplications for linear layers and convolutions for convolutional layers used in computer vision.
 
-First, they introduced "multiply-accumulate" operation (e. g. `x += y * z`) per 1 GPU clock cycle.
+First, they introduced "multiply-accumulate" operation (e.g., `x += y * z`) per 1 GPU clock cycle.
 
 Google uses Tensor Processing Units. Nobody really knows how they work (proprietary hardware that they rent, not sell).
 

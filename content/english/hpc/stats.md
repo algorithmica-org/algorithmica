@@ -18,7 +18,7 @@ A **random variable** is any variable whose value depends on an outcome of a ran
 2. $\forall x \in X, 0 \leq P \leq 1$.
 3. $\sum_{x \in X} P(x) = 1$.
 
-For example, consider a random variable $X$ with $k$ discrete states (e. g. the result of a die toss). We can place a *uniform distribution* on $X$ — that is, make each of its states equally likely — by setting its probability distribution to:
+For example, consider a random variable $X$ with $k$ discrete states (e.g., the result of a die toss). We can place a *uniform distribution* on $X$ — that is, make each of its states equally likely — by setting its probability distribution to:
 
 $$
 P(x=x_i) = \frac{1}{k}
@@ -121,7 +121,7 @@ The last transition is true because it is a sum of harmonic series.
 
 ### Order Statistics
 
-There is a slight modification of quicksort called quickselect that allows finding the $k$-th smallest element in $O(n)$ time, which is useful when we need to quickly compute order statistics, e. g. medians or 75-th quantiles.
+There is a slight modification of quicksort called quickselect that allows finding the $k$-th smallest element in $O(n)$ time, which is useful when we need to quickly compute order statistics; e.g., medians or 75-th quantiles.
 
 1. Select a random element $p$ from the array.
 2. Partition the array into two arrays $L$ and $R$ using the predicate $a_i > p$.

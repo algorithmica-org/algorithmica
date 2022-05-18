@@ -105,7 +105,7 @@ It is a notoriously difficult math problem that seems ridiculously simple.
 
 Make use of [lea instruction](../assembly).
 
-E. g. if you want to make a computational experiment [Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture), you may use `lea rax, [rax + rax * 2 + 1]`, and then try to `sar` it.
+E.g., if you want to make a computational experiment [Collatz conjecture](https://en.wikipedia.org/wiki/Collatz_conjecture), you may use `lea rax, [rax + rax * 2 + 1]`, and then try to `sar` it.
 
 Another way is to check add.
 

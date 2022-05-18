@@ -62,7 +62,7 @@ double sqrt(double n) {
 }
 ```
 
-The algorithm converges for many functions, although it does so reliably and provably only for a certain subset of them (e. g. convex functions). Another question is how fast the convergence is, if it occurs.
+The algorithm converges for many functions, although it does so reliably and provably only for a certain subset of them (e.g., convex functions). Another question is how fast the convergence is, if it occurs.
 
 ### Rate of Convergence
 

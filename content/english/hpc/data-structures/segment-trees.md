@@ -79,7 +79,7 @@ There are many things segment trees can do. Persistent structures, computational
 
 Segment trees are used for windowing queries or range queries in general, either by themselves or as part of a larger algorithm.
 
-Functional programming, e. g. for implementing persistent arrays and derived structures.
+Functional programming, e.g., for implementing persistent arrays and derived structures.
 
 -->
 
@@ -249,7 +249,7 @@ Apart from requiring much less memory, which is good for fitting into the CPU ca
 
 To improve the performance further, we can:
 
-- manually optimize the index arithmetic (e. g. noticing that we need to multiply `v` by `2` either way),
+- manually optimize the index arithmetic (e.g., noticing that we need to multiply `v` by `2` either way),
 - replace division by two with an explicit binary shift (because [compilers aren't always able to do it themselves](/hpc/compilation/contracts/#arithmetic)),
 - and, most importantly, get rid of [recursion](/hpc/architecture/functions) and make the implementation fully iterative.
 
@@ -724,7 +724,7 @@ This makes both queries much slower — especially the reduction — but this sh
 
 **Minimum** is a nice exception where the update query can be made slightly faster if the new value of the element is less than the current one: we can skip the horizontal reduction part and just update $\log_B n$ nodes using a scalar procedure.
 
-This works very fast when we mostly have such updates, which is the case e. g. for the sparse-graph Dijkstra algorithm when we have more edges than vertices. For this problem, the wide segment tree can serve as an efficient fixed-universe min-heap.
+This works very fast when we mostly have such updates, which is the case, e.g., for the sparse-graph Dijkstra algorithm when we have more edges than vertices. For this problem, the wide segment tree can serve as an efficient fixed-universe min-heap.
 
 **Lazy propagation** can be done by storing a separate array for the delayed operations in a node. To propagate the updates, we need to go top to bottom (which can be done by simply reversing the direction of the `for` loop and using `k >> (h * b)` to calculate the `h`-th ancestor), [broadcast](/hpc/simd/moving/#broadcast) and reset the delayed operation value stored in the parent of the current node, and apply it to all values stored in the current node with SIMD.
 

@@ -10,7 +10,7 @@ There are many different types of profilers. I like to think about them by analo
 
 - When objects are on a micrometer scale, they use optical microscopes.
 - When objects are on a nanometer scale, and light no longer interacts with them, they use electron microscopes.
-- When objects are smaller than that (e. g. the insides of an atom), they resort to theories and assumptions about how things work (and test these assumptions using intricate and indirect experiments).
+- When objects are smaller than that (e.g., the insides of an atom), they resort to theories and assumptions about how things work (and test these assumptions using intricate and indirect experiments).
 
 Similarly, there are three main profiling techniques, each operating by its own principles, having distinct areas of applicability, and allowing for different levels of precision:
 

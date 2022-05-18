@@ -8,7 +8,7 @@ published: true
 
 There are multiple ways this may happen:
 
-* A *structural hazard* happens when two or more instructions need the same part of CPU (e. g. an execution unit).
+* A *structural hazard* happens when two or more instructions need the same part of CPU (e.g., an execution unit).
 * A *data hazard* happens when you have to wait for an operand to be computed from some previous step.
 * A *control hazard* happens when a CPU can't tell which instructions it needs to execute next.
 

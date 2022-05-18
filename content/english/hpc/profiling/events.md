@@ -93,7 +93,7 @@ Overhead  Command  Shared Object        Symbol
    0.80%  run      libc-2.33.so         [.] rand
 ```
 
-Note that, for each function, just its *overhead* is listed and not the total running time (e. g. `setup` includes `std::__introsort_loop` but only its own overhead is accounted as 3.43%). There are tools for constructing [flame graphs](https://www.brendangregg.com/flamegraphs.html) out of perf reports to make them more clear. You also need to account for possible inlining, which is apparently what happened with `std::lower_bound` here. Perf also tracks shared libraries (like `libc`) and, in general, any other spawned processes: if you want, you can launch a web browser with perf and see what's happening inside.
+Note that, for each function, just its *overhead* is listed and not the total running time (e.g., `setup` includes `std::__introsort_loop` but only its own overhead is accounted as 3.43%). There are tools for constructing [flame graphs](https://www.brendangregg.com/flamegraphs.html) out of perf reports to make them more clear. You also need to account for possible inlining, which is apparently what happened with `std::lower_bound` here. Perf also tracks shared libraries (like `libc`) and, in general, any other spawned processes: if you want, you can launch a web browser with perf and see what's happening inside.
 
 Next, you can "zoom in" on any of these functions, and, among others things, it will offer to show you its disassembly with an associated heatmap. For example, here is the assembly for `query`:
 

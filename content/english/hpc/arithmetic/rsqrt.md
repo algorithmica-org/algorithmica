@@ -3,13 +3,13 @@ title: Fast Inverse Square Root
 weight: 4
 ---
 
-The inverse square root of a floating-point number $\frac{1}{\sqrt x}$ is used in calculating normalized vectors, which are in turn extensively used in various simulation scenarios such as computer graphics, e. g. to determine angles of incidence and reflection to simulate lighting.
+The inverse square root of a floating-point number $\frac{1}{\sqrt x}$ is used in calculating normalized vectors, which are in turn extensively used in various simulation scenarios such as computer graphics (e.g., to determine angles of incidence and reflection to simulate lighting).
 
 $$
 \hat{v} = \frac{\vec v}{\sqrt {v_x^2 + v_y^2 + v_z^2}}
 $$
 
-Calculating inverse square root directly — by first calculating square root and then dividing by it — is extremely slow, because both of these operations are slow even though they are implemented in hardware.
+Calculating an inverse square root directly — by first calculating a square root and then dividing $1$ by it — is extremely slow because both of these operations are slow even though they are implemented in hardware.
 
 But there is a surprisingly good approximation algorithm that takes advantage of the way floating-point numbers are stored in memory. In fact, it is so good that it has been [implemented in hardware](https://www.felixcloutier.com/x86/rsqrtps), so the algorithm is no longer relevant by itself for software engineers, but we are nonetheless going to walk through it for its intrinsic beauty and great educational value.
 

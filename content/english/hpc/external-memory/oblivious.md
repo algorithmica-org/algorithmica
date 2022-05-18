@@ -118,7 +118,7 @@ It seems like we can't do better, but it turns out we can.
 
 ### Algorithm
 
-Cache-oblivious matrix multiplication relies on essentially the same trick as the transposition. We need to divide the data until it fits into lowest cache (i. e. $N^2 \leq M$). For matrix multiplication, this equates to using this formula:
+Cache-oblivious matrix multiplication relies on essentially the same trick as the transposition. We need to divide the data until it fits into lowest cache (i.e., $N^2 \leq M$). For matrix multiplication, this equates to using this formula:
 
 $$
 \begin{pmatrix}

@@ -28,4 +28,4 @@ func main() {
 
 The way they work is that the language maintains a group of threads ready to pick up from where they left. This is called N:M scheduling.
 
-Similar runtimes exist for other languages, e. g. for C++ and Rust.
+Similar runtimes exist for other languages, e.g., for C++ and Rust.

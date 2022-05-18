@@ -14,7 +14,7 @@ As there are many different instructions, It is very common for programs to have
 
 <!-- Pipeline of a superscalar CPU with the width of 2 img/superscalar.png -->
 
-Interleaving the stages of execution is a general idea in digital electronics, and it is applied not only in the main CPU pipeline, but also on the level of separate instructions and [memory](/hpc/cpu-cache/mlp). Most execution units have their own little pipelines, and can take another instruction just one or two cycles after the previous one. If a certain instruction is frequently used, it makes sense to duplicate its execution unit also, and also place frequently jointly used instructions on the same execution unit: e. g. not using the same for arithmetic and memory operation.
+Interleaving the stages of execution is a general idea in digital electronics, and it is applied not only in the main CPU pipeline, but also on the level of separate instructions and [memory](/hpc/cpu-cache/mlp). Most execution units have their own little pipelines, and can take another instruction just one or two cycles after the previous one. If a certain instruction is frequently used, it makes sense to duplicate its execution unit also, and also place frequently jointly used instructions on the same execution unit: e.g., not using the same for arithmetic and memory operation.
 
 ### Microcode
 

@@ -94,7 +94,7 @@ For sparse reads, it often makes sense to increase page size, which improves the
 
 Typical size of a page is 4KB, but it can be up to 1G or so for large databases, but enabling it by default is not a good idea as scenarios when we have a VPS with 256M or RAM and more than 256 processes are not uncommon.
 
-Typical page sizes are 4K, 2M and 1G (e. g. allowing for 256K, 128M, 64G memory regions to be stored in a 64-entry L1 TLB respectively).
+Typical page sizes are 4K, 2M and 1G (e.g., allowing for 256K, 128M, 64G memory regions to be stored in a 64-entry L1 TLB respectively).
 
 
 - There are other types of cache inside CPUs that are used for things other than data. The most important for us are *instruction cache* (I-cache), which is used to speed up the fetching of machine code from memory, and *translation lookaside buffer* (TLB), which is used to store physical locations of virtual memory pages, which is instrumental to the efficiency of virtual memory.

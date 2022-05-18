@@ -106,4 +106,4 @@ Theoretically, both requests should use the same bandwidth: a read request sends
 
 Also, for these reasons, a single CPU core usually [can't fully saturate the memory bandwidth](../sharing).
 
-The same technique generalizes to `memcpy`: it also just moves 32-byte blocks with SIMD load/store instructions, and it can be similarly made non-temporal, increasing the throughput twofold for large arrays. There is also a non-temporal load instruction (`_mm256_stream_load_si256`) for when you want to *read* without polluting cache (e. g. when you don't need the original array after a `memcpy`, but will need some data that you had accessed before calling it).
+The same technique generalizes to `memcpy`: it also just moves 32-byte blocks with SIMD load/store instructions, and it can be similarly made non-temporal, increasing the throughput twofold for large arrays. There is also a non-temporal load instruction (`_mm256_stream_load_si256`) for when you want to *read* without polluting cache (e.g., when you don't need the original array after a `memcpy`, but will need some data that you had accessed before calling it).

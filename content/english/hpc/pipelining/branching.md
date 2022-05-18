@@ -47,7 +47,7 @@ body:
 
 Our goal is to simulate a completely unpredictable branch, and we successfully achieve it: the code takes ~14 CPU cycles per element. For a very rough estimate of what it is supposed to be, we can assume that the branches alternate between `<` and `>=`, and the pipeline is mispredicted every other iteration. Then, every two iterations:
 
-- We discard the pipeline, which is 19 cycles deep on Zen 2 (i. e. it has 19 stages, each taking one cycle).
+- We discard the pipeline, which is 19 cycles deep on Zen 2 (i.e., it has 19 stages, each taking one cycle).
 - We need a memory fetch and a comparison, which costs ~5 cycles. We can check the conditions of even and odd iterations concurrently, so let's assume we only pay it once per 2 iterations.
 - In the case of the `<` branch, we need another ~4 cycles to add `a[i]` to a volatile (memory-stored) variable `s`.
 

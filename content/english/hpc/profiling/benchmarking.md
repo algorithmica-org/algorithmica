@@ -59,7 +59,7 @@ Although *efficient* in terms of execution speed, C and C++ are not the most *pr
 
 One way to improve modularity and reusability is to separate all testing and analytics code from the actual implementation of the algorithm, and also make it so that different versions are implemented in separate files, but have the same interface.
 
-In C/C++, you can do this by creating a single header file (e. g. `gcd.hh`) with a function interface and all its benchmarking code in `main`:
+In C/C++, you can do this by creating a single header file (e.g., `gcd.hh`) with a function interface and all its benchmarking code in `main`:
 
 ```c++
 int gcd(int a, int b); // to be implemented
@@ -93,7 +93,7 @@ int main() {
 }
 ```
 
-Then you create many implementation files for each algorithm version (e. g. `v1.cc`, `v2.cc` and so on, or some meaningful names if applicable) that all include that single header file:
+Then you create many implementation files for each algorithm version (e.g., `v1.cc`, `v2.cc`, and so on, or some meaningful names if applicable) that all include that single header file:
 
 ```c++
 #include "gcd.hh"

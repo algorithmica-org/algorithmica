@@ -40,8 +40,8 @@ Everything up to the RAM level is called *volatile memory* because it does not p
 
 From fastest to slowest:
 
-- **CPU registers**, which are the zero-time access data cells CPU uses to store all its intermediate values, can also be thought of as a memory type. There is only a limited number of them (e. g. 16 "general purpose" ones), and in some cases, you may want to use all of them for performance reasons.
-- **CPU caches.** Modern CPUs have multiple layers of cache (L1, L2, often L3, and rarely even L4). The lowest layer is shared between cores and is usually scaled with their number (e. g. a 10-core CPU should have around 10M of L3 cache).
+- **CPU registers**, which are the zero-time access data cells CPU uses to store all its intermediate values, can also be thought of as a memory type. There is only a limited number of them (e.g., just 16 "general purpose" ones), and in some cases, you may want to use all of them for performance reasons.
+- **CPU caches.** Modern CPUs have multiple layers of cache (L1, L2, often L3, and rarely even L4). The lowest layer is shared between cores and is usually scaled with their number (e.g., a 10-core CPU should have around 10M of L3 cache).
 - **Random access memory,** which is the first scalable type of memory: nowadays you can rent machines with half a terabyte of RAM on the public clouds. This is the one where most of your working data is supposed to be stored.
 
 The CPU cache system has an important concept of a *cache line*, which is the basic unit of data transfer between the CPU and the RAM. The size of a cache line is 64 bytes on most architectures, meaning that all main memory is divided into blocks of 64 bytes, and whenever you request (read or write) a single byte, you are also fetching all its 63 cache line neighbors whether your want them or not.

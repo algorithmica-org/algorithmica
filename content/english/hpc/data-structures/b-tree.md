@@ -289,7 +289,7 @@ We start at the size $10^4$ and end at $10^7$, for around $50$ data points in to
 
 <!--
 
-Keys are uniform, but we should not rely on that fact (e. g. using ).
+Keys are uniform, but we should not rely on that fact (e.g., using interpolation search).
 
 It is common that >90% of operations are lookups. Optimizing searches is important because every other operation starts with locating a key.
 

@@ -40,7 +40,7 @@ First, it outputs general information about the loop and the hardware:
 - It "ran" the loop 100 times, executing 400 instructions in total in 108 cycles, which is the same as executing $\frac{400}{108} \approx 3.7$ [instructions per cycle](/hpc/complexity/hardware) on average (IPC).
 - The CPU is theoretically capable of executing up to 6 instructions per cycle ([dispatch width](/hpc/architecture/layout)).
 - Each cycle in theory can be executed in 0.8 cycles on average ([block reciprocal throughput](/hpc/pipelining/tables)).
-- The "uOps" here are the micro-operations that CPU splits each instruction into (e. g. fused load-add is composed of two uOps).
+- The "uOps" here are the micro-operations that the CPU splits each instruction into (e.g., fused load-add is composed of two uOps).
 
 Then it proceeds to give information about each individual instruction: 
 

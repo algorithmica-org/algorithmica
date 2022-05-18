@@ -21,7 +21,7 @@ In general, when an optimization doesn't happen, it is usually because one of th
 
 - The compiler doesn't have enough information to know it will be beneficial.
 - The optimization is actually not always correct: there is an input on which the result doesn't comply with the spec, even if it is correct on every input that the programmer expects.
-- It isn't implemented in the compiler yet, either because it is too hard to implement in general, too costly to compute or too rare to be worth the trouble (e. g. writing a tiny library for some specific algorithm is usually better than hardcoding it into compiler).
+- It isn't implemented in the compiler yet, either because it is too hard to implement in general, too costly to compute or too rare to be worth the trouble (e.g., writing a tiny library for some specific algorithm is usually better than hardcoding it into compiler).
 
 In addition, optimization sometimes fails just due to the source code being overly complicated.
 

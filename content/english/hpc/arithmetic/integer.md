@@ -19,7 +19,7 @@ $$
 \end{aligned}
 $$
 
-When the result of an operation can't fit into the word size (e. g. is more or equal to $2^{32}$ for 32-bit unsigned integers), it *overflows* by leaving only the lowest 32 bits of the result. Similarly, if the result is a negative value, it *underflows* by adding it to $2^{32}$, so that it always stays in the $[0, 2^{32})$ range.
+When the result of an operation can't fit into the word size (e.g., is more or equal to $2^{32}$ for 32-bit unsigned integers), it *overflows* by leaving only the lowest 32 bits of the result. Similarly, if the result is a negative value, it *underflows* by adding it to $2^{32}$, so that it always stays in the $[0, 2^{32})$ range.
 
 This is equivalent to performing all operations modulo a power of two:
 
@@ -90,7 +90,7 @@ The bits of an integer are simply stored sequentially. The only ambiguity here i
 
 This seems like an important architecture aspect, but in most cases, it doesn't make a difference: just pick one style and stick with it. But in some cases it does:
 
-- Little-endian has the advantage that you can cast a value to a smaller type (e. g. `long long` to `int`) by just loading fewer bytes, which in most cases means doing nothing — thanks to *register aliasing*, `eax` refers to the first 4 bytes of `rax`, so conversion is essentially free. It is also easier to read values in a variety of type sizes — while on big-endian architectures, loading an `int` from a `long long` array would require shifting the pointer by 2 bytes.
+- Little-endian has the advantage that you can cast a value to a smaller type (e.g., `long long` to `int`) by just loading fewer bytes, which in most cases means doing nothing — thanks to *register aliasing*, `eax` refers to the first 4 bytes of `rax`, so conversion is essentially free. It is also easier to read values in a variety of type sizes — while on big-endian architectures, loading an `int` from a `long long` array would require shifting the pointer by 2 bytes.
 - Big-endian has the advantage that higher bytes are loaded first, which in theory can make highest-to-lowest routines such as comparisons and printing faster. You can also perform certain checks such as finding out whether a number is negative by only loading its first byte.
 
 Big-endian is also more "natural" — this is how we write binary numbers on paper — but the advantage of having faster type conversions outweigh it. For this reason, little-endian is used by default on most hardware, although some CPUs are "bi-endian" and can be configured to switch modes on demand.

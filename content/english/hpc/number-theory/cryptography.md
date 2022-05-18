@@ -30,7 +30,7 @@ There is an issue when establishing initial communication that the attacker coul
 
 Between your browser and a bank. "Hey this is a message from a bank."
 
-Trust networks. E. g. everyone can trust Google or whoever makes the device or operating system.
+Trust networks. E.g., everyone can trust Google or whoever makes the device or operating system.
 
 ## Symmetric Cryptography
 

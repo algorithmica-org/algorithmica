@@ -2,7 +2,7 @@
 
 Algorithmica is an open-access web book dedicated to the art and science of computing.
 
-You can contribute via [Prose](https://prose.io/) by clicking on the pencil icon on the top right on any page or by editing its source directly on GitHub. We use a slightly different Markdown dialect, so if you are not sure that the change is correct (e. g. editing an intricate LaTeX formula), you can install [Hugo](https://gohugo.io/) and build the site locally — or just create a pull request, and a preview link will be automatically generated for you.
+You can contribute via [Prose](https://prose.io/) by clicking on the pencil icon on the top right on any page or by editing its source directly on GitHub. We use a slightly different Markdown dialect, so if you are not sure that the change is correct (for example, editing an intricate LaTeX formula), you can install [Hugo](https://gohugo.io/) and build the site locally — or just create a pull request, and a preview link will be automatically generated for you.
 
 If you happen to speak Russian, please also read the [contributing guidelines](https://ru.algorithmica.org/contributing/).
 

@@ -95,7 +95,7 @@ for (int i = 0; i < 100; i += 4) {
 
 The main challenge of using SIMD is getting the data into contiguous fixed-sized blocks suitable for loading into registers. In the code above, we may in general have a problem if the length of the array is not divisible by the block size. There are two common solutions to this:
 
-1. We can "overshoot" by iterating over the last incomplete segment either way. To make sure we don't segfault by trying to read from or write to a memory region we don't own, we need to pad the arrays to the nearest block size (typically with some "neutral" element, e. g. zero).
+1. We can "overshoot" by iterating over the last incomplete segment either way. To make sure we don't segfault by trying to read from or write to a memory region we don't own, we need to pad the arrays to the nearest block size (typically with some "neutral" element, e.g., zero).
 2. Make one iteration less and write a little loop in the end that calculates the remainder normally (with scalar operations).
 
 Humans prefer #1 because it is simpler and results in less code, and compilers prefer #2 because they don't really have another legal option.
@@ -135,7 +135,7 @@ Also, some of the intrinsics don't map to a single instruction but a short seque
 
 <!--
 
-For example, the group of `extract` intrinsics that are used to get individual elements out of vectors: e. g. `_mm256_extract_epi32(x, 0)` returns the first element out of 8-integer vector. t is quite slow (~5 cycles) to move data between "normal" and SIMD registers in general.
+For example, the group of `extract` intrinsics that are used to get individual elements out of vectors: e g., `_mm256_extract_epi32(x, 0)` returns the first element out of 8-integer vector. t is quite slow (~5 cycles) to move data between "normal" and SIMD registers in general.
 
 -->
 

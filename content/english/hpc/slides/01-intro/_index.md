@@ -151,7 +151,7 @@ Also a clear path to improvement: just make lenses stronger and chips smaller
 
 $\implies$ Each new "generation" should have roughly the same total cost, but 40% higher clock and twice as many transistors
 
-(which can be used e. g. to add new instructions or increase the word size) <!-- .element: class="fragment" data-fragment-index="1" -->
+(which can be used, e.g., to add new instructions or increase the word size) <!-- .element: class="fragment" data-fragment-index="1" -->
 
 ----
 
