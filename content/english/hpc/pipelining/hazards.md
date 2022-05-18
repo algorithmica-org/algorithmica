@@ -20,6 +20,6 @@ Different hazards have different penalties:
 
 - In structural hazards, you have to wait (usually one more cycle) until the execution unit is ready. They are fundamental bottlenecks on performance and can't be avoided — you have to engineer around them.
 - In data hazards, you have to wait for the required data to be computed (the latency of the *critical path*). Data hazards are solved by restructuring computations so that the critical path is shorter.
-- In control hazards, you generally have to flush the entire pipeline and start over, wasting whole 15-20 cycles. They are solved by either removing branches completely, or making them predictable so that the CPU can effectively *speculate* on what is going to be executed next.
+- In control hazards, you generally have to flush the entire pipeline and start over, wasting a whole 15-20 cycles. They are solved by either removing branches completely, or making them predictable so that the CPU can effectively *speculate* on what is going to be executed next.
 
-As they have very different impact on performance, we are going to go in the reversed order and start with the more grave ones.
+As they have very different impacts on performance, we are going to go in the reversed order and start with the more grave ones.

@@ -32,7 +32,7 @@ Suddenly, the loop now takes ~7 cycles per element instead of the original ~14. 
 
 But wait… shouldn't there still be a branch? How does `(a[i] < 50)` map to assembly?
 
-There are no boolean types in assembly, nor any instructions that yield either one or zero based on the result of the comparison, but we can compute it indirectly like this: `(a[i] - 50) >> 31`. This trick relies on the [binary representation of integers](/hpc/arithmetic/integer), specifically on the fact that if the expression `a[i] - 50` is negative (implying `a[i] < 50`), then the highest bit of the result will be set to one, which we can then extract using a right-shift.
+There are no Boolean types in assembly, nor any instructions that yield either one or zero based on the result of the comparison, but we can compute it indirectly like this: `(a[i] - 50) >> 31`. This trick relies on the [binary representation of integers](/hpc/arithmetic/integer), specifically on the fact that if the expression `a[i] - 50` is negative (implying `a[i] < 50`), then the highest bit of the result will be set to one, which we can then extract using a right-shift.
 
 ```nasm
 mov  ebx, eax   ; t = x
@@ -101,7 +101,7 @@ In our example, the branchy code wins when the branch can be predicted with a pr
 
 ![](../img/branchy-vs-branchless.svg)
 
-This 75% threshold is commonly used by the compilers as a heuristic for determining whether to use the `cmov` or not. Unfortunately, this probability is usually unknown at the compile-time, so it needs to be provided in one of several ways:
+This 75% threshold is commonly used by the compilers as a heuristic for determining whether to use the `cmov` or not. Unfortunately, this probability is usually unknown at the compile time, so it needs to be provided in one of several ways:
 
 - We can use [profile-guided optimization](/hpc/compilation/situational/#profile-guided-optimization) which will decide for itself whether to use predication or not.
 - We can use [likeliness attributes](../branching#hinting-likeliness-of-branches) and [compiler-specific intrinsics](/hpc/compilation/situational) to hint at the likeliness of branches: `__builtin_expect_with_probability` in GCC and `__builtin_unpredictable` in Clang.

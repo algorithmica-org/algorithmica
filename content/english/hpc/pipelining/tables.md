@@ -14,7 +14,7 @@ In this context, it makes sense to use two different "[costs](/hpc/complexity)" 
 
 <!-- alternative throughput definitions, maybe in scheduling? -->
 
-You can get latency and throughput numbers for a specific architecture from special documents called [instruction tables](https://www.agner.org/optimize/instruction_tables.pdf). Here are some samples values for my Zen 2 (all specified for 32-bit operands, if there is any difference):
+You can get latency and throughput numbers for a specific architecture from special documents called [instruction tables](https://www.agner.org/optimize/instruction_tables.pdf). Here are some sample values for my Zen 2 (all specified for 32-bit operands, if there is any difference):
 
 | Instruction | Latency | RThroughput |
 |-------------|---------|:------------|
@@ -34,7 +34,7 @@ Some comments:
 - If a certain instruction is especially frequent, its execution unit could be duplicated to increase its throughput — possibly to even more than one, but not higher than the [decode width](/hpc/architecture/layout).
 - Some instructions have a latency of 0. This means that these instruction are used to control the scheduler and don't reach the execution stage. They still have non-zero reciprocal throughput because the [CPU front-end](/hpc/architecture/layout) still needs to process them.
 - Most instructions are pipelined, and if they have the reciprocal throughput of $n$, this usually means that their execution unit can take another instruction after $n$ cycles (and if it is below 1, this means that there are multiple execution units, all capable of taking another instruction on the next cycle). One notable exception is the [integer division](/hpc/arithmetic/division): it is either very poorly pipelined or not pipelined at all.
-- Some instructions have variable latency, depending on not only the size, but also the values of the operands. For memory operations (including fused ones like `add`), latency is usually specified for the best case (an L1 cache hit).
+- Some instructions have variable latency, depending on not only the size, but also the values of the operands. For memory operations (including fused ones like `add`), the latency is usually specified for the best case (an L1 cache hit).
 
 There are many more important little details, but this mental model will suffice for now.
 

@@ -18,7 +18,7 @@ The hardware stack works the same way software stacks do and is similarly implem
 - The *base pointer* marks the start of the stack and is conventionally stored in `rbp`.
 - The *stack pointer* marks the last element of the stack and is conventionally stored in `rsp`.
 
-When you need to call a function, you push all your local variables onto the stack (which you can also do in other circumstances, e. g. when you run out of registers), push the current instruction pointer, and then jump to the beginning of the function. When exiting from a function, you look at the pointer stored on top of the stack, jump there, and then carefully read all the variables stored on the stack back into their registers.
+When you need to call a function, you push all your local variables onto the stack (which you can also do in other circumstances, e.g. when you run out of registers), push the current instruction pointer, and then jump to the beginning of the function. When exiting from a function, you look at the pointer stored on top of the stack, jump there, and then carefully read all the variables stored on the stack back into their registers.
 
 <!--
 
@@ -94,7 +94,7 @@ Note that the data in the stack is written top-to-bottom. This is just a convent
 
 ### Calling Conventions
 
-The people who develop compilers and operating systems eventually came up with [conventions](https://wiki.osdev.org/Calling_Conventions) on how to write and call functions. These conventions enable some important [software engineering marvels](/hpc/compilation/stages/) such as splitting compilation into separate units, re-using already compiled libraries, and even writing them in different programming languages.
+The people who develop compilers and operating systems eventually came up with [conventions](https://wiki.osdev.org/Calling_Conventions) on how to write and call functions. These conventions enable some important [software engineering marvels](/hpc/compilation/stages/) such as splitting compilation into separate units, reusing already-compiled libraries, and even writing them in different programming languages.
 
 Consider the following example in C:
 
@@ -142,7 +142,7 @@ length:
 ```
 -->
 
-By convention, a function should take its arguments in `rdi`, `rsi`, `rdx`, `rcx`, `r8`, `r9` (and the rest in the stack if that wasn't enough), put the return value into `rax`, and then return. Thus, `square`, being a simple one-argument function, can be implemented like this:
+By convention, a function should take its arguments in `rdi`, `rsi`, `rdx`, `rcx`, `r8`, `r9` (and the rest in the stack if those weren't enough), put the return value into `rax`, and then return. Thus, `square`, being a simple one-argument function, can be implemented like this:
 
 ```nasm
 square:             ; x = edi, ret = eax
@@ -190,7 +190,7 @@ distance:
     ret
 ```
 
-This is better, but we are still implicitly accessing stack memory: you need to push and pop the instruction pointer on each function call. In simple cases like this, we can *inline* function calls by stitching callee's code into the caller and resolving conflicts over registers. In our example:
+This is better, but we are still implicitly accessing stack memory: you need to push and pop the instruction pointer on each function call. In simple cases like this, we can *inline* function calls by stitching the callee's code into the caller and resolving conflicts over registers. In our example:
 
 ```nasm
 distance:
