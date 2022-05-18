@@ -77,7 +77,7 @@ This potentially wastes space but saves a lot of CPU cycles. This trade-off is m
 
 ### Optimizing Member Order
 
-Padding is only inserted before a not-yet-aligned member or at the end of the structure. By changing the ordering of members in a structure, it is possible to change the required amount of padding bytes and the total size of the structure.
+Padding is only inserted before a not-yet-aligned member or at the end of the structure. By changing the ordering of members in a structure, it is possible to change the required number of padding bytes and the total size of the structure.
 
 In the previous example, we could reorder the structure members like this:
 

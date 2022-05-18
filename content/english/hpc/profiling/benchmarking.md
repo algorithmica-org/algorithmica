@@ -186,4 +186,4 @@ plt.plot(ns, [x / y for x, y in zip(baseline, results)])
 plt.show()
 ```
 
-Once established, this workflow makes you iterate much faster and just focus on optimizing the algorithm itself.
+Once established, this workflow makes you iterate much faster and focus on optimizing the algorithm itself.

@@ -313,7 +313,7 @@ Here we query the array of $[1, …, 8]$ for the lower bound of $x=4$. We compar
 
 The trick is to notice that, unless the answer is the last element of the array, we compare $x$ against it at some point, and after we've learned that it is not less than $x$, we start comparing $x$ against elements to the left, and all these comparisons evaluate true (that is, leading to the right). Therefore, to restore the answer, we just need to "cancel" some number of right turns.
 
-This can be done in an elegant way by observing that the right turns are recorded in the binary representation of $k$ as 1-bits, and so we just need to find the number of trailing ones in the binary representation and right-shift $k$ by exactly that amount. To do this, we can invert the number (`~k`) and call the "find first set" instruction:
+This can be done in an elegant way by observing that the right turns are recorded in the binary representation of $k$ as 1-bits, and so we just need to find the number of trailing ones in the binary representation and right-shift $k$ by exactly that. To do this, we can invert the number (`~k`) and call the "find first set" instruction:
 
 ```c++
 int lower_bound(int x) {

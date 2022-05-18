@@ -37,7 +37,7 @@ constexpr int fibonacci(int n) {
 }
 ```
 
-There used to be much more limitations in earlier C++ standards, like you could not use any sort of state inside them and had to rely on recursion, so the whole process felt more like Haskell programming rather than C++. Since C++17, you can even compute static arrays using the imperative style, which is useful for precomputing lookup tables:
+There used to be many more limitations in earlier C++ standards, like you could not use any sort of state inside them and had to rely on recursion, so the whole process felt more like Haskell programming rather than C++. Since C++17, you can even compute static arrays using the imperative style, which is useful for precomputing lookup tables:
 
 ```c++
 struct Precalc {

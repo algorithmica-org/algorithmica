@@ -175,7 +175,7 @@ The general idea of our algorithm is as follows:
 - use this mask to index a lookup table that returns a permutation moving the elements that satisfy the predicate to the beginning of the vector (in their original order);
 - use the `_mm256_permutevar8x32_epi32` intrinsic to permute the values;
 - write the whole permuted vector to the buffer — it may have some trailing garbage, but its prefix is correct;
-- calculate the population count of the scalar mask and move the buffer pointer by that amount.
+- calculate the population count of the scalar mask and move the buffer pointer by that number.
 
 First, we need to precompute the permutations:
 

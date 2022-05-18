@@ -174,7 +174,7 @@ The AoS layout is usually preferred for data structures, but SoA still has good 
 
 This difference in design is important in data processing applications. For example, databases can be either *row-* or *column-oriented* (also called *columnar*):
 
-- *Row-oriented* storage formats are used when you need to search for a limited amount of objects in a large dataset and fetch all or most of their fields. Examples: PostgreSQL, MongoDB.
+- *Row-oriented* storage formats are used when you need to search for a limited number of objects in a large dataset and/or fetch all or most of their fields. Examples: PostgreSQL, MongoDB.
 - *Columnar* storage formats are used for big data processing and analytics, where you need to scan through everything anyway to calculate certain statistics. Examples: ClickHouse, Hbase.
 
 Columnar formats have the additional advantage that you can only read the fields that you need, as different fields are stored in separate external memory regions.
