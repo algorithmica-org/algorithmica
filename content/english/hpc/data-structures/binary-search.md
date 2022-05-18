@@ -286,7 +286,9 @@ This function takes the current node number `k`, recursively writes out all elem
 
 Despite being recursive, it is actually quite fast as all the memory reads are sequential, and the memory writes are only in $O(\log n)$ different memory blocks at a time.
 
-Note that the Eytzinger array is one-indexed — this will be important for performance later. You can put in the zeroth element the value that you want to be returned in the case when the lower bound doesn't exist (similar to `a.end()` for `std::lower_bound`).
+Note that this traversal and the resulting permutation are not exactly equivalent to the "tree" of vanilla binary search: for example, the left child subtree may be larger than the right child subtree — and even more than just by one node — but it doesn't matter since both approaches result in the same logarithmic tree depth.
+
+Also note that the Eytzinger array is one-indexed — this will be important for performance later. You can put in the zeroth element the value that you want to be returned in the case when the lower bound doesn't exist (similar to `a.end()` for `std::lower_bound`).
 
 ### Search Implementation
 
@@ -302,18 +304,18 @@ The only problem arises when we need to restore the index of the resulting eleme
 
 ```
     array:  1 2 3 4 5 6 7 8
-eytzinger:  4 2 5 1 6 3 7 8
+eytzinger:  5 3 7 2 4 6 8 1
 1st range:  ---------------  k := 1
 2nd range:  -------          k := 2*k      (=2)
 3rd range:      ---          k := 2*k + 1  (=5)
-4th range:        -          k := 2*k + 1  (=11)
+4th range:        -          k := 2*k      (=10)
 ```
 
-Here we query the array of $[1, …, 8]$ for the lower bound of $x=4$. We compare it against $4$, $2$, and $5$, go left-right-right, and end up with $k = 11$, which isn't even a valid array index.
+Here we query the array of $[1, …, 8]$ for the lower bound of $x=4$. We compare it against $5$, $3$, and $4$, go left-right-left, and end up with $k = 10$, which isn't even a valid array index.
 
 The trick is to notice that, unless the answer is the last element of the array, we compare $x$ against it at some point, and after we've learned that it is not less than $x$, we start comparing $x$ against elements to the left, and all these comparisons evaluate true (that is, leading to the right). Therefore, to restore the answer, we just need to "cancel" some number of right turns.
 
-This can be done in an elegant way by observing that the right turns are recorded in the binary representation of $k$ as 1-bits, and so we just need to find the number of trailing ones in the binary representation and right-shift $k$ by exactly that. To do this, we can invert the number (`~k`) and call the "find first set" instruction:
+This can be done in an elegant way by observing that the right turns are recorded in the binary representation of $k$ as 1-bits, and so we just need to find the number of trailing 1s in the binary representation and right-shift $k$ by exactly that number of bits. To do this, we can invert the number (`~k`) and call the "find first set" instruction:
 
 ```c++
 int lower_bound(int x) {
