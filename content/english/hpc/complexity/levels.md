@@ -40,3 +40,25 @@ Programmers can be put in several "levels" in terms of their software optimizati
 In this book, we expect that the average reader is somewhere around stage 1, and hopefully by the end of it will get to 4.
 
 You should also go through these levels when designing algorithms. First get it working in the first place, then select a bunch of reasonably asymptotically optimal algorithm. Then think about how they are going to work in terms of their memory operations or ability to execute in parallel (even if you consider single-threaded programs, there is still going to be plenty of parallelism inside a core, so this model is extremely ), and then proceed toward actual implementation. Avoid premature optimization, as Knuth once said.
+
+---
+
+For most web services, efficiency doesn't matter, but *latency* does.
+
+Increasing efficiency is not how it is done nowadays.
+
+A pageview usually generates somewhere on the order of 0.1 to 1 cent per pageview. This is a typical rate at which you monetize user attention. Say, if I simply installed AdSense, i'd be getting something like that — depending on where most of my readers are from and how many of them are using an ad blocker.
+
+At the same time, a server with a dedicated core and 1GB of ram (which is an absurdly large amount of resources for a simple web service) costs around one millionth per second when amortized. You could fetch 100 photos with that.
+
+Amazon had an experiment where they A/B tested their service with artificial delays and found out that a 100ms delay decreased revenue. This follows for most other services, say, you lose your "flow" at twitter, the user is likely to start thinking on something else and leave. If the delay at Google is more than a few seconds, people will just think that Google isn't working and quit.
+
+Minimization of latency can be usually done with parallel computing, which is why distributed systems are scaled more on scalability. This part of the book is concerned with improving *efficiency* of algorithms, which makes latency lower as the by-product.
+
+However, there are still use cases when there is a trade-off between quality and cost of servers.
+
+- Search is hierarchical. There are usually many layers of more accurate but slower models. The more documents you rank on each layer, the better the final quality.
+- Games. They are more enjoyable on large scale, but computational power also increases. This includes AI.
+- AI workloads — those that have large quantities of data such as language models. Heavier models require more compute. The bottleneck in them is not the number of data, but efficiencty.
+
+Inherently sequential algorithms, or cases when the resources are constrained. Ctrl+f'ing a large PDF is painful. Factorization.
