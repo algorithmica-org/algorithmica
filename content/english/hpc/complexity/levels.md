@@ -62,3 +62,17 @@ However, there are still use cases when there is a trade-off between quality and
 - AI workloads — those that have large quantities of data such as language models. Heavier models require more compute. The bottleneck in them is not the number of data, but efficiencty.
 
 Inherently sequential algorithms, or cases when the resources are constrained. Ctrl+f'ing a large PDF is painful. Factorization.
+
+## Estimating the impact
+
+Sometime the optimization needs to happen in the calling layer.
+
+SIMDJSON speeds up JSON parsing, but it may be better to not use JSON in the first place.
+
+Protobuf or flat binary formats.
+
+There is also a chicken and egg problem: people don't use an approach that much because it is slow and not feasible.
+
+Cost to implement, bugs, maintainability. It is perfectly fine that most software in the world is inefficient.
+
+What does it mean to be a better programmer? Faster programs? Faster speed of work? Fewer bugs? It is a combination of those.
