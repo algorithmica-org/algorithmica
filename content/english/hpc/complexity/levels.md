@@ -76,3 +76,5 @@ There is also a chicken and egg problem: people don't use an approach that much 
 Cost to implement, bugs, maintainability. It is perfectly fine that most software in the world is inefficient.
 
 What does it mean to be a better programmer? Faster programs? Faster speed of work? Fewer bugs? It is a combination of those.
+
+Implementing compiler optimizations or databases are examples of high-leverage activities because they act as a tax on everything else — which is why you see most people writing books on these particular topics rather than software optimization in general.
