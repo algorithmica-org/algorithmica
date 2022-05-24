@@ -4,42 +4,59 @@ weight: 3
 draft: true
 ---
 
-Integer factorization is interesting because of RSA problem.
+The problem of factoring integers into primes is central to computational [number theory](/hpc/number-theory/). It has been [studied](https://www.cs.purdue.edu/homes/ssw/chapter3.pdf) since at least the 3rd century BC, and [many methods](https://en.wikipedia.org/wiki/Category:Integer_factorization_algorithms) have been developed that are efficient for different inputs.
 
-"How big are your numbers?" determines the method to use:
+In this case study, we specifically consider the factorization of *word-sized* integers: those on the order of $10^9$ and $10^{18}$. Untypical for this book, in this one, you may actually learn an asymptotically better algorithm: we start with a few basic approaches, and then gradually build up to the $O(\sqrt[4]{n})$-time *Pollard's rho algorithm* and optimize it to the point where it can factorize 60-bit semiprimes in 0.3-0.4ms, which is almost 4x faster than the previous state-of-the-art.
 
-- Less than 2^16 or so: Lookup table.
-- Less than 2^70 or so: Richard Brent's modification of Pollard's rho algorithm.
-- Less than 10^50: Lenstra elliptic curve factorization
-- Less than 10^100: Quadratic Sieve
-- More than 10^100: General Number Field Sieve
+<!--
+Integer factorization is interesting because of the RSA problem.
+Unlike other case studies of this book, in this one you will actually learn an asymptotically better algorithm that you've never known before — Pollard's rho algorithm — which we optimize so that it is almost 4 times faster than the existing implementation, to the best of my knowledge.
+-->
 
-and do other computations such as computing the greatest common multiple (given that it is not even so that ) (since $\gcd(n, r) = 1$)
+### Benchmark
 
-For all methods, we will implement `find_factor` function which returns one divisor ot 1. You can apply it recurively to get the factorization, so whatever asymptotic you had won't affect it:
-
-```c++
-typedef uint32_t u32;
-typedef uint64_t u64;
-typedef __uint128_t u128;
-
-vector<u64> factorize(u64 n) {
-    vector<u64> res;
-    while (int d = find_factor(n); d > 1) // does it work?
-        res.push_back(d);
-    return res;
-}
-```
-
-0.056024
-2043.968140
+For all methods, we will implement `find_factor` function that takes a positive integer $n$ and returns either its smallest divisor (or `1` if the number is prime):
 
 ```c++
+// I don't feel like typing "unsigned long long" each time
 typedef __uint16_t u16;
 typedef __uint32_t u32;
 typedef __uint64_t u64;
 typedef __uint128_t u128;
 
+u64 find_factor(u64 n);
+```
+
+To find full factorization, you can apply it to $n$, reduce it, and continue until a new factor can no longer be found:
+
+```c++
+vector<u64> factorize(u64 n) {
+    vector<u64> factorization;
+    do {
+        u64 d = find_factor(n);
+        factorization.push_back(d);
+        n /= d;
+    } while (d != 1);
+    return factorization;
+}
+```
+
+Since after each removed factor the problem becomes considerably smaller and simpler, the worst-case running time of full factorization is equal to the worst-case running time of a `find_factor` call. 
+
+For many factorization algorithms, including those presented in this article, the running time scales with the least prime factor. Therefore, to provide worst-case input, we use *semiprimes:* products of two prime numbers $p \le q$ that are on the same order of magnitude. To generate a $k$-bit semiprime, we generate two random $\lfloor k / 2 \rfloor$-bit primes.
+
+Since some of the algorithms are inherently randomized, we also tolerate a small (<1%) percentage of errors, although they can be reduced to almost zero without significant performance penalties.
+
+### Trial division
+
+Trial division was first described by Fibonacci in 1202. Although it was probably known to animals. Perhaps some animals can factor? The scientific priority probably belongs to dinosaurs or ancient fish trying to divvy stuff up.
+
+I tried finding references to who invented trial division, but probably it was known to animals long before to split into equal parts.
+
+0.056024
+2043.968140
+
+```c++
 u64 find_factor(u64 n) {
     for (u64 d = 2; d * d <= n; d++)
         if (n % d == 0)
@@ -47,8 +64,6 @@ u64 find_factor(u64 n) {
     return 1;
 }
 ```
-
-## Trial division
 
 This is the most basic algorithm to find a prime factorization.
 
@@ -434,3 +449,14 @@ u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
 There are slightly more errors because we are a bit loose with modular arithmetic here. The error rate grows higher when we increase and decrease (due to overflows).
 
 788.4861246275735
+
+### Larger Numbers
+
+"How big are your numbers?" determines the method to use:
+
+
+- Less than 2^16 or so: Lookup table.
+- Less than 2^70 or so: Richard Brent's modification of Pollard's rho algorithm.
+- Less than 10^50: Lenstra elliptic curve factorization
+- Less than 10^100: Quadratic Sieve
+- More than 10^100: General Number Field Sieve
