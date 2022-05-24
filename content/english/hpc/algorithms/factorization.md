@@ -14,7 +14,6 @@ Integer factorization is interesting because of RSA problem.
 - Less than 10^100: Quadratic Sieve
 - More than 10^100: General Number Field Sieve
 
-
 and do other computations such as computing the greatest common multiple (given that it is not even so that ) (since $\gcd(n, r) = 1$)
 
 For all methods, we will implement `find_factor` function which returns one divisor ot 1. You can apply it recurively to get the factorization, so whatever asymptotic you had won't affect it:
@@ -29,6 +28,23 @@ vector<u64> factorize(u64 n) {
     while (int d = find_factor(n); d > 1) // does it work?
         res.push_back(d);
     return res;
+}
+```
+
+0.056024
+2043.968140
+
+```c++
+typedef __uint16_t u16;
+typedef __uint32_t u32;
+typedef __uint64_t u64;
+typedef __uint128_t u128;
+
+u64 find_factor(u64 n) {
+    for (u64 d = 2; d * d <= n; d++)
+        if (n % d == 0)
+            return d;
+    return 1;
 }
 ```
 
@@ -193,3 +209,228 @@ This is exactly the type of problem when we need specific knowledge, because we 
 ## Further optimizations
 
 Существуют также [субэкспоненциальные](https://ru.wikipedia.org/wiki/%D0%A4%D0%B0%D0%BA%D1%82%D0%BE%D1%80%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F_%D1%86%D0%B5%D0%BB%D1%8B%D1%85_%D1%87%D0%B8%D1%81%D0%B5%D0%BB#%D0%A1%D1%83%D0%B1%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%86%D0%B8%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B5_%D0%B0%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC%D1%8B), но не полиномиальные алгоритмы факторизации. Человечество [умеет](https://en.wikipedia.org/wiki/Integer_factorization_records) факторизовывать числа порядка $2^{200}$.
+
+
+---
+
+If you have limited time, you should probably compute as much forward as possible, and then half the time computing the other.
+
+How to optimize for the *average* case is unclear.
+
+0.087907
+3964.321045
+
+```c++
+u64 find_factor(u64 n) {
+    if (n % 2 == 0)
+        return 2;
+    for (u64 d = 3; d * d <= n; d += 2)
+        if (n % d == 0)
+            return d;
+    return 1;
+}
+```
+
+0.199740
+7615.217773
+
+```c++
+u64 find_factor(u64 n) {
+    for (u64 d : {2, 3, 5})
+        if (n % d == 0)
+            return d;
+    u64 increments[] = {0, 4, 6, 10, 12, 16, 22, 24};
+    for (u64 d = 7; d * d <= n; d += 30) {
+        for (u64 k = 0; k < 8; k++) {
+            u64 x = d + increments[k];
+            if (n % x == 0)
+                return x;
+        }
+    }
+    return 1;
+}
+```
+
+19430.058594
+
+```c++
+const int N = (1 << 16);
+
+struct Precalc {
+    u16 primes[6542]; // # of primes under N=2^16
+
+    constexpr Precalc() : primes{} {
+        bool marked[N] = {};
+        int n_primes = 0;
+
+        for (int i = 2; i < N; i++) {
+            if (!marked[i]) {
+                primes[n_primes++] = i;
+                for (int j = 2 * i; j < N; j += i)
+                    marked[j] = true;
+            }
+        }
+    }
+};
+
+constexpr Precalc P{};
+
+u64 find_factor(u64 n) {
+    for (u16 p : P.primes)
+        if (n % p == 0)
+            return p;
+    return 1;
+}
+```
+
+352997.656250
+
+```c++
+u64 magic[6542];
+magic[n_primes++] = u64(-1) / i + 1;
+
+u64 find_factor(u64 n) {
+    for (u64 m : P.magic)
+        if (m * n < m)
+            return u64(-1) / m + 1;
+    return 1;
+}
+```
+
+Except that it is contant, so the speedup should be twice as much.
+
+---
+
+```c++
+u64 find_factor(u64 n) {
+    while (true) {
+        if (u64 g = gcd(randint(2, n - 1), n); g != 1)
+            return g;
+    }
+}
+```
+
+99.292641
+25720.164062 almost 15x slower
+
+```c++
+u64 f(u64 x, u64 a, u64 mod) {
+    return ((u128) x * x + a) % mod;
+}
+
+u64 diff(u64 a, u64 b) {
+    // a and b are unsigned and so is their difference, so we can't just call abs(a - b)
+    return a > b ? a - b : b - a;
+}
+
+u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
+    u64 x = x0, y = x0, g = 1;
+    while (g == 1) {
+        x = f(x, a, n);
+        y = f(y, a, n);
+        y = f(y, a, n);
+        g = gcd(diff(x, y));
+    }
+    return g;
+}
+
+u64 find_factor(u64 n) {
+    return rho(n);
+}
+```
+
+56.745281
+
+```c++
+u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
+    u64 x = x0, y = x0;
+    
+    for (int l = 256; l < (1 << 20); l *= 2) {
+        x = y;
+        for (int i = 0; i < l; i++) {
+            y = f(y, a, n);
+            if (u64 g = gcd(diff(x, y), n); g != 1)
+                return g;
+        }
+    }
+
+    return 1;
+}
+```
+
+426.389160
+
+```c++
+const int M = 1024;
+
+u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
+    u64 x = x0, y = x0, p = 1;
+    
+    for (int l = M; l < (1 << 20); l *= 2) {
+        x = y;
+        for (int i = 0; i < l; i += M) {
+            for (int j = 0; j < M; j++) {
+                y = f(y, a, n);
+                p = (u128) p * diff(x, y) % n;
+            }
+            if (u64 g = gcd(p, n); g != 1)
+                return g;
+        }
+    }
+
+    return 1;
+}
+```
+
+2948.260986
+
+```c++
+struct Montgomery {
+    u64 n, nr;
+    
+    Montgomery(u64 n) : n(n) {
+        nr = 1;
+        for (int i = 0; i < 6; i++)
+            nr *= 2 - n * nr;
+    }
+
+    u64 reduce(u128 x) const {
+        u64 q = u64(x) * nr;
+        u64 m = ((u128) q * n) >> 64;
+        return (x >> 64) + n - m;
+    }
+
+    u64 multiply(u64 x, u64 y) {
+        return reduce((u128) x * y);
+    }
+};
+
+u64 f(u64 x, u64 a, Montgomery m) {
+    return m.multiply(x, x) + a;
+}
+
+const int M = 1024;
+
+u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
+    Montgomery m(n);
+    u64 y = x0;
+    
+    for (int l = M; l < (1 << 20); l *= 2) {
+        u64 x = y, p = 1;
+        for (int i = 0; i < l; i += M) {
+            for (int j = 0; j < M; j++) {
+                y = f(y, a, m);
+                p = m.multiply(p, diff(x, y));
+            }
+            if (u64 g = gcd(p, n); g != 1)
+                return g;
+        }
+    }
+
+    return 1;
+}
+```
+
+There are slightly more errors because we are a bit loose with modular arithmetic here. The error rate grows higher when we increase and decrease (due to overflows).
+
+788.4861246275735
