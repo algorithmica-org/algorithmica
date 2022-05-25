@@ -271,12 +271,13 @@ u64 diff(u64 a, u64 b) {
     return a > b ? a - b : b - a;
 }
 
+const u64 SEED = 42;
+
 u64 find_factor(u64 n) {
-    u64 x = x0, y = x0, g = 1;
+    u64 x = SEED, y = SEED, g = 1;
     while (g == 1) {
-        x = f(x, a, n);
-        y = f(y, a, n);
-        y = f(y, a, n);
+        x = f(f(x, n), n); // advance x twice
+        y = f(y, n);       // advance y once
         g = gcd(diff(x, y));
     }
     return g;
@@ -290,13 +291,13 @@ While it processes 25k 30-bit numbers — almost 15 times slower than the fastes
 Floyd's cycle-finding algorithm has a problem in that it does more iterator increments than necessary. One way to solve it is to memorize the values that the faster iterator visits and compute the gcd using the difference of $x_i$ and $x_{\lfloor i / 2 \rfloor}$, but it can also be done without extra memory using this trick:
 
 ```c++
-u64 find_factor(u64 n, u64 x0 = 2, u64 a = 1) {
-    u64 x = x0, y = x0;
+u64 find_factor(u64 n) {
+    u64 x = SEED;
     
     for (int l = 256; l < (1 << 20); l *= 2) {
-        x = y;
+        u64 y = x;
         for (int i = 0; i < l; i++) {
-            y = f(y, a, n);
+            x = f(x, n);
             if (u64 g = gcd(diff(x, y), n); g != 1)
                 return g;
         }
@@ -313,14 +314,14 @@ We can remove the logarithm from the asymptotic using the fact that if one of $a
 ```c++
 const int M = 1024;
 
-u64 find_factor(u64 n, u64 x0 = 2, u64 a = 1) {
-    u64 x = x0, y = x0, p = 1;
+u64 find_factor(u64 n) {
+    u64 x = SEED;
     
     for (int l = M; l < (1 << 20); l *= 2) {
-        x = y;
+        u64 y = x, p = 1;
         for (int i = 0; i < l; i += M) {
             for (int j = 0; j < M; j++) {
-                y = f(y, a, n);
+                y = f(y, n);
                 p = (u128) p * diff(x, y) % n;
             }
             if (u64 g = gcd(p, n); g != 1)
@@ -339,6 +340,8 @@ It now works at 425 factorizations per second, bottlenecked by the speed of modu
 The next step is to actually apply [Montgomery Multiplication](/hpc/number-theory/montgomery/).
 
 This is exactly the type of problem when we need specific knowledge, because we have 64-bit modulo by not-compile-constants, and compiler can't really do much to optimize it.
+
+We do not need to convert numbers out of Montgomery representation before computing the GCD.
 
 ```c++
 struct Montgomery {
@@ -369,13 +372,13 @@ const int M = 1024;
 
 u64 find_factor(u64 n, u64 x0 = 2, u64 a = 1) {
     Montgomery m(n);
-    u64 y = x0;
+    u64 x = SEED;
     
     for (int l = M; l < (1 << 20); l *= 2) {
-        u64 x = y, p = 1;
+        u64 y = x, p = 1;
         for (int i = 0; i < l; i += M) {
             for (int j = 0; j < M; j++) {
-                y = f(y, a, m);
+                x = f(x, m);
                 p = m.multiply(p, diff(x, y));
             }
             if (u64 g = gcd(p, n); g != 1)
