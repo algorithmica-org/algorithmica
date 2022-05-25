@@ -302,12 +302,12 @@ while (k <= n)
 
 The only problem arises when we need to restore the index of the resulting element, as $k$ may end up not pointing to a leaf node. Here is an example of how that can happen:
 
-```
-    array:  1 2 3 4 5 6 7 8
-eytzinger:  5 3 7 2 4 6 8 1
-1st range:  ---------------  k := 1
-2nd range:  -------          k := 2*k      (=2)
-3rd range:      ---          k := 2*k + 1  (=5)
+```center
+    array:  1 2 3 4 5 6 7 8                     
+eytzinger:  5 3 7 2 4 6 8 1                     
+1st range:  ---------------  k := 1             
+2nd range:  -------          k := 2*k      (=2) 
+3rd range:      ---          k := 2*k + 1  (=5) 
 4th range:        -          k := 2*k      (=10)
 ```
 
