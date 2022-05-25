@@ -15,7 +15,7 @@ Unlike other case studies of this book, in this one you will actually learn an a
 
 ### Benchmark
 
-For all methods, we will implement `find_factor` function that takes a positive integer $n$ and returns either its smallest divisor (or `1` if the number is prime):
+For all methods, we will implement `find_factor` function that takes a positive integer $n$ and returns any of its non-trivial divisors (or `1` if the number is prime):
 
 ```c++
 // I don't feel like typing "unsigned long long" each time
@@ -45,16 +45,30 @@ Since after each removed factor the problem becomes considerably smaller and sim
 
 For many factorization algorithms, including those presented in this article, the running time scales with the least prime factor. Therefore, to provide worst-case input, we use *semiprimes:* products of two prime numbers $p \le q$ that are on the same order of magnitude. To generate a $k$-bit semiprime, we generate two random $\lfloor k / 2 \rfloor$-bit primes.
 
-Since some of the algorithms are inherently randomized, we also tolerate a small (<1%) percentage of errors, although they can be reduced to almost zero without significant performance penalties.
+Since some of the algorithms are inherently randomized, we also tolerate a small (<1%) percentage of false negative errors (when `find_factor` returns `1` despite number $n$ being composite), although this rate can be reduced to almost zero without significant performance penalties.
 
 ### Trial division
 
+<!--
+
 Trial division was first described by Fibonacci in 1202. Although it was probably known to animals. Perhaps some animals can factor? The scientific priority probably belongs to dinosaurs or ancient fish trying to divvy stuff up.
 
-I tried finding references to who invented trial division, but probably it was known to animals long before to split into equal parts.
-
 0.056024
-2043.968140
+
+-->
+
+The most basic approach is to try every number less than $n$ as a divosor:
+
+```c++
+u64 find_factor(u64 n) {
+    for (u64 d = 2; d < n; d++)
+        if (n % d == 0)
+            return d;
+    return 1;
+}
+```
+
+One simple optimization is to notice that it is enough to only check divisors that do not exceed $\sqrt n$. This works because if $n$ is divided by $d > \sqrt n$, then it is also divided by $\frac{n}{d} < \sqrt n$, so we can don't have to check it separately.
 
 ```c++
 u64 find_factor(u64 n) {
@@ -65,32 +79,43 @@ u64 find_factor(u64 n) {
 }
 ```
 
-This is the most basic algorithm to find a prime factorization.
+In our benchmark, $n$ is a semiprime, and we always find the lesser divisor, so both $O(n)$ and $O(\sqrt n)$ implementations perform the same and are able to factorize ~2k 30-bit numbers per second, while taking whole ~20 seconds to factorize a single 60-bit number.
 
-We divide by each possible divisor $d$.
-We can notice, that it is impossible that all prime factors of a composite number $n$ are bigger than $\sqrt{n}$.
-Therefore, we only need to test the divisors $2 \le d \le \sqrt{n}$, which gives us the prime factorization in $O(\sqrt{n})$.
+### Lookup Table
 
-The smallest divisor has to be a prime number.
-We remove the factor from the number, and repeat the process.
-If we cannot find any divisor in the range $[2; \sqrt{n}]$, then the number itself has to be prime.
+Nowadays, you can type `factor 57` in your Linux terminal or Google search bar to get the factorization of any number. But before computers were invented, it was more practical to use *factorization tables:* special books containing factorizations of the first $N$ numbers.
+
+We can also use this approach to compute these lookup tables [during compile time](/hpc/compilation/precalc/). To save space, it is convenient to only store the smallest divisor of a number, requiring just one byte for a 16-bit integer:
 
 ```c++
+template <int N = (1<<16)>
+struct Precalc {
+    unsigned char divisor[N];
+
+    constexpr Precalc() : divisor{} {
+        for (int i = 0; i < N; i++)
+            divisor[i] = 1;
+        for (int i = 2; i * i < N; i++)
+            if (divisor[i] == 1)
+                for (int k = i * i; k < N; k += i)
+                    divisor[k] = i;
+    }
+};
+
+constexpr Precalc P{};
+
 u64 find_factor(u64 n) {
-    for (u64 d = 2; d * d <= n; d++)
-        if (n % d == 0)
-            return d;
-    return 1;
+    return P.divisor[n];
 }
 ```
+
+This approach can process 3M 16-bit integers per second, although it [probably gets slower](../hpc/cpu-cache/bandwidth/) for larger numbers. While it requires just a few milliseconds and 64KB of memory to calculate and store the divisors of the first $2^{16}$ numbers, it does not scale well for larger inputs.
 
 ### Wheel factorization
 
-This is an optimization of the trial division.
-The idea is the following.
-Once we know that the number is not divisible by 2, we don't need to check every other even number.
-This leaves us with only $50\%$ of the numbers to check.
-After checking 2, we can simply start with 3 and skip every other number.
+To save paper space, pre-computer era factorization tables typically excluded numbers divisible by 2 and 5: in decimal numeral system, you can quickly determine whether a number is divisible by 2 or 5 (by looking at its last digit) and keep dividing the number $n$ by 2 or 5 while it is possible, eventually arriving to some entry in the factorization table. This makes the factorization table just ½ × ⅘ = 0.4 its original size.
+
+We can apply a similar trick to trial division, first checking if the number is divisible by $2$, and then only check for odd divisors:
 
 ```c++
 u64 find_factor(u64 n) {
@@ -103,24 +128,27 @@ u64 find_factor(u64 n) {
 }
 ```
 
-This method can be extended.
-If the number is not divisible by 3, we can also ignore all other multiples of 3 in the future computations.
-So we only need to check the numbers $5, 7, 11, 13, 17, 19, 23, \dots$.
-We can observe a pattern of these remaining numbers.
-We need to check all numbers with $d \bmod 6 = 1$ and $d \bmod 6 = 5$.
-So this leaves us with only $33.3\%$ percent of the numbers to check.
-We can implement this by checking the primes 2 and 3 first, and then start checking with 5 and alternatively skip 1 or 3 numbers.
+With 50% fewer divisions to do, this algorithm works twice as fast, but it can be extended. If the number is not divisible by $3$, we can also ignore all multiples of $3$, and the same goes for all other divisors. 
+
+The problem is, as we increase the number of primes to exclude, it becomes less straightforward to iterate only over the numbers not divisible by them as they follow an irregular pattern — unless the number of primes is small. For example, if we consider $2$, $3$, and $5$, then, among the first $90$ numbers, we only need to check:
+
+```center
+(1,) 7, 11, 13, 17, 19, 23, 29,
+31, 37, 41, 43, 47, 49, 53, 59,
+61, 67, 71, 73, 77, 79, 83, 89…
+```
+
+You can notice a pattern: the sequence repeats itself every $30$ numbers because remainder modulo $2 \times 3 \times 5 = 30$ is all we need to determine whether a number is divisible by $2$, $3$, or $5$. This means that we only need to check $8$ specific numbers in every $30$, proportionally improving the performance:
 
 ```c++
 u64 find_factor(u64 n) {
     for (u64 d : {2, 3, 5})
         if (n % d == 0)
             return d;
-    u64 increments[] =   {0, 4, 6, 10, 12, 16, 22, 24};
-    u64 sum = 30;
-    for (u64 d = 7; d * d <= n; d += sum) {
-        for (u64 k = 0; k < 8; k++) {
-            u64 x = d + increments[k];
+    u64 offsets[] = {0, 4, 6, 10, 12, 16, 22, 24};
+    for (u64 d = 7; d * d <= n; d += 30) {
+        for (u64 offset : offsets) {
+            u64 x = d + offset;
             if (n % x == 0)
                 return x;
         }
@@ -129,37 +157,79 @@ u64 find_factor(u64 n) {
 }
 ```
 
-We can extend this even further.
-Here is an implementation for the prime number 2, 3 and 5.
-It's convenient to use an array to store how much we have to skip.
+As expected, it works $\frac{30}{8} = 3.75$ times faster than the naive trial division, processing about 7.6k 30-bit numbers per second. The performance can be improved by considering more primes, but the returns are diminishing: adding a new prime $p$ reduces the number of iterations by $\frac{1}{p}$, but increases the size of the skip-list by a factor of $p$, requiring proportionally more memory.
 
-### Lookup table
+### Precomputed Primes
 
-We will choose to store smallest factors of first $2^16$ — because this way they all fit in just one byte, so we are sort of saving on memory here.
+If we keep increasing the number of primes we exclude in wheel factorization, we eventually exclude all composite numbers and only check for prime factors. In this case, we don't need this array of offsets, but we need to precompute primes, which we can do during compile time like this:
 
 ```c++
-template<int N = (1<<16)>
-struct Precalc {
-    char divisor[N];
+const int N = (1 << 16);
 
-    constexpr Precalc() : divisor{} {
-        for (int i = 0; i < N; i++)
-            divisor[i] = 1;
-        for (int i = 2; i * i < N; i++)
-            if (divisor[i] == 1)
-                for (int k = i * i; k < N; k += i)
-                    divisor[k] = i;
+struct Precalc {
+    u16 primes[6542]; // # of primes under N=2^16
+
+    constexpr Precalc() : primes{} {
+        bool marked[N] = {};
+        int n_primes = 0;
+
+        for (int i = 2; i < N; i++) {
+            if (!marked[i]) {
+                primes[n_primes++] = i;
+                for (int j = 2 * i; j < N; j += i)
+                    marked[j] = true;
+            }
+        }
     }
 };
 
-constexpr Precalc precalc{};
+constexpr Precalc P{};
 
 u64 find_factor(u64 n) {
-    return precalc.divisor[n];
+    for (u16 p : P.primes)
+        if (n % p == 0)
+            return p;
+    return 1;
 }
 ```
 
+This approach lets us process almost 20k 30-bit integers per second, but it does not work for larger (64-bit) numbers unless they have small ($< 2^{16}$) factors. Note that this is actually an asymptotic optimization: there are $O(\frac{n}{\ln n})$ primes among the first $n$ numbers, so this algorithm performs $O(\frac{\sqrt n}{\ln \sqrt n})$ operations, while wheel factorization only eliminates a large but fixed fraction of divisors. If we extend it to 64-bit numbers and precompute every prime under $2^{32}$ (storing which would require several hundred megabytes of memory), the relative speedup would grow by a factor of $\frac{\ln \sqrt{n^2}}{\ln \sqrt n} = 2 \cdot \frac{1/2}{1/2} \cdot \frac{\ln n}{\ln n} = 2$.
+
+All variants of trial division, including this one, are bottlenecked by the speed of integer division, which can be [optimized](../hpc/arithmetic/division/) if we know the divisors in advice and allow for some precomputation:
+
+```c++
+// ...precomputation is the same as before,
+// but we store the reciprocal instead of the prime number itself
+u64 magic[6542];
+// for each prime i:
+magic[n_primes++] = u64(-1) / i + 1;
+
+u64 find_factor(u64 n) {
+    for (u64 m : P.magic)
+        if (m * n < m)
+            return u64(-1) / m + 1;
+    return 1;
+}
+```
+
+This makes the algorithm ~18x faster: we can now process ~350k 30-bit numbers per second. This is actually the most efficient algorithm we have 
+
+
+$\tilde{O}(\sqrt n)$ territory
+
 ### Pollard's Rho Algorithm
+
+---
+
+```c++
+u64 find_factor(u64 n) {
+    while (true) {
+        if (u64 g = gcd(randint(2, n - 1), n); g != 1)
+            return g;
+    }
+}
+```
+
 
 The algorithm is probabilistic. This means that it may or may not work. You would also need to 
 
@@ -231,99 +301,6 @@ This is exactly the type of problem when we need specific knowledge, because we 
 If you have limited time, you should probably compute as much forward as possible, and then half the time computing the other.
 
 How to optimize for the *average* case is unclear.
-
-0.087907
-3964.321045
-
-```c++
-u64 find_factor(u64 n) {
-    if (n % 2 == 0)
-        return 2;
-    for (u64 d = 3; d * d <= n; d += 2)
-        if (n % d == 0)
-            return d;
-    return 1;
-}
-```
-
-0.199740
-7615.217773
-
-```c++
-u64 find_factor(u64 n) {
-    for (u64 d : {2, 3, 5})
-        if (n % d == 0)
-            return d;
-    u64 increments[] = {0, 4, 6, 10, 12, 16, 22, 24};
-    for (u64 d = 7; d * d <= n; d += 30) {
-        for (u64 k = 0; k < 8; k++) {
-            u64 x = d + increments[k];
-            if (n % x == 0)
-                return x;
-        }
-    }
-    return 1;
-}
-```
-
-19430.058594
-
-```c++
-const int N = (1 << 16);
-
-struct Precalc {
-    u16 primes[6542]; // # of primes under N=2^16
-
-    constexpr Precalc() : primes{} {
-        bool marked[N] = {};
-        int n_primes = 0;
-
-        for (int i = 2; i < N; i++) {
-            if (!marked[i]) {
-                primes[n_primes++] = i;
-                for (int j = 2 * i; j < N; j += i)
-                    marked[j] = true;
-            }
-        }
-    }
-};
-
-constexpr Precalc P{};
-
-u64 find_factor(u64 n) {
-    for (u16 p : P.primes)
-        if (n % p == 0)
-            return p;
-    return 1;
-}
-```
-
-352997.656250
-
-```c++
-u64 magic[6542];
-magic[n_primes++] = u64(-1) / i + 1;
-
-u64 find_factor(u64 n) {
-    for (u64 m : P.magic)
-        if (m * n < m)
-            return u64(-1) / m + 1;
-    return 1;
-}
-```
-
-Except that it is contant, so the speedup should be twice as much.
-
----
-
-```c++
-u64 find_factor(u64 n) {
-    while (true) {
-        if (u64 g = gcd(randint(2, n - 1), n); g != 1)
-            return g;
-    }
-}
-```
 
 99.292641
 25720.164062 almost 15x slower
