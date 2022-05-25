@@ -195,7 +195,7 @@ u64 find_factor(u64 n) {
 
 This approach lets us process almost 20k 30-bit integers per second, but it does not work for larger (64-bit) numbers unless they have small ($< 2^{16}$) factors. Note that this is actually an asymptotic optimization: there are $O(\frac{n}{\ln n})$ primes among the first $n$ numbers, so this algorithm performs $O(\frac{\sqrt n}{\ln \sqrt n})$ operations, while wheel factorization only eliminates a large but fixed fraction of divisors. If we extend it to 64-bit numbers and precompute every prime under $2^{32}$ (storing which would require several hundred megabytes of memory), the relative speedup would grow by a factor of $\frac{\ln \sqrt{n^2}}{\ln \sqrt n} = 2 \cdot \frac{1/2}{1/2} \cdot \frac{\ln n}{\ln n} = 2$.
 
-All variants of trial division, including this one, are bottlenecked by the speed of integer division, which can be [optimized](../hpc/arithmetic/division/) if we know the divisors in advice and allow for some precomputation:
+All variants of trial division, including this one, are bottlenecked by the speed of integer division, which can be [optimized](/hpc/arithmetic/division/) if we know the divisors in advice and allow for some precomputation. In particular, we can use [Lemire division check](/hpc/arithmetic/division/#lemire-reduction):
 
 ```c++
 // ...precomputation is the same as before,
@@ -212,14 +212,13 @@ u64 find_factor(u64 n) {
 }
 ```
 
-This makes the algorithm ~18x faster: we can now process ~350k 30-bit numbers per second. This is actually the most efficient algorithm we have 
-
-
-$\tilde{O}(\sqrt n)$ territory
+This makes the algorithm ~18x faster: we can now process ~350k 30-bit numbers per second. This is actually the most efficient algorithm we have for this number range. While it can probably be even further optimized by performing these checks in parallel with [SIMD](/hpc/simd), we will stop there and consider a different, asymptotically better approach.
 
 ### Pollard's Rho Algorithm
 
----
+<!--
+
+Consider this weird code snippet:
 
 ```c++
 u64 find_factor(u64 n) {
@@ -230,84 +229,41 @@ u64 find_factor(u64 n) {
 }
 ```
 
+It also searches for a factor, but it does so by repeatedly trying to compute the [GCD](../gcd) of $n$ and its random remainder, which would yield a valid divisor of $n$ if this remainder is not coprime with it. Surprisingly, this algorithm is not *that* terrible: it needs expected $O(\sqrt n)$ iterations in the worst case (times $\log n$ from GCD) because on each trial, it can hit not only $p$ or $q = \frac{n}{p}$, but also $\frac{n}{p} + \frac{n}{q} = O(\sqrt n)$ of their multiples.
 
-The algorithm is probabilistic. This means that it may or may not work. You would also need to 
+By itself, this algorithm is just an esoteric way of computing factorization, but can be made useful. If, instead of random numbers, we apply this $\gcd$ trick to a particular number sequence, we get a $O(n^\frac{1}{4})$ approach known as Pollard's rho algorithm.
 
-Ро-алгоритм Полларда — рандомизированный алгоритм факторизации целых чисел, работающий за время $O(n^\frac{1}{4})$ и основывающийся не следствии из парадокса дней рождений:
+-->
 
-> В мультимножество нужно добавить $O(\sqrt{n})$ случайных чисел от 1 до $n$, чтобы какие-то два совпали.
+To construct this sequence, we need a "seemingly random" function that maps the remainders of $n$. Typical choice is $f(x) = (x + 1)^2 \mod n$.
 
-## $\rho$-алгоритм Полларда
+Now, consider a graph where each vertex $x$ has an edge pointing to $f(x)$. Such graphs are called *functional*. The "trajectory" of any element — the path we walk starting from that element and following edges — eventually loop around. This trajectory resembles the greek letter $\rho$ (rho), which is why the algorithm is named so.
 
-Итак, мы хотим факторизовать число $n$. Предположим, что $n = p q$ и $p \approx q$. Понятно, что труднее случая, наверное, нет. Алгоритм итеративно ищет наименьший делитель и таким образом сводит задачу к как минимум в два раза меньшей.
+![](../img/rho.jpg)
 
-Возьмём произвольную «достаточно случайную» с точки зрения теории чисел функцию. Например $f(x) = (x+1)^2 \mod n$.
+Apart from this trick, Pollard's rho algorithm relies on a consequence from the Birthday paradox: we need to add $O(\sqrt{n})$ random numbers from $1$ to $n$ to a set until we get a collision.
 
-Граф, в котором из каждой вершины есть единственное ребро $x \to f(x)$, называется *функциональным*. Если в нём нарисовать «траекторию» произвольного элемента — какой-то путь, превращающийся в цикл — то получится что-то похожее на букву $\rho$ (ро). Алгоритм из-за этого так и назван.
+Now, consider a trajectory of some element $x_0$: {$x_0$, $f(x_0)$, $f(f(x_0))$, $\ldots$}.
 
-![](https://upload.wikimedia.org/wikipedia/commons/4/47/Pollard_rho_cycle.jpg)
+Make another sequence out of it, virtually taking each element modulo $p$, the lesser of prime divisors of $n$.
 
-Рассмотрим траекторию какого-нибудь элемента $x_0$: {$x_0$, $f(x_0)$, $f(f(x_0))$, $\ldots$}. Сделаем из неё новую последовательность, мысленно взяв каждый элемент по модулю $p$ — наименьшего из простых делителей $n$. 
+**Lemma.** The expected length in that sequence is $O(\sqrt[4]{n})$.
 
-**Утверждение**. Ожидаемая длина цикла в этой последовательности $O(\sqrt[4]{n})$.
+**Proof.** Each time we walk a new edge, we generate a random number. It has some chance if looping around.
 
-*Доказательство:* так как $p$ — меньший делитель, то $p \leq \sqrt n$. Теперь просто подставлим в следствие из парадокса дней рождений: в множество нужно добавить $O(\sqrt{p}) = O(\sqrt[4]{n})$ элементов, чтобы какие-то два совпали, а значит последовательность зациклилась.
+As $p$ is the lesser divisor, $p \leq \sqrt n$. Now we need to plug it into the [Birthday paradox](https://en.wikipedia.org/wiki/Birthday_problem): we need to add $O(\sqrt{p}) = O(\sqrt[4]{n})$ elements to the set to get a collision, which means that the.
 
-Если мы найдём цикл в такой последовательности — то есть такие $i$ и $j$, что $f^i(x_0) \equiv f^j(x_0) \pmod p$ — то мы сможем найти и какой-то делитель $n$, а именно $\gcd(|f^i(x_0) - f^j(x_0)|, n)$ — это число меньше $n$ и делится на $p$.
+Another observation: the length of the "tail" and the cycle is equal in expectation, since when we loop around, we choose any vertex of the path we walked independently.
 
-Алгоритм по сути находит цикл в этой последовательности, используя для этого стандартный алгоритм («черепаха и заяц»): будем поддерживать два удаляющихся друг от друга указателя $i$ и $j$ ($i = 2j$) и проверять, что $f^i(x_0) \equiv f^j(x_0) \pmod p$, что эквивалентно проверке $\gcd(|f^i(x_0) - f^j(x_0)|, n) \not \in \{ 1, n \}$.
+Now, if we find a cycle in this sequence — $i$ and $j$ such that $f^i(x_0) \equiv f^j(x_0) \pmod p$ — we can find some divisor of $n$ using the $\gcd$ trick: $\gcd(|f^i(x_0) - f^j(x_0)|, n)$ would be less than $n$ and divisible by $p$.
 
-```c++
-typedef long long ll;
+Floyd's cycle-finding algorithm
 
-inline ll f(ll x) { return (x+1)*(x+1); }
-
-ll find_divisor(ll n, ll seed = 1) {
-    ll x = seed, y = seed;
-    ll divisor = 1;
-    while (divisor == 1 || divisor == n) {
-        // двигаем первый указатель на шаг
-        y = f(y) % n;
-        // а второй -- на два
-        x = f(f(x) % n) % n;
-        // пытаемся найти общий делитель
-        divisor = __gcd(abs(x-y), n);
-    }
-    return divisor;
-}
-```
-
-Так как алгоритм рандомизированный, при полной реализации нужно учитывать разные детали. Например, что иногда делитель не находится (нужно запускать несколько раз), или что при попытке факторизовать простое число он будет работать за $O(\sqrt n)$ (нужно добавить отсечение по времени).
-
-### Brent's Method
-
-Another idea is to accumulate the product and instead of calculating GCD on each step to calculate it every log n steps.
-
-### Optimizing division
-
-The next step is to actually apply Montgomery Multiplication.
-
-This is exactly the type of problem when we need specific knowledge, because we have 64-bit modulo by not-compile-constants, and compiler can't really do much to optimize it.
-
-...
-
-## Further optimizations
-
-Существуют также [субэкспоненциальные](https://ru.wikipedia.org/wiki/%D0%A4%D0%B0%D0%BA%D1%82%D0%BE%D1%80%D0%B8%D0%B7%D0%B0%D1%86%D0%B8%D1%8F_%D1%86%D0%B5%D0%BB%D1%8B%D1%85_%D1%87%D0%B8%D1%81%D0%B5%D0%BB#%D0%A1%D1%83%D0%B1%D1%8D%D0%BA%D1%81%D0%BF%D0%BE%D0%BD%D0%B5%D0%BD%D1%86%D0%B8%D0%B0%D0%BB%D1%8C%D0%BD%D1%8B%D0%B5_%D0%B0%D0%BB%D0%B3%D0%BE%D1%80%D0%B8%D1%82%D0%BC%D1%8B), но не полиномиальные алгоритмы факторизации. Человечество [умеет](https://en.wikipedia.org/wiki/Integer_factorization_records) факторизовывать числа порядка $2^{200}$.
-
-
----
-
-If you have limited time, you should probably compute as much forward as possible, and then half the time computing the other.
-
-How to optimize for the *average* case is unclear.
-
-99.292641
-25720.164062 almost 15x slower
+The algorithm itself just finds a loop in this sequence using the Ford algorithms, also known as the "hare and turtle" technique: we maintain two pointers $i$ and $j$ ($i = 2j$) and check that $f^i(x_0) \equiv f^j(x_0) \pmod p$, which is equivalent to checking $\gcd(|f^i(x_0) - f^j(x_0)|, n) \neq 1$.
 
 ```c++
-u64 f(u64 x, u64 a, u64 mod) {
-    return ((u128) x * x + a) % mod;
+u64 f(u64 x, u64 mod) {
+    return ((u128) x * x + 1) % mod;
 }
 
 u64 diff(u64 a, u64 b) {
@@ -315,7 +271,7 @@ u64 diff(u64 a, u64 b) {
     return a > b ? a - b : b - a;
 }
 
-u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
+u64 find_factor(u64 n) {
     u64 x = x0, y = x0, g = 1;
     while (g == 1) {
         x = f(x, a, n);
@@ -325,16 +281,16 @@ u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
     }
     return g;
 }
-
-u64 find_factor(u64 n) {
-    return rho(n);
-}
 ```
 
-56.745281
+While it processes 25k 30-bit numbers — almost 15 times slower than the fastest algorithm we have — it drammatically outperforms every $\tilde{O}(\sqrt n)$ algorithm for 60-bit numbers, processing around 90 of them per second.
+
+### Pollard-Brent Algorithm 
+
+Floyd's cycle-finding algorithm has a problem in that it does more iterator increments than necessary. One way to solve it is to memorize the values that the faster iterator visits and compute the gcd using the difference of $x_i$ and $x_{\lfloor i / 2 \rfloor}$, but it can also be done without extra memory using this trick:
 
 ```c++
-u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
+u64 find_factor(u64 n, u64 x0 = 2, u64 a = 1) {
     u64 x = x0, y = x0;
     
     for (int l = 256; l < (1 << 20); l *= 2) {
@@ -350,12 +306,14 @@ u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
 }
 ```
 
-426.389160
+It actually does *not* improve performance and even makes it ~1.5x *slower*, which probably has something to do with the fact that $x$ is stale. It spends most of the time computing the GCD and not advancing the iterator — in fact, the asymptotic of the algorithm is currently $O(\sqrt[4]{n} \log n)$ because of it.
+
+We can remove the logarithm from the asymptotic using the fact that if one of $a$ and $b$ contains factor $p$, then $a \cdot b \bmod n$ will also contain it, so instead of computing $\gcd(a, n)$ and $\gcd(b, n)$, we can compute $\gcd(a \cdot b \bmod n, n)$. This way, we can group the calculations of GCP in groups of $M = O(\log n)$, we remove $\log n$ out of the asymptotic:
 
 ```c++
 const int M = 1024;
 
-u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
+u64 find_factor(u64 n, u64 x0 = 2, u64 a = 1) {
     u64 x = x0, y = x0, p = 1;
     
     for (int l = M; l < (1 << 20); l *= 2) {
@@ -374,7 +332,13 @@ u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
 }
 ```
 
-2948.260986
+It now works at 425 factorizations per second, bottlenecked by the speed of modulo.
+
+### Optimizing Modulo
+
+The next step is to actually apply [Montgomery Multiplication](/hpc/number-theory/montgomery/).
+
+This is exactly the type of problem when we need specific knowledge, because we have 64-bit modulo by not-compile-constants, and compiler can't really do much to optimize it.
 
 ```c++
 struct Montgomery {
@@ -403,7 +367,7 @@ u64 f(u64 x, u64 a, Montgomery m) {
 
 const int M = 1024;
 
-u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
+u64 find_factor(u64 n, u64 x0 = 2, u64 a = 1) {
     Montgomery m(n);
     u64 y = x0;
     
@@ -423,14 +387,37 @@ u64 rho(u64 n, u64 x0 = 2, u64 a = 1) {
 }
 ```
 
+It processes around 3000 per second, which is ~3.8 faster than what [PARI](https://pari.math.u-bordeaux.fr/) library can do (invocated via [sage](https://doc.sagemath.org/html/en/reference/structure/sage/structure/factorization.html)).
+
+### Further Optimization
+
+There might be a way to .
+
+It may be beneficial to start multiplying only after a certain threshold since there is little probability that we enter a cycle in the beginning.
+
+It may be worth it to run a few versions in parallel and stop whichever finishes first. If we run $p$ runs, it is expected to finish $\sqrt p$ times faster. Either scalar code and taking advantage of there being multiple execution ports for multiplication, or using [SIMD](/hpc/simd) instructions to do 4 or 8 multiplications in parallel.
+
+Would not be surprised to see another 3x improvement and throughputs of 10k/sec.
+
+If you have limited time, you should probably compute as much forward as possible, and then half the time computing the other.
+
+How to optimize for the *average* case is unclear.
+
+### Reducing Errors
+
 There are slightly more errors because we are a bit loose with modular arithmetic here. The error rate grows higher when we increase and decrease (due to overflows).
 
-788.4861246275735
+Our implementation has less than 0.7% error rate, but it grows higher if the numbers are lower than $10^{18}$.
+
+Since Pollard's rho algorithm is randomized, you need to account for errors. There may be several sources:
+
+- Factors not being found (need to perform a primality test and start again if it's negative).
+- The `p` variable can get zeroed out (need to either restart or roll back and do it iteration-by-iteration).
+- Overflows in Montgomery multiplication (our implementation is pretty loose).
 
 ### Larger Numbers
 
 "How big are your numbers?" determines the method to use:
-
 
 - Less than 2^16 or so: Lookup table.
 - Less than 2^70 or so: Richard Brent's modification of Pollard's rho algorithm.
