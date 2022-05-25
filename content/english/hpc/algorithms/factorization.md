@@ -6,7 +6,7 @@ draft: true
 
 The problem of factoring integers into primes is central to computational [number theory](/hpc/number-theory/). It has been [studied](https://www.cs.purdue.edu/homes/ssw/chapter3.pdf) since at least the 3rd century BC, and [many methods](https://en.wikipedia.org/wiki/Category:Integer_factorization_algorithms) have been developed that are efficient for different inputs.
 
-In this case study, we specifically consider the factorization of *word-sized* integers: those on the order of $10^9$ and $10^{18}$. Untypical for this book, in this one, you may actually learn an asymptotically better algorithm: we start with a few basic approaches, and then gradually build up to the $O(\sqrt[4]{n})$-time *Pollard's rho algorithm* and optimize it to the point where it can factorize 60-bit semiprimes in 0.3-0.4ms, which is almost 4x faster than the previous state-of-the-art.
+In this case study, we specifically consider the factorization of *word-sized* integers: those on the order of $10^9$ and $10^{18}$. Untypical for this book, in this one, you may actually learn an asymptotically better algorithm: we start with a few basic approaches and gradually build up to the $O(\sqrt[4]{n})$-time *Pollard's rho algorithm* and optimize it to the point where it can factorize 60-bit semiprimes in 0.3-0.4ms and almost 4 times faster than the previous state-of-the-art.
 
 <!--
 Integer factorization is interesting because of the RSA problem.
@@ -27,7 +27,7 @@ typedef __uint128_t u128;
 u64 find_factor(u64 n);
 ```
 
-To find full factorization, you can apply it to $n$, reduce it, and continue until a new factor can no longer be found:
+To find the full factorization, you can apply it to $n$, reduce it, and continue until a new factor can no longer be found:
 
 ```c++
 vector<u64> factorize(u64 n) {
@@ -41,11 +41,11 @@ vector<u64> factorize(u64 n) {
 }
 ```
 
-Since after each removed factor the problem becomes considerably smaller and simpler, the worst-case running time of full factorization is equal to the worst-case running time of a `find_factor` call. 
+After each removed factor, the problem becomes considerably smaller, so the worst-case running time of full factorization is equal to the worst-case running time of a `find_factor` call. 
 
-For many factorization algorithms, including those presented in this article, the running time scales with the least prime factor. Therefore, to provide worst-case input, we use *semiprimes:* products of two prime numbers $p \le q$ that are on the same order of magnitude. To generate a $k$-bit semiprime, we generate two random $\lfloor k / 2 \rfloor$-bit primes.
+For many factorization algorithms, including those presented in this article, the running time scales with the smaller prime factor. Therefore, to provide worst-case input, we use *semiprimes:* products of two prime numbers $p \le q$ that are on the same order of magnitude. We generate a $k$-bit semiprime as the product of two random $\lfloor k / 2 \rfloor$-bit primes.
 
-Since some of the algorithms are inherently randomized, we also tolerate a small (<1%) percentage of false negative errors (when `find_factor` returns `1` despite number $n$ being composite), although this rate can be reduced to almost zero without significant performance penalties.
+Since some of the algorithms are inherently randomized, we also tolerate a small (<1%) percentage of false-negative errors (when `find_factor` returns `1` despite number $n$ being composite), although this rate can be reduced to almost zero without significant performance penalties.
 
 ### Trial division
 
@@ -57,7 +57,7 @@ Trial division was first described by Fibonacci in 1202. Although it was probabl
 
 -->
 
-The most basic approach is to try every number less than $n$ as a divosor:
+The most basic approach is to try every integer smaller than $n$ as a divisor:
 
 ```c++
 u64 find_factor(u64 n) {
@@ -68,7 +68,7 @@ u64 find_factor(u64 n) {
 }
 ```
 
-One simple optimization is to notice that it is enough to only check divisors that do not exceed $\sqrt n$. This works because if $n$ is divided by $d > \sqrt n$, then it is also divided by $\frac{n}{d} < \sqrt n$, so we can don't have to check it separately.
+We can notice that if $n$ is divided by $d < \sqrt n$, then it is also divided by $\frac{n}{d} > \sqrt n$, and there is no need to check for it separately. This lets us stop trial division early and only check for potential divisors that do not exceed $\sqrt n$:
 
 ```c++
 u64 find_factor(u64 n) {
@@ -79,13 +79,13 @@ u64 find_factor(u64 n) {
 }
 ```
 
-In our benchmark, $n$ is a semiprime, and we always find the lesser divisor, so both $O(n)$ and $O(\sqrt n)$ implementations perform the same and are able to factorize ~2k 30-bit numbers per second, while taking whole ~20 seconds to factorize a single 60-bit number.
+In our benchmark, $n$ is a semiprime, and we always find the lesser divisor, so both $O(n)$ and $O(\sqrt n)$ implementations perform the same and are able to factorize ~2k 30-bit numbers per second — while taking whole 20 seconds to factorize a single 60-bit number.
 
 ### Lookup Table
 
 Nowadays, you can type `factor 57` in your Linux terminal or Google search bar to get the factorization of any number. But before computers were invented, it was more practical to use *factorization tables:* special books containing factorizations of the first $N$ numbers.
 
-We can also use this approach to compute these lookup tables [during compile time](/hpc/compilation/precalc/). To save space, it is convenient to only store the smallest divisor of a number, requiring just one byte for a 16-bit integer:
+We can also use this approach to compute these lookup tables [during compile time](/hpc/compilation/precalc/). To save space, we can store only the smallest divisor of a number. Since the smallest divisor does not exceed the $\sqrt n$, we need just one byte per a 16-bit integer:
 
 ```c++
 template <int N = (1<<16)>
@@ -109,13 +109,13 @@ u64 find_factor(u64 n) {
 }
 ```
 
-This approach can process 3M 16-bit integers per second, although it [probably gets slower](../hpc/cpu-cache/bandwidth/) for larger numbers. While it requires just a few milliseconds and 64KB of memory to calculate and store the divisors of the first $2^{16}$ numbers, it does not scale well for larger inputs.
+With this approach, we can process 3M 16-bit integers per second, although it would probably [get slower](../hpc/cpu-cache/bandwidth/) for larger numbers. While it requires just a few milliseconds and 64KB of memory to calculate and store the divisors of the first $2^{16}$ numbers, it does not scale well for larger inputs.
 
 ### Wheel factorization
 
-To save paper space, pre-computer era factorization tables typically excluded numbers divisible by 2 and 5: in decimal numeral system, you can quickly determine whether a number is divisible by 2 or 5 (by looking at its last digit) and keep dividing the number $n$ by 2 or 5 while it is possible, eventually arriving to some entry in the factorization table. This makes the factorization table just ½ × ⅘ = 0.4 its original size.
+To save paper space, pre-computer era factorization tables typically excluded numbers divisible by $2$ and $5$, making the factorization table ½ × ⅘ = 0.4 of its original size. In the decimal numeral system, you can quickly determine whether a number is divisible by $2$ or $5$ (by looking at its last digit) and keep dividing the number $n$ by $2$ or $5$ while it is possible, eventually arriving at some entry in the factorization table.
 
-We can apply a similar trick to trial division, first checking if the number is divisible by $2$, and then only check for odd divisors:
+We can apply a similar trick to trial division by first checking if the number is divisible by $2$ and then only considering odd divisors:
 
 ```c++
 u64 find_factor(u64 n) {
@@ -128,9 +128,11 @@ u64 find_factor(u64 n) {
 }
 ```
 
-With 50% fewer divisions to do, this algorithm works twice as fast, but it can be extended. If the number is not divisible by $3$, we can also ignore all multiples of $3$, and the same goes for all other divisors. 
+With 50% fewer divisions to perform, this algorithm works twice as fast.
 
-The problem is, as we increase the number of primes to exclude, it becomes less straightforward to iterate only over the numbers not divisible by them as they follow an irregular pattern — unless the number of primes is small. For example, if we consider $2$, $3$, and $5$, then, among the first $90$ numbers, we only need to check:
+This method can be extended: if the number is not divisible by $3$, we can also ignore all multiples of $3$, and the same goes for all other divisors. The problem is, as we increase the number of primes to exclude, it becomes less straightforward to iterate only over the numbers not divisible by them as they follow an irregular pattern — unless the number of primes is small.
+
+For example, if we consider $2$, $3$, and $5$, then, among the first $90$ numbers, we only need to check:
 
 ```center
 (1,) 7, 11, 13, 17, 19, 23, 29,
@@ -138,7 +140,7 @@ The problem is, as we increase the number of primes to exclude, it becomes less 
 61, 67, 71, 73, 77, 79, 83, 89…
 ```
 
-You can notice a pattern: the sequence repeats itself every $30$ numbers because remainder modulo $2 \times 3 \times 5 = 30$ is all we need to determine whether a number is divisible by $2$, $3$, or $5$. This means that we only need to check $8$ specific numbers in every $30$, proportionally improving the performance:
+You can notice a pattern: the sequence repeats itself every $30$ numbers. This is not surprising since the remainder modulo $2 \times 3 \times 5 = 30$ is all we need to determine whether a number is divisible by $2$, $3$, or $5$. This means that we only need to check $8$ numbers with specific remainders out of every $30$, proportionally improving the performance:
 
 ```c++
 u64 find_factor(u64 n) {
@@ -157,11 +159,11 @@ u64 find_factor(u64 n) {
 }
 ```
 
-As expected, it works $\frac{30}{8} = 3.75$ times faster than the naive trial division, processing about 7.6k 30-bit numbers per second. The performance can be improved by considering more primes, but the returns are diminishing: adding a new prime $p$ reduces the number of iterations by $\frac{1}{p}$, but increases the size of the skip-list by a factor of $p$, requiring proportionally more memory.
+As expected, it works $\frac{30}{8} = 3.75$ times faster than the naive trial division, processing about 7.6k 30-bit numbers per second. The performance can be improved further by considering more primes, but the returns are diminishing: adding a new prime $p$ reduces the number of iterations by $\frac{1}{p}$ but increases the size of the skip-list by a factor of $p$, requiring proportionally more memory.
 
 ### Precomputed Primes
 
-If we keep increasing the number of primes we exclude in wheel factorization, we eventually exclude all composite numbers and only check for prime factors. In this case, we don't need this array of offsets, but we need to precompute primes, which we can do during compile time like this:
+If we keep increasing the number of primes in wheel factorization, we eventually exclude all composite numbers and only check for prime factors. In this case, we don't need this array of offsets but just the array of primes:
 
 ```c++
 const int N = (1 << 16);
@@ -193,9 +195,11 @@ u64 find_factor(u64 n) {
 }
 ```
 
-This approach lets us process almost 20k 30-bit integers per second, but it does not work for larger (64-bit) numbers unless they have small ($< 2^{16}$) factors. Note that this is actually an asymptotic optimization: there are $O(\frac{n}{\ln n})$ primes among the first $n$ numbers, so this algorithm performs $O(\frac{\sqrt n}{\ln \sqrt n})$ operations, while wheel factorization only eliminates a large but fixed fraction of divisors. If we extend it to 64-bit numbers and precompute every prime under $2^{32}$ (storing which would require several hundred megabytes of memory), the relative speedup would grow by a factor of $\frac{\ln \sqrt{n^2}}{\ln \sqrt n} = 2 \cdot \frac{1/2}{1/2} \cdot \frac{\ln n}{\ln n} = 2$.
+This approach lets us process almost 20k 30-bit integers per second, but it does not work for larger (64-bit) numbers unless they have small ($< 2^{16}$) factors.
 
-All variants of trial division, including this one, are bottlenecked by the speed of integer division, which can be [optimized](/hpc/arithmetic/division/) if we know the divisors in advice and allow for some precomputation. In particular, we can use [Lemire division check](/hpc/arithmetic/division/#lemire-reduction):
+Note that this is actually an asymptotic optimization: there are $O(\frac{n}{\ln n})$ primes among the first $n$ numbers, so this algorithm performs $O(\frac{\sqrt n}{\ln \sqrt n})$ operations, while wheel factorization only eliminates a large but constant fraction of divisors. If we extend it to 64-bit numbers and precompute every prime under $2^{32}$ (storing which would require several hundred megabytes of memory), the relative speedup would grow by a factor of $\frac{\ln \sqrt{n^2}}{\ln \sqrt n} = 2 \cdot \frac{1/2}{1/2} \cdot \frac{\ln n}{\ln n} = 2$.
+
+All variants of trial division, including this one, are bottlenecked by the speed of integer division, which can be [optimized](/hpc/arithmetic/division/) if we know the divisors in advice and allow for some additional precomputation. In our case, it is suitable to use [the Lemire division check](/hpc/arithmetic/division/#lemire-reduction):
 
 ```c++
 // ...precomputation is the same as before,
@@ -212,7 +216,7 @@ u64 find_factor(u64 n) {
 }
 ```
 
-This makes the algorithm ~18x faster: we can now process ~350k 30-bit numbers per second. This is actually the most efficient algorithm we have for this number range. While it can probably be even further optimized by performing these checks in parallel with [SIMD](/hpc/simd), we will stop there and consider a different, asymptotically better approach.
+This makes the algorithm ~18x faster: we can now factorize **~350k** 30-bit numbers per second, which is actually the most efficient algorithm we have for this number range. While it can probably be optimized even further by performing these checks in parallel with [SIMD](/hpc/simd), we will stop there and try a different, asymptotically better approach.
 
 ### Pollard's Rho Algorithm
 
@@ -234,6 +238,8 @@ It also searches for a factor, but it does so by repeatedly trying to compute th
 By itself, this algorithm is just an esoteric way of computing factorization, but can be made useful. If, instead of random numbers, we apply this $\gcd$ trick to a particular number sequence, we get a $O(n^\frac{1}{4})$ approach known as Pollard's rho algorithm.
 
 -->
+
+Pollard's rho algorithm is a randomized $O(\sqrt[4]{n})$ integer factorization algorithm.
 
 To construct this sequence, we need a "seemingly random" function that maps the remainders of $n$. Typical choice is $f(x) = (x + 1)^2 \mod n$.
 
@@ -427,3 +433,7 @@ Since Pollard's rho algorithm is randomized, you need to account for errors. The
 - Less than 10^50: Lenstra elliptic curve factorization
 - Less than 10^100: Quadratic Sieve
 - More than 10^100: General Number Field Sieve
+
+Requiring about 100KB of memory.
+
+6542 * 8
