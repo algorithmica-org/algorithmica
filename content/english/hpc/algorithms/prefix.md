@@ -76,7 +76,7 @@ v4i prefix(v4i x) {
     // x = 1, 3, 5, 7
     //   + 0, 0, 1, 3
     //   = 1, 3, 6, 10
-    return s;
+    return x;
 }
 ```
 
@@ -91,7 +91,7 @@ v8i prefix(v8i x) {
     x = _mm256_add_epi32(x, _mm256_slli_si256(x, 8));
     x = _mm256_add_epi32(x, _mm256_slli_si256(x, 16)); // <- this does nothing
     // x = 1, 3, 6, 10, 5, 11, 18, 26
-    return s;
+    return x;
 }
 ```
 
