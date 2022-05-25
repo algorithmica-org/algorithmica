@@ -237,35 +237,49 @@ It also searches for a factor, but it does so by repeatedly trying to compute th
 
 By itself, this algorithm is just an esoteric way of computing factorization, but can be made useful. If, instead of random numbers, we apply this $\gcd$ trick to a particular number sequence, we get a $O(n^\frac{1}{4})$ approach known as Pollard's rho algorithm.
 
+Apart from this trick, Pollard's rho algorithm relies on a consequence from the Birthday paradox: we need to add $O(\sqrt{n})$ random numbers from $1$ to $n$ to a set until we get a collision. 
+
 -->
 
-Pollard's rho algorithm is a randomized $O(\sqrt[4]{n})$ integer factorization algorithm.
+Pollard's rho algorithm is a randomized $O(\sqrt[4]{n})$ integer factorization algorithm that makes use of the [birthday paradox](https://en.wikipedia.org/wiki/Birthday_problem): one only needs to draw $\Theta(\sqrt{n})$ random numbers between $1$ and $n$ to get a collision with high probability.
 
-To construct this sequence, we need a "seemingly random" function that maps the remainders of $n$. Typical choice is $f(x) = (x + 1)^2 \mod n$.
+Consider some function $f(x)$ that takes a remainder $x \in [0, n)$ and maps it to some other remainder of $n$ in a way that that seems random from the number theory point of view. Specifically, we will use $f(x) = x^2 + 1 \bmod n$, which is random enough for our purposes.
 
-Now, consider a graph where each vertex $x$ has an edge pointing to $f(x)$. Such graphs are called *functional*. The "trajectory" of any element — the path we walk starting from that element and following edges — eventually loop around. This trajectory resembles the greek letter $\rho$ (rho), which is why the algorithm is named so.
+Now, consider a graph where each number-vertex $x$ has an edge pointing to $f(x)$. Such graphs are called *functional*. In functional graphs, the "trajectory" of any element — the path we walk if we start from that element and keep following the edges — is a path that eventually loops around (because the set of vertices is limited, and at some point we have to go to a vertex we have already visited).
 
-![](../img/rho.jpg)
+![The trajectory of an element resembles the greek letter ρ (rho), which is what the algorithm is named after](../img/rho.jpg)
 
-Apart from this trick, Pollard's rho algorithm relies on a consequence from the Birthday paradox: we need to add $O(\sqrt{n})$ random numbers from $1$ to $n$ to a set until we get a collision.
+Consider a trajectory of some particular element $x_0$:
 
-Now, consider a trajectory of some element $x_0$: {$x_0$, $f(x_0)$, $f(f(x_0))$, $\ldots$}.
+$$
+x_0, \; f(x_0), \; f(f(x_0)), \; \ldots
+$$
 
-Make another sequence out of it, virtually taking each element modulo $p$, the lesser of prime divisors of $n$.
+Now, let's make another sequence out of this one by reducing each element modulo $p$, the smallest prime divisor of $n$.
 
-**Lemma.** The expected length in that sequence is $O(\sqrt[4]{n})$.
+**Lemma.** The expected length of that sequence before it turns into a cycle is $O(\sqrt[4]{n})$.
 
-**Proof.** Each time we walk a new edge, we generate a random number. It has some chance if looping around.
+**Proof:** Since $p$ is the smallest divisor, $p \leq \sqrt n$. Each time we follow a new edge, we essentially generate a random number between $0$ and $p$ (we treat $f$ as a "deterministically-random" function). The birthday paradox states that we only need to generate $O(\sqrt p) = O(\sqrt[4]{n})$ numers until we get a collision and thus enter a loop.
 
-As $p$ is the lesser divisor, $p \leq \sqrt n$. Now we need to plug it into the [Birthday paradox](https://en.wikipedia.org/wiki/Birthday_problem): we need to add $O(\sqrt{p}) = O(\sqrt[4]{n})$ elements to the set to get a collision, which means that the.
+Since we don't know $p$, this mod-$p$ sequence is only imaginary, but if find a cycle in it — that is, $i$ and $j$ such that
 
-Another observation: the length of the "tail" and the cycle is equal in expectation, since when we loop around, we choose any vertex of the path we walked independently.
+$$
+f^i(x_0) \equiv f^j(x_0) \pmod p
+$$
 
-Now, if we find a cycle in this sequence — $i$ and $j$ such that $f^i(x_0) \equiv f^j(x_0) \pmod p$ — we can find some divisor of $n$ using the $\gcd$ trick: $\gcd(|f^i(x_0) - f^j(x_0)|, n)$ would be less than $n$ and divisible by $p$.
+then we can also find $p$ itself as
 
-Floyd's cycle-finding algorithm
+$$
+p = \gcd(|f^i(x_0) - f^j(x_0)|, n)
+$$
 
-The algorithm itself just finds a loop in this sequence using the Ford algorithms, also known as the "hare and turtle" technique: we maintain two pointers $i$ and $j$ ($i = 2j$) and check that $f^i(x_0) \equiv f^j(x_0) \pmod p$, which is equivalent to checking $\gcd(|f^i(x_0) - f^j(x_0)|, n) \neq 1$.
+The algorithm itself just finds this cycle and $p$ using this GCD trick and Floyd's "[tortoise and hare](https://en.wikipedia.org/wiki/Cycle_detection#Floyd's_tortoise_and_hare)" algorithm: we maintain two pointers $i$ and $j = 2i$ and check that 
+
+$$
+\gcd(|f^i(x_0) - f^j(x_0)|, n) \neq 1
+$$
+
+which is equivalent to comparing $f^i(x_0)$ and $f^j(x_0)$ modulo $p$. Since $j$ (hare) is increasing at twice the rate of $i$ (tortoise), their difference is increasing by $1$ each iteration and eventually will become equal to (or a multiple of) the cycle length, with $i$ and $j$ pointing to the same elements. And as we proved half a page ago, reaching a cycle would only require $O(\sqrt[4]{n})$ iterations:
 
 ```c++
 u64 f(u64 x, u64 mod) {
@@ -290,7 +304,7 @@ u64 find_factor(u64 n) {
 }
 ```
 
-While it processes 25k 30-bit numbers — almost 15 times slower than the fastest algorithm we have — it drammatically outperforms every $\tilde{O}(\sqrt n)$ algorithm for 60-bit numbers, processing around 90 of them per second.
+While it processes only ~25k 30-bit integers — almost 15 times slower than the fastest algorithm we have — it drammatically outperforms every $\tilde{O}(\sqrt n)$ algorithm for 60-bit numbers, factorizing around 90 of them per second.
 
 ### Pollard-Brent Algorithm 
 
@@ -411,6 +425,9 @@ Would not be surprised to see another 3x improvement and throughputs of 10k/sec.
 If you have limited time, you should probably compute as much forward as possible, and then half the time computing the other.
 
 How to optimize for the *average* case is unclear.
+
+Another observation: the length of the "tail" and the cycle is equal in expectation, since when we loop around, we choose any vertex of the path we walked independently.
+
 
 ### Reducing Errors
 
