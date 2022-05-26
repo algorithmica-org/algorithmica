@@ -362,7 +362,7 @@ u64 find_factor(u64 n) {
 
 It now works at 425 factorizations per second, bottlenecked by the speed of modulo.
 
-### Optimizing Modulo
+### Optimizing the Modulo
 
 The final step is to apply [Montgomery multiplication](/hpc/number-theory/montgomery/): the modulo is constant, so we can perform all computations — advancing the iterator, multiplication, and even computing the GCD — in the Montgomery space where reduction is cheap.
 
@@ -413,26 +413,27 @@ u64 find_factor(u64 n, u64 x0 = 2, u64 a = 1) {
 }
 ```
 
-This implementation can processes around 3k 60-bit integers per second, which is ~3.8 faster than the [PARI](https://pari.math.u-bordeaux.fr/) library (invoked via [sage](https://doc.sagemath.org/html/en/reference/structure/sage/structure/factorization.html)).
+This implementation can processes around 3k 60-bit integers per second, which is ~3.8 faster than what [PARI](https://pari.math.u-bordeaux.fr/) / [SageMath](https://doc.sagemath.org/html/en/reference/structure/sage/structure/factorization.html)'s `factor` function measures.
 
 ### Further Improvements
 
-I belive there is still a lot of potential for optimization in our implementation of the Pollard's algorithm:
+**Optimizations.** There is still a lot of potential for optimization in our implementation of the Pollard's algorithm:
 
-- There is probably be a better cycle-finding algorithm that exploits the fact that the graph is random. It is currently bottlenecked by advancing the iterator (the latency of Montgomery multiplication is much higher than its reciprocal throughput), and while we do that, we could calculate more than one multiplication of the values we've seen to detect a loop sooner. On the other hand, there is little chance that we enter the loop in within the first few iterations, so we may just advance the iterator for some time before starting the trials with the GCD trick.
-- If we run $p$ independent instances of the algorithm with different seeds in parallel and stop when one of them finds the answer, it would finish $\sqrt p$ times faster (try to prove it). We don't have to use multiple cores for that: there is a lot of untapped [instruction-level parallelism](/hpc/pipelining/), so we could run two or three pairs of operations on the same thread, or use [SIMD](/hpc/simd) instructions to perform 4 or 8 multiplications in parallel.
+- We could probably use a better cycle-finding algorithm, exploiting the fact that the graph is random. For example, there is little chance that we enter the loop in within the first few iterations (the length of the cycle and the path we walk before entering it should be equal in expectation since before we loop around, we choose the vertex of the path we've walked independently), so we may just advance the iterator for some time before starting the trials with the GCD trick.
+- Our current approach is bottlenecked by advancing the iterator (the latency of Montgomery multiplication is much higher than its reciprocal throughput), and while we are waiting for it to complete, we could perform more than just one trial using the previous values.
+- If we run $p$ independent instances of the algorithm with different seeds in parallel and stop when one of them finds the answer, it would finish $\sqrt p$ times faster (the reasoning is similar to the Birthday paradox; try to prove it yourself). We don't have to use multiple cores for that: there is a lot of untapped [instruction-level parallelism](/hpc/pipelining/), so we could concurrently run two or three of the same operations on the same thread, or use [SIMD](/hpc/simd) instructions to perform 4 or 8 multiplications in parallel.
 
-I would not be surprised to see another 3x improvement and a throughput of ~10k/sec.
+I would not be surprised to see another 3x improvement and a throughput of ~10k/sec. If you [implement](https://github.com/sslotin/amh-code/tree/main/factor) some of these ideas, please [let me know](http://sereja.me/).
 
 <!-- Another observation: the length of the "tail" and the cycle is equal in expectation, since when we loop around, we choose any vertex of the path we walked independently. How to optimize for the *average* case is unclear. -->
 
-Another aspect that we need to handle in a practical implementation is possible errors. Our current implementation has a 0.7% error rate which grows higher if the numbers are lower than $10^{18}$. They come from three main sources:
+**Errors.** Another aspect that we need to handle in a practical implementation is possible errors. Our current implementation has a 0.7% error rate for 60-bit integers, and it grows higher if the numbers are lower. These errors come from three main sources:
 
-- Factors simply not being found (the algorithm is inherently randomized, and there is no guarantee that they will be found). In this case, we need to perform a primality test and optionally start again.
+- A cycle simply not being found (the algorithm is inherently random, and there is no guarantee that it will be found). In this case, we need to perform a primality test and optionally start again.
 - The `p` variable becoming zero (because both $p$ and $q$ can get into the product). It becomes increasingly more likely as we decrease size of the inputs or increase the constant `M`. In this case, we need to either restart the process or (better) roll back the last $M$ iterations and perform the trials one-by-one.
 - Overflows in the Montgomery multiplication. Our current implementation is pretty loose with them, and if $n$ is large, we need to add more `x > mod ? x - mod : x` kind of statements to deal with overflows.
 
-These issues become less important if we exclude small numbers and numbers with small prime factors using the algorithms we've implemented before. In general the optimal approach should depend on the size of the numbers:
+**Larger numbers.** These issues become less important if we exclude small numbers and numbers with small prime factors using the algorithms we've implemented before. In general, the optimal approach should depend on the size of the numbers:
 
 - Smaller than $2^{16}$: use a lookup table
 - Smaller than $2^{32}$: use a list of precomputed primes with a fast divsibility check
@@ -443,4 +444,4 @@ These issues become less important if we exclude small numbers and numbers with 
 
 <!-- Requiring about 100KB of memory. 6542 * 8 -->
 
-If you [implement](https://github.com/sslotin/amh-code/tree/main/factor) some of these ideas, please [let me know](http://sereja.me/).
+The last three approaches are very different from what we've been doing and require much more advanced number theory, and they deserve an article (or a full-length university course) of their own.
