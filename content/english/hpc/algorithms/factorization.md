@@ -5,7 +5,7 @@ weight: 3
 
 The problem of factoring integers into primes is central to computational [number theory](/hpc/number-theory/). It has been [studied](https://www.cs.purdue.edu/homes/ssw/chapter3.pdf) since at least the 3rd century BC, and [many methods](https://en.wikipedia.org/wiki/Category:Integer_factorization_algorithms) have been developed that are efficient for different inputs.
 
-In this case study, we specifically consider the factorization of *word-sized* integers: those on the order of $10^9$ and $10^{18}$. Untypical for this book, in this one, you may actually learn an asymptotically better algorithm: we start with a few basic approaches and gradually build up to the $O(\sqrt[4]{n})$-time *Pollard's rho algorithm* and optimize it to the point where it can factorize 60-bit semiprimes in 0.3-0.4ms and almost 4 times faster than the previous state-of-the-art.
+In this case study, we specifically consider the factorization of *word-sized* integers: those on the order of $10^9$ and $10^{18}$. Untypical for this book, in this one, you may actually learn an asymptotically better algorithm: we start with a few basic approaches and gradually build up to the $O(\sqrt[4]{n})$-time *Pollard's rho algorithm* and optimize it to the point where it can factorize 60-bit semiprimes in 0.3-0.4ms and ~3 times faster than the previous state-of-the-art.
 
 <!--
 Integer factorization is interesting because of the RSA problem.
@@ -413,7 +413,7 @@ u64 find_factor(u64 n, u64 x0 = 2, u64 a = 1) {
 }
 ```
 
-This implementation can processes around 3k 60-bit integers per second, which is ~3.8 faster than what [PARI](https://pari.math.u-bordeaux.fr/) / [SageMath's `factor`](https://doc.sagemath.org/html/en/reference/structure/sage/structure/factorization.html) function measures.
+This implementation can processes around 3k 60-bit integers per second, which is ~3x faster than what [PARI](https://pari.math.u-bordeaux.fr/) / [SageMath's `factor`](https://doc.sagemath.org/html/en/reference/structure/sage/structure/factorization.html) / `cat semiprimes.txt | time factor` measures.
 
 ### Further Improvements
 
