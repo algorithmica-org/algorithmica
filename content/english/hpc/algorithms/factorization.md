@@ -1,7 +1,6 @@
 ---
 title: Integer Factorization
 weight: 3
-draft: true
 ---
 
 The problem of factoring integers into primes is central to computational [number theory](/hpc/number-theory/). It has been [studied](https://www.cs.purdue.edu/homes/ssw/chapter3.pdf) since at least the 3rd century BC, and [many methods](https://en.wikipedia.org/wiki/Category:Integer_factorization_algorithms) have been developed that are efficient for different inputs.
@@ -241,7 +240,11 @@ Apart from this trick, Pollard's rho algorithm relies on a consequence from the 
 
 -->
 
-Pollard's rho algorithm is a randomized $O(\sqrt[4]{n})$ integer factorization algorithm that makes use of the [birthday paradox](https://en.wikipedia.org/wiki/Birthday_problem): one only needs to draw $\Theta(\sqrt{n})$ random numbers between $1$ and $n$ to get a collision with high probability.
+Pollard's rho is a randomized $O(\sqrt[4]{n})$ integer factorization algorithm that makes use of the [birthday paradox](https://en.wikipedia.org/wiki/Birthday_problem):
+
+> One only needs to draw $d = \Theta(\sqrt{n})$ random numbers between $1$ and $n$ to get a collision with high probability.
+
+You can look up formal proof on Wikipedia, but the informal reasoning behind it is that that each of $d$ added numbers has a chance of approximately $\frac{d}{n}$ of colliding with anythin else, meaning that the expected number of collisions is $\frac{d^2}{n}$. If $d$ is asymptotically smaller than $\sqrt n$, then this ratio grows to zero as $n$ rises and to infinity otherwise.
 
 Consider some function $f(x)$ that takes a remainder $x \in [0, n)$ and maps it to some other remainder of $n$ in a way that that seems random from the number theory point of view. Specifically, we will use $f(x) = x^2 + 1 \bmod n$, which is random enough for our purposes.
 
@@ -308,7 +311,9 @@ While it processes only ~25k 30-bit integers — almost 15 times slower than the
 
 ### Pollard-Brent Algorithm 
 
-Floyd's cycle-finding algorithm has a problem in that it does more iterator increments than necessary. One way to solve it is to memorize the values that the faster iterator visits and compute the gcd using the difference of $x_i$ and $x_{\lfloor i / 2 \rfloor}$, but it can also be done without extra memory using this trick:
+Floyd's cycle-finding algorithm has a problem in that it moves iterators more than necessary: at least half of the vertices are visited one additional time by the slower iterator.
+
+One way to solve it is to memorize the values $x_i$ that the faster iterator visits and every two iterations compute the GCD using the difference of $x_i$ and $x_{\lfloor i / 2 \rfloor}$, but it can also be done without extra memory using a different principle: the tortoise doesn't move on every iteration, but it gets reset to the value of the faster iterator when the iteration number becomes a power of two. This lets us save additional iterations while still using the same GCD trick to compare $x_i$ and $x_{2^{\lfloor \log_2 i \rfloor}}$ on each iteration:
 
 ```c++
 u64 find_factor(u64 n) {
@@ -327,9 +332,11 @@ u64 find_factor(u64 n) {
 }
 ```
 
-It actually does *not* improve performance and even makes it ~1.5x *slower*, which probably has something to do with the fact that $x$ is stale. It spends most of the time computing the GCD and not advancing the iterator — in fact, the asymptotic of the algorithm is currently $O(\sqrt[4]{n} \log n)$ because of it.
+Note that we also set an upper limit on the number of iterations so that the algorithm finishes in reasonable time and returns `1` if $n$ turns out to be a prime.
 
-We can remove the logarithm from the asymptotic using the fact that if one of $a$ and $b$ contains factor $p$, then $a \cdot b \bmod n$ will also contain it, so instead of computing $\gcd(a, n)$ and $\gcd(b, n)$, we can compute $\gcd(a \cdot b \bmod n, n)$. This way, we can group the calculations of GCP in groups of $M = O(\log n)$, we remove $\log n$ out of the asymptotic:
+It actually does *not* improve performance and even makes the algorithm ~1.5x *slower*, which probably has something to do with the fact that $x$ is stale. It spends most of the time computing the GCD and not advancing the iterator — in fact, the asymptotic of the algorithm is currently $O(\sqrt[4]{n} \log n)$ because of it.
+
+Instead of [optimizing the GCD itself](../gcd), we can optimize the number of its invocations. We can use the fact that if one of $a$ and $b$ contains factor $p$, then $a \cdot b \bmod n$ will also contain it, so instead of computing $\gcd(a, n)$ and $\gcd(b, n)$, we can compute $\gcd(a \cdot b \bmod n, n)$. This way, we can group the calculations of GCP in groups of $M = O(\log n)$, we remove $\log n$ out of the asymptotic:
 
 ```c++
 const int M = 1024;
@@ -357,11 +364,7 @@ It now works at 425 factorizations per second, bottlenecked by the speed of modu
 
 ### Optimizing Modulo
 
-The next step is to actually apply [Montgomery Multiplication](/hpc/number-theory/montgomery/).
-
-This is exactly the type of problem when we need specific knowledge, because we have 64-bit modulo by not-compile-constants, and compiler can't really do much to optimize it.
-
-We do not need to convert numbers out of Montgomery representation before computing the GCD.
+The final step is to apply [Montgomery multiplication](/hpc/number-theory/montgomery/): the modulo is constant, so we can perform all computations — advancing the iterator, multiplication, and even computing the GCD — in the Montgomery space where reduction is cheap.
 
 ```c++
 struct Montgomery {
@@ -410,47 +413,34 @@ u64 find_factor(u64 n, u64 x0 = 2, u64 a = 1) {
 }
 ```
 
-It processes around 3000 per second, which is ~3.8 faster than what [PARI](https://pari.math.u-bordeaux.fr/) library can do (invocated via [sage](https://doc.sagemath.org/html/en/reference/structure/sage/structure/factorization.html)).
+This implementation can processes around 3k 60-bit integers per second, which is ~3.8 faster than the [PARI](https://pari.math.u-bordeaux.fr/) library (invoked via [sage](https://doc.sagemath.org/html/en/reference/structure/sage/structure/factorization.html)).
 
-### Further Optimization
+### Further Improvements
 
-There might be a way to .
+I belive there is still a lot of potential for optimization in our implementation of the Pollard's algorithm:
 
-It may be beneficial to start multiplying only after a certain threshold since there is little probability that we enter a cycle in the beginning.
+- There is probably be a better cycle-finding algorithm that exploits the fact that the graph is random. It is currently bottlenecked by advancing the iterator (the latency of Montgomery multiplication is much higher than its reciprocal throughput), and while we do that, we could calculate more than one multiplication of the values we've seen to detect a loop sooner. On the other hand, there is little chance that we enter the loop in within the first few iterations, so we may just advance the iterator for some time before starting the trials with the GCD trick.
+- If we run $p$ independent instances of the algorithm with different seeds in parallel and stop when one of them finds the answer, it would finish $\sqrt p$ times faster (try to prove it). We don't have to use multiple cores for that: there is a lot of untapped [instruction-level parallelism](/hpc/pipelining/), so we could run two or three pairs of operations on the same thread, or use [SIMD](/hpc/simd) instructions to perform 4 or 8 multiplications in parallel.
 
-It may be worth it to run a few versions in parallel and stop whichever finishes first. If we run $p$ runs, it is expected to finish $\sqrt p$ times faster. Either scalar code and taking advantage of there being multiple execution ports for multiplication, or using [SIMD](/hpc/simd) instructions to do 4 or 8 multiplications in parallel.
+I would not be surprised to see another 3x improvement and a throughput of ~10k/sec.
 
-Would not be surprised to see another 3x improvement and throughputs of 10k/sec.
+<!-- Another observation: the length of the "tail" and the cycle is equal in expectation, since when we loop around, we choose any vertex of the path we walked independently. How to optimize for the *average* case is unclear. -->
 
-If you have limited time, you should probably compute as much forward as possible, and then half the time computing the other.
+Another aspect that we need to handle in a practical implementation is possible errors. Our current implementation has a 0.7% error rate which grows higher if the numbers are lower than $10^{18}$. They come from three main sources:
 
-How to optimize for the *average* case is unclear.
+- Factors simply not being found (the algorithm is inherently randomized, and there is no guarantee that they will be found). In this case, we need to perform a primality test and optionally start again.
+- The `p` variable becoming zero (because both $p$ and $q$ can get into the product). It becomes increasingly more likely as we decrease size of the inputs or increase the constant `M`. In this case, we need to either restart the process or (better) roll back the last $M$ iterations and perform the trials one-by-one.
+- Overflows in the Montgomery multiplication. Our current implementation is pretty loose with them, and if $n$ is large, we need to add more `x > mod ? x - mod : x` kind of statements to deal with overflows.
 
-Another observation: the length of the "tail" and the cycle is equal in expectation, since when we loop around, we choose any vertex of the path we walked independently.
+These issues become less important if we exclude small numbers and numbers with small prime factors using the algorithms we've implemented before. In general the optimal approach should depend on the size of the numbers:
 
+- Smaller than $2^{16}$: use a lookup table
+- Smaller than $2^{32}$: use a list of precomputed primes with a fast divsibility check
+- Smaller than $2^{64}$ or so: use Pollard's rho algorithm with Montgomery multiplication
+- Smaller than $10^{50}$: switch to [Lenstra elliptic curve factorization](https://en.wikipedia.org/wiki/Lenstra_elliptic-curve_factorization)
+- Smaller than $10^{100}$: switch to [Quadratic Sieve](https://en.wikipedia.org/wiki/Quadratic_sieve)
+- Larger than $10^{100}$: switch to [General Number Field Sieve](https://en.wikipedia.org/wiki/General_number_field_sieve)
 
-### Reducing Errors
+<!-- Requiring about 100KB of memory. 6542 * 8 -->
 
-There are slightly more errors because we are a bit loose with modular arithmetic here. The error rate grows higher when we increase and decrease (due to overflows).
-
-Our implementation has less than 0.7% error rate, but it grows higher if the numbers are lower than $10^{18}$.
-
-Since Pollard's rho algorithm is randomized, you need to account for errors. There may be several sources:
-
-- Factors not being found (need to perform a primality test and start again if it's negative).
-- The `p` variable can get zeroed out (need to either restart or roll back and do it iteration-by-iteration).
-- Overflows in Montgomery multiplication (our implementation is pretty loose).
-
-### Larger Numbers
-
-"How big are your numbers?" determines the method to use:
-
-- Less than 2^16 or so: Lookup table.
-- Less than 2^70 or so: Richard Brent's modification of Pollard's rho algorithm.
-- Less than 10^50: Lenstra elliptic curve factorization
-- Less than 10^100: Quadratic Sieve
-- More than 10^100: General Number Field Sieve
-
-Requiring about 100KB of memory.
-
-6542 * 8
+If you [implement](https://github.com/sslotin/amh-code/tree/main/factor) some of these ideas, please [let me know](http://sereja.me/).
