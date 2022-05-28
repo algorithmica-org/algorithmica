@@ -1,6 +1,7 @@
 ---
 title: Integer Factorization
 weight: 3
+published: true
 ---
 
 The problem of factoring integers into primes is central to computational [number theory](/hpc/number-theory/). It has been [studied](https://www.cs.purdue.edu/homes/ssw/chapter3.pdf) since at least the 3rd century BC, and [many methods](https://en.wikipedia.org/wiki/Category:Integer_factorization_algorithms) have been developed that are efficient for different inputs.
@@ -198,7 +199,7 @@ This approach lets us process almost 20k 30-bit integers per second, but it does
 
 Note that this is actually an asymptotic optimization: there are $O(\frac{n}{\ln n})$ primes among the first $n$ numbers, so this algorithm performs $O(\frac{\sqrt n}{\ln \sqrt n})$ operations, while wheel factorization only eliminates a large but constant fraction of divisors. If we extend it to 64-bit numbers and precompute every prime under $2^{32}$ (storing which would require several hundred megabytes of memory), the relative speedup would grow by a factor of $\frac{\ln \sqrt{n^2}}{\ln \sqrt n} = 2 \cdot \frac{1/2}{1/2} \cdot \frac{\ln n}{\ln n} = 2$.
 
-All variants of trial division, including this one, are bottlenecked by the speed of integer division, which can be [optimized](/hpc/arithmetic/division/) if we know the divisors in advice and allow for some additional precomputation. In our case, it is suitable to use [the Lemire division check](/hpc/arithmetic/division/#lemire-reduction):
+All variants of trial division, including this one, are bottlenecked by the speed of integer division, which can be [optimized](/hpc/arithmetic/division/) if we know the divisors in advance and allow for some additional precomputation. In our case, it is suitable to use [the Lemire division check](/hpc/arithmetic/division/#lemire-reduction):
 
 ```c++
 // ...precomputation is the same as before,
