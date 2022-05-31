@@ -1,6 +1,7 @@
 ---
 title: Segment Trees
 weight: 4
+published: true
 ---
 
 The lessons learned from [optimizing](../s-tree) [binary search](../binary-search) can be applied to a broad range of data structures.
@@ -329,7 +330,7 @@ int sum(int l, int r) {
     int s = 0;
     while (l <= r) {
         if ( l & 1) s += t[l++]; // l is a right child: add it and move to a cousin
-        if (~r & 1) s += t[r--]; // r is a light child: add it and move to a cousin
+        if (~r & 1) s += t[r--]; // r is a left child: add it and move to a cousin
         l >>= 1, r >>= 1;
     }
     return s;
