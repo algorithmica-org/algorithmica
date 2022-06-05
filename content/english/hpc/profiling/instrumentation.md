@@ -4,6 +4,8 @@ weight: 1
 published: true
 ---
 
+<!-- pv in Linux, pipes -->
+
 *Instrumentation* is an overcomplicated term that means inserting timers and other tracking code into programs. The simplest example is using the `time` utility in Unix-like systems to measure the duration of execution for the whole program.
 
 More generally, we want to know *which parts* of the program need optimization. There are tools shipped with compilers and IDEs that can time designated functions automatically, but it is more robust to do it by hand using any methods of interacting with time that the language provides:

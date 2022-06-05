@@ -78,3 +78,7 @@ Cost to implement, bugs, maintainability. It is perfectly fine that most softwar
 What does it mean to be a better programmer? Faster programs? Faster speed of work? Fewer bugs? It is a combination of those.
 
 Implementing compiler optimizations or databases are examples of high-leverage activities because they act as a tax on everything else — which is why you see most people writing books on these particular topics rather than software optimization in general.
+
+---
+
+Factorization is kind of useless by itself, but it helps with understanding how to optimize number theoretic computations in general. Same goes for sorting and binary trees: most people hold some metainformation.
