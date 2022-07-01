@@ -14,7 +14,7 @@ Abstractions help us in reducing all this complexity down to a single *interface
 
 Hardware engineers love abstractions too. An abstraction of a CPU is called an *instruction set architecture* (ISA), and it defines how a computer should work from a programmer's perspective. Similar to software interfaces, it gives computer engineers the ability to improve on existing CPU designs while also giving its users — us, programmers — the confidence that things that worked before won't break on newer chips.
 
-An ISA essentially defines how the hardware should interpret the machine language. Apart from instructions and their binary encodings, an ISA importantly defines the counts, sizes, and purposes of registers, the memory model, and the input/output model. Similar to software interfaces, ISAs can be extended too: in fact, they are often updated, mostly in a backward-compatible way, to add new and more specialized instructions that can improve performance.
+An ISA essentially defines how the hardware should interpret the machine language. Apart from instructions and their binary encodings, an ISA also defines the counts, sizes, and purposes of registers, the memory model, and the input/output model. Similar to software interfaces, ISAs can be extended too: in fact, they are often updated, mostly in a backward-compatible way, to add new and more specialized instructions that can improve performance.
 
 ### RISC vs CISC
 

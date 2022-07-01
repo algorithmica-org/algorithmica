@@ -30,7 +30,7 @@ Loop Stream Detector (LSD)
 
 ### Code Alignment
 
-Other things being equal, compilers typically prefer instructions with shorter machine code, because this way more instructions can fit in a single 32B fetch block, and also because it reduces the size of the binary. But sometimes the reverse advice applies, caused by the fact that the fetched instructions blocks have to be aligned.
+Other things being equal, compilers typically prefer instructions with shorter machine code, because this way more instructions can fit in a single 32B fetch block, and also because it reduces the size of the binary. But sometimes the reverse is prefereable, due to the fact that the fetched instructions' blocks must be aligned.
 
 Imagine that you need to execute an instruction sequence that starts on the last byte of a 32B-aligned block. You may be able to execute the first instruction without additional delay, but for the subsequent ones, you have to wait for one additional cycle to do another instruction fetch. If the code block was aligned on a 32B boundary, then up to 4 instructions could be decoded and then executed concurrently (unless they are extra long or interdependent).
 
@@ -46,7 +46,7 @@ In GCC, you can use `-falign-labels=n` flag to specify a particular alignment po
 
 The instructions are stored and fetched using largely the same [memory system](/hpc/cpu-cache) as for the data, except maybe the lower layers of cache are replaced with a separate *instruction cache* (because you wouldn't want a random data read to kick out the code that processes it).
 
-The instruction cache is crucial in situations when you either
+The instruction cache is crucial in situations when you either:
 
 - don't know what instructions you are going to execute next, and need to fetch the next block with [low latency](/hpc/cpu-cache/latency),
 - or are executing a long sequence of verbose-but-quick-to-process instructions, and need [high bandwidth](/hpc/cpu-cache/bandwidth).
@@ -153,7 +153,7 @@ length:
     ret
 ```
 
-This is a very important issue, and we will spend [much of the next chapter](/hpc/pipelining/branching) discussing it in more detail.
+Eliminating branches is an important topic, and we will spend [much of the next chapter](/hpc/pipelining/branching) discussing it in more detail.
 
 <!--
 

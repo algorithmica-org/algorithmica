@@ -21,7 +21,7 @@ There are two major groups of actions that cause undefined behavior:
 
 Designating something as undefined instead of implementation-defined behavior also helps compilers in optimization. Consider the case of signed integer overflow. On almost all architectures, [signed integers](/hpc/arithmetic/integer) overflow the same way as unsigned ones, with `INT_MAX + 1 == INT_MIN`, and yet, this is undefined behavior according to the C++ standard. This is very much intentional: if you disallow signed integer overflow, then `(x + 1) > x` is guaranteed to be always true for `int`, but not for `unsigned int`, because `(x + 1)` may overflow. For signed types, this lets compilers optimize such checks away.
 
-As a more naturally occurring example, consider the case of a loop with an integer control variable. Modern C++ and languages like Rust are advocating for using an unsigned integer (`size_t` / `usize`), while C programmers stubbornly keep using `int`. To understand why, consider the following `for` loop:
+As a more naturally occurring example, consider the case of a loop with an integer control variable. Modern C++ and languages like Rust encourage programmers to use an unsigned integer (`size_t` / `usize`), while C programmers stubbornly keep using `int`. To understand why, consider the following `for` loop:
 
 ```cpp
 for (unsigned int i = 0; i < n; i++) {
@@ -157,7 +157,7 @@ void add(int *a, int *b, int n) {
 
 Since each iteration of this loop is independent, it can be executed in parallel and [vectorized](/hpc/simd). But is it, technically?
 
-There may be a problem if the arrays `a` and `b` intersect. Consider the case when `b == a + 1`, that is, if `b` is just a memory view of `a` starting from its second element. In this case, the next iteration depends on the previous one, and the only correct solution is to execute the loop sequentially. The compiler has to check for such possibilities, even if the programmer knows they can't happen.
+There may be a problem if the arrays `a` and `b` intersect. Consider the case when `b == a + 1`, that is, if `b` is just a memory view of `a` starting from its second element. In this case, the next iteration depends on the previous one, and the only correct solution is to execute the loop sequentially. The compiler has to check for such possibilities even if the programmer knows they can't happen.
 
 This is why we have `const` and `restrict` keywords. The first one enforces that we won't modify memory with the pointer variable, and the second is a way to tell the compiler that the memory is guaranteed to not be aliased.
 

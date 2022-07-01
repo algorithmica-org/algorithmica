@@ -29,7 +29,7 @@ Labels can be any string, but compilers don't get creative and [typically](https
 
 It is reasonable to think that these conditions are computed as `bool`-s somewhere and passed to conditional jumps as operands: after all, this is how it works in programming languages. But that is not how it is implemented in hardware. Conditional operations use a special `FLAGS` register, which first needs to be populated by executing instructions that perform some kind of check.
 
-In our example, `cmp rax, rcx` compares the iterator `rax` with the end-of-array pointer `rcx`. This updates the FLAGS register, and now it can be used by `jne loop`, which looks up a certain bit there that tells whether the two values are equal or not, and then either jumps back to the beginning or continues to the next instruction, thus breaking the loop.
+In our example, `cmp rax, rcx` compares the iterator `rax` with the end-of-array pointer `rcx`. This updates the `FLAGS` register, and now it can be used by `jne loop`, which looks up a certain bit there that tells whether the two values are equal or not, and then either jumps back to the beginning or continues to the next instruction, thus breaking the loop.
 
 ### Loop Unrolling
 
@@ -61,15 +61,15 @@ loop:
 
 Now we only need 3 loop control instructions for 4 useful ones (an improvement from $\frac{1}{4}$ to $\frac{4}{7}$ in terms of efficiency), and this can be continued to reduce the overhead almost to zero.
 
-In practice though, unrolling loops isn't always necessary for performance because modern processors don't actually execute instructions one-by-one, but maintain a [queue of pending instructions](/hpc/pipelining) so that two independent operations can be executed concurrently without waiting for each other to finish.
+In practice, unrolling loops isn't always necessary for performance because modern processors don't actually execute instructions one-by-one, but maintain a [queue of pending instructions](/hpc/pipelining) so that two independent operations can be executed concurrently without waiting for each other to finish.
 
 This is our case too: the real speedup from unrolling won't be fourfold, because the operations of incrementing the counter and checking if we are done are independent from the loop body, and can be scheduled to run concurrently with it. But may still be beneficial to [ask the compiler](/hpc/compilation/situational) to unroll it to some extent.
 
 ### An Alternative Approach
 
-You don't have to explicitly use `cmp` or a similar instruction to make a conditional jump. Many other instructions either read or modify the FLAGS register, sometimes as a by-product enabling optional exception checks.
+You don't have to explicitly use `cmp` or a similar instruction to make a conditional jump. Many other instructions either read or modify the `FLAGS` register, sometimes as a by-product enabling optional exception checks.
 
-For example, `add` always sets a bunch of flags, denoting whether the result is zero, is negative, whether an overflow or an underflow occurred, and so on. Taking advantage of this mechanism, compilers often produce loops like this:
+For example, `add` always sets a number of flags, denoting whether the result is zero, is negative, whether an overflow or an underflow occurred, and so on. Taking advantage of this mechanism, compilers often produce loops like this:
 
 ```nasm
     mov  rax, -100  ; replace 100 with the array size
@@ -79,7 +79,7 @@ loop:
     jnz  loop       ; checks if the result is zero
 ```
 
-This code is a bit harder to read for a human, but it is one instruction shorter in the repeated part, which isn't huge, but non-negligible for performance.
+This code is a bit harder to read for a human, but it is one instruction shorter in the repeated part, which may meaningfully affect performance.
 
 <!--
 
@@ -117,7 +117,7 @@ cmov
 
 Need to somehow link it to branchless programming and layout article. We now have 3 places introducing the concept.
 
-Many other operations set something in the FLAGS register. For example, add often. It is useful to, and then decrement or increment it to save on instruction. Like a while loop:
+Many other operations set something in the `FLAGS` register. For example, add often. It is useful to, and then decrement or increment it to save on instruction. Like a while loop:
 
 ```
 while (n--) {
