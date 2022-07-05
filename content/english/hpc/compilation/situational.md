@@ -63,7 +63,7 @@ This is a new feature that only appeared in C++20. Before that, there were compi
 
 ```c++
 int factorial(int n) {
-    if (likely(n > 1))
+    if (__builtin_expect(n > 1, 1))
         return n * factorial(n - 1);
     else
         return 1;
@@ -102,7 +102,7 @@ After we run the program — preferably on input that is as representative of re
 g++ -fprofile-use [other flags] source.cc -o binary
 ```
 
-It usually improves performance by 10-20% for large codebases, and for this reason it is commonly included in the build process of performance-critical projects. One more reason to invest in solid benchmarking code.
+It usually improves performance by 10-20% for large codebases, and for this reason it is commonly included in the build process of performance-critical projects. This is more reason to invest in solid benchmarking code.
 
 <!--
 

@@ -19,7 +19,7 @@ When you fetch anything from memory, the request goes through an incredibly comp
 
 -->
 
-When you fetch anything from memory, there is always some non-zero latency before the data arrives. Moreover, the request doesn't go directly to its ultimate storage location, but it first goes through an incredibly complex system of address translation units and caching layers designed to both help in memory management and reduce the latency.
+When you fetch anything from memory, there is always some latency before the data arrives. Moreover, the request doesn't go directly to its ultimate storage location, but it first goes through a complex system of address translation units and caching layers designed to both help in memory management and reduce the latency.
 
 Therefore, the only correct answer to this question is "it depends" — primarily on where the operands are stored:
 

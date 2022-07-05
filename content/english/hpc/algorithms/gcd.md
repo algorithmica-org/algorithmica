@@ -14,7 +14,7 @@ $$
 \gcd(a, b) = \max_{g: \; g|a \, \land \, g | b} g
 $$
 
-You probably already know this algorithm from a CS textbook, but let me briefly remind it anyway. It is based on the following formula, assuming that $a > b$:
+You probably already know this algorithm from a CS textbook, but I will summarize it here. It is based on the following formula, assuming that $a > b$:
 
 $$
 \gcd(a, b) = \begin{cases}

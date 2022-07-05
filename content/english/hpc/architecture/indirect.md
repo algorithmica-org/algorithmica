@@ -102,7 +102,7 @@ There are many ways to implement this behavior, but C++ does it using a *virtual
 
 For all concrete implementations of `Animal`, compiler pads all their methods (that is, their instruction sequences) so that they have the exact same length for all classes (by inserting some [filler instructions](../layout) after `ret`) and then just writes them sequentially somewhere in the instruction memory. Then it adds a *run-time type information* field to the structure (that is, to all its instances), which is essentially just the offset in the memory region that points to the right implementation of the virtual methods of the class.
 
-During a virtual method call, that offset field is fetched from the instance of a structure, and a normal function call is made with it, using the fact that all methods and other fields of every derived class have exactly the same offsets.
+With a virtual method call, that offset field is fetched from the instance of a structure and a normal function call is made with it, using the fact that all methods and other fields of every derived class have exactly the same offsets.
 
 Of course, this adds some overhead:
 

@@ -28,7 +28,7 @@ for (int i = 0; i < N; i++)
     s += (a[i] < 50) * a[i];
 ```
 
-Suddenly, the loop now takes ~7 cycles per element instead of the original ~14. Also, the performance remains constant if we change `50` to some other threshold, so it doesn't depend on the branch probability.
+The loop now takes ~7 cycles per element instead of the original ~14. Also, the performance remains constant if we change `50` to some other threshold, so it doesn't depend on the branch probability.
 
 But wait… shouldn't there still be a branch? How does `(a[i] < 50)` map to assembly?
 
@@ -182,7 +182,7 @@ int abs(int a) {
 
 **Strings.** Oversimplifying things, an `std::string` is comprised of a pointer to a null-terminated char array (also known as "C-string") allocated somewhere on the heap and one integer containing the string size.
 
-A very common value for strings is the empty string — which is also its default value. You also need to handle them somehow, and the idiomatic thing to do is to assign `nullptr` as the pointer and `0` as the string size, and then check if the pointer is null or if the size is zero at the beginning of every procedure involving strings.
+A common value for strings is the empty string — which is also its default value. You also need to handle them somehow, and the idiomatic thing to do is to assign `nullptr` as the pointer and `0` as the string size, and then check if the pointer is null or if the size is zero at the beginning of every procedure involving strings.
 
 However, this requires a separate branch, which is costly unless most strings are empty. What we can do to get rid of it is to allocate a "zero C-string," which is just a zero byte allocated somewhere, and then simply point all empty strings there. Now all string operations with empty strings have to read this useless zero byte, but this is still much cheaper than a branch misprediction.
 
@@ -216,7 +216,7 @@ That there are no substantial reasons why compilers can't do this on their own, 
 
 -->
 
-**Data-parallel programming.** Branchless programming is very important for [SIMD](/hpc/simd) applications, including GPU programming, because they don't have branching in the first place.
+**Data-parallel programming.** Branchless programming is very important for [SIMD](/hpc/simd) applications because they don't have branching in the first place.
 
 In our array sum example, if you remove the `volatile` type qualifier from the accumulator, the compiler becomes able to [vectorize](/hpc/simd/auto-vectorization) the loop:
 

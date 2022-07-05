@@ -9,7 +9,7 @@ Instead, the most fascinating showcases of performance engineering are multifold
 
 <!-- Yet, with remarkable periodicity, these can be optimized to ridiculous levels of performance. -->
 
-In this article, we focus on one such fundamental algorithm — *binary search* — and implement two of its variants that are, depending on the problem size, up to 4x faster than `std::lower_bound`, while being under just 15 lines of code.
+In this section, we focus on one such fundamental algorithm — *binary search* — and implement two of its variants that are, depending on the problem size, up to 4x faster than `std::lower_bound`, while being under just 15 lines of code.
 
 The first algorithm achieves that by removing [branches](/hpc/pipelining/branching), and the second also optimizes the memory layout to achieve better [cache system](/hpc/cpu-cache) performance. This technically disqualifies it from being a drop-in replacement for `std::lower_bound` as it needs to permute the elements of the array before it can start answering queries — but I can't recall a lot of scenarios where you obtain a sorted array but can't afford to spend linear time on preprocessing.
 
@@ -401,7 +401,7 @@ Also, note that the last few prefetch requests are actually not needed, and in f
 
 This prefetching technique allows us to read up to four elements ahead, but it doesn't really come for free — we are effectively trading off excess memory [bandwidth](/hpc/cpu-cache/bandwidth) for reduced [latency](/hpc/cpu-cache/latency). If you run more than one instance at a time on separate hardware threads or just any other memory-intensive computation in the background, it will significantly [affect](/hpc/cpu-cache/sharing) the benchmark performance.
 
-But we can do better. Instead of fetching four cache lines at a time, we could fetch four times *fewer* cache lines. And in the [next article](../s-tree), we will explore the approach.
+But we can do better. Instead of fetching four cache lines at a time, we could fetch four times *fewer* cache lines. And in the [next section](../s-tree), we will explore the approach.
 
 <!--
 
@@ -413,7 +413,7 @@ But that was a small detour. Let's get back to optimizing for *large* arrays.
 
 ### Removing the Last Branch
 
-Just the finishing touch. Did you notice the bumpiness of the Eytzinger search? This isn't random noise — let's zoom in:
+Just one finishing touch: did you notice the bumpiness of the Eytzinger search? This isn't random noise — let's zoom in:
 
 ![](../img/search-eytzinger-small.svg)
 
