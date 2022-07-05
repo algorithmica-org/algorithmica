@@ -1,6 +1,7 @@
 ---
 title: Rounding Errors
 weight: 2
+published: true
 ---
 
 The way rounding works in hardware floats is remarkably simple: it occurs if and only if the result of the operation is not representable exactly, and by default gets rounded to the nearest representable number (in case of a tie preferring the number that ends with a zero).
@@ -141,7 +142,7 @@ for (int i = 0; i < n; i++)
 
 Since we are performing summations and not multiplications, its relative error is no longer just bounded by $O(\epsilon \cdot n)$, but heavily depends on the input.
 
-In the most ridiculous case, if the first value is $2^{23}$ and the other values are equal to $1$, the sum is going to be $2^{23}$ regardless of $n$, which can be verified by executing the following code and observing that it simply prints $16777216 = 2^{23}$ twice:
+In the most ridiculous case, if the first value is $2^{24}$ and the other values are equal to $1$, the sum is going to be $2^{24}$ regardless of $n$, which can be verified by executing the following code and observing that it simply prints $16777216 = 2^{24}$ twice:
 
 ```cpp
 const int n = (1<<24);
@@ -154,7 +155,7 @@ for (int i = 0; i < n; i++)
 printf("%f\n", s);
 ```
 
-This happens because `float` has only 23 mantissa bits, and so $2^{23} + 1$ is the first integer number that can't be represented exactly and has to be rounded down, which happens every time we try to add $1$ to $s = 2^{23}$. The error is indeed $O(n \cdot \epsilon)$ but in terms of the absolute error, not the relative one: in the example above, it is $2$, and it would go up to infinity if the last number happened to be $-2^{23}$.
+This happens because `float` has only 23 mantissa bits, and so $2^{24} + 1$ is the first integer number that can't be represented exactly and has to be rounded down, which happens every time we try to add $1$ to $s = 2^{24}$. The error is indeed $O(n \cdot \epsilon)$ but in terms of the absolute error, not the relative one: in the example above, it is $2$, and it would go up to infinity if the last number happened to be $-2^{24}$.
 
 The obvious solution is to switch to a larger type such as `double`, but this isn't really a scalable method. An elegant solution is to store the parts that weren't added in a separate variable, which is then added to the next variable:
 
