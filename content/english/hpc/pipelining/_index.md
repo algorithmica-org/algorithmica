@@ -5,7 +5,7 @@ weight: 3
 
 When programmers hear the word *parallelism*, they mostly think about *multi-core parallelism*, the practice of explicitly splitting a computation into semi-independent *threads* that work together to solve a common problem.
 
-This type of parallelism is mainly about reducing *latency* and achieving *scalability*, but not about improving *efficiency*. You can solve a problem ten times as big with a parallel algorithm, but it would take at least ten times as much computational resources. Although parallel hardware is becoming [ever more abundant](/hpc/complexity/hardware), and parallel algorithm design is becoming an increasingly important area, for now, we will consider the use of more than one CPU core cheating.
+This type of parallelism is mainly about reducing *latency* and achieving *scalability*, but not about improving *efficiency*. You can solve a problem ten times as big with a parallel algorithm, but it would take at least ten times as many computational resources. Although parallel hardware is becoming [ever more abundant](/hpc/complexity/hardware) and parallel algorithm design is becoming an increasingly important area, for now, we will limit ourselves to considering only a single CPU core.
 
 But there are other types of parallelism, already existing inside a CPU core, that you can use *for free*.
 

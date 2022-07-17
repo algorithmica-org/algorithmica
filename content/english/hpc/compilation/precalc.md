@@ -5,11 +5,11 @@ weight: 8
 
 When compilers can infer that a certain variable does not depend on any user-provided data, they can compute its value during compile time and turn it into a constant by embedding it into the generated machine code.
 
-This optimization helps performance a lot, but it is not a part of the C++ standard, so compilers don't *have to* do that. When a compile-time computation is either hard to implement or time-intensive, they have a full legal right to pass on that opportunity.
+This optimization helps performance a lot, but it is not a part of the C++ standard, so compilers don't *have to* do that. When a compile-time computation is either hard to implement or time-intensive, a compiler may pass on that opportunity.
 
 ### Constant Expressions
 
-In modern C++, you can mark a function as `constexpr`, and if it is called by passing constants, its value is guaranteed to be computed during compile time:
+For a more reliable solution, in modern C++ you can mark a function as `constexpr`; if it is called by passing constants its value is guaranteed to be computed during compile time:
 
 ```c++
 constexpr int fibonacci(int n) {
@@ -23,7 +23,7 @@ static_assert(fibonacci(10) == 55);
 
 These functions have some restrictions like that they only call other `constexpr` functions and can't do memory allocation, but otherwise, they are executed "as is."
 
-Note that while they don't cost anything during the run time, they still increase compilation time, so at least remotely care about their efficiency and don't put something NP-complete in them:
+Note that while `constexpr` functions don't cost anything during run time, they still increase compilation time, so at least remotely care about their efficiency and don't put something NP-complete in them:
 
 ```c++
 constexpr int fibonacci(int n) {

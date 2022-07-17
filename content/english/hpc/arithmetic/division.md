@@ -118,15 +118,15 @@ This method requires some precomputation, including performing one actual divisi
 It is not very clear why such $m$ and $s$ always exist, let alone how to find them. But given a fixed $s$, intuition tells us that $m$ should be as close to $2^s/y$ as possible for $2^s$ to cancel out. So there are two natural choices: $\lfloor 2^s/y \rfloor$ and $\lceil 2^s/y \rceil$. The first one doesn't work, because if you substitute
 
 $$
-\lfloor \frac{x \cdot \lfloor 2^s/y \rfloor}{2^s} \rfloor
+\Bigl \lfloor \frac{x \cdot \lfloor 2^s/y \rfloor}{2^s} \Bigr \rfloor
 $$
 
 then for any integer $\frac{x}{y}$ where $y$ is not even, the result will be strictly less than the truth. This only leaves the other case, $m = \lceil 2^s/y \rceil$. Now, let's try to derive the lower and upper bounds for the result of the computation:
 
 $$
   \lfloor x / y \rfloor
-= \lfloor \frac{x \cdot m}{2^s} \rfloor
-= \lfloor \frac{x \cdot \lceil  2^s /y \rceil}{2^s} \rfloor
+= \Bigl \lfloor \frac{x \cdot m}{2^s} \Bigr \rfloor
+= \Bigl \lfloor \frac{x \cdot \lceil  2^s /y \rceil}{2^s} \Bigr \rfloor
 $$
 
 Let's start with the bounds for $m$:
@@ -144,7 +144,7 @@ And now for the whole expression:
 $$
 x / y - 1
 <
-\lfloor \frac{x \cdot \lceil  2^s /y \rceil}{2^s} \rfloor
+\Bigl \lfloor \frac{x \cdot \lceil  2^s /y \rceil}{2^s} \Bigr \rfloor
 <
 x / y + x / 2^s
 $$
@@ -182,8 +182,8 @@ Now, for 32-bit integers, we can set $s = 64$ and look at the computation that w
 
 $$
   \lfloor x / y \rfloor
-= \lfloor \frac{x \cdot m}{2^s} \rfloor
-= \lfloor \frac{x \cdot \lceil  2^s /y \rceil}{2^s} \rfloor
+= \Bigl \lfloor \frac{x \cdot m}{2^s} \Bigr \rfloor
+= \Bigl \lfloor \frac{x \cdot \lceil  2^s /y \rceil}{2^s} \Bigr \rfloor
 $$
 
 What we really do here is we multiply $x$ by a floating-point constant ($x \cdot m$) and then truncate the result $(\lfloor \frac{\cdot}{2^s} \rfloor)$.

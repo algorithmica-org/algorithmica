@@ -5,7 +5,7 @@ weight: 9
 
 In the [previous chapter](../external-memory), we studied computer memory from a theoretical standpoint, using the [external memory model](../external-memory/model) to estimate the performance of memory-bound algorithms.
 
-While it is more or less accurate for computations involving HDDs and network storage, where in-memory arithmetic is negligibly fast compared to the external I/O operations, it is too imprecise for lower levels in the cache hierarchy, where the costs of these operations become comparable.
+While the external memory model is more or less accurate for computations involving HDDs and network storage, where cost of arithmetic operations on in-memory values is negligible compared to external I/O operations, it is too imprecise for lower levels in the cache hierarchy, where the costs of these operations become comparable.
 
 To perform more fine-grained optimization of in-memory algorithms, we have to start taking into account the many specific details of the CPU cache system. And instead of studying loads of boring Intel documents with dry specs and theoretically achievable limits, we will estimate these parameters experimentally by running numerous small benchmark programs with access patterns that resemble the ones that often occur in practical code.
 
@@ -34,7 +34,7 @@ Although the CPU can be clocked at 4.1GHz in boost mode, we will perform most ex
 
 -->
 
-Due to difficulties in [refraining the compiler from cheating](/hpc/profiling/noise/), the code snippets in this article are slightly simplified for exposition purposes. Check the [code repository](https://github.com/sslotin/amh-code/tree/main/cpu-cache) if you want to reproduce them yourself.
+Due to difficulties in [preventing the compiler from optimizing away unused values](/hpc/profiling/noise/), the code snippets in this article are slightly simplified for exposition purposes. Check the [code repository](https://github.com/sslotin/amh-code/tree/main/cpu-cache) if you want to reproduce them yourself.
 
 ### Acknowledgements
 

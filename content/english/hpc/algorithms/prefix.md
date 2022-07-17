@@ -146,7 +146,7 @@ Another interesting data point: if we only execute the `prefix` phase, the perfo
 
 ### Blocking
 
-So, we have a memory bandwidth problem for large arrays. We can avoid re-fetching the entire array from the RAM if we split it into blocks that fit in the cache and process them separately. All we need to pass to the next block is the sum of the previous ones, so we can design a `local_prefix` function with an interface similar to `accumulate`:
+So, we have a memory bandwidth problem for large arrays. We can avoid re-fetching the entire array from RAM if we split it into blocks that fit in the cache and process them separately. All we need to pass to the next block is the sum of the previous ones, so we can design a `local_prefix` function with an interface similar to `accumulate`:
 
 ```c++
 const int B = 4096; // <- ideally should be slightly less or equal to the L1 cache

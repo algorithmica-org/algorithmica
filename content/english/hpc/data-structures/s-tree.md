@@ -3,9 +3,9 @@ title: Static B-Trees
 weight: 2
 ---
 
-This article is a follow-up to the [previous one](../binary-search), where we optimized binary search by the means of removing branching and improving the memory layout. Here, we will also be searching in sorted arrays, but this time we are not limited to fetching and comparing only one element at a time.
+This section is a follow-up to the [previous one](../binary-search), where we optimized binary search by the means of removing branching and improving the memory layout. Here, we will also be searching in sorted arrays, but this time we are not limited to fetching and comparing only one element at a time.
 
-In this article, we generalize the techniques we developed for binary search to *static B-trees* and accelerate them further using [SIMD instructions](/hpc/simd). In particular, we develop two new implicit data structures:
+In this section, we generalize the techniques we developed for binary search to *static B-trees* and accelerate them further using [SIMD instructions](/hpc/simd). In particular, we develop two new implicit data structures:
 
 - The [first](#b-tree-layout) is based on the memory layout of a B-tree, and, depending on the array size, it is up to 8x faster than `std::lower_bound` while using the same space as the array and only requiring a permutation of its elements.
 - The [second](#b-tree-layout-1) is based on the memory layout of a B+ tree, and it is up to 15x faster than `std::lower_bound` while using just 6-7% more memory — or 6-7% **of** the memory if we can keep the original sorted array.

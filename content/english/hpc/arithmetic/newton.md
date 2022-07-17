@@ -5,7 +5,7 @@ weight: 3
 
 Reaching the maximum possible precision is rarely required from a practical algorithm. In real-world data, modeling and measurement errors are usually several orders of magnitude larger than the errors that come from rounding floating-point numbers and such, and we are often perfectly happy with picking an approximate method that trades off precision for speed.
 
-In this section, we introduce one of the most important building blocks in such approximate, numerical algorithms: *the Newton's method*.
+In this section, we introduce one of the most important building blocks in such approximate, numerical algorithms: *Newton's method*.
 
 ## Newton's Method
 
