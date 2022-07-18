@@ -252,9 +252,9 @@ int gcd(int a, int b) {
 }
 ```
 
-It runs in 91ns — which is good enough to leave it there.
+It runs in 91ns, which is good enough to leave it there.
 
-If somebody wants to try to shove off a few more nanoseconds by re-writing assembly by hand or trying a lookup table to save a few last iterations, please [let me know](http://sereja.me/).
+If somebody wants to try to shave off a few more nanoseconds by rewriting the assembly by hand or trying a lookup table to save a few last iterations, please [let me know](http://sereja.me/).
 
 ### Acknowledgements
 
