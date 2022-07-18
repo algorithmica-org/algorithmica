@@ -185,4 +185,4 @@ int load(int *p) {
 }
 ```
 
-Compilers usually don't do that because this is not technically always legal: that 4th byte may be on a memory page that you don't own, so the operating system won't let you load it even if you are going to discard it right away.
+Compilers usually don't do that because it's technically not legal: that 4th byte may be on a memory page that you don't own, so the operating system won't let you load it even if you are going to discard it right away.

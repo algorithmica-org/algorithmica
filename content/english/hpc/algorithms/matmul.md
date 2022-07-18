@@ -438,7 +438,7 @@ There is also an approach that performs asymptotically fewer arithmetic operatio
 
 FMA also supports 64-bit floating-point numbers, but it does not support integers: you need to perform addition and multiplication separately, which results in decreased performance. If you can guarantee that all intermediate results can be represented exactly as 32- or 64-bit floating-point numbers (which is [often the case](/hpc/arithmetic/errors/)), it may be faster to just convert them to and from floats.
 
-You can also apply the same trick to other similar computations. One example is the "min-plus matrix multiplication," which is defined as:
+This approach can be also applied to some similar-looking computations. One example is the "min-plus matrix multiplication" defined as:
 
 $$
 (A \circ B)_{ij} = \min_{1 \le k \le n} (A_{ik} + B_{kj})
