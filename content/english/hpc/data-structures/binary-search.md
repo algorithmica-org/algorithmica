@@ -248,7 +248,7 @@ Apart from being compact, it has some nice properties, like that all even-number
 
 Here is how this layout looks when applied to binary search:
 
-![](../img/eytzinger.png)
+![Note that the tree is slightly imbalanced (because of the last layer is continuous)](../img/eytzinger.png)
 
 When searching in this layout, we just need to start from the first element of the array, and then on each iteration jump to either $2 k$ or $(2k + 1)$, depending on how the comparison went:
 
@@ -278,15 +278,15 @@ void eytzinger(int k = 1) {
 }
 ```
 
-This function takes the current node number `k`, recursively writes out all elements to the left of the middle of the search interval, writes out the current element we'd compare against, and then recursively writes out all the elements on the right. It seems a bit complicated, but to convince ourselves that it works, we only need three observations:
+This function takes the current node number `k`, recursively writes out all elements to the left of the middle of the search interval, writes out the current element we'd compare against, and then recursively writes out all the elements on the right. It seems a bit complicated, but to convince yourself that it works, you only need three observations:
 
 - It writes exactly `n` elements as we enter the body of `if` for each `k` from `1` to `n` just once.
 - It writes out sequential elements from the original array as it increments the `i` pointer each time.
-- By the time we write the element at node `k`, we have already written all the elements to its left (exactly `i`).
+- By the time we write the element at node `k`, we will have already written all the elements to its left (exactly `i`).
 
-Despite being recursive, it is actually quite fast as all the memory reads are sequential, and the memory writes are only in $O(\log n)$ different memory blocks at a time.
+Despite being recursive, it is actually quite fast as all the memory reads are sequential, and the memory writes are only in $O(\log n)$ different memory blocks at a time. Maintaining the permutation is both logically and computationally harder to maintain though: adding an element to a sorted array only requires shifting a suffix of its elements one position to the right, while Eytzinger array practically needs to be rebuilt from scratch.
 
-Note that this traversal and the resulting permutation are not exactly equivalent to the "tree" of vanilla binary search: for example, the left child subtree may be larger than the right child subtree — and even more than just by one node — but it doesn't matter since both approaches result in the same logarithmic tree depth.
+Note that this traversal and the resulting permutation are not exactly equivalent to the "tree" of vanilla binary search: for example, the left child subtree may be larger than the right child subtree — up to twice as large — but it doesn't matter much since both approaches result in the same $\lceil \log_2 n \rceil$ tree depth.
 
 Also note that the Eytzinger array is one-indexed — this will be important for performance later. You can put in the zeroth element the value that you want to be returned in the case when the lower bound doesn't exist (similar to `a.end()` for `std::lower_bound`).
 
@@ -300,22 +300,25 @@ while (k <= n)
     k = 2 * k + (t[k] < x);
 ```
 
-The only problem arises when we need to restore the index of the resulting element, as $k$ may end up not pointing to a leaf node. Here is an example of how that can happen:
+The only problem arises when we need to restore the index of the resulting element, as $k$ does not directly point to it. Consider this example (its corresponding tree is listed above):
 
 ```center
-    array:  1 2 3 4 5 6 7 8                     
-eytzinger:  5 3 7 2 4 6 8 1                     
-1st range:  ---------------  k := 1             
-2nd range:  -------          k := 2*k      (=2) 
-3rd range:      ---          k := 2*k + 1  (=5) 
-4th range:        -          k := 2*k      (=10)
+    array:  0 1 2 3 4 5 6 7 8 9                           
+eytzinger:  6 3 7 1 5 8 9 0 2 4                           
+1st range:  -------------------  k := 1                    
+2nd range:  -------------        k := 2*k     = 2   (6 ≥ 3)
+3rd range:  -------              k := 2*k     = 4   (3 ≥ 3)
+4th range:      ---              k := 2*k + 1 = 9   (1 < 3)
+5th range:        -              k := 2*k + 1 = 19  (2 < 3)
 ```
 
-Here we query the array of $[1, …, 8]$ for the lower bound of $x=4$. We compare it against $5$, $3$, and $4$, go left-right-left, and end up with $k = 10$, which isn't even a valid array index.
+<!-- do we need the last comparison? -->
 
-The trick is to notice that, unless the answer is the last element of the array, we compare $x$ against it at some point, and after we've learned that it is not less than $x$, we start comparing $x$ against elements to the left, and all these comparisons evaluate true (that is, leading to the right). Therefore, to restore the answer, we just need to "cancel" some number of right turns.
+Here we query the array of $[0, …, 9]$ for the lower bound of $x=3$. We compare it against $6$, $3$, $1$, and $2$, go left-left-right-right, and end up with $k = 19$, which isn't even a valid array index.
 
-This can be done in an elegant way by observing that the right turns are recorded in the binary representation of $k$ as 1-bits, and so we just need to find the number of trailing 1s in the binary representation and right-shift $k$ by exactly that number of bits. To do this, we can invert the number (`~k`) and call the "find first set" instruction:
+The trick is to notice that, unless the answer is the last element of the array, we compare $x$ against it at some point, and after we've learned that it is not less than $x$, we go left exactly once and then keep going right until we reach a leaf (because we will only be comparing $x$ against lesser elements). Therefore, to restore the answer, we just need to "cancel" some number of right turns and then one more.
+
+This can be done in an elegant way by observing that the right turns are recorded in the binary representation of $k$ as 1-bits, and so we just need to find the number of trailing 1s in the binary representation and right-shift $k$ by exactly that number of bits plus one. To do this, we can invert the number (`~k`) and call the "find first set" instruction:
 
 ```c++
 int lower_bound(int x) {
