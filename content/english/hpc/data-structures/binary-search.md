@@ -3,6 +3,8 @@ title: Binary Search
 weight: 1
 ---
 
+<!-- mention interpolation search and radix trees? -->
+
 While improving the speed of user-facing applications is the end goal of performance engineering, people don't really get excited over 5-10% improvements in some databases. Yes, this is what software engineers are paid for, but these types of optimizations tend to be too intricate and system-specific to be readily generalized to other software.
 
 Instead, the most fascinating showcases of performance engineering are multifold optimizations of textbook algorithms: the kinds that everybody knows and deemed so simple that it would never even occur to try to optimize them in the first place. These optimizations are simple and instructive and can very much be adopted elsewhere. And they are surprisingly not as rare as you'd think.
@@ -71,7 +73,7 @@ int lower_bound(int x) {
 
 Find the middle element of the search range, compare it to `x`, shrink the range in half. Beautiful in its simplicity.
 
-A similar approach is employed by `std::lower_bound`, except that it needs to be more generic to support containers with non-random-access iterators and thus uses the first element and the size of the search interval instead of the two of its ends. Implementations from both [Clang](https://github.com/llvm-mirror/libcxx/blob/78d6a7767ed57b50122a161b91f59f19c9bd0d19/include/algorithm#L4169) and [GCC](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023) use this metaprogramming monstrosity:
+A similar approach is employed by `std::lower_bound`, except that it needs to be more generic to support containers with non-random-access iterators and thus uses the first element and the size of the search interval instead of the two of its ends. To this end, implementations from both [Clang](https://github.com/llvm-mirror/libcxx/blob/78d6a7767ed57b50122a161b91f59f19c9bd0d19/include/algorithm#L4169) and [GCC](https://github.com/gcc-mirror/gcc/blob/d9375e490072d1aae73a93949aa158fcd2a27018/libstdc%2B%2B-v3/include/bits/stl_algobase.h#L1023) use this metaprogramming monstrosity:
 
 ```c++
 template <class _Compare, class _ForwardIterator, class _Tp>
@@ -131,23 +133,60 @@ Now, let's try to get rid of these obstacles one by one.
 
 ## Removing Branches
 
-We can replace branching with [predication](/hpc/pipelining/branchless). To do this, we need to adopt the STL approach and rewrite the loop using the first element and the size of the search interval — instead of its first and last element. This way we only need to update the first element of the search interval with a `cmov` instruction and halve its size on each iteration:
+We can replace branching with [predication](/hpc/pipelining/branchless). To make the task easier, we can adopt the STL approach and rewrite the loop using the first element and the size of the search interval (instead of its first and last element):
 
 ```c++
 int lower_bound(int x) {
     int *base = t, len = n;
     while (len > 1) {
         int half = len / 2;
-        base = (base[half] < x ? &base[half] : base);
-        len -= half;
+        if (base[half - 1] < x) {
+            base += half;
+            len = len - half;
+        } else {
+            len = half;
+        }
     }
-    return *(base + (*base < x));
+    return *base;
 }
 ```
 
-Note that this loop is not always equivalent to the standard binary search — it always rounds *up* the size of the search interval, so it accesses slightly different elements and may perform one comparison more than what is needed. We do this to make the number of iterations constant and remove the need for branching completely, although it does require an awkward `(*base < x)` check at the end.
+Note that, on each iteration, `len` is essentially just halved and then either floored or ceiled, depending on how the comparison went. This conditional update seems unnecessary; to avoid it, we can simply say that it's always ceiled:
 
-As typical for predication, this trick is very fragile to compiler optimizations. It doesn't make a difference on Clang — for some reason, it replaces the ternary operator with a branch anyway — but it works fine on GCC (9.3), yielding a 2.5-3x improvement on small arrays:
+```c++
+int lower_bound(int x) {
+    int *base = t, len = n;
+    while (len > 1) {
+        int half = len / 2;
+        if (base[half - 1] < x)
+            base += half;
+        len -= half; // = ceil(len / 2)
+    }
+    return *base;
+}
+```
+
+This way, we only need to update the first element of the search interval with a [conditional move](/hpc/pipelining/branchless/) and halve its size on each iteration:
+
+```c++
+int lower_bound(int x) {
+    int *base = t, len = n;
+    while (len > 1) {
+        int half = len / 2;
+        base += (base[half - 1] < x) * half; // will be replaced with a "cmov"
+        len -= half;
+    }
+    return *base;
+}
+```
+
+<!-- pre-compute base pointer for next iteration? -->
+
+Note that this loop is not always equivalent to the standard binary search. Since it always rounds *up* the size of the search interval, it accesses slightly different elements and may perform one comparison more than needed. Apart from simplifying computations on each iteration, it also makes the number of iterations constant if the array size is constant, removing branch mispredictions completely.
+
+As typical for predication, this trick is very fragile to compiler optimizations — depending on the compiler and how the funciton is invoked, it may still leave a branch or generate suboptimal code. It works fine on Clang 10, yielding a 2.5-3x improvement on small arrays:
+
+<!-- todo: update numbers -->
 
 ![](../img/search-branchless.svg)
 
@@ -162,14 +201,16 @@ int lower_bound(int x) {
     int *base = t, len = n;
     while (len > 1) {
         int half = len / 2;
-        __builtin_prefetch(&base[(len - half) / 2]);
-        __builtin_prefetch(&base[half + (len - half) / 2]);
-        base = (base[half] < x ? &base[half] : base);
         len -= half;
+        __builtin_prefetch(&base[len / 2 - 1]);
+        __builtin_prefetch(&base[half + len / 2 - 1]);
+        base += (base[half - 1] < x) * half;
     }
-    return *(base + (*base < x));
+    return *base;
 }
 ```
+
+<!-- todo: rerun this too -->
 
 With prefetching, the performance on large arrays becomes roughly the same:
 
