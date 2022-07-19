@@ -594,7 +594,7 @@ constexpr int offset(int h) {
     int s = 0, n = N;
     while (h--) {
         s += (n + B - 1) / B * B;
-        n /= B;
+        n = (n + B - 1) / B;
     }
     return s;
 }
