@@ -3,9 +3,9 @@ title: Modular Arithmetic
 weight: 1
 ---
 
-TODO: use it in binary exponentiation.
-
 <!--
+
+TODO: use it in binary exponentiation.
 
 In this section, we are going to discuss some preliminaries before discussing more advanced topics.
 
@@ -19,9 +19,9 @@ And the beautiful thing about it is that remainders are small and cyclic. Think 
 
 Computers usually store time as the number of seconds that have passed since the 1st of January, 1970 — the start of the "Unix era" — and use these timestamps in all computations that have to do with time.
 
-We humans also keep track of time relative to some point in the past, which usually has a political or religious significance. For example, at the moment of writing, approximately 63882260594 seconds have passed since 0 AD.
+We humans also keep track of time relative to some point in the past, which usually has a political or religious significance. For example, at the moment of writing, approximately 63882260594 seconds have passed since 1 AD — [6th century Eastern Roman monks' best estimate](https://en.wikipedia.org/wiki/Anno_Domini) of the day Jesus Christ was born.
 
-But unlike computers, we do not always need *all* that information. Depending on the task at hand, the relevant part may be that it's 2 pm right now and it's time to go to dinner, or that it's Thursday, and so Subway's sub of the day is an Italian BMT. Instead of the whole timestamp, we use its *remainder* containing just the information we need: it is much easier to deal with 1- or 2-digit numbers than 11-digit ones.
+But unlike computers, we do not always need *all* that information. Depending on the task at hand, the relevant part may be that it's 2 pm right now, and it's time to go to dinner; or that it's Thursday, and so Subway's sub of the day is an Italian BMT. Instead of the whole timestamp, we use its *remainder* containing just the information we need: it is much easier to deal with 1- or 2-digit numbers than 11-digit ones.
 
 **Problem.** Today is Thursday. What day of the week will be exactly in a year?
 

@@ -3,9 +3,9 @@ title: Montgomery Multiplication
 weight: 4
 ---
 
-Unsurprisingly, large fractions of computations in [modular arithmetic](../modular) are often spent on calculating the modulo operation, which is as slow as general integer division and typically taking 15-20 cycles, depending on the operand size.
+Unsurprisingly, a large fraction of computation in [modular arithmetic](../modular) is often spent on calculating the modulo operation, which is as slow as [general integer division](/hpc/arithmetic/division/) and typically takes 15-20 cycles, depending on the operand size.
 
-The best way to deal this nuisance is to avoid modulo operation altogether, delaying or replacing it with [predication](/hpc/pipelining/branchless), which can be done when calculating sums, for example:
+The best way to deal this nuisance is to avoid modulo operation altogether, delaying or replacing it with [predication](/hpc/pipelining/branchless), which can be done, for example, when calculating modular sums:
 
 ```cpp
 const int M = 1e9 + 7;
@@ -44,7 +44,7 @@ But there is another technique designed specifically for modular arithmetic, cal
 
 Montgomery multiplication works by first transforming the multipliers into *Montgomery space*, where modular multiplication can be performed cheaply, and then transforming them back when their actual values are needed. Unlike general integer division methods, Montgomery multiplication is not efficient for performing just one modular reduction and only becomes worthwhile when there is a chain of modular operations.
 
-The space is defined by the modulo $n$ and a positive integer $r \ge n$ coprime to $n$. The algorithm involves division and modulo by $r$, so in practice, $r$ is chosen to be $2^m$ with $m$ being equal 32 or 64, so that these operations can be done with a right-shift and a bitwise AND respectively.
+The space is defined by the modulo $n$ and a positive integer $r \ge n$ coprime to $n$. The algorithm involves modulo and division by $r$, so in practice, $r$ is chosen to be $2^{32}$ or $2^{64}$, so that these operations can be done with a right-shift and a bitwise AND respectively.
 
 <!-- Therefore $n$ needs to be an odd number so that every power of $2$ will be coprime to $n$. And if it is not, we can make it odd (?). -->
 
@@ -54,7 +54,7 @@ $$
 \bar{x} = x \cdot r \bmod n
 $$
 
-Computing this transformation involves a multiplication and a modulo — an expensive operation that we wanted to optimize away in the first place — which is why we don't use this method for general modular multiplication and only long sequences of operations where transforming numbers to and from the Montgomery space is worth it.
+Computing this transformation involves a multiplication and a modulo — an expensive operation that we wanted to optimize away in the first place — which is why we only use this method when the overhead of transforming numbers to and from the Montgomery space is worth it and not for general modular multiplication.
 
 <!-- Note that the transformation is actually such a multiplication that we want to optimize, so it is still an expensive operation. However, we will only need to transform a number into the space once, perform as many operations as we want efficiently in that space and at the end transform the final result back, which should be profitable if we are doing lots of operations modulo $n$. -->
 
@@ -287,6 +287,6 @@ int inverse(int _a) {
 }
 ```
 
-While vanilla binary exponentiation with a compiler-generated fast modulo trick requires ~170ns per `inverse` call, this implementation takes ~166ns, going down to ~158s we omit `transform` and `reduce` (a reasonable use case in modular arithmetic is for `inverse` to be used as a subprocedure in a bigger computation). This is a small improvement, but Montgomery multiplication becomes much more advantageous for SIMD applications and larger data types.
+While vanilla binary exponentiation with a compiler-generated fast modulo trick requires ~170ns per `inverse` call, this implementation takes ~166ns, going down to ~158s we omit `transform` and `reduce` (a reasonable use case is for `inverse` to be used as a subprocedure in a bigger modular computation). This is a small improvement, but Montgomery multiplication becomes much more advantageous for SIMD applications and larger data types.
 
 **Exercise.** Implement efficient *modular* [matix multiplication](/hpc/algorithms/matmul).

@@ -3,7 +3,7 @@ title: Binary Exponentiation
 weight: 2
 ---
 
-In modular arithmetic and computational algebra in general, you often need to raise a number to the $n$-th power — to do [modular division](../modular/#modular-division), perform [primality tests](../modular/#fermats-theorem), or compute some combinatorial values — ­and you usually want to spend fewer than $\Theta(n)$ operations calculating it.
+In modular arithmetic (and computational algebra in general), you often need to raise a number to the $n$-th power — to do [modular division](../modular/#modular-division), perform [primality tests](../modular/#fermats-theorem), or compute some combinatorial values — ­and you usually want to spend fewer than $\Theta(n)$ operations calculating it.
 
 *Binary exponentiation*, also known as *exponentiation by squaring*, is a method that allows for computation of the $n$-th power using $O(\log n)$ multiplications, relying on the following observation:
 
@@ -54,9 +54,11 @@ u64 inverse(u64 a) {
 }
 ```
 
-We use $m = 10^9+7$, which is a modulo value is commonly used in *competitive programming* to calculate checksums in combinatorial problems because it is prime (allowing inverse via binary exponentiation), sufficiently large while not overflowing `int` in addition or `long long` in multiplication, and is easy to type as `1e9 + 7`. Since it is a compile-time constant, the compiler can optimize the modulo by [replacing it with multiplication](/hpc/arithmetic/division/) (even if it is not a compile-time constant, it is still cheaper to compute the magic constants by hand once and use them for fast reduction).
+We use $m = 10^9+7$, which is a modulo value commonly used in competitive programming to calculate checksums in combinatorial problems — because it is prime (allowing inverse via binary exponentiation), sufficiently large, not overflowing `int` in addition, not overflowing `long long` in multiplication, and easy to type as `1e9 + 7`.
 
-The execution path and hence the running time depends on the value of $n$. For this particular $n$, the baseline implementation takes around 330ns per call. As recursion introduces some [overhead](/hpc/architecture/functions/), it makes sense to unroll it into an iterative one.
+Since we use it as compile-time constant in the code, the compiler can optimize the modulo by [replacing it with multiplication](/hpc/arithmetic/division/) (even if it is not a compile-time constant, it is still cheaper to compute the magic constants by hand once and use them for fast reduction).
+
+The execution path — and consequently the running time — depends on the value of $n$. For this particular $n$, the baseline implementation takes around 330ns per call. As recursion introduces some [overhead](/hpc/architecture/functions/), it makes sense to unroll the implementation into an iterative procedure.
 
 ### Iterative Implementation
 
@@ -66,7 +68,7 @@ $$
 a^{42} = a^{32+8+2} = a^{32} \cdot a^8 \cdot a^2 
 $$
 
-To calculate this product, we can iterate over the bits of $n$ maintaining two variables: the value of $a^{2^k}$ and the current product after considering $k$ lowest bits. On each step, we multiply the current product by $a^{2^k}$ if the $k$-th bit of $n$ is set, and, in either case, square $a^k$ to get $a^{2^k \cdot 2} = a^{2^{k+1}}$ that will be used on the next iteration.
+To calculate this product, we can iterate over the bits of $n$ maintaining two variables: the value of $a^{2^k}$ and the current product after considering $k$ lowest bits of $n$. On each step, we multiply the current product by $a^{2^k}$ if the $k$-th bit of $n$ is set, and, in either case, square $a^k$ to get $a^{2^k \cdot 2} = a^{2^{k+1}}$ that will be used on the next iteration.
 
 ```c++
 u64 binpow(u64 a, u64 n) {
@@ -85,7 +87,7 @@ u64 binpow(u64 a, u64 n) {
 
 The iterative implementation takes about 180ns per call. The heavy calculations are the same; the improvement mainly comes from the reduced dependency chain: `a = a * a % M` needs to finish before the loop can proceed, and it can now execute concurrently with `r = res * a % M`.
 
-The performance also benefits from $n$ being a constant, [making all branches predictable](/hpc/pipelining/branching/) and letting the scheduler know what needs to be executed in advance. The compiler, however, does not take advantage of it and does not unroll the `while(n) n >>= 1` loop. We can rewrite it as a `for` loop that takes constant 30 iterations:
+The performance also benefits from $n$ being a constant, [making all branches predictable](/hpc/pipelining/branching/) and letting the scheduler know what needs to be executed in advance. The compiler, however, does not take advantage of it and does not unroll the `while(n) n >>= 1` loop. We can rewrite it as a `for` loop that performs constant 30 iterations:
 
 ```c++
 u64 inverse(u64 a) {
@@ -102,6 +104,6 @@ u64 inverse(u64 a) {
 }
 ```
 
-This forces the compiler to generate only the instructions we need, shoving off another 10ns and making the total running time ~170ns.
+This forces the compiler to generate only the instructions we need, shaving off another 10ns and making the total running time ~170ns.
 
-Note that the performance depends not only on the binary length of $n$, but also on the number of binary 1s. If $n$ is $2^{30}$, it takes around 20ns less not having to perform these off-path multiplications.
+Note that the performance depends not only on the binary length of $n$, but also on the number of binary 1s. If $n$ is $2^{30}$, it takes around 20ns less as we don't have to to perform any off-path multiplications.
