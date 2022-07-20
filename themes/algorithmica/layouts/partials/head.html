@@ -45,6 +45,7 @@
       if (window.getComputedStyle(searchDiv).display == 'none') {
         searchDiv.style.display = 'block'
         window.scrollTo({ top: 0 });
+        document.getElementById('search-bar').focus()
       } else {
         searchDiv.style.display = 'none'  
       }
