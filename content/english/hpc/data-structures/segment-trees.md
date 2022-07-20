@@ -593,8 +593,8 @@ constexpr int height(int n) {
 constexpr int offset(int h) {
     int s = 0, n = N;
     while (h--) {
-        s += (n + B - 1) / B * B;
         n = (n + B - 1) / B;
+        s += n * B;
     }
     return s;
 }
