@@ -239,6 +239,10 @@ This work is largely based on blog posts, research papers, conference talks, and
 - [Geoff Langdale](https://branchfree.org/)
 - [Matt Kulukundis](https://twitter.com/JuvHarlequinKFM)
 - [Georg Sauthoff](https://gms.tf/)
+- [Danila Kutenin](https://danlark.org/author/kutdanila/)
+- [Ivica Bogosavljević](https://johnysswlab.com/author/ibogi/)
+- [Matt Pharr](https://pharr.org/matt/)
+- [Jan Wassenberg](https://research.google/people/JanWassenberg/)
 - [Marshall Lochbaum](https://mlochbaum.github.io/publications.html)
 - [Pavel Zemtsov](https://pzemtsov.github.io/)
 - [Nayuki](https://www.nayuki.io/category/programming)
@@ -252,22 +256,22 @@ Release date: Q3 2022
 
 ### Part II: Parallel Algorithms
 
-Concurrency, models of parallelism, green threads, concurrent runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking, graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication, sorting.
+Concurrency, models of parallelism, context switching, green threads, concurrent runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking, graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication, sorting.
 
 Volume: 150-200 pages  
 Release date: 2023-2024?
 
 ### Part III: Distributed Computing
 
-(I might need some help from here on.)
+<!-- (I might need some help from here on.) -->
 
-Metworking, message passing, actor model, communication-constrained algorithms, distributed primitives, all-reduce, MapReduce, stream processing, query planning, storage, sharding, compression, consistency, reliability, scheduling, cloud computing.
+Metworking, message passing, actor model, communication-constrained algorithms, distributed primitives, all-reduce, MapReduce, stream processing, query planning, storage, sharding, compression, distributed databases, consistency, reliability, scheduling, workflow engines, cloud computing.
 
 Release date: ??? (more likely to be completed than not)
 
-### Part IV: Compilers and Domain-Specific Architectures
+### Part IV: Software & Hardware
 
-(TODO: come up with a better title — one that emphasizes that this part is mainly about the software-hardware boundary and not PL/IC design.)
+<!-- (TODO: come up with a better title — one that emphasizes that this part is mainly about the software-hardware boundary and not PL/IC design.) -->
 
 LLVM IR, compiler optimizations & back-end, interpreters, JIT-compilation, Cython, JAX, Numba, Julia, OpenCL, DPC++, oneAPI, XLA, (basic) Verilog, FPGAs, ASICs, TPUs and other AI accelerators.
 
@@ -277,4 +281,4 @@ Release date: ??? (less likely to be completed than not)
 
 The examples in this book use C++, GCC, x86-64, CUDA, and Spark, although the underlying principles conveyed are not specific to them.
 
-To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment and thus more helpful to the reader. I would have respectively picked C / Rust, LLVM, arm, OpenCL, and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
+To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment and thus more helpful to the reader. I would have respectively picked C / Rust / [Carbon?](https://github.com/carbon-language/carbon-lang), LLVM, arm, OpenCL, and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
