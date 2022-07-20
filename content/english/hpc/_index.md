@@ -163,8 +163,8 @@ Planned table of contents:
  9.11. AoS and SoA
 10. SIMD Parallelism
  10.1. Intrinsics and Vector Types
- 10.2. Loading and Writing Data
- 10.3. Sums and Other Reductions
+ 10.2. Moving Data
+ 10.3. Reductions
  10.4. Masking and Blending
  10.5. In-Register Shuffles
  10.6. Auto-Vectorization

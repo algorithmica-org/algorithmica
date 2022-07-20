@@ -1,5 +1,5 @@
 ---
-title: Sums and Other Reductions
+title: Reductions
 weight: 3
 ---
 

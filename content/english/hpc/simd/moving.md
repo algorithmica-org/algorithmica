@@ -1,5 +1,5 @@
 ---
-title: Loading and Writing Data
+title: Moving Data
 aliases: [/hpc/simd/vectorization]
 weight: 2
 ---
