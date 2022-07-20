@@ -215,7 +215,35 @@ Among the cool things that we will speed up:
 - optimal Karatsuba Algorithm
 - optimal FFT
 
-This work is largely based on blog posts, research papers, conference talks, and other work authored by a lot of people:
+Volume: 450-600 pages  
+Release date: Q3 2022
+
+### Part II: Parallel Algorithms
+
+Concurrency, models of parallelism, context switching, green threads, concurrent runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking, graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication, sorting.
+
+Volume: 150-200 pages  
+Release date: 2023-2024?
+
+### Part III: Distributed Computing
+
+<!-- (I might need some help from here on.) -->
+
+Metworking, message passing, actor model, communication-constrained algorithms, distributed primitives, all-reduce, MapReduce, stream processing, query planning, storage, sharding, compression, distributed databases, consistency, reliability, scheduling, workflow engines, cloud computing.
+
+Release date: ??? (more likely to be completed than not)
+
+### Part IV: Software & Hardware
+
+<!-- (TODO: come up with a better title — one that emphasizes that this part is mainly about the software-hardware boundary and not PL/IC design.) -->
+
+LLVM IR, compiler optimizations & back-end, interpreters, JIT-compilation, Cython, JAX, Numba, Julia, OpenCL, DPC++, oneAPI, XLA, (basic) Verilog, FPGAs, ASICs, TPUs and other AI accelerators.
+
+Release date: ??? (less likely to be completed than not)
+
+### Acknowledgements
+
+The book is largely based on blog posts, research papers, conference talks, and other work authored by a lot of people:
 
 - [Agner Fog](https://agner.org/optimize/)
 - [Daniel Lemire](https://lemire.me/en/#publications)
@@ -245,37 +273,13 @@ This work is largely based on blog posts, research papers, conference talks, and
 - [Jan Wassenberg](https://research.google/people/JanWassenberg/)
 - [Marshall Lochbaum](https://mlochbaum.github.io/publications.html)
 - [Pavel Zemtsov](https://pzemtsov.github.io/)
+- [Gustavo Duarte](https://manybutfinite.com/)
+- [Nyaan](https://nyaannyaan.github.io/library/)
 - [Nayuki](https://www.nayuki.io/category/programming)
 - [InstLatX64](https://twitter.com/InstLatX64)
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
 - [Z boson](https://stackoverflow.com/users/2542702/z-boson)
 - [Creel](https://www.youtube.com/c/WhatsACreel)
-
-Volume: 450-600 pages  
-Release date: Q3 2022
-
-### Part II: Parallel Algorithms
-
-Concurrency, models of parallelism, context switching, green threads, concurrent runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking, graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication, sorting.
-
-Volume: 150-200 pages  
-Release date: 2023-2024?
-
-### Part III: Distributed Computing
-
-<!-- (I might need some help from here on.) -->
-
-Metworking, message passing, actor model, communication-constrained algorithms, distributed primitives, all-reduce, MapReduce, stream processing, query planning, storage, sharding, compression, distributed databases, consistency, reliability, scheduling, workflow engines, cloud computing.
-
-Release date: ??? (more likely to be completed than not)
-
-### Part IV: Software & Hardware
-
-<!-- (TODO: come up with a better title — one that emphasizes that this part is mainly about the software-hardware boundary and not PL/IC design.) -->
-
-LLVM IR, compiler optimizations & back-end, interpreters, JIT-compilation, Cython, JAX, Numba, Julia, OpenCL, DPC++, oneAPI, XLA, (basic) Verilog, FPGAs, ASICs, TPUs and other AI accelerators.
-
-Release date: ??? (less likely to be completed than not)
 
 ### Disclaimer: Technology Choices
 
