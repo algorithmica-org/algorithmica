@@ -39,11 +39,11 @@ After that, I will mostly be fixing errors and only doing some minor edits refle
 
 **Pre-ordering / financially supporting the book.** Due to my unfortunate citizenship and place of birth, you can't — that is, until I find a way that at the same time complies with international sanctions, doesn't sponsor [the war](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine), and won't put me in prison for tax evasion.
 
-So, don't bother. If you want to support this book, just share the articles you like on link aggregators and social media and help fix typos — that would be enough.
+So, don't bother. If you want to support this book, just share it and help fix typos — that would be enough.
 
 **Translations.** The website has a separate functionality for creating and managing translations — and I've already been contacted by some nice people willing to translate the book into Italian and Chinese (and I will personally translate at least some of it into my native Russian).
 
-However, as the book is still evolving, it is probably not the best idea to start translating it at least until Part I is finished. That said, you are very much encouraged to make translations of any articles and publish them in your blogs — just send me the link so that we can merge it back when a centralized translation process starts.
+However, as the book is still evolving, it is probably not the best idea to start translating it at least until Part I is finished. That said, you are very much encouraged to make translations of any articles and publish them in your blogs — just send me the link so that we can merge it back when centralized translation starts.
 
 **"Translating" the Russian version.** The articles hosted at [ru.algorithmica.org/cs/](https://ru.algorithmica.org/cs/) are not about advanced performance engineering but mostly about classical computer science algorithms — without discussing how to speed them up beyond asymptotic complexity. Most of the information there is not unique and already exists in English on some other places on the internet: for example, the similar-spirited [cp-algorithms.com](https://cp-algorithms.com/).
 
@@ -51,7 +51,7 @@ However, as the book is still evolving, it is probably not the best idea to star
 
 There are two highly impactful textbooks on which most computer science courses are built. Both are undoubtedly outstanding, but [one of them](https://en.wikipedia.org/wiki/The_Art_of_Computer_Programming) is 50 years old, and [the other](https://en.wikipedia.org/wiki/Introduction_to_Algorithms) is 30 years old, and [computers have changed a lot](/hpc/complexity/hardware) since then. Asymptotic complexity is not the sole deciding factor anymore. In modern practical algorithm design, you choose the approach that makes better use of different types of parallelism available in the hardware over the one that theoretically does fewer raw operations on galaxy-scale inputs.
 
-And yet, the computer science curricula in most colleges completely ignore this shift. Although there are some great courses that aim to correct that — such as "[Performance Engineering of Software Systems](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2018/)" from MIT, "[Programming Parallel Computers](https://ppc.cs.aalto.fi/)" from Aalto University, and some non-academic ones like Denis Bakhvalov's "[Performance Ninja](https://github.com/dendibakh/perf-ninja)" — most computer science graduates still treat the hardware like something from the 1990s.
+And yet, the computer science curricula in most colleges completely ignore this shift. Although there are some great courses that aim to correct that — such as "[Performance Engineering of Software Systems](https://ocw.mit.edu/courses/electrical-engineering-and-computer-science/6-172-performance-engineering-of-software-systems-fall-2018/)" from MIT, "[Programming Parallel Computers](https://ppc.cs.aalto.fi/)" from Aalto University, and some non-academic ones like Denis Bakhvalov's "[Performance Ninja](https://github.com/dendibakh/perf-ninja)" — most computer science graduates still treat modern hardware like something from the 1990s.
 
 What I really want to achieve is that performance engineering becomes taught right after introduction to algorithms. Writing the first comprehensive textbook on the subject is a large part of it, and this is why I rush to finish it by the summer so that the colleges can pick it up in the next academic year. But creating a new course requires more than that: you need a balanced curriculum, course infrastructure, lecture slides, lab assignments… so for some time after finishing the main book, I will be working on course materials and tools for *teaching* performance engineering — and I'm looking forward to collaborating with other people who want to make it a reality as well.
 
@@ -76,7 +76,7 @@ Competitive programming is, in my opinion, misguided. They are doing useless thi
 
 The first part covers the basics of computer architecture and optimization of single-threaded algorithms.
 
-It walks through the main CPU optimization topics such as caching, SIMD and pipelining, and provides brief examples in C++, followed by large case studies where we usually achieve a significant speedup over some STL algorithm or data structure.
+It walks through the main CPU optimization topics such as caching, SIMD, and pipelining, and provides brief examples in C++, followed by large case studies where we usually achieve a significant speedup over some STL algorithm or data structure.
 
 Planned table of contents:
 
@@ -94,7 +94,7 @@ Planned table of contents:
  1.4. Functions and Recursion
  1.5. Indirect Branching
  1.6. Machine Code Layout
- 1.7. Interrupts and System Calls
+ 1.7. System Calls
  1.8. Virtualization
 3. Instruction-Level Parallelism
  3.1. Pipeline Hazards
@@ -215,7 +215,7 @@ Among the cool things that we will speed up:
 - optimal Karatsuba Algorithm
 - optimal FFT
 
-This work is largely based on blog posts, research papers, conference talks and other work authored by a lot of people:
+This work is largely based on blog posts, research papers, conference talks, and other work authored by a lot of people:
 
 - [Agner Fog](https://agner.org/optimize/)
 - [Daniel Lemire](https://lemire.me/en/#publications)
@@ -248,29 +248,33 @@ This work is largely based on blog posts, research papers, conference talks and 
 - [Creel](https://www.youtube.com/c/WhatsACreel)
 
 Volume: 450-600 pages  
-Release date: Q2 2022
+Release date: Q3 2022
 
 ### Part II: Parallel Algorithms
 
-Concurrency, models of parallelism, green threads and concurrent runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking and graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication and sorting.
+Concurrency, models of parallelism, green threads, concurrent runtimes, cache coherence, synchronization primitives, OpenMP, reductions, scans, list ranking, graph algorithms, lock-free data structures, heterogeneous computing, CUDA, kernels, warps, blocks, matrix multiplication, sorting.
 
 Volume: 150-200 pages  
-Release date: 2023?
+Release date: 2023-2024?
 
 ### Part III: Distributed Computing
 
-Communication-constrained algorithms, message passing, actor model, partitioning, MapReduce, consistency and reliability at scale, storage, compression, scheduling and cloud computing, distributed deep learning.
+(I might need some help from here on.)
+
+Metworking, message passing, actor model, communication-constrained algorithms, distributed primitives, all-reduce, MapReduce, stream processing, query planning, storage, sharding, compression, consistency, reliability, scheduling, cloud computing.
 
 Release date: ??? (more likely to be completed than not)
 
 ### Part IV: Compilers and Domain-Specific Architectures
 
-LLVM IR, compiler optimizations, JIT-compilation, Cython, JAX, Numba, Julia, OpenCL, DPC++ and oneAPI, XLA,  Verilog, FPGAs, ASICs, TPUs and other AI accelerators.
+(TODO: come up with a better title — one that emphasizes that this part is mainly about the software-hardware boundary and not PL/IC design.)
+
+LLVM IR, compiler optimizations & back-end, interpreters, JIT-compilation, Cython, JAX, Numba, Julia, OpenCL, DPC++, oneAPI, XLA, (basic) Verilog, FPGAs, ASICs, TPUs and other AI accelerators.
 
 Release date: ??? (less likely to be completed than not)
 
 ### Disclaimer: Technology Choices
 
-The examples in this book use C++, GCC, x86-64, CUDA, and Spark, although the underlying principles we aim to convey are not specific to them.
+The examples in this book use C++, GCC, x86-64, CUDA, and Spark, although the underlying principles conveyed are not specific to them.
 
 To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment and thus more helpful to the reader. I would have respectively picked C / Rust, LLVM, arm, OpenCL, and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
