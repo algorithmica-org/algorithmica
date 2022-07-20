@@ -43,6 +43,6 @@ In particular, AVX2 has instructions for working with 256-bit registers, while b
 
 ![](img/intel-extensions.webp)
 
-Compilers often do a good job rewriting simple loops with SIMD instructions, like in the case above. This optimization is called [auto-vectorization](auto-vectorization), and it is the preferred way to use SIMD.
+Compilers often do a good job rewriting simple loops with SIMD instructions, like in the case above. This optimization is called [auto-vectorization](auto-vectorization), and it is the most popular way of using SIMD.
 
 The problem is that it only works with certain types of loops, and even then it often yields suboptimal results. To understand its limitations, we need to get our hands dirty and explore this technology on a lower level, which is what we are going to do in this chapter.

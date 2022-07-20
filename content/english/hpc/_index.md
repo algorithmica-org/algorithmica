@@ -167,7 +167,7 @@ Planned table of contents:
  10.3. Reductions
  10.4. Masking and Blending
  10.5. In-Register Shuffles
- 10.6. Auto-Vectorization
+ 10.6. Auto-Vectorization and SPMD
 11. Algorithm Case Studies
  11.1. Binary GCD
 (11.2. Prime Number Sieves)

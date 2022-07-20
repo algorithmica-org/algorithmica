@@ -1,15 +1,17 @@
 ---
-title: Auto-Vectorization
+title: Auto-Vectorization and SPMD
 weight: 10
 ---
 
-SIMD-parallelism is most often used for *embarrassingly parallel* computations: the kinds where all you do is apply some elementwise function to all elements of an array and write it back somewhere else. In this setting, you don't even need to know how SIMD works: the compiler is perfectly capable of optimizing such loops by itself — you just need to be aware that such optimization exists and that it usually yields a 5-10x speedup.
+SIMD parallelism is most often used for *embarrassingly parallel* computations: the kinds where all you do is apply some elementwise function to all elements of an array and write it back somewhere else. In this setting, you don't even need to know how SIMD works: the compiler is perfectly capable of optimizing such loops by itself — you just need to be aware that such optimization exists and that it usually yields a 5-10x speedup.
 
-Doing nothing and relying on auto-vectorization is actually the preferred way of using SIMD. Whenever you can, you should always stick with the scalar code for its simplicity and maintainability. But often even the loops that seem straightforward to vectorize are not optimized because of some technical nuances. [As in many other cases](/hpc/compilation/contracts), the compiler may need some additional input from the programmer as he may know a bit more about the problem than what can be inferred from static analysis.
+Doing nothing and relying on auto-vectorization is actually the most popular way of using SIMD. In fact, in many cases, it even advised to stick with the plain scalar code for its simplicity and maintainability.
+
+But often even the loops that seem straightforward to vectorize are not optimized because of some technical nuances. [As in many other cases](/hpc/compilation/contracts), the compiler may need some additional input from the programmer as he may know a bit more about the problem than what can be inferred from static analysis.
 
 ### Potential Problems
 
-Consider the "a + b" example:
+Consider the "a + b" example we [started with](../intrinsics/#simd-intrinsics):
 
 ```c++
 void sum(int *a, int *b, int *c, int n) {
@@ -47,8 +49,18 @@ for (int i = 0; i < n; i++)
 
 To help the compiler eliminate this corner case, we can use the `alignas` specifier on static arrays and the `std::assume_aligned` function to mark pointers aligned.
 
-**Checking if vectorization happened.**  In either case, it is useful to check if the compiler vectorized the loop the way you intended. You can either [compiling it to assembly](/hpc/compilation/stages) and look for blocks for instructions that start with a "v" or add the `-fopt-info-vec-optimized` compiler flag so that the compiler indicates where auto-vectorization is happening and what SIMD width is being used. If you swap `optimized` for `missed` or `all`, you may also get some reasoning behind why it is not happening in other places.
+**Checking if vectorization happened.** In either case, it is useful to check if the compiler vectorized the loop the way you intended. You can either [compiling it to assembly](/hpc/compilation/stages) and look for blocks for instructions that start with a "v" or add the `-fopt-info-vec-optimized` compiler flag so that the compiler indicates where auto-vectorization is happening and what SIMD width is being used. If you swap `optimized` for `missed` or `all`, you may also get some reasoning behind why it is not happening in other places.
 
----
+There are [many other ways](https://software.intel.com/sites/default/files/m/4/8/8/2/a/31848-CompilerAutovectorizationGuide.pdf) of telling the compiler exactly what we mean, but in especially complex cases — e.g., when there are a lot of branches or function calls inside the loop — it is easier to go one level of abstraction down and vectorize manually.
 
-There are [many other ways](https://software.intel.com/sites/default/files/m/4/8/8/2/a/31848-CompilerAutovectorizationGuide.pdf) of telling the compiler what we meant exactly, but in especially complex cases — when inside the loop there are a lot of branches or some functions are called — it is easier to go down to the intrinsics level and write it yourself.
+### SPMD
+
+There is a neat compromise between auto-vectorization and the manual use of SIMD intrinsics: "single program, multiple data" (SPMD). This is a model of computation in which the programmer writes what appears to be a regular serial program, but that is actually executed in parallel on the hardware.  
+
+The programming experience is largely the same, and there is still the fundamental limitation in that the computation must be data-parallel, but SPMD ensures that the vectorization will happen regardless of the compiler and the target CPU architecture. It also allows for the computation to be automatically parallelized across multiple cores and, in some cases, even offloaded to other types of parallel hardware.
+
+There is support for SPMD is some modern languages ([Julia](https://docs.julialang.org/en/v1/base/base/#Base.SimdLoop.@simd)), multiprocessing APIs ([OpenMP](https://www.openmp.org/spec-html/5.0/openmpsu42.html)), and specialized compilers (Intel [ISPC](https://ispc.github.io/)), but it has seen the most success in the context of GPU programming where both problems and hardware are massively parallel.
+
+We will cover this model of computation in much more depth in Part 2
+
+<!-- This approach is especially popular with [game developers](https://twitter.com/pbrubaker/status/1537041398037303296) because they need to support many platforms and have reliable performance, and also because it resembles the way graphics programming is done. -->
