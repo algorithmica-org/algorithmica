@@ -593,8 +593,8 @@ constexpr int height(int n) {
 constexpr int offset(int h) {
     int s = 0, n = N;
     while (h--) {
-        s += (n + B - 1) / B * B;
-        n /= B;
+        n = (n + B - 1) / B;
+        s += n * B;
     }
     return s;
 }
@@ -603,14 +603,14 @@ constexpr int H = height(N);
 alignas(64) int t[offset(H)]; // an array for storing nodes
 ```
 
-This way we effectively reduce the height of the tree by approximately $\frac{\log_B n}{\log_2 n} = \log_2 B$ times ($\sim4$ times if $B = 16$), but it becomes non-trivial to implement in-node operations efficiently. For our problem, we have two main options:
+This way, we effectively reduce the height of the tree by approximately $\frac{\log_B n}{\log_2 n} = \log_2 B$ times ($\sim4$ times if $B = 16$), but it becomes non-trivial to implement in-node operations efficiently. For our problem, we have two main options:
 
 1. We could store $B$ *sums* in each node (for each of its $B$ children).
 2. We could store $B$ *prefix sums* in each node (the $i$-th being the sum of the first $(i + 1)$ children).
 
 If we go with the first option, the `add` query would be largely the same as in the bottom-up segment tree, but the `sum` query would need to add up to $B$ scalars in each node it visits. And if we go with the second option, the `sum` query would be trivial, but the `add` query would need to add `x` to some suffix on each node it visits.
 
-In either case, one operation will perform $O(\log_B n)$ operations, touching just one scalar in each node, while the other will perform $O(B \cdot \log_B n)$ operations, touching up to $B$ scalars in each node. However, it is 21st century, and we can use [SIMD](/hpc/simd) to accelerate the slower operation. Since there are no fast [horizontal reductions](/hpc/simd/reduction) in SIMD instruction sets, but it is easy to add a vector to a vector, we will choose the second approach and store prefix sums in each node.
+In either case, one operation would perform $O(\log_B n)$ operations, touching just one scalar in each node, while the other would perform $O(B \cdot \log_B n)$ operations, touching up to $B$ scalars in each node. We can, however, use [SIMD](/hpc/simd) to accelerate the slower operation, and since there are no fast [horizontal reductions](/hpc/simd/reduction) in SIMD instruction sets, but it is easy to add a vector to a vector, we will choose the second approach and store prefix sums in each node.
 
 This makes the `sum` query extremely fast and easy to implement:
 
@@ -623,7 +623,7 @@ int sum(int k) {
 }
 ```
 
-The `add` query is more complicated and slower. We need to add a number to only a suffix of a node, and we can do this by [masking out](/hpc/simd/masking) the positions that need not be modified.
+The `add` query is more complicated and slower. We need to add a number only to a suffix of a node, and we can do this by [masking out](/hpc/simd/masking) the positions that should not be modified.
 
 We can pre-calculate a $B \times B$ array corresponding to $B$ such masks that tell, for each of $B$ positions within a node, whether a certain prefix sum value needs to be updated or not:
 
