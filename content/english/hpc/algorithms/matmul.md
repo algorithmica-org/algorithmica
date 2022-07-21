@@ -474,9 +474,9 @@ for (int k = 0; k < n; k++)
             d[i][j] = min(d[i][j], d[i][k] + d[k][j]);
 ```
 
-Interestingly, vectorizing the distance product and executing it $O(\log n)$ times in $O(n^3 \log n)$ total operations is faster than naively executing the Floyd-Warshall algorithm in $O(n^3)$ operations, although not by a lot.
+Interestingly, similarly vectorizing the distance product and executing it $O(\log n)$ times ([or possibly fewer](https://arxiv.org/pdf/1904.01210.pdf)) in $O(n^3 \log n)$ total operations is faster than naively executing the Floyd-Warshall algorithm in $O(n^3)$ operations, although not by a lot.
 
-As an exercise, try to speed up this "for-for-for" computation. It is harder to do than in the matrix multiplication case because now there is a logical dependency between the iterations, and you need to perform updates in a particular order, but it is still possible to design a similar kernel and a block iteration order that achieves a 30-50x total speedup.
+As an exercise, try to speed up this "for-for-for" computation. It is harder to do than in the matrix multiplication case because now there is a logical dependency between the iterations, and you need to perform updates in a particular order, but it is still possible to design [a similar kernel and a block iteration order](https://github.com/sslotin/amh-code/blob/main/floyd/blocked.cc) that achieves a 30-50x total speedup.
 
 ## Acknowledgements
 
