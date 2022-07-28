@@ -102,7 +102,19 @@ int i = __builtin_ffs(mask) - 1;
 // now i is the number of the correct child node
 ```
 
-Unfortunately, the compilers are not smart enough yet to auto-vectorize this code, so we need to manually vectorize it with intrinsics:
+Unfortunately, the compilers are not smart enough to [auto-vectorize](/hpc/simd/auto-vectorization/) this code yet, so we have to optimize it manually. In AVX2, we can load 8 elements, compare them against the search key, producing a [vector mask](/hpc/simd/masking/), and then extract the scalar mask from it with `movemask`. Here is a minimized illustrated example of what we want to do:
+
+```center
+       y = 4        17       65       103     
+       x = 42       42       42       42      
+   y ≥ x = 00000000 00000000 11111111 11111111
+           ├┬┬┬─────┴────────┴────────┘       
+movemask = 0011                               
+           ┌─┘                                
+     ffs = 3                                  
+```
+
+Since we are limited to processing 8 elements at a time (half our block / cache line size), we have to split the elements into two groups and then combine the two 8-bit masks. To do this, it will be slightly easier to swap the condition for `x > y` and compute the inverted mask instead:
 
 ```c++
 typedef __m256i reg;
@@ -114,7 +126,7 @@ int cmp(reg x_vec, int* y_ptr) {
 }
 ```
 
-This function works for 8-element vectors, which is half our block / cache line size. To process the entire block, we need to call it twice and then combine the masks:
+Now, to process the entire block, we need to call it twice and combine the masks:
 
 ```c++
 int mask = ~(
@@ -123,7 +135,7 @@ int mask = ~(
 );
 ```
 
-Now, to descend down the tree, we use `ffs` on that mask to get the correct child number and just call the `go` function we defined earlier:
+To descend down the tree, we use `ffs` on that mask to get the correct child number and just call the `go` function we defined earlier:
 
 ```c++
 int i = __builtin_ffs(mask) - 1;
