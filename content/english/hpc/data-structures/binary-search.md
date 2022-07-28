@@ -343,7 +343,7 @@ while (k <= n)
 
 The only problem arises when we need to restore the index of the resulting element, as $k$ does not directly point to it. Consider this example (its corresponding tree is listed above):
 
-```center
+<!--
     array:  0 1 2 3 4 5 6 7 8 9                           
 eytzinger:  6 3 7 1 5 8 9 0 2 4                           
 1st range:  -------------------  k := 1                    
@@ -351,7 +351,17 @@ eytzinger:  6 3 7 1 5 8 9 0 2 4
 3rd range:  -------              k := 2*k     = 4   (3 ≥ 3)
 4th range:      ---              k := 2*k + 1 = 9   (1 < 3)
 5th range:        -              k := 2*k + 1 = 19  (2 < 3)
-```
+-->
+
+<pre class='center-pre'>
+    array:  0 1 2 3 4 5 6 7 8 9                           
+eytzinger:  <u>6</u> <u>3</u> 7 <u>1</u> 5 8 9 0 <u>2</u> 4                           
+1st range:  -------------------  k := 1                    
+2nd range:  -------------        k := 2*k     = 2   (6 ≥ 3)
+3rd range:  -------              k := 2*k     = 4   (3 ≥ 3)
+4th range:      ---              k := 2*k + 1 = 9   (1 < 3)
+5th range:        -              k := 2*k + 1 = 19  (2 < 3)
+</pre>
 
 <!-- do we need the last comparison? -->
 
