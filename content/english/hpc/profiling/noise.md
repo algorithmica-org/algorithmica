@@ -1,6 +1,7 @@
 ---
 title: Getting Accurate Results
 weight: 10
+published: true
 ---
 
 It is not an uncommon for there to be two library algorithm implementations, each maintaining its own benchmarking code, and each claiming to be faster than the other. This confuses everyone involved, especially the users, who have to somehow choose between the two.
@@ -111,7 +112,7 @@ for (int i = 0; i < N; i++)
     checksum ^= lower_bound(q[i]);
 ```
 
-It is also sometimes convenient to combine the warm-up run with answer validation, it if is more complicated than just computing some sort of checksum.
+It is also sometimes convenient to combine the warm-up run with answer validation, if it is more complicated than just computing some sort of checksum.
 
 **Over-optimization.** Sometimes the benchmark is outright erroneous because the compiler just optimized the benchmarked code away. To prevent the compiler from cutting corners, you need to add checksums and either print them somewhere or add the `volatile` qualifier, which also prevents any sort of interleaving of loop iterations.
 
