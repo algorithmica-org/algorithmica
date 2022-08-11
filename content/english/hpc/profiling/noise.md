@@ -128,10 +128,10 @@ https://github.com/sosy-lab/benchexec
 
 The issues we've described produce *bias* in measurements: they consistently give advantage to one algorithm over the other. There are other types of possible problems with benchmarking that result in either unpredictable skews or just completely random noise, thus increasing *variance*.
 
-These type of issues are caused by side effects and some sort of external noise, mostly due to noisy neighbors and CPU frequency scaling:
+These types of issues are caused by side effects and some sort of external noise, mostly due to noisy neighbors and CPU frequency scaling:
 
 - If you benchmark a compute-bound algorithm, measure its performance in cycles using `perf stat`: this way it will be independent of clock frequency, fluctuations of which is usually the main source of noise.
-- Otherwise, set core frequency to the what you expect it to be and make sure nothing interferes with it. On Linux you can do it with `cpupower` (e.g., `sudo cpupower frequency-set -g powersave` to put it to minimum or `sudo cpupower frequency-set -g ondemand` to enable turbo boost). I use a [convenient GNOME shell extension](https://extensions.gnome.org/extension/1082/cpufreq/) that has a separate button to do it.
+- Otherwise, set core frequency to what you expect it to be and make sure nothing interferes with it. On Linux you can do it with `cpupower` (e.g., `sudo cpupower frequency-set -g powersave` to put it to minimum or `sudo cpupower frequency-set -g ondemand` to enable turbo boost). I use a [convenient GNOME shell extension](https://extensions.gnome.org/extension/1082/cpufreq/) that has a separate button to do it.
 - If applicable, turn hyper-threading off and attach jobs to specific cores. Make sure no other jobs are running on the system, turn off networking and try not to fiddle with the mouse.
 
 You can't remove noises and biases completely. Even a program's name can affect its speed: the executable's name ends up in an environment variable, environment variables end up on the call stack, and so the length of the name affects stack alignment, which can result in data accesses slowing down due to crossing cache line or memory page boundaries.
