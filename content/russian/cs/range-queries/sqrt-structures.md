@@ -1,10 +1,11 @@
 ---
 title: Корневые структуры
 authors:
-- Сергей Слотин
-- Иван Сафонов
+  - Сергей Слотин
+  - Иван Сафонов
 weight: 6
-date: 2021-09-13
+date: {}
+published: true
 ---
 
 Корневые оптимизации можно использовать много для чего, в частности в контексте структур данных.
@@ -68,6 +69,7 @@ void upd(int l, int r, int x) {
             l += c;
         }
         else {
+          	b[l / c] += x;
             a[l] += x;
             l++;
         }
@@ -111,8 +113,8 @@ vector< vector<int> > blocks;
 // возвращает индекс блока и индекс элемента внутри блока
 pair<int, int> find_block(int pos) {
     int idx = 0;
-    while (blocks[idx].size() >= pos)
-        pos -= blocks[idx--].size();
+    while (blocks[idx].size() <= pos)
+        pos -= blocks[idx++].size();
     return {idx, pos};
 }
 ```
