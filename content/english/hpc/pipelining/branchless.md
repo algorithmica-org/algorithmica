@@ -91,7 +91,7 @@ $$
 
 This way you can eliminate branching, but this comes at the cost of evaluating *both* branches and the `cmov` itself. Because evaluating the ">=" branch costs nothing, the performance is exactly equal to [the "always yes" case](../branching/#branch-prediction) in the branchy version.
 
-### When It Is Beneficial
+### When Predication Is Beneficial
 
 Using predication eliminates [a control hazard](../hazards) but introduces a data hazard. There is still a pipeline stall, but it is a cheaper one: you only need to wait for `cmov` to be resolved and not flush the entire pipeline in case of a mispredict.
 
@@ -180,11 +180,11 @@ int abs(int a) {
 
 ### Larger Examples
 
-**Strings.** Oversimplifying things, an `std::string` is comprised of a pointer to a null-terminated char array (also known as "C-string") allocated somewhere on the heap and one integer containing the string size.
+**Strings.** Oversimplifying things, an `std::string` is comprised of a pointer to a null-terminated `char` array (also known as a "C-string") allocated somewhere on the heap and one integer containing the string size.
 
-A common value for strings is the empty string — which is also its default value. You also need to handle them somehow, and the idiomatic thing to do is to assign `nullptr` as the pointer and `0` as the string size, and then check if the pointer is null or if the size is zero at the beginning of every procedure involving strings.
+A common value for a string is the empty string — which is also its default value. You also need to handle them somehow, and the idiomatic approach is to assign `nullptr` as the pointer and `0` as the string size, and then check if the pointer is null or if the size is zero at the beginning of every procedure involving strings.
 
-However, this requires a separate branch, which is costly unless most strings are empty. What we can do to get rid of it is to allocate a "zero C-string," which is just a zero byte allocated somewhere, and then simply point all empty strings there. Now all string operations with empty strings have to read this useless zero byte, but this is still much cheaper than a branch misprediction.
+However, this requires a separate branch, which is costly (unless the majority of strings are either empty or non-empty). To remove the check and thus also the branch, we can allocate a "zero C-string," which is just a zero byte allocated somewhere, and then simply point all empty strings there. Now all string operations with empty strings have to read this useless zero byte, but this is still much cheaper than a branch misprediction.
 
 **Binary search.** The standard binary search [can be implemented](/hpc/data-structures/binary-search) without branches, and on small arrays (that fit into cache) it works ~4x faster than the branchy `std::lower_bound`:
 
@@ -193,10 +193,10 @@ int lower_bound(int x) {
     int *base = t, len = n;
     while (len > 1) {
         int half = len / 2;
-        base = (base[half] < x ? &base[half] : base);
+        base += (base[half - 1] < x) * half; // will be replaced with a "cmov"
         len -= half;
     }
-    return *(base + (*base < x));
+    return *base;
 }
 ```
 
@@ -218,7 +218,7 @@ That there are no substantial reasons why compilers can't do this on their own, 
 
 **Data-parallel programming.** Branchless programming is very important for [SIMD](/hpc/simd) applications because they don't have branching in the first place.
 
-In our array sum example, if you remove the `volatile` type qualifier from the accumulator, the compiler becomes able to [vectorize](/hpc/simd/auto-vectorization) the loop:
+In our array sum example, removing the `volatile` type qualifier from the accumulator allows the compiler to [vectorize](/hpc/simd/auto-vectorization) the loop:
 
 ```c++
 /* volatile */ int s = 0;
@@ -230,7 +230,7 @@ for (int i = 0; i < N; i++)
 
 It now works in ~0.3 per element, which is mainly [bottlenecked by the memory](/hpc/cpu-cache/bandwidth).
 
-The compiler is usually able to vectorize any loop that doesn't have branches or dependencies between the iterations — and some specific deviations from that, such as [reductions](/hpc/simd/reduction) or simple loops that contain just one if-without-else. Vectorization of anything more complex is a very nontrivial problem, which may involve various techniques such as [masking](/hpc/simd/masking) and [in-register permutations](/hpc/simd/shuffling).
+The compiler is usually able to vectorize any loop that doesn't have branches or dependencies between the iterations — and some specific small deviations from that, such as [reductions](/hpc/simd/reduction) or simple loops that contain just one if-without-else. Vectorization of anything more complex is a very nontrivial problem, which may involve various techniques such as [masking](/hpc/simd/masking) and [in-register permutations](/hpc/simd/shuffling).
 
 <!--
 
