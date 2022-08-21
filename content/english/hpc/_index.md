@@ -285,4 +285,4 @@ The book is largely based on blog posts, research papers, conference talks, and 
 
 The examples in this book use C++, GCC, x86-64, CUDA, and Spark, although the underlying principles conveyed are not specific to them.
 
-To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment and thus more helpful to the reader. I would have respectively picked C / Rust / [Carbon?](https://github.com/carbon-language/carbon-lang), LLVM, arm, OpenCL, and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
+To clear my conscience, I'm not happy with any of these choices: these technologies just happen to be the most widespread and stable at the moment and thus more helpful to the reader. I would have respectively picked C / Rust / [Carbon?](https://github.com/carbon-language/carbon-lang), LLVM, arm, OpenCL, SYCL, and Dask; maybe there will be a 2nd edition in which some of the tech stack is changed.
