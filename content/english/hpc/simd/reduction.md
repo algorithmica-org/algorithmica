@@ -46,7 +46,7 @@ int sum_simd(v8si *a, int n) {
 }
 ```
 
-You can use this approach for for other reductions, such as for finding the minimum or the xor-sum of an array.
+You can use this approach for other reductions, such as for finding the minimum or the xor-sum of an array.
 
 ### Instruction-Level Parallelism
 
