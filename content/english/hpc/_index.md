@@ -276,6 +276,7 @@ The book is largely based on blog posts, research papers, conference talks, and 
 - [Gustavo Duarte](https://manybutfinite.com/)
 - [Nyaan](https://nyaannyaan.github.io/library/)
 - [Nayuki](https://www.nayuki.io/category/programming)
+- [Konstantin](http://const.me/)
 - [InstLatX64](https://twitter.com/InstLatX64)
 - [ridiculous_fish](https://ridiculousfish.com/blog/)
 - [Z boson](https://stackoverflow.com/users/2542702/z-boson)
