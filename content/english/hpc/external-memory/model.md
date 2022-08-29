@@ -18,7 +18,7 @@ Similar in spirit, in the *external memory model*, we simply ignore every operat
 
 In this model, we measure the performance of an algorithm in terms of its high-level *I/O operations*, or *IOPS* — that is, the total number of blocks read or written to external memory during execution.
 
-We will mostly focus on the case where the internal memory is RAM and external memory is SSD or HDD, although the underlying analysis techniques that we will develop are applicable to any layer in the cache hierarchy. Under these settings, reasonable block size $B$ is about 1MB, internal memory size $M$ is usually a few gigabytes, and $N$ is up to a few terabytes.
+We will mostly focus on the case where the internal memory is RAM and the external memory is SSD or HDD, although the underlying analysis techniques that we will develop are applicable to any layer in the cache hierarchy. Under these settings, reasonable block size $B$ is about 1MB, internal memory size $M$ is usually a few gigabytes, and $N$ is up to a few terabytes.
 
 ### Array Scan
 
