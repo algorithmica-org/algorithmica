@@ -68,7 +68,7 @@ $$
 The omnipresence of errors is especially important to remember when making discrete "yes or no" decisions based on the results of floating-point calculations. For example, here is how you should check for equality:
 
 ```c++
-const float eps = std::numeric_limits<float>::epsilon; // ~2^(-23)
+const float eps = std::numeric_limits<float>::epsilon(); // ~2^(-23)
 bool eq(float a, float b) {
     return abs(a - b) <= eps;
 }
