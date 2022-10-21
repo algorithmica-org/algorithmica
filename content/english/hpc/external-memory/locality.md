@@ -115,7 +115,7 @@ $$
 
 In plain English: we store the minimum on each segment whose length is a power of two. 
 
-Such array can be used for calculating minima on arbitrary segments in constant time because for each segment we can always find two possibly overlapping segments whose sizes are the same power of two, the union of which gives the whole segment.
+Such an array can be used for calculating minima on arbitrary segments in constant time because for each segment we can always find two possibly overlapping segments whose sizes are the same power of two, the union of which gives the whole segment.
 
 ![](../img/sparse-table.png)
 
@@ -158,7 +158,7 @@ Suppose that you want to implement a binary tree and store its fields in separat
 int left_child[maxn], right_child[maxn], key[maxn], size[maxn];
 ```
 
-Such memory layout, when we store each field separately from others, is called *struct-of-arrays* (SoA). In most cases, when implementing tree operations, you access a node and then shortly after all or most of its internal data. If these fields are stored separately, this would mean that they are also located in different memory blocks. If some of the requested fields happen to be are cached while the others are not, you would still have to wait for the slowest of them to be fetched.
+Such memory layout, when we store each field separately from others, is called *struct-of-arrays* (SoA). In most cases, when implementing tree operations, you access a node and then shortly after all or most of its internal data. If these fields are stored separately, this would mean that they are also located in different memory blocks. If some of the requested fields happen to be cached while the others are not, you would still have to wait for the slowest of them to be fetched.
 
 In contrast, if it was instead stored as an array-of-structs (AoS), you would need ~4 times fewer block reads as all the data of a node is stored in the same block and fetched at once:
 
