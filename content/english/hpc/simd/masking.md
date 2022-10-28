@@ -1,6 +1,7 @@
 ---
 title: Masking and Blending
 weight: 4
+published: true
 ---
 
 One of the bigger challenges of SIMD programming is that its options for control flow are very limited — because the operations you apply to a vector are the same for all its elements.
@@ -116,7 +117,7 @@ The scalar version gives ~4 GFLOPS of performance. This number includes the elem
 
 To vectorize it, we need to compare a vector of its elements with the searched value for equality, producing a mask, and then somehow check if this mask is zero. If it isn't, the needed element is somewhere within this block of 8.
 
-To check if the mask is zero, we can use the `_mm256_movemask_ps` intrinsic, which takes the first bit of each 32-bit element in a vector and produces an 8-bit integer mask out of them. We can then check if this mask is non-zero — and if it is, also immediately get the index with the `ctz` instruction:
+To check if the mask is zero, we can use the `_mm256_movemask_ps` intrinsic, which takes the most significant bit of each 32-bit element in a vector and produces an 8-bit integer mask out of them. We can then check if this mask is non-zero — and if it is, also immediately get the index with the `ctz` instruction:
 
 ```c++
 int find(int needle) {
