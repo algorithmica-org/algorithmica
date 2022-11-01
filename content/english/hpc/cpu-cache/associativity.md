@@ -44,7 +44,7 @@ We can resort to another, much simpler approach: just map each block of 64 bytes
 
 ![Direct-mapped cache](../img/cache2.png)
 
-A direct-mapped cache is easy to implement doesn't require storing any additional meta-information associated with a cache line except its tag (the actual memory location of a cached block). The disadvantage is that the entries can be kicked out too quickly — for example, when bouncing between two addresses that map to the same cache line — leading to lower overall cache utilization.
+A direct-mapped cache is easy to implement and doesn't require storing any additional meta-information associated with a cache line except its tag (the actual memory location of a cached block). The disadvantage is that the entries can be kicked out too quickly — for example, when bouncing between two addresses that map to the same cache line — leading to lower overall cache utilization.
 
 For that reason, we settle for something in-between direct-mapped and fully associative caches: the *set-associative cache*. It splits the address space into equal groups, which separately act as small fully-associative caches.
 
