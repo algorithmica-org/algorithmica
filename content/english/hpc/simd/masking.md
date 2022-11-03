@@ -1,7 +1,6 @@
 ---
 title: Masking and Blending
 weight: 4
-published: true
 ---
 
 One of the bigger challenges of SIMD programming is that its options for control flow are very limited — because the operations you apply to a vector are the same for all its elements.
