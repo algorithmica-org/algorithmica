@@ -1,7 +1,6 @@
 ---
 title: In-Register Shuffles
 weight: 6
-published: true
 ---
 
 [Masking](../masking) lets you apply operations to only a subset of vector elements. It is a very effective and frequently used data manipulation technique, but in many cases, you need to perform more advanced operations that involve permuting values inside a vector register instead of just blending them with other vectors.
