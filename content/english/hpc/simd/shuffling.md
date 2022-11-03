@@ -1,6 +1,7 @@
 ---
 title: In-Register Shuffles
 weight: 6
+published: true
 ---
 
 [Masking](../masking) lets you apply operations to only a subset of vector elements. It is a very effective and frequently used data manipulation technique, but in many cases, you need to perform more advanced operations that involve permuting values inside a vector register instead of just blending them with other vectors.
@@ -144,7 +145,7 @@ int popcnt() {
 
 This code processes around 30 bytes per cycle. Theoretically, the inner loop could do 32, but we have to stop it every 15 iterations because the 8-bit counters can overflow. 
 
-The `pshufb` instruction is so instrumental in some SIMD algorithms that [Wojciech Muła](http://0x80.pl/) — the guy who came up with this algorithm — took it as his [Twitter handle](https://twitter.com/pshufb). You can calculate population counts even faster: check out his [GitHub repository](https://github.com/WojciechMula/sse-popcount) with different vectorized popcount implementations and his [recent paper](https://arxiv.org/pdf/1611.07612.pdf) for a detailed explanation of the state-of-the-art.
+The `pshufb` instruction is so instrumental in some SIMD algorithms that [Wojciech Muła](http://0x80.pl/) — the guy who came up with this algorithm — took it as his [Twitter handle](https://twitter.com/pshufb). You can calculate population counts even faster: check out his [GitHub repository](https://github.com/WojciechMula/sse-popcount) with different vectorized popcount implementations and his [recent paper](https://arxiv.org/pdf/1611.07612.pdf) for a detailed explanation of the state of the art.
 
 ### Permutations and Lookup Tables
 
