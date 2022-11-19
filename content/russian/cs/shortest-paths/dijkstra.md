@@ -1,10 +1,11 @@
 ---
 title: Алгоритм Дейкстры
 authors:
-- Максим Иванов
+  - Максим Иванов
 editors:
-- Сергей Слотин
+  - Сергей Слотин
 weight: 3
+published: true
 ---
 
 Алгоритм Дейкстры (англ. *Dijkstra's algorithm*) находит кратчайшие пути от заданной вершины $s$ до всех остальных в графе без ребер отрицательного веса.
@@ -105,7 +106,7 @@ vector<int> dijkstra(int s) {
 ```cpp
 vector<int> dijkstra(int s) {
     vector<int> d(n, inf);
-    d[root] = 0;
+    d[s] = 0;
     set< pair<int, int> > q;
     q.insert({0, s});
     while (!q.empty()) {
