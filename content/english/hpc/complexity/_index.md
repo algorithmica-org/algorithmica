@@ -1,8 +1,10 @@
 ---
 title: Complexity Models
 part: Performance Engineering
-aliases: [/hpc/hardware]
+aliases:
+  - /hpc/hardware
 weight: 1
+published: true
 ---
 
 If you ever opened a computer science textbook, it probably introduced *computational complexity* somewhere in the very beginning. Simply put, it is the total count of *elementary operations* (additions, multiplications, reads, writes…) that are executed during a computation, optionally weighted by their *costs*.
@@ -25,7 +27,7 @@ Similar to how the sum of instruction latencies can be used as a clock-independe
 
 ### Asymptotic Complexity
 
-The idea to express execution time as a function of input size seems obvious now, but it wasn't so in the 1960s. Back then, [typical computers](https://en.wikipedia.org/wiki/CDC_1604) cost millions of dollars, were so large that they required a separate room, and had clock rates measured in kilohertz. They were used for practical tasks at hand, like predicting the weather, sending rockets into space, or figuring out how far a Soviet nuclear missile can fly from the coast of Cuba — all of which are finite-length problems. Engineers of that era were mainly concerned with how to multiply $3 \times 3$ matrices rather than $n \times n$ ones.
+The idea to express execution time as a function of input size seems obvious now, but it wasn't so in the 1960s. Back then, [typical computers](https://en.wikipedia.org/wiki/CDC_1604) cost millions of dollars, were so large that they required a separate room, and had clock rates measured in kilohertz. They were used for practical tasks at hand, like predicting the weather, sending rockets into space, or figuring out how far a Soviet nuclear missile can fly from the coast of Cuba — all of which are finite-length problems. Engineers of that are were mainly concerned with how to multiply $3 \times 3$ matrices rather than $n \times n$ ones.
 
 What caused the shift was the acquired confidence among computer scientists that computers will continue to become faster — and indeed they have. Over time, people stopped counting execution time, then stopped counting cycles, and then even stopped counting operations exactly, replacing it with an *estimate* that, on sufficiently large inputs, is only off by no more than a constant factor. With *asymptotic complexity*, verbose "$4 \cdot n^3 - n^2$ operations" turns into plain "$\Theta(n^3)$," hiding the initial costs of individual operations in the "Big O," along with all the other intricacies of the hardware.
 
