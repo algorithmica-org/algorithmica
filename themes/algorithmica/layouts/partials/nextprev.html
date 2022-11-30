@@ -15,26 +15,33 @@
       {{ end }}
 
       {{ if .IsSection }}
+        <div class='left'>
         {{ with index $pages (add $selfIdx -1) }}
           {{ with index (last 1 .Pages) 0 }}
-            <a href='{{.Permalink}}' style='float: left' id='prev-article'>← {{ .Title }}</a><br>
+            <a href='{{.Permalink}}' id='prev-article'>← {{ .Title }}</a><br>
           {{ end }}
-          <a href='{{.Permalink}}' style='float: left'>← ../{{ .Title }}</a>
+          <a href='{{.Permalink}}'>← ../{{ .Title }}</a>
         {{ end }}
+        </div>
+        <div class='right'>
         {{ with index .Pages 0 }}
-          <a href='{{.Permalink}}' style='float: right' id='next-article'>{{ .Title }} →</a><br>
+          <a href='{{.Permalink}}' id='next-article'>{{ .Title }} →</a><br>
         {{ end }}
         {{ with index $pages (add $selfIdx 1) }}
-          <a href='{{.Permalink}}' style='float: right'>../{{ .Title }} →</a>
+          <a href='{{.Permalink}}'>../{{ .Title }} →</a>
         {{ end }}
+        </div>
       {{ else }}
+        <div class='left'>
         {{ with index $pages (add $selfIdx -1) }}
-          <a href='{{.Permalink}}' style='float: left' id='prev-article'>← {{ .Title }}</a>
+          <a href='{{.Permalink}}' id='prev-article'>← {{ .Title }}</a>
         {{ else }}
-          <a href='{{.Parent.Permalink}}' style='float: left' id='prev-article'>← ../{{ .Parent.Title }}</a>
+          <a href='{{.Parent.Permalink}}' id='prev-article'>← ../{{ .Parent.Title }}</a>
         {{ end }}
+        </div>
+        <div class='right'>
         {{ with index $pages (add $selfIdx 1) }}
-          <a href='{{.Permalink}}' style='float: right' id='next-article'>{{ .Title }} →</a>
+          <a href='{{.Permalink}}' id='next-article'>{{ .Title }} →</a>
         {{ else }}
           {{ $parent := .Parent }}
           {{ $parentIdx := -1 }}
@@ -47,9 +54,10 @@
           {{ end }}
         
           {{ with index $pages (add $parentIdx 1) }}
-            <a href='{{.Permalink}}' style='float: right' id='next-article'>../{{ .Title }} →</a>
+            <a href='{{.Permalink}}' id='next-article'>../{{ .Title }} →</a>
           {{ end }}
         {{ end }}
+        </div>
       {{ end }}
     {{ end }}
   {{ end }}

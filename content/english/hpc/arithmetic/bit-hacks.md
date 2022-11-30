@@ -1,6 +1,6 @@
 ---
 title: Bit Manipulation
-weight: 4
+weight: 7
 draft: true
 ---
 
@@ -24,11 +24,11 @@ Left or right-shifting negative numbers invokes undefined behavior in C/C++.
 
 `__builtin_popcount` `popcnt` Returns the number of 1-bits in x.
 
-`__builtin_parity` Returns the parity of x, i.e. the number of 1-bits in x modulo 2.
+`__builtin_parity` Returns the *parity* of x (that is, the number of 1-bits in x modulo 2).
 
 This is presumably for [error detection](https://en.wikipedia.org/wiki/Parity_bit).
 
-`__builtin_clrsb` Returns the number of leading redundant sign bits in x, i.e. the number of bits following the most significant bit that are identical to it. There are no special cases for 0 or other values.
+`__builtin_clrsb` Returns the number of leading redundant sign bits in x, i.e., the number of bits following the most significant bit that are identical to it. There are no special cases for 0 or other values.
 
 `__builtin_ffs` Returns one plus the index of the least significant 1-bit of x, or if x is zero, returns zero.
 

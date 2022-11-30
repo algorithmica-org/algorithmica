@@ -99,7 +99,7 @@ $$ ax + my = 1 \iff ax \equiv 1 \iff x \equiv a^{-1} \pmod m $$
 int inv(int a, int m) {
     if (a == 1)
         return 1;
-    return (1 - inv(m % a, a) * m) / a + m;
+    return (1 - 1ll * inv(m % a, a) * m) / a + m;
 }
 ```
 

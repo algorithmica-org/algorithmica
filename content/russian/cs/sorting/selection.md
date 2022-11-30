@@ -1,6 +1,7 @@
 ---
 title: Сортировка выбором
 weight: 2
+published: true
 ---
 
 Похожим методом является **сортировка выбором** (минимума или максимума).
@@ -9,10 +10,10 @@ weight: 2
 
 ```cpp
 void selection_sort(int *a, int n) {
-    for (k = 0; k < n - 1; k++)
-        for (j = i + 1; j < n; j++)
-            if (a[i] > a[j])
-                swap(a[j], a[i]);
+    for (int k = 0; k < n - 1; k++)
+        for (int j = k + 1; j < n; j++)
+            if (a[k] > a[j])
+                swap(a[j], a[k]);
 }
 ```
 

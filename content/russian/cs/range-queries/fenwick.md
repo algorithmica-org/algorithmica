@@ -84,7 +84,7 @@ int sum (int r1, int r2) {
     int res = 0;
     for (int i = r1; i > 0; i -= i & -i)
         for (int j = r2; j > 0; j -= j & -j)
-            ans += t[i][j];
+            res += t[i][j];
     return res;
 }
 ```

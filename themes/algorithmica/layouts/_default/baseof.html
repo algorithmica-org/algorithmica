@@ -6,13 +6,14 @@
     <div id='wrapper' {{ if .Params.HideSidebar }}class='sidebar-hidden sidebar-toggled'{{end}}>
       {{- partial "buttons.html" . -}}
       <main>
+        {{ partial "search.html" . }}
         {{- partial "header.html" . -}}
         <article>
           {{- block "main" . }}{{- end }}
         </article>
         {{ partial "nextprev.html" . }}
-        {{ partial "footer.html" . }}
       </main>
+      {{ partial "footer.html" . }}
     </div>
   </body>
 </html>

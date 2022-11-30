@@ -73,7 +73,7 @@ CUDA is available for many languages.
 
 Nice documentation can be found here: https://documen.tician.de/pycuda/index.html
 
-If you are on Colab, go to Runtime -> Change runtime type -> Hardware accelerator and set it to "GPU".
+If you are on Colab, go to Runtime -> Change runtime type -> Hardware accelerator and set it to "GPU."
 
 
 ```python
@@ -167,7 +167,7 @@ There is also `drv.InOut` function, which makes it available for both reading an
 
 Most of the operations here are memory operations, so measuring performance here is useless. Don't worry, we will get to more complex examples soon enough.
 
-GPUs have very specific operations. However, in case of NVIDIA GPUs managing it is quite simple: the cards have *compute capabilities* (1.0, 1.1, 1.2, 1.3, 2.0, etc.) and all features added at capability $x$ is also available at later versions. These can be checked at run-time or compile-time.
+GPUs have very specific operations. However, in case of NVIDIA GPUs managing it is quite simple: the cards have *compute capabilities* (1.0, 1.1, 1.2, 1.3, 2.0, etc.) and all features added at capability $x$ is also available at later versions. These can be checked at run time or compile time.
 
 You can check differences in this Wikipedia article: https://en.wikipedia.org/wiki/CUDA#Version_features_and_specifications
 
@@ -195,7 +195,7 @@ Some tasks, especially in cryptography, cannot be parallelized. But some can.
 
 ## Summing arrays in $O(\log n)$ time
 
-Assume we want to perform some associative (i. e. $A*(B*C) = (A*B)*C$) operation on an array of $n$ elements. Say, sum it up.
+Assume we want to perform some associative (i.e., $A*(B*C) = (A*B)*C$) operation on an array of $n$ elements. Say, sum it up.
 
 Normally, we would do that with a simple loop:
 
@@ -418,7 +418,7 @@ Intrinsics for that.
 
 Now, a lot of value comes from cryptocurrency and deep learning. The latter relies on two specific operations: matrix multiplications for linear layers and convolutions for convolutional layers used in computer vision.
 
-First, they introduced "multiply-accumulate" operation (e. g. `x += y * z`) per 1 GPU clock cycle.
+First, they introduced "multiply-accumulate" operation (e.g., `x += y * z`) per 1 GPU clock cycle.
 
 Google uses Tensor Processing Units. Nobody really knows how they work (proprietary hardware that they rent, not sell).
 
@@ -431,7 +431,7 @@ Well, you don't really need anything more precise than that for deep learning an
 
 It is called mixed precision because input matrices are fp16 but multiplication result and accumulator are fp32 matrices.
 
-Probably, the proper name would be "4x4 matrix cores", however NVIDIA marketing team decided to use "tensor cores".
+Probably, the proper name would be "4x4 matrix cores," however NVIDIA marketing team decided to use "tensor cores."
 
 So, see, this is not exactly fair comparison.
 

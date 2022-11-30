@@ -10,6 +10,11 @@
   <link rel="stylesheet" type="text/css" href="https://tikzjax.com/v1/fonts.css">
   <script src="https://tikzjax.com/v1/tikzjax.js"></script>
 
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/lunr.js/2.3.9/lunr.min.js"></script>
+  <script src="/scripts/lunr.stemmer.support.min.js"></script>
+  <script src="/scripts/lunr.ru.min.js"></script>
+  <script src="/scripts/lunr.multi.min.js"></script>
+
   {{ $dark := resources.Get "dark.sass" | toCSS | minify | fingerprint }}
   <link rel="stylesheet" id="theme">
 
@@ -18,22 +23,101 @@
       console.log("Toggling sidebar visibility")
       var sidebar = document.getElementById('sidebar')
       var wrapper = document.getElementById('wrapper')
-      if (sidebar.classList.contains('sidebar-toggled') || window.getComputedStyle(sidebar).display == 'block') {
+      if (sidebar.classList.contains('sidebar-toggled') || window.getComputedStyle(sidebar).display == 'block') { 
         sidebar.classList.toggle('sidebar-hidden')
         wrapper.classList.toggle('sidebar-hidden')
       }
       sidebar.classList.add('sidebar-toggled')
       wrapper.classList.add('sidebar-toggled')
     }
+
     function switchTheme(theme) {
       console.log("Changing theme:", theme)
       document.getElementById('theme').href = (theme == 'dark' ? "{{ $dark.RelPermalink }}" : "")
       document.getElementById('syntax-theme').href = (theme == 'dark' ? '/syntax-dark.css' : '/syntax.css')
       localStorage.setItem('theme', theme)
     }
+
+    async function toggleSearch() {
+      console.log("Toggling search")
+      
+      var searchDiv = document.getElementById('search')
+      if (window.getComputedStyle(searchDiv).display == 'none') {
+        searchDiv.style.display = 'block'
+        window.scrollTo({ top: 0 });
+        document.getElementById('search-bar').focus()
+      } else {
+        searchDiv.style.display = 'none'  
+      }
+
+      if (!index) {
+        console.log("Fetching index")
+        const response = await fetch('/searchindex.json')
+        const pages = await response.json()
+        index = lunr(function() {
+          this.use(lunr.multiLanguage('en', 'ru'))
+          this.field('title', {
+            boost: 5
+          })
+          this.field('content', {
+            boost: 1
+          })
+          pages.forEach(function(doc) {
+            this.add(doc)
+            articles.push(doc)
+          }, this)
+        })
+        console.log("Ready to search")
+      }
+    }
+
+    var articles = []
+    var index = undefined
+
+    function search() {
+      var query = document.getElementById('search-bar').value
+      var resultsDiv = document.getElementById('search-results')
+      var countDiv = document.getElementById('search-count')
+      
+      if (query == '') {
+        resultsDiv.innerHTML = ''
+        countDiv.innerHTML = ''
+        return
+      }
+      
+      var results = index.search(query)
+
+      countDiv.innerHTML = '{{ T "searchCountPrefix" }} <b>' + results.length + '</b> {{ T "searchCountSuffix" }}'
+
+      let resultList = ''
+
+      for (const n in results) {
+        const item = articles[results[n].ref]
+        resultList += '<li><a href="' + item.path + '">' + item.title + '</a> <p>'
+        const text = item.content
+
+        const contextLimit = 80
+
+        if (text.includes(query)) {
+          const start = text.indexOf(query)
+          if (start > contextLimit)
+            resultList += '…'
+          resultList += text.substring(start - contextLimit, start)
+                      + '<b>' + query + '</b>' + text.substring(start + query.length, start + query.length + contextLimit)
+
+        } else {
+          resultList += text.substring(0, contextLimit * 2)
+        }
+        resultList += '…</p></li>'
+      }
+
+      resultsDiv.innerHTML = resultList
+    }
+
     if (localStorage.getItem('theme') == 'dark') {
       switchTheme('dark')
     }
+
     window.addEventListener('load', function() {
       var el = document.getElementById("active-element")
       //console.log(el)
@@ -46,6 +130,7 @@
         toggleSidebar()
       }*/
     })
+
     window.addEventListener('scroll', function() {
       var menu = document.getElementById('menu')
       if (window.scrollY < 120) {
@@ -56,8 +141,10 @@
         menu.classList.add('scrolled')
       }
     })
-    // onkeypress didn't work with arrows for some reasons
+
     window.addEventListener('keydown', function(e) {
+      if (e.altKey) { return }
+      if (document.activeElement.tagName == 'INPUT') { return }
       if (e.key == 'ArrowLeft') {
         document.getElementById('prev-article').click()
       } else if (e.key == 'ArrowRight') {

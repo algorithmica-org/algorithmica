@@ -15,6 +15,15 @@ other = "updated"
 [sections]
 other = "sections"
 
+[search]
+other = "Search this book…"
+
+[searchCountPrefix]
+other = "Found"
+
+[searchCountSuffix]
+other = "pages"
+
 [prerequisites]
 other = "prerequisites"
 
@@ -22,7 +31,7 @@ other = "prerequisites"
 other = "translations"
 
 [copyright1]
-other = "Copyright 2021 Sergey Slotin"
+other = "Copyright 2021–2022 Sergey Slotin"
 
 [copyright2]
 other = " " # Content is distributed under <a href='https://tldrlegal.com/license/creative-commons-attribution-noncommercial-4.0-international-(cc-by-nc-4.0)'>CC BY-NC</a>

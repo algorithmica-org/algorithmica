@@ -2,8 +2,9 @@
 title: Структуры с откатами
 weight: 1
 authors:
-- Сергей Слотин
-date: 2021-09-12
+  - Сергей Слотин
+date: {}
+published: true
 ---
 
 Состояние любой структуры как-то лежит в памяти: в каких-то массивах, или в более общем случае, по каким-то определенным адресам в памяти. Для простоты, пусть у нас есть некоторый массив $a$ размера $n$, и нам нужно обрабатывать запросы присвоения и чтения, а также иногда откатывать изменения обратно.
@@ -20,7 +21,7 @@ int a[N];
 stack< pair<int, int> > s;
 
 void change(int k, int x) {
-    l.push({k, a[k]});
+    s.push({k, a[k]});
     a[k] = x;
 }
 
@@ -84,7 +85,7 @@ void rollback() {
 
 ```cpp
 int t = 0;
-vector<int> versions[N];
+vector< pair<int, int> > versions[N];
 
 void change(int k, int x) {
     versions[k].push_back({t++, x});

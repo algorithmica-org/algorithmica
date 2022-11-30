@@ -117,7 +117,7 @@ vector<int> c = {1, 2, 3} // {1, 2, 3}
 Получить `capacity` у `vector` можно с помощью одноимённой функции:
 
 
-```
+```cpp
 vector<int> a;
 for (int i = 0; i < 10; i++) {
     a.push_back(i);
