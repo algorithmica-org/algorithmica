@@ -33,9 +33,6 @@ for (int x : a)
 for (int &x : a)
     x *= 2;
 
-for (x : a)
-    cout << x << endl;
-
 for (const int &x : a)
     cout << x << endl;
 
