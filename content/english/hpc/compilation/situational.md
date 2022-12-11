@@ -96,7 +96,7 @@ The whole process is automated by modern compilers. For example, the `-fprofile-
 g++ -fprofile-generate [other flags] source.cc -o binary
 ```
 
-After we run the program — preferably on input that is as representative of real use case as possible — it will create a bunch of `*.gcda` files that contain log data for the test run, after which we can rebuild the program, but now adding the `-fprofile-use` flag:
+After we run the program — preferably on input that is as representative of the real use case as possible — it will create a bunch of `*.gcda` files that contain log data for the test run, after which we can rebuild the program, but now adding the `-fprofile-use` flag:
 
 ```
 g++ -fprofile-use [other flags] source.cc -o binary

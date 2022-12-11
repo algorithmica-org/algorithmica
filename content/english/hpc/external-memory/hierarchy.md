@@ -58,7 +58,7 @@ There are other caches inside CPUs that are used for something other than data. 
 
 ### Non-Volatile Memory
 
-While the data cells in CPU caches and the RAM only gently store just a few electrons (that periodically leak and need to be periodically refreshed), the data cells in *non-volatile memory* types store hundreds of them. This lets the data to persist for prolonged periods of time without power but comes at the cost of performance and durability — because when you have more electrons, you also have more opportunities for them colliding with silicon atoms.
+While the data cells in CPU caches and the RAM only gently store just a few electrons (that periodically leak and need to be periodically refreshed), the data cells in *non-volatile memory* types store hundreds of them. This lets the data persist for prolonged periods of time without power but comes at the cost of performance and durability — because when you have more electrons, you also have more opportunities for them to collide with silicon atoms.
 
 <!-- error correction -->
 

@@ -1,6 +1,7 @@
 ---
 title: Binary Search
 weight: 1
+published: true
 ---
 
 <!-- mention interpolation search and radix trees? -->
@@ -184,7 +185,7 @@ int lower_bound(int x) {
 
 Note that this loop is not always equivalent to the standard binary search. Since it always rounds *up* the size of the search interval, it accesses slightly different elements and may perform one comparison more than needed. Apart from simplifying computations on each iteration, it also makes the number of iterations constant if the array size is constant, removing branch mispredictions completely.
 
-As typical for predication, this trick is very fragile to compiler optimizations — depending on the compiler and how the funciton is invoked, it may still leave a branch or generate suboptimal code. It works fine on Clang 10, yielding a 2.5-3x improvement on small arrays:
+As typical for predication, this trick is very fragile to compiler optimizations — depending on the compiler and how the function is invoked, it may still leave a branch or generate suboptimal code. It works fine on Clang 10, yielding a 2.5-3x improvement on small arrays:
 
 <!-- todo: update numbers -->
 

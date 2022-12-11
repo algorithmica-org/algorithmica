@@ -19,7 +19,7 @@ When you fetch anything from memory, the request goes through an incredibly comp
 
 -->
 
-When you fetch anything from memory, there is always some latency before the data arrives. Moreover, the request doesn't go directly to its ultimate storage location, but it first goes through a complex system of address translation units and caching layers designed to both help in memory management and reduce the latency.
+When you fetch anything from memory, there is always some latency before the data arrives. Moreover, the request doesn't go directly to its ultimate storage location, but it first goes through a complex system of address translation units and caching layers designed to both help in memory management and reduce latency.
 
 Therefore, the only correct answer to this question is "it depends" — primarily on where the operands are stored:
 
@@ -27,7 +27,7 @@ Therefore, the only correct answer to this question is "it depends" — primaril
 - If it was accessed recently, it is probably *cached* and will take less than that to fetch, depending on how long ago it was accessed — it could be ~50 cycles for the slowest layer of cache and around 4-5 cycles for the fastest.
 - But it could also be stored on some type of *external memory* such as a hard drive, and in this case, it will take around 5ms, or roughly $10^7$ cycles (!) to access it.
 
-Such high variance of memory performance is caused by the fact that memory hardware doesn't follow the same [laws of silicon scaling](/hpc/complexity/hardware) as CPU chips do. Memory is still improving through other means, but if 50 years ago memory timings were roughly on the same scale with the instruction latencies, nowadays they lag far behind.
+Such a high variance of memory performance is caused by the fact that memory hardware doesn't follow the same [laws of silicon scaling](/hpc/complexity/hardware) as CPU chips do. Memory is still improving through other means, but if 50 years ago memory timings were roughly on the same scale with the instruction latencies, nowadays they lag far behind.
 
 ![](img/memory-vs-compute.png)
 

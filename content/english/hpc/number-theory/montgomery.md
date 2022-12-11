@@ -1,6 +1,7 @@
 ---
 title: Montgomery Multiplication
 weight: 4
+published: true
 ---
 
 Unsurprisingly, a large fraction of computation in [modular arithmetic](../modular) is often spent on calculating the modulo operation, which is as slow as [general integer division](/hpc/arithmetic/division/) and typically takes 15-20 cycles, depending on the operand size.
@@ -287,6 +288,6 @@ int inverse(int _a) {
 }
 ```
 
-While vanilla binary exponentiation with a compiler-generated fast modulo trick requires ~170ns per `inverse` call, this implementation takes ~166ns, going down to ~158s we omit `transform` and `reduce` (a reasonable use case is for `inverse` to be used as a subprocedure in a bigger modular computation). This is a small improvement, but Montgomery multiplication becomes much more advantageous for SIMD applications and larger data types.
+While vanilla binary exponentiation with a compiler-generated fast modulo trick requires ~170ns per `inverse` call, this implementation takes ~166ns, going down to ~158ns we omit `transform` and `reduce` (a reasonable use case is for `inverse` to be used as a subprocedure in a bigger modular computation). This is a small improvement, but Montgomery multiplication becomes much more advantageous for SIMD applications and larger data types.
 
 **Exercise.** Implement efficient *modular* [matix multiplication](/hpc/algorithms/matmul).
