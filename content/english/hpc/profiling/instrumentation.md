@@ -70,7 +70,7 @@ Mathematically, what we are doing here is repeatedly sampling from [Bernoulli di
 ```c++
 void query() {
     static next_sample = geometric_distribution(sample_rate);
-    if (next_sample--) {
+    if (next_sample-- == 0) {
         next_sample = geometric_distribution(sample_rate);
         // ...
     }
