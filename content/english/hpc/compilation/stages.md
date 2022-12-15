@@ -1,6 +1,7 @@
 ---
 title: Stages of Compilation
 weight: 1
+published: true
 ---
 
 Before jumping straight to compiler optimizations, which is what most of this chapter is about, let's briefly recap the "big picture" first. Skipping the boring parts, there are 4 stages of turning C programs into executables:
@@ -14,7 +15,7 @@ There are possibilities to improve program performance in each of these stages.
 
 ### Interprocedural Optimization
 
-We have the last [stage](../stages), linking, because it is is both easier and faster to compile programs on a file-by-file basis and then link those files together — this way you can do this in parallel and also cache intermediate results.
+We have the last [stage](../stages), linking, because it is both easier and faster to compile programs on a file-by-file basis and then link those files together — this way you can do this in parallel and also cache intermediate results.
 
 It also gives the ability to distribute code as *libraries*, which can be either *static* or *shared*:
 
