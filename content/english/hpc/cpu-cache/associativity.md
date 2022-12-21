@@ -1,6 +1,7 @@
 ---
 title: Cache Associativity
 weight: 11
+published: true
 ---
 
 Consider a [strided incrementing loop](../cache-lines) over an array of size $N=2^{21}$ with a fixed step size of 256:
@@ -65,7 +66,7 @@ If we implemented set-associative cache in software, we would compute some hash 
 Instead, the hardware uses the lazy approach. It takes the memory address that needs to be accessed and splits it into three parts — from lower bits to higher:
 
 - *offset* — the index of the word within a 64B cache line ($\log_2 64 = 6$ bits);
-- *index* — the index of the cache line set (the next $12$ bits as there are $2^{12}$ cache lines in the L3 cache);
+- *index* — the index of the cache line set (the next $12$ bits as there are $2^{12}$ cache line sets in the L3 cache);
 - *tag* — the rest of the memory address, which is used to tell the memory blocks stored in the cache lines apart.
 
 In other words, all memory addresses with the same "middle" part map to the same set.
