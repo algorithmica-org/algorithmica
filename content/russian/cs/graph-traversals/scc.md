@@ -48,7 +48,7 @@ int cnt_components = 0;
 // топологическая сортировка
 void dfs1(int v) {
     used[v] = true;
-    for (int u : g[v]) {
+    for (int u : g[v])
         if (!used[u]) 
             dfs1(u);
     order.push_back(v);
