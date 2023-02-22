@@ -68,7 +68,7 @@ bool find(int x, int *a, int n) {
 Для стандартных контейнеров STL такая функция реализована:
 
 ```cpp
-bool find(x, vector<int> a) {
+bool find(int x, vector<int> a) {
     auto it = lower_bound(a.begin(), a.end(), x);
     return (it != a.end() && *it == x);
 }
