@@ -51,17 +51,19 @@ x = 42
 Однако, если массив отсортирован, найти число $x$ в массиве можно и быстрее: можно аналогичным способом найти *нижнюю грань* (англ. *lower bound*) — самое малое число, не меньшее $x$ — и проверить, оказалось ли оно равно $x$.
 
 ```cpp
-bool find(int x, int *a, int n) {
-    int l = 0, r = n + 1;
-    // отрезок поиска теперь полуинтервал: [l, r)
-    while (l + 1 < r) {
-        int m = (l + r) / 2;
-        if (a[m] >= x)
-            l = m;
-        else
-            r = m;
-    }
-    return (l < n && a[l] == x);
+bool find(int x, int const *a, int n) {
+  int l = 0, r = n;
+  // отрезок поиска теперь полуинтервал: [l, r)
+  while (l < r) {
+    int const m = (l + r) / 2;
+    if (a[m] < x)
+      l = m + 1;
+    else if (a[m] > x)
+      r = m;
+    else
+      return true;
+  }
+  return false;
 }
 ```
 
