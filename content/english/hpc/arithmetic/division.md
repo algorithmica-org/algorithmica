@@ -1,6 +1,7 @@
 ---
 title: Integer Division
 weight: 6
+published: true
 ---
 
 Compared to other arithmetic operations, division works very poorly on x86 and computers in general. Both floating-point and integer division is notoriously hard to implement in hardware. The circuitry takes a lot of space in the ALU, the computation has a lot of stages, and as the result, `div` and its siblings routinely take 10-20 cycles to complete, with latency being slightly less on smaller data type sizes.
@@ -97,7 +98,7 @@ It can be shown that such a pair always exists, and compilers actually perform a
 
 ```nasm
 ;  input (rdi): x
-; output (rax): x mod (m=1e9+7)
+; output (rax): x div (m=1e9+7)
 mov    rax, rdi
 movabs rdx, -8543223828751151131  ; load magic constant into a register
 mul    rdx                        ; perform multiplication
