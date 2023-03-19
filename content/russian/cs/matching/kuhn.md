@@ -2,9 +2,10 @@
 title: Алгоритм Куна
 weight: 2
 authors:
-- Сергей Слотин
+  - Сергей Слотин
 prerequisites:
-- berge
+  - berge
+published: true
 ---
 
 Лемма Бержа говорит о том, что паросочетание без увеличивающих цепей является максимальным.
@@ -49,7 +50,7 @@ bool dfs(int v) {
 ```cpp
 memset(mt, -1, sizeof mt);
 for (int i = 0; i < n; i++) {
-    memset(used, 0, sizeof mt);
+    memset(used, 0, sizeof used);
     if (dfs(i))
         cnt++;
 }
