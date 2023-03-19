@@ -95,7 +95,7 @@ $$
 a^p \equiv a \pmod p
 $$
 
-**Proof**. Let $P(x_1, x_2, \ldots, x_n) = \frac{k}{\prod (x_i!)}$ be the *multinomial coefficient:* the number of times the element $a_1^{x_1} a_2^{x_2} \ldots a_n^{x_n}$ appears after the expansion of $(a_1 + a_2 + \ldots + a_n)^k$. Then:
+**Proof**. Let $P(x_1, x_2, \ldots, x_n) = \frac{k!}{\prod (x_i!)}$ be the *multinomial coefficient:* the number of times the element $a_1^{x_1} a_2^{x_2} \ldots a_n^{x_n}$ appears after the expansion of $(a_1 + a_2 + \ldots + a_n)^k$. Then:
 
 $$
 \begin{aligned}
