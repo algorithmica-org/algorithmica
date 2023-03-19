@@ -1,8 +1,9 @@
 ---
 title: Деревья поиска
 editors:
-- Сергей Слотин
+  - Сергей Слотин
 weight: 9
+published: true
 ---
 
 Дерево — одна из наиболее распространенных структур данных в программировании.
@@ -55,7 +56,7 @@ bool find(Node *v, int x) {
         return false;
     if (v->x == x)
         return true;
-    return (v->x < x) ? find(v->l, x) : find(v->r, x);
+    return (v->x < x) ? find(v->r, x) : find(v->l, x);
 }
 ```
 
