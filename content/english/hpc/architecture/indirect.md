@@ -1,6 +1,7 @@
 ---
 title: Indirect Branching
 weight: 4
+published: true
 ---
 
 During assembly, all labels are converted to addresses (absolute or relative) and then encoded into jump instructions.
@@ -79,11 +80,11 @@ struct Animal {
     virtual void speak() { printf("<abstract animal sound>\n");}
 };
 
-struct Dog {
+struct Dog : Animal {
     void speak() override { printf("Bark\n"); }
 };
 
-struct Cat {
+struct Cat : Animal {
     void speak() override { printf("Meow\n"); }
 };
 ```
