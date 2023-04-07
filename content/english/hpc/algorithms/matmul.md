@@ -132,7 +132,7 @@ The performance for $n = 1920$ is now around 2.3 GFLOPS — or another ~4 times 
 
 ![](../img/mm-vectorized-barplot.svg)
 
-This optimization looks neither too complex nor specific to matrix multiplication. Why can't the compiler [auto-vectorizee](/hpc/simd/auto-vectorization/) the inner loop by itself?
+This optimization looks neither too complex nor specific to matrix multiplication. Why can't the compiler [auto-vectorize](/hpc/simd/auto-vectorization/) the inner loop by itself?
 
 It actually can; the only thing preventing that is the possibility that `c` overlaps with either `a` or `b`. To rule it out, you can communicate to the compiler that you guarantee `c` is not [aliased](/hpc/compilation/contracts/#memory-aliasing) with anything by adding the `__restrict__` keyword to it:
 
