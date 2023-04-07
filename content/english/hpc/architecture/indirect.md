@@ -47,7 +47,7 @@ When we have control over the range of values that the variable can take, we can
 Compilers use this technique when the values are densely packed together (not necessarily strictly sequentially, but it has to be worth having blank fields in the table). It can also be implemented explicitly with a *computed goto*:
 
 ```cpp
-void weather_in_russia(int season) {
+void grumpy_weather(int season) {
     static const void* table[] = {&&winter, &&spring, &&summer, &&fall};
     goto *table[season];
 
