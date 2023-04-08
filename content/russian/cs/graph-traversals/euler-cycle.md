@@ -26,7 +26,7 @@ authors:
 ```c++
 void euler(int v) {
     while (!g[v].empty()) {
-        u = *g[v].begin(); // берем любое ребро
+        int u = *g[v].begin(); // берем любое ребро
         remove_edge(v, u); // удаляем его
         euler(u);            // запускаемся от противоположного конца
     }
@@ -52,7 +52,7 @@ set<int> g[maxn];
 
 void euler(int v) {
     while (!g[v].empty()) {
-        u = *g[v].begin();
+        int u = *g[v].begin();
         g[v].erase(u);
         g[u].erase(v); // если граф ориентированный, обратное ребро удалять не надо
         euler(u);
@@ -76,9 +76,9 @@ stack<int> g[maxn];
 
 void add_edge(int u, int v) {
     g[u].push(edges.size());
-    edges.add({v, false});
-    g[u].push(edges.size());
-    edges.add({u, false});
+    edges.push_back({v, false});
+    g[v].push(edges.size());
+    edges.push_back({u, false});
 }
 ```
 
@@ -89,11 +89,11 @@ void add_edge(int u, int v) {
 ```cpp
 void euler(int v) {
     while (!g[v].empty()) {
-        e = g[v].top();
+        int e = g[v].top();
         g[v].pop();
         if (!edges[e].deleted) {
             edges[e].deleted = edges[e^1].deleted = true;
-            euler(e.to);
+            euler(edges[e].to);
         }
     }
     cout << v <<  " ";
