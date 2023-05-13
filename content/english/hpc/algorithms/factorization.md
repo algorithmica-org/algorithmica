@@ -388,8 +388,8 @@ struct Montgomery {
     }
 };
 
-u64 f(u64 x, u64 a, Montgomery m) {
-    return m.multiply(x, x) + a;
+u64 f(u64 x, Montgomery m) {
+    return m.multiply(x, x) + 1;
 }
 
 const int M = 1024;
