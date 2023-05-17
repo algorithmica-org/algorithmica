@@ -158,7 +158,7 @@ u32 reduce(u64 x) {
     u32 q = u32(x) * nr;
     u64 m = (u64) q * n;
     u32 y = (x - m) >> 32;
-    return y + n
+    return y + n;
 }
 ```
 
