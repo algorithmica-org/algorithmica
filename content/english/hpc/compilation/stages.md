@@ -14,7 +14,7 @@ There are possibilities to improve program performance in each of these stages.
 
 ### Interprocedural Optimization
 
-We have the last [stage](../stages), linking, because it is is both easier and faster to compile programs on a file-by-file basis and then link those files together — this way you can do this in parallel and also cache intermediate results.
+We have the last [stage](../stages), linking, because it is both easier and faster to compile programs on a file-by-file basis and then link those files together — this way you can do this in parallel and also cache intermediate results.
 
 It also gives the ability to distribute code as *libraries*, which can be either *static* or *shared*:
 
