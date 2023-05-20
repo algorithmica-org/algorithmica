@@ -48,7 +48,7 @@ Instrumentation can also be used to collect other types of information that can 
 
 - for a hash function, we are interested in the average length of its input;
 - for a binary tree, we care about its size and height;
-- for a sorting algorithm, we we want to know how many comparisons it does.
+- for a sorting algorithm, we want to know how many comparisons it does.
 
 In a similar way, we can insert counters in the code that compute these algorithm-specific statistics.
 
