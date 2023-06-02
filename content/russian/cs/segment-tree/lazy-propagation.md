@@ -73,7 +73,7 @@ void add(int lq, int rq, int x) {
 int sum(int lq, int rq) {
     push();
     if (lb >= lq && rb <= rq)
-        return s;
+        return sum;
     if (max(lb, lq) >= min(rb, rq))
         return 0;
     return l->sum(lq, rq) + r->sum(lq, rq);
