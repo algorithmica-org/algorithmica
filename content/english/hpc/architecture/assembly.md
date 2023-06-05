@@ -47,7 +47,7 @@ Since there are far more differences between the architectures than just this on
 
 ### Instructions and Registers
 
-For historical reasons, instruction mnemonics in most assembly languages are very terse. Back when people used to write assembly by hand and repeatedly wrote the same set of common instructions, one less character to type was one step away from insanity.
+For historical reasons, instruction mnemonics in most assembly languages are very terse. Back when people used to write assembly by hand and repeatedly wrote the same set of common instructions, one fewer character to type was one step further from insanity.
 
 For example, `mov` is for "store/load a word," `inc` is for "increment by 1," `mul` is for "multiply," and `idiv` is for "integer division." You can look up the description of an instruction by its name in [one of x86 references](https://www.felixcloutier.com/x86/), but most instructions do what you'd think they do.
 
