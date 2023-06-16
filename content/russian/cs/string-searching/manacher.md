@@ -20,13 +20,13 @@ vector<int> pal_array(string s) {
     s = "#" + s + "$";
 
     // в этом массиве будем хранить расстояние от центра до границы палиндрома
-    vector<int> t(n, 0);
+    vector<int> d(n, 0);
 
     for(int i = 1; i <= n; i++)
-        while (s[i - t[i - 1]] == s[i + t[i - 1]])
-            r[i-1]++;
+        while (s[i - d[i - 1]] == s[i + d[i - 1]])
+            d[i - 1]++;
 
-    return r;
+    return d;
 }
 ```
 
