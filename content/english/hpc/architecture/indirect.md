@@ -79,11 +79,11 @@ struct Animal {
     virtual void speak() { printf("<abstract animal sound>\n");}
 };
 
-struct Dog {
+struct Dog : Animal {
     void speak() override { printf("Bark\n"); }
 };
 
-struct Cat {
+struct Cat : Animal {
     void speak() override { printf("Meow\n"); }
 };
 ```
