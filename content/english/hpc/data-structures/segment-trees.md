@@ -603,7 +603,7 @@ constexpr int H = height(N);
 alignas(64) int t[offset(H)]; // an array for storing nodes
 ```
 
-This way, we effectively reduce the height of the tree by approximately $\frac{\log_B n}{\log_2 n} = \log_2 B$ times ($\sim4$ times if $B = 16$), but it becomes non-trivial to implement in-node operations efficiently. For our problem, we have two main options:
+This way, we effectively reduce the height of the tree by approximately $\frac{\log_2 n}{\log_B n} = \log_2 B$ times ($\sim4$ times if $B = 16$), but it becomes non-trivial to implement in-node operations efficiently. For our problem, we have two main options:
 
 1. We could store $B$ *sums* in each node (for each of its $B$ children).
 2. We could store $B$ *prefix sums* in each node (the $i$-th being the sum of the first $(i + 1)$ children).
