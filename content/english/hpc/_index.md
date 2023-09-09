@@ -2,11 +2,8 @@
 title: Algorithms for Modern Hardware
 menuTitle: HPC
 weight: 5
-#authors:
-#- Sergey Slotin
-#created: "Feb 2021"
-#date: 2021-09-16
 noToc: true
+published: true
 ---
 
 This is an upcoming high performance computing book titled "Algorithms for Modern Hardware" by [Sergey Slotin](http://sereja.me/).
@@ -229,7 +226,7 @@ Release date: 2023-2024?
 
 <!-- (I might need some help from here on.) -->
 
-Metworking, message passing, actor model, communication-constrained algorithms, distributed primitives, all-reduce, MapReduce, stream processing, query planning, storage, sharding, compression, distributed databases, consistency, reliability, scheduling, workflow engines, cloud computing.
+Networking, message passing, actor model, communication-constrained algorithms, distributed primitives, all-reduce, MapReduce, stream processing, query planning, storage, sharding, compression, distributed databases, consistency, reliability, scheduling, workflow engines, cloud computing.
 
 Release date: ??? (more likely to be completed than not)
 
