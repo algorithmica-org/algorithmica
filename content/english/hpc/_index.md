@@ -229,7 +229,7 @@ Release date: 2023-2024?
 
 <!-- (I might need some help from here on.) -->
 
-Metworking, message passing, actor model, communication-constrained algorithms, distributed primitives, all-reduce, MapReduce, stream processing, query planning, storage, sharding, compression, distributed databases, consistency, reliability, scheduling, workflow engines, cloud computing.
+Networking, message passing, actor model, communication-constrained algorithms, distributed primitives, all-reduce, MapReduce, stream processing, query planning, storage, sharding, compression, distributed databases, consistency, reliability, scheduling, workflow engines, cloud computing.
 
 Release date: ??? (more likely to be completed than not)
 
