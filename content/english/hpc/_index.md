@@ -2,8 +2,11 @@
 title: Algorithms for Modern Hardware
 menuTitle: HPC
 weight: 5
+#authors:
+#- Sergey Slotin
+#created: "Feb 2021"
+#date: 2021-09-16
 noToc: true
-published: true
 ---
 
 This is an upcoming high performance computing book titled "Algorithms for Modern Hardware" by [Sergey Slotin](http://sereja.me/).
