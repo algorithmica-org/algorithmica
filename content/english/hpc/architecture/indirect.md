@@ -1,6 +1,7 @@
 ---
 title: Indirect Branching
 weight: 4
+published: true
 ---
 
 During assembly, all labels are converted to addresses (absolute or relative) and then encoded into jump instructions.
@@ -79,11 +80,11 @@ struct Animal {
     virtual void speak() { printf("<abstract animal sound>\n");}
 };
 
-struct Dog {
+struct Dog: public Animal {
     void speak() override { printf("Bark\n"); }
 };
 
-struct Cat {
+struct Cat: public Animal {
     void speak() override { printf("Meow\n"); }
 };
 ```
@@ -100,15 +101,15 @@ catdog->speak();
 
 There are many ways to implement this behavior, but C++ does it using a *virtual method table*.
 
-For all concrete implementations of `Animal`, compiler pads all their methods (that is, their instruction sequences) so that they have the exact same length for all classes (by inserting some [filler instructions](../layout) after `ret`) and then just writes them sequentially somewhere in the instruction memory. Then it adds a *run-time type information* field to the structure (that is, to all its instances), which is essentially just the offset in the memory region that points to the right implementation of the virtual methods of the class.
+For all concrete implementations of `Animal`, the compiler creates a table (typically called a "vtable") with pointers to each of that implementation's methods. A field is then added to each instance of `Animal` that points to the vtable for that instance's concrete implementation.
 
-With a virtual method call, that offset field is fetched from the instance of a structure and a normal function call is made with it, using the fact that all methods and other fields of every derived class have exactly the same offsets.
+With a virtual method call, the vtable field is fetched from the instance of a structure, then a function pointer is loaded from the vtable and called.
 
 Of course, this adds some overhead:
 
 - You may need to spend another 15 cycles or so for the same pipeline flushing reasons as for [branch misprediction](/hpc/pipelining).
 - The compiler most likely won't be able to inline the function call itself.
-- Class size increases by a couple of bytes or so (this is implementation-specific).
+- Class size increases by a couple of bytes or so (usually at least 1 pointer size for the vtable pointer).
 - The binary size itself increases a little bit.
 
 For these reasons, runtime polymorphism is usually avoided in performance-critical applications.
