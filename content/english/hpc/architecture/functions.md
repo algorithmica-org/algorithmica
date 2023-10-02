@@ -207,7 +207,7 @@ This is fairly close to what optimizing compilers produce out of this snippet â€
 distance:
     imul edi, edi       ; edi = x^2
     imul esi, esi       ; esi = y^2
-    lea  eax, [rdi+rsi] ; eax = x^2 + y^2
+    lea  eax, [edi+esi] ; eax = x^2 + y^2
     ret
 ```
 
