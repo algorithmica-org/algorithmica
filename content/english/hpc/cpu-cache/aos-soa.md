@@ -24,11 +24,12 @@ for (int i = 0; i < M; i++)
     q[k][0] = p[i];
 
     for (int j = 1; j < D; j++)
-        q[i][0] ^= (q[j][i] = rand());
+        q[k][0] ^= (q[k][j] = rand());
 
-    k = q[k][0];
+    k = p[i];
 }
 
+k = 0;
 for (int i = 0; i < M; i++) {
     int x = 0;
     for (int j = 0; j < D; j++)
