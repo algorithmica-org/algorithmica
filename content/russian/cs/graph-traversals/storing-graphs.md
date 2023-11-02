@@ -39,18 +39,17 @@ published: true
 ```c++
 // если на вход идет матрица смежности
 vector<vector<int>> g(n);
-for (int i = 0; i < n; ++i){
-    for (int j = 0;j < n;++j){
-        cin >> a;
-        if (a)
-          g[i].push_back(j);
-    }
+for (int i = 0; i < n; ++i) {
+  for (int j = 0; j < n; ++j) {
+    cin >> a;
+    if (a) g[i].push_back(j);
+  }
 }
 
 // если на вход идет список ребер
 cin >> n >> m;
 vector<vector<int>> g(n);
-for (int i = 0; i < m; ++i){
+for (int i = 0; i < m; ++i) {
   cin >> v1 >> v2;
   g[v1].push_back(v2);
   g[v2].push_back(v1);
