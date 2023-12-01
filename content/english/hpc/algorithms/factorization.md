@@ -302,7 +302,7 @@ u64 find_factor(u64 n) {
     while (g == 1) {
         x = f(f(x, n), n); // advance x twice
         y = f(y, n);       // advance y once
-        g = gcd(diff(x, y));
+        g = gcd(diff(x, y), n);
     }
     return g;
 }
