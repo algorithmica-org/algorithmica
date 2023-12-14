@@ -1,11 +1,12 @@
 ---
 title: Memory Latency
 weight: 2
+published: true
 ---
 
 Despite that [bandwidth](../bandwidth) is a more complicated concept, it is much easier to observe and measure than latency: you can simply execute a long series of independent read or write queries, and the scheduler, having access to them in advance, reorders and overlaps them, hiding their latency and maximizing the total throughput.
 
-To measure *latency*, we need to design an experiment where the CPU can't cheat by knowing the memory locations we will request in advance. One way to ensure this is to generate a random permutation of size $N$ that corresponds to a cycle and then repeatedly follow the permutation:
+To measure *latency*, we need to design an experiment where the CPU can't cheat by knowing the memory locations we will request in advance. One way to ensure this is to generate a random permutation of $N$ values that corresponds to a cycle, so that we can repeatedly follow the circle and thus the permutation:
 
 ```cpp
 int p[N], q[N];
