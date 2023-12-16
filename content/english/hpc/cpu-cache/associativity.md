@@ -1,6 +1,7 @@
 ---
 title: Cache Associativity
 weight: 11
+published: true
 ---
 
 Consider a [strided incrementing loop](../cache-lines) over an array of size $N=2^{21}$ with a fixed step size of 256:
@@ -40,7 +41,7 @@ In the context of hardware, such scheme is called *fully associative cache*: we 
 
 The problem with fully associative cache is that implementing the "find the oldest cache line among millions" operation is pretty hard to do in software and just unfeasible in hardware. You can make a fully associative cache that has 16 entries or so, but managing hundreds of cache lines already becomes either prohibitively expensive or so slow that it's not worth it.
 
-We can resort to another, much simpler approach: just map each block of 64 bytes in RAM to a single cache line which it can occupy. Say, if we have 4096 blocks in memory and 64 cache lines for them, then each cache line at any time stores the contents of one of $\frac{4096}{64} = 64$ different blocks.
+We can resort to another, much simpler *direct mapped* approach: just map each block of 64 bytes in RAM to a single cache line which it can occupy. Say, if we have 4096 blocks in memory and 64 cache lines for them, then each cache line at any time stores the contents of one of $\frac{4096}{64} = 64$ different blocks.
 
 ![Direct-mapped cache](../img/cache2.png)
 
