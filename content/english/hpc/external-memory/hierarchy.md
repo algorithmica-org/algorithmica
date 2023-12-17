@@ -1,6 +1,7 @@
 ---
 title: Memory Hierarchy
 weight: 1
+published: true
 ---
 
 Modern computer memory is highly hierarchical. It consists of multiple *cache layers* of varying speed and size, where *higher* levels typically store most frequently accessed data from *lower* levels to reduce latency: each next level is usually an order of magnitude faster, but also smaller and/or more expensive.
@@ -44,7 +45,7 @@ From fastest to slowest:
 - **CPU caches.** Modern CPUs have multiple layers of cache (L1, L2, often L3, and rarely even L4). The lowest layer is shared between cores and is usually scaled with their number (e.g., a 10-core CPU should have around 10M of L3 cache).
 - **Random access memory,** which is the first scalable type of memory: nowadays you can rent machines with half a terabyte of RAM on the public clouds. This is the one where most of your working data is supposed to be stored.
 
-The CPU cache system has an important concept of a *cache line*, which is the basic unit of data transfer between the CPU and the RAM. The size of a cache line is 64 bytes on most architectures, meaning that all main memory is divided into blocks of 64 bytes, and whenever you request (read or write) a single byte, you are also fetching all its 63 cache line neighbors whether your want them or not.
+The CPU cache system has an important concept of a [*cache line*](/hpc/cpu-cache/cache-lines), which is the basic unit of data transfer between the CPU and the RAM. The size of a cache line is 64 bytes on most architectures, meaning that all main memory is divided into blocks of 64 bytes, and whenever you request (read or write) a single byte, you are also fetching all its 63 cache line neighbors whether your want them or not.
 
 Caching on the CPU level happens automatically based on the last access times of cache lines. When accessed, the contents of a cache line are emplaced onto the lowest cache layer and then gradually evicted to higher levels unless accessed again in time. The programmer can't control this process explicitly, but it is worthwhile to study how it works in detail, which we will do [in the next chapter](/hpc/cpu-cache).
 
