@@ -1,6 +1,7 @@
 ---
 title: Алгоритм Джарвиса
 weight: 2
+published: true
 ---
 
 Одним из самых простых алгоритмов построения выпуклой оболочки является алгоритм Джарвиса.
@@ -34,7 +35,7 @@ vector<r> jarvis(vector<r> points) {
             if ((p - p0) ^ (t - p0) > 0)
                 t = p;
         if (t == p0)
-            continue;
+            break;
         else {
             p0 = t;
             hull.push_back(t);
