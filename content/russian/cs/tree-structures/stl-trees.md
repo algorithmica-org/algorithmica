@@ -60,6 +60,32 @@ for (int x : s)
 
 Инкремент и декремент итераторов работает за логарифмические время.
 
+### ordered_set
+
+Иногда, при решении задач, может понадобится вывести порядковый
+номер элемента или элемент по порядковому номеру (например, находящийся
+в середине сета). Для этого можно воспользоваться `ordered_set`, подключив
+библиотеки policy based data structures и включив дополнительное пространство имен
+
+```cpp
+#include <ext/pb_ds/assoc_container.hpp>
+#include <ext/pb_ds/tree_policy.hpp>
+#define ordered_set tree <int, null_type, less <int>, rb_tree_tag, tree_order_statistics_node_update >
+
+using namespace __gnu_pbds;
+
+ordered_set a;
+// поддерживает те же операции, что и set
+a.insert(1); 
+s.count(1);
+s.erase(1);
+
+cout << *X.find_by_order(1) << endl; // вывести элемент на 1 позиции
+cout << X.order_of_key(1) << endl;  // кол-во элементов, меньших чем 1
+
+```
+
+
 ### Связанные структуры
 
 В STL есть несколько структур со схожей функциональностью:
