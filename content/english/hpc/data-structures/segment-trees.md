@@ -618,7 +618,7 @@ This makes the `sum` query extremely fast and easy to implement:
 int sum(int k) {
     int s = 0;
     for (int h = 0; h < H; h++)
-        s += t[offset(h) + (k >> (h * b))];
+        s += t[offset(h) + (k >> (h * B))];
     return s;
 }
 ```
