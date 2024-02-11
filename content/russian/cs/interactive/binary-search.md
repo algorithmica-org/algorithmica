@@ -55,11 +55,12 @@ bool find(int x, int *a, int n) {
     int l = 0, r = n + 1;
     // отрезок поиска теперь полуинтервал: [l, r)
     while (l + 1 < r) {
-        int m = (l + r) / 2;
-        if (a[m] >= x)
-            l = m;
-        else
+        int m = l + (r - l) / 2;
+        if (a[m] >= x) {
             r = m;
+        } else {
+            l = m + 1;
+        }
     }
     return (l < n && a[l] == x);
 }
