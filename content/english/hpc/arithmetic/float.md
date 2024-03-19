@@ -38,7 +38,7 @@ struct r {
 
 r operator+(r a, r b) { return {a.x * b.y + a.y * b.x, a.y * b.y}; }
 r operator*(r a, r b) { return {a.x * b.x, a.y * b.y}; }
-r operator/(r a, r b) { return {a.x * b.x, a.y * b.y}; }
+r operator/(r a, r b) { return {a.x * b.y, a.y * b.x}; }
 bool operator<(r a, r b) { return a.x * b.y < b.x * a.y; }
 // ...and so on, you get the idea
 ```
