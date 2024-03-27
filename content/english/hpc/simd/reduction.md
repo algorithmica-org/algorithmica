@@ -40,7 +40,8 @@ int sum_simd(v8si *a, int n) {
 
     // add the remainder of a
     for (int i = n / 8 * 8; i < n; i++)
-        res += a[i];
+        for(int j = 0; j < 8; j++)
+            res += a[i][j];
         
     return res;
 }
