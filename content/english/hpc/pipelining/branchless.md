@@ -73,7 +73,7 @@ Both variants are optimized by the compiler and produce the following assembly:
 
 ```nasm
     mov     eax, 0
-    mov     ecx, -4000000
+    mov     rdx, -4000000
 loop:
     mov     esi, dword ptr [rdx + a + 4000000]  ; load a[i]
     cmp     esi, 50
