@@ -21,7 +21,7 @@ When we repeatedly increment a floating-point number $x$, we eventually hit a po
 
 $$2^{24} + 1 = 2^{24} \cdot 1.\underbrace{0\ldots0}_{\times 23} 1$$
 
-has the exact same distance from $2^{24}$ and $(2^{24} + 1)$ but gets rounded down to $2^{24}$ by the above-stated tie-breaker rule. At the same time, the increment of everything lower than that can be represented exactly, so no rounding happens in the first place.
+has the exact same distance from $2^{24}$ and $(2^{24} + 2)$ but gets rounded down to $2^{24}$ by the above-stated tie-breaker rule. At the same time, the increment of everything lower than that can be represented exactly, so no rounding happens in the first place.
 
 ### Rounding Errors and Operation Order
 
