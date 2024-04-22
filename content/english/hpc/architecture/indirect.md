@@ -79,11 +79,11 @@ struct Animal {
     virtual void speak() { printf("<abstract animal sound>\n");}
 };
 
-struct Dog {
+struct Dog : Animal {
     void speak() override { printf("Bark\n"); }
 };
 
-struct Cat {
+struct Cat : Animal {
     void speak() override { printf("Meow\n"); }
 };
 ```
@@ -94,7 +94,7 @@ We want to create an animal and, without knowing its type in advance, call its `
 Dog sparkles;
 Cat mittens;
 
-Animal *catdog = (rand() & 1) ? &sparkles : &mittens;
+Animal *catdog = (rand() & 1) ? (Animal*)&sparkles : (Animal*)&mittens;
 catdog->speak();
 ```
 
