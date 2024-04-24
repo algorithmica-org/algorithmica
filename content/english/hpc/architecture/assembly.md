@@ -41,7 +41,7 @@ Assembly is a very minimal language because it needs to be. It reflects the mach
 
 [^disassembly]: On Linux, to disassemble a compiled program, you can call `objdump -d {path-to-binary}`.
 
-Note that the two snippets above are not just syntactically different. Both are optimized codes produced by a compiler, but the Arm version uses 4 instructions, while the x86 version uses 3. The `add eax, [rdi]` instruction is what's called *fused instruction* that does a load and an add in one go — this is one of the perks that the [CISC](../isa#risc-vs-cisc) approach can provide.
+Note that the two snippets above are not just syntactically different. Both are optimized codes produced by a compiler, but the Arm version uses 4 instructions, while the x86 version uses 3. The `add eax, [rdi]` instruction is what's called a *fused instruction* that does a load and an add in one go — this is one of the perks that the [CISC](../isa#risc-vs-cisc) approach can provide.
 
 Since there are far more differences between the architectures than just this one, from here on and for the rest of the book we will only provide examples for x86, which is probably what most of our readers will optimize for, although many of the introduced concepts will be architecture-agnostic.
 
