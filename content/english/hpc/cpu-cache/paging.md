@@ -23,7 +23,7 @@ This anomaly is also due to the cache system, although the standard L1-L3 data c
 
 On [my CPU](https://en.wikichip.org/wiki/amd/microarchitectures/zen_2), there are two levels of TLB:
 
-- The L1 TLB has 64 entries, and if the page size is 4K, then it can handle $64 \times 4K = 512K$ of active memory without going to the L2 TLB.
+- The L1 TLB has 64 entries, and if the page size is 4K, then it can handle $64 \times 4K = 256K$ of active memory without going to the L2 TLB.
 - The L2 TLB has 2048 entries, and it can handle $2048 \times 4K = 8M$ of memory without going to the page table.
 
 How much memory is allocated when $D$ becomes equal to 256? You've guessed it: $8K \times 256 \times 4B = 8M$, exactly the limit of what the L2 TLB can handle. When $D$ gets larger than that, some requests start getting redirected to the main page table, which has a large latency and very limited throughput, which bottlenecks the whole computation.
