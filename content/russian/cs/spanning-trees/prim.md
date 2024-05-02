@@ -71,14 +71,16 @@ for (int i = 0; i < n; i++) {
 ```c++
 set< pair<int, int> > q;
 int d[maxn];
+int used[maxn];
 
 while (q.size()) {
     v = q.begin()->second;
     q.erase(q.begin());
-
+	used[v] = 1;
+  	
     for (auto e : g[v]) {
         int u = e.first, w = e.second;
-        if (w < d[u]) {
+        if (w < d[u] && !used[u]) {
             q.erase({d[u], u});
             d[u] = w;
             q.insert({d[u], u});
