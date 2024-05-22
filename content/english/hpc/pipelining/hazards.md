@@ -10,7 +10,7 @@ There are multiple ways this may happen:
 
 * A *structural hazard* happens when two or more instructions need the same part of CPU (e.g., an execution unit).
 * A *data hazard* happens when you have to wait for an operand to be computed from some previous step.
-* A *control hazard* happens when a CPU can't tell which instructions it needs to execute next.
+* A *control hazard* (or *branch hazard*) happens when a CPU mispredicts a branch and brings into the pipeline instructions that must be later discarded.
 
 The only way to resolve a hazard is to have a *pipeline stall*: stop the progress of all previous steps until the cause of congestion is gone. This creates *bubbles* in the pipeline — analogous with air bubbles in fluid pipes — a time-propagating condition when execution units are idling and no useful work is done.
 
