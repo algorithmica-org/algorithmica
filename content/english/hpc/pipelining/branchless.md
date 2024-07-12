@@ -228,7 +228,7 @@ for (int i = 0; i < N; i++)
         s += a[i];
 ```
 
-It now works in ~0.3 per element, which is mainly [bottlenecked by the memory](/hpc/cpu-cache/bandwidth).
+It now works in ~0.3 cycles per element, which is mainly [bottlenecked by the memory](/hpc/cpu-cache/bandwidth).
 
 The compiler is usually able to vectorize any loop that doesn't have branches or dependencies between the iterations — and some specific small deviations from that, such as [reductions](/hpc/simd/reduction) or simple loops that contain just one if-without-else. Vectorization of anything more complex is a very nontrivial problem, which may involve various techniques such as [masking](/hpc/simd/masking) and [in-register permutations](/hpc/simd/shuffling).
 
