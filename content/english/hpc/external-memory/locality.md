@@ -79,7 +79,7 @@ for (int n = 1; n <= N; n++)
     for (int w = 0; w <= W; w++)
         f[n][w] = c[n - 1] > w ?
                   f[n - 1][w] :
-                  max(f[n - 1][k], c[n - 1] + f[n - 1][w - c[n - 1]]);
+                  max(f[n - 1][w], c[n - 1] + f[n - 1][w - c[n - 1]]);
 ```
 
 Notice that we are only using the previous layer of the dynamic to calculate the next one. This means that if we can store one layer in the cache, we would only need to write $O(\frac{N \cdot W}{B})$ blocks in external memory.
