@@ -27,7 +27,7 @@ for (int t = 0; t < K; t++)
 
 Compared to linear iteration, it is *much* slower — by multiple orders of magnitude — to visit all elements of an array this way. Not only does it make [SIMD](/hpc/simd) impossible, but it also [stalls the pipeline](/hpc/pipelining), creating a large traffic jam of instructions, all waiting for a single piece of data to be fetched from the memory.
 
-This performance anti-pattern is known as *pointer chasing*, and it is very frequent in data structures, especially those written high-level languages that use lots of heap-allocated objects and pointers to them necessary for dynamic typing.
+This performance anti-pattern is known as *pointer chasing*, and it is very frequent in data structures, especially those written in high-level languages that use lots of heap-allocated objects and pointers to them necessary for dynamic typing.
 
 ![](../img/latency-throughput.svg)
 
