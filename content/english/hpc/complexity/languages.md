@@ -5,7 +5,6 @@ aliases:
 weight: 2
 published: true
 ---
-
 If you are reading this book, then somewhere on your computer science journey you had a moment when you first started to care about the efficiency of your code.
 
 Mine was in high school, when I realized that making websites and doing *useful* programming won't get you into a university, and entered the exciting world of algorithmic programming olympiads. I was an okay programmer, especially for a highschooler, but I had never really wondered how much time it took for my code to execute before. But suddenly it started to matter: each problem now has a strict time limit. I started counting my operations. How many can you do in one second?
@@ -84,7 +83,7 @@ print(duration)
 
 This code runs in 630 seconds. That's more than 10 minutes!
 
-Let's try to put this number in perspective. The CPU that ran it has a clock frequency of 1.4GHz, meaning that it does $1.4 \cdot 10^9$ cycles per second, totaling to almost $10^{15}$ for the entire computation, and about 880 cycles per multiplication in the innermost loop.
+Let's try to put this number in perspective. The CPU that ran it has a clock frequency of 1.4GHz, meaning that it does $1.4 \cdot 10^9$ cycles per second, totaling to almost $10^{12}$  since $1.4*10^9*630=8.82*10^{11}$  for the entire computation, and about 880 cycles per multiplication in the innermost loop.
 
 This is not surprising if you consider the things that Python needs to do to figure out what the programmer meant:
 
@@ -126,7 +125,7 @@ public class Matmul {
             for (int j = 0; j < n; j++)
                 for (int k = 0; k < n; k++)
                     c[i][j] += a[i][k] * b[k][j];
-                
+              
         double diff = (System.nanoTime() - start) * 1e-9;
         System.out.println(diff);
     }
@@ -168,7 +167,7 @@ int main() {
 
     float seconds = (float) (clock() - start) / CLOCKS_PER_SEC;
     printf("%.4f\n", seconds);
-    
+  
     return 0;
 }
 ```
