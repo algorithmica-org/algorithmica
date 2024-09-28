@@ -71,7 +71,7 @@ ll solve() {
             r = mid;
     }
     pair<ll, int> result = check(l);
-    return result.first - l * return.second; // вычитаем штрафы
+    return result.first - l * result.second; // вычитаем штрафы
 }
 ```
 
