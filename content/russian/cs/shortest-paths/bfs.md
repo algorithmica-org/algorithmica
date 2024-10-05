@@ -200,7 +200,7 @@ for (int dist = 0; dist < maxd; dist++) {
         q[dist].pop();
         // если расстояние меньше и мы уже рассмотрели эту вершину,
         // но она всё ещё лежит в более верхней очереди
-        if (d[v] > dist)
+        if (d[v] < dist)
             continue;
         for (auto [u, w] : g[v]) {
             if (d[u] < d[v] + w) {
