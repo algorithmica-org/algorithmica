@@ -365,7 +365,7 @@ int sum(int k) {
 }
 ```
 
-In contrast, this prefix sum implementation doesn't work unless $n$ is not a power of two — because `k` could be on that wrapped-around part, and we'd sum almost the entire array instead of a small prefix.
+In contrast, this prefix sum implementation doesn't work when $n$ is not a power of two — because `k` could be on that wrapped-around part, and we'd sum almost the entire array instead of a small prefix.
 
 To make it work for arbitrary array sizes, we can permute the leaves so that they are in the left-to-right logical order in the last two layers of the tree. In the example above, this would mean adding $3$ to all leaf indexes and then moving the last three leaves one level higher by subtracting $13$.
 
