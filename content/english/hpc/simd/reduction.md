@@ -5,7 +5,7 @@ weight: 3
 
 *Reduction* (also known as *folding* in functional programming) is the action of computing the value of some associative and commutative operation (i.e., $(a \circ b) \circ c = a \circ (b \circ c)$ and $a \circ b = b \circ a$) over a range of arbitrary elements.
 
-The simplest example of reduction is calculating the sum an array:
+The simplest example of reduction is calculating the sum of an array:
 
 ```c++
 int sum(int *a, int n) {
