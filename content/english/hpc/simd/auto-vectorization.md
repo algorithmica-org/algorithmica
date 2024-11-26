@@ -59,7 +59,7 @@ There is a neat compromise between auto-vectorization and the manual use of SIMD
 
 The programming experience is largely the same, and there is still the fundamental limitation in that the computation must be data-parallel, but SPMD ensures that the vectorization will happen regardless of the compiler and the target CPU architecture. It also allows for the computation to be automatically parallelized across multiple cores and, in some cases, even offloaded to other types of parallel hardware.
 
-There is support for SPMD is some modern languages ([Julia](https://docs.julialang.org/en/v1/base/base/#Base.SimdLoop.@simd)), multiprocessing APIs ([OpenMP](https://www.openmp.org/spec-html/5.0/openmpsu42.html)), and specialized compilers (Intel [ISPC](https://ispc.github.io/)), but it has seen the most success in the context of GPU programming where both problems and hardware are massively parallel.
+There is support for SPMD in some modern languages ([Julia](https://docs.julialang.org/en/v1/base/base/#Base.SimdLoop.@simd)), multiprocessing APIs ([OpenMP](https://www.openmp.org/spec-html/5.0/openmpsu42.html)), and specialized compilers (Intel [ISPC](https://ispc.github.io/)), but it has seen the most success in the context of GPU programming where both problems and hardware are massively parallel.
 
 We will cover this model of computation in much more depth in Part 2
 
