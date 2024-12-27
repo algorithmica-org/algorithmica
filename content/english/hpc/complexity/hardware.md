@@ -34,7 +34,7 @@ Apart from these immediate benefits, photolithography enabled a clear path to im
 
 ### Dennard Scaling
 
-Consider what happens when we scale a microchip down. A smaller circuit requires proportionally fewer materials, and smaller transistors take less time to switch (along with all other physical processes in the chip), allowing reducing the voltage and increasing the clock rate.
+Consider what happens when we scale a microchip down. A smaller circuit requires proportionally fewer materials, and smaller transistors take less time to switch (along with all other physical processes in the chip), allowing a reduction in voltage and an increase in clock rate.
 
 A more detailed observation, known as the *Dennard scaling*, states that reducing transistor dimensions by 30%
 
