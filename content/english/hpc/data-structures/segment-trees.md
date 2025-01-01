@@ -453,7 +453,7 @@ To store these segment sums compactly, the Fenwick tree ditches the Eytzinger la
 - the element $9$ would hold the sum on the $[8, 9]$ range ($-86$),
 - the element $10$ would hold the sum on the $[10, 10]$ range ($-52$, the element itself).
 
-How to compute this range for a given element $k$ (the left boundary, to be more specific: the right boundary is always the element $k$ itself) quicker than simulating the descend down the tree? Turns out, there is a smart bit trick that works when the tree size is a power of two and we use one-based indexing — just remove the least significant bit of the index:
+How to compute this range for a given element $k$ (the left boundary, to be more specific: the right boundary is always the element $k$ itself) quicker than simulating the descent down the tree? Turns out, there is a smart bit trick that works when the tree size is a power of two and we use one-based indexing — just remove the least significant bit of the index:
 
 - the left bound for element $7 + 1 = 8 = 1000_2$ is $0000_2 = 0$,
 - the left bound for element $9 + 1 = 10 = 1010_2$ is $1000_2 = 8$, 
