@@ -141,7 +141,7 @@ JIT compilation is not a feature of the language itself, but of its implementati
 
 ### Compiled Languages
 
-Now it's turn for C:
+Now it's C's turn:
 
 ```cpp
 #include <stdlib.h>
