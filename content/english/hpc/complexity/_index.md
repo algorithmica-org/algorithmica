@@ -7,7 +7,7 @@ weight: 1
 
 If you ever opened a computer science textbook, it probably introduced *computational complexity* somewhere in the very beginning. Simply put, it is the total count of *elementary operations* (additions, multiplications, reads, writes…) that are executed during a computation, optionally weighted by their *costs*.
 
-Complexity is an old concept. It was [systematically formulated](http://www.cs.albany.edu/~res/comp_complexity_ams_1965.pdf) in the early 1960s, and since then it has been universally used as the cost function for designing algorithms. The reason this model was so quickly adopted is that it was a good approximation of how computers worked at the time.
+Complexity is an old concept. It was [systematically formulated](https://www3.risc.jku.at/people/schreine/courses/compcomp/HartmanisStearns1965.pdf) in the early 1960s, and since then it has been universally used as the cost function for designing algorithms. The reason this model was so quickly adopted is that it was a good approximation of how computers worked at the time.
 
 ### Classical Complexity Theory
 
