@@ -65,10 +65,10 @@ You don't need to do anything else other than defining a structure for the bit f
 ```cpp
 int k = p[N - 1];
 
-for (int i = 0; i < N; i++) {
+for (int i = 0; i < N; i++) 
     k = q[k].idx = p[i];
 
-for (int i = 0; i < N; i++) {
+for (int i = 0; i < N; i++) 
     k = q[k].idx;
 ```
 
