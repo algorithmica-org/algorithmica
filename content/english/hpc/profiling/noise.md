@@ -37,7 +37,7 @@ int checksum = 0;
 
 for (int t = 0; t < 1000; t++)
     for (int i = 0; i < 1000; i++)
-        checksum += gcd(a[i], b[i]);
+        checksum += gcd(a[t], b[i]);
 ```
 
 
