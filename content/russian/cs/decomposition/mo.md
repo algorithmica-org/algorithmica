@@ -25,7 +25,7 @@ published: true
 struct query { int l, r, idx; };
 
 int a[maxn], ans[maxq]; // исходный массив и массив ответов на запросы
-vector<query> b[c];
+vector<vector<query>> b[c];
 
 
 // где-то в main:
