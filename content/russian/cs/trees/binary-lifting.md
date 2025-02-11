@@ -1,10 +1,10 @@
 ---
 title: Метод двоичных подъемов
 authors:
-- Сергей Слотин
+  - Сергей Слотин
 weight: 5
 prerequisites:
-- lca-rmq
+  - lca-rmq
 ---
 
 В контексте решения задачи LCA и не только популярен следующий метод.
@@ -65,15 +65,31 @@ int lca(int v, int u) {
 Заметим, что минимум на пути от $u$ до $v$ — это минимум от минимума на пути от $u$ до $lca(u, v)$ и от минимума на пути от $v$ до $lca(u, v)$. В свою очередь, оба этих минимума — это минимум на всех двоичных подъемах до LCA.
 
 ```c++
+void dfs(ll v, ll p = 0, ll edge = 1e18) {
+	...
+    mn[v][0] = edge;
+    for (ll i = 1; i < l; ++i) {
+        mn[v][i] = min(mn[up[v][i - 1]][i - 1], mn[v][i - 1]);
+    }
+    ...
+}
+
 int get_min(int v, int u) {
-    int res = inf;
-    for (int l = logn-1; l >= 0; l--)
-        if (!ancestor(up[v][l], u))
-            v = up[v][l], res = min(res, mn[v][l]);
-    for (int l = logn-1; l >= 0; l--)
-        if (!ancestor(up[u][l], v))
-            u = up[u][l], res = min(res, mn[u][l]);
-    return min({res, mn[v][0], mn[u][0]})
+    ll res = inf;
+    if (v == u)
+        assert(false);
+    for (int i = l - 1; i >= 0; i--)
+        if (!upper(up[v][i], u))
+            res = min(res, mn[v][i]), v = up[v][i];
+    for (int i = l - 1; i >= 0; i--)
+        if (!upper(up[u][i], v))
+            res = min(res, mn[u][i]), u = up[u][i];
+    const int parent = lca(u, v);
+    if (v != parent)
+        res = min(res, mn[v][0]);
+    if (u != parent)
+        res = min(res, mn[u][0]);
+    return res;
 }
 ```
 
