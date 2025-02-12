@@ -202,7 +202,7 @@ For example, consider what happens when we descend to the rightmost leaf in a se
 
 - we start with the root numbered $1$ representing the range $[0, 16]$,
 - we go to node $3 = 2 \times 1 + 1$ representing the range $[8, 16]$,
-- we go to node $7 = 2 \times 2 + 1$ representing the range $[12, 16]$,
+- we go to node $7 = 2 \times 3 + 1$ representing the range $[12, 16]$,
 - we go to node $15 = 2 \times 7 + 1$ representing the range $[14, 16]$,
 - we go to node $31 = 2 \times 15 + 1$ representing the range $[15, 16]$,
 - and we finally reach node $63 = 2 \times 31 + 1$ representing the range $[16, 16]$.
