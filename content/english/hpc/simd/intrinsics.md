@@ -1,6 +1,7 @@
 ---
 title: Intrinsics and Vector Types
-aliases: [/hpc/simd/x86-simd]
+aliases:
+  - /hpc/simd/x86-simd
 weight: 1
 ---
 
@@ -119,7 +120,7 @@ For some reason, there are some operations that are agnostic to the type of data
 
 A very helpful reference for x86 SIMD intrinsics is the [Intel Intrinsics Guide](https://software.intel.com/sites/landingpage/IntrinsicsGuide/), which has groupings by categories and extensions, descriptions, pseudocode, associated assembly instructions, and their latency and throughput on Intel microarchitectures. You may want to bookmark that page.
 
-The Intel reference is useful when you know that a specific instruction exists and just want to look up its name or performance info. When you don't know whether it exists, this [cheat sheet](https://db.in.tum.de/~finis/x86%20intrinsics%20cheat%20sheet%20v1.0.pdf) may do a better job.
+The Intel reference is useful when you know that a specific instruction exists and just want to look up its name or performance info. When you don't know whether it exists, this [cheat sheet](https://db.in.tum.de/~finis/x86-intrin-cheatsheet-v2.2.pdf) may do a better job.
 
 **Instruction selection.** Note that compilers do not necessarily pick the exact instruction that you specify. Similar to the scalar `c = a + b` we [discussed before](/hpc/analyzing-performance/assembly), there is a fused vector addition instruction too, so instead of using 2+1+1=4 instructions per loop cycle, compiler [rewrites the code above](https://godbolt.org/z/dMz8E5Ye8) with blocks of 3 instructions like this:
 
