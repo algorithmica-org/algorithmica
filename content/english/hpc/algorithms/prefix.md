@@ -133,7 +133,7 @@ void prefix(int *a, int n) {
     
     v4i s = _mm_setzero_si128();
     
-    for (int i = 4; i < n; i += 4)
+    for (int i = 0; i < n; i += 4)
         s = accumulate(&a[i], s);
 }
 ```
