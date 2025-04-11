@@ -170,7 +170,7 @@ vptest   ymm0, ymm0
 je       loop
 ```
 
-This doesn't improve performance much because both both `vptest` and `vmovmskps` have a throughput of one and will bottleneck the computation regardless of anything else we do in the loop.
+This doesn't improve performance much because both `vptest` and `vmovmskps` have a throughput of one and will bottleneck the computation regardless of anything else we do in the loop.
 
 To work around this limitation, we can iterate in blocks of 16 elements and combine the results of independent comparisons of two 256-bit AVX2 registers using a bitwise `or`:
 
