@@ -6,15 +6,17 @@ weight: 11
 Consider a [strided incrementing loop](../cache-lines) over an array of size $N=2^{21}$ with a fixed step size of 256:
 
 ```cpp
-for (int i = 0; i < N; i += 256)
-    a[i]++;
+for (int j = 0; j < K; j++) 
+	for (int i = 0; i < N; i += 256)
+    	a[i]++;
 ```
 
 And then this one, with the step size of 257:
 
 ```cpp
-for (int i = 0; i < N; i += 257)
-    a[i]++;
+for (int j = 0; j < K; j++) 
+	for (int i = 0; i < N; i += 257)
+    	a[i]++;
 ```
 
 Which one will be faster to finish? There are several considerations that come to mind:
