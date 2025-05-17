@@ -60,7 +60,7 @@ Instruction Info:
  1      1     0.50                        jne	-11
 ```
 
-There is nothing there that there isn't in the [instruction tables](/hpc/pipelining/tables):
+There is nothing there that isn't in the [instruction tables](/hpc/pipelining/tables):
 
 - how many uOps each instruction is split into;
 - how many cycles each instruction takes to complete (latency);
