@@ -82,7 +82,7 @@ Dr         D1mr      DLmr Bc         Bcm         file:function
  2,000,000         0    0          0          0  ???:rand
 ```
 
-You can see there are a lot of branch mispredicts in the sorting stage, and also a lot of both L1 cache misses and branch mispredicts during binary searching. We couldn't get this information with perf — it would only tell use these counts for the whole program.
+You can see there are a lot of branch mispredicts in the sorting stage, and also a lot of both L1 cache misses and branch mispredicts during binary searching. We couldn't get this information with perf — it would only tell us these counts for the whole program.
 
 Another great feature that Cachegrind has is the line-by-line annotation of source code. For that, you need to compile the program with debug information (`-g`) and either explicitly tell `cg_annotate` which source files to annotate or just pass the `--auto=yes` option so that it annotates everything it can reach (including the standard library source code).
 
