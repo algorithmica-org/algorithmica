@@ -76,7 +76,7 @@ u64 binpow(u64 a, u64 n) {
     
     while (n) {
         if (n & 1)
-            r = res * a % M;
+            r = r * a % M;
         a = a * a % M;
         n >>= 1;
     }
