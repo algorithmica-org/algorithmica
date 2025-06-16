@@ -37,7 +37,7 @@ int faster_sum(int *a, int n) {
 }
 ```
 
-However, sometimes you only have a chain of modular multiplications, and there is no good way to eel out of computing the remainder of the division — other than with the [integer division tricks](../hpc/arithmetic/division/) requiring a constant modulo and some precomputation.
+However, sometimes you only have a chain of modular multiplications, and there is no good way to eel out of computing the remainder of the division — other than with the [integer division tricks](/hpc/arithmetic/division/) requiring a constant modulo and some precomputation.
 
 But there is another technique designed specifically for modular arithmetic, called *Montgomery multiplication*.
 
