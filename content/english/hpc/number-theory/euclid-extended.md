@@ -11,7 +11,7 @@ $$
 
 where $\phi(m)$ is [Euler's totient function](https://en.wikipedia.org/wiki/Euler%27s_totient_function) defined as the number of positive integers $x < m$ that are coprime with $m$. In the special case when $m$ is a prime, then all the $m - 1$ residues are coprime and $\phi(m) = m - 1$, yielding the Fermat's theorem.
 
-This lets us calculate the inverse of $a$ as $a^{\phi(m) - 1}$ if we know $\phi(m)$, but in turn, calculating it is not so fast: you usually need to obtain the [factorization](/hpc/algorithms/factorization/) of $m$ to do it. There is a more general method that works by modifying the [the Euclidean algorthm](/hpc/algorithms/gcd/).
+This lets us calculate the inverse of $a$ as $a^{\phi(m) - 1}$ if we know $\phi(m)$, but in turn, calculating it is not so fast: you usually need to obtain the [factorization](/hpc/algorithms/factorization/) of $m$ to do it. There is a more general method that works by modifying the [Euclidean algorthm](/hpc/algorithms/gcd/).
 
 ### Algorithm
 
