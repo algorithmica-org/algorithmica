@@ -26,7 +26,7 @@ void merge(int *a, int *b, int *c, int n, int m) {
 }
 ```
 
-In terms of memory operations, we just linearly read all elements of $a$ and $b$ and linearly write all elements of $c$. Since these reads and writes can be buffered, it works in $SCAN(N+M)$ I/O operations.
+In terms of memory operations, we just linearly read all elements of $a$ and $b$ and linearly write all elements of $c$. Since these reads and writes can be buffered, it works in $SCAN((N+M)/B)$ I/O operations.
 
 So far the examples have been simple, and their analysis doesn't differ too much from the RAM model, except that we divide the final answer by the block size $B$. But here is a case where this is not so.
 
