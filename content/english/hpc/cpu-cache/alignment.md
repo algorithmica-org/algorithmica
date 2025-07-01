@@ -55,7 +55,7 @@ struct Data {
 };
 ```
 
-When stored succinctly, this structure needs a total of $1 + 2 + 4 + 1 = 8$ bytes per instance, but even assuming that the whole structure has the alignment of 4 bytes (its largest member, `int`), only `a` will be fine, while `b`, `c` and `d` are not size-aligned and potentially cross a cache line boundary.
+When stored succinctly, this structure needs a total of $1 + 2 + 4 + 1 = 8$ bytes per instance, but even assuming that the whole structure has the alignment of 4 bytes (its largest member, `int`), only `a` and `d` will be fine, while `b` and `c` are not size-aligned and potentially cross a cache line boundary.
 
 To fix this, the compiler inserts some unnamed members so that each next member gets the right minimum alignment:
 
