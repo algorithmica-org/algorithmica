@@ -157,7 +157,7 @@ void add(int *a, int *b, int n) {
 
 Since each iteration of this loop is independent, it can be executed in parallel and [vectorized](/hpc/simd). But is it, technically?
 
-There may be a problem if the arrays `a` and `b` intersect. Consider the case when `b == a + 1`, that is, if `b` is just a memory view of `a` starting from its second element. In this case, the next iteration depends on the previous one, and the only correct solution is to execute the loop sequentially. The compiler has to check for such possibilities even if the programmer knows they can't happen.
+There may be a problem if the arrays `a` and `b` intersect. Consider the case when `a == b + 1`, that is, if `a` is just a memory view of `b` starting from its second element. In this case, the next iteration depends on the previous one, and the only correct solution is to execute the loop sequentially. The compiler has to check for such possibilities even if the programmer knows they can't happen.
 
 This is why we have `const` and `restrict` keywords. The first one enforces that we won't modify memory with the pointer variable, and the second is a way to tell the compiler that the memory is guaranteed to not be aliased.
 
