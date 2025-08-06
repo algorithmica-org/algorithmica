@@ -76,7 +76,7 @@ u64 binpow(u64 a, u64 n) {
     
     while (n) {
         if (n & 1)
-            r = res * a % M;
+            r = r * a % M;
         a = a * a % M;
         n >>= 1;
     }
@@ -85,7 +85,7 @@ u64 binpow(u64 a, u64 n) {
 }
 ```
 
-The iterative implementation takes about 180ns per call. The heavy calculations are the same; the improvement mainly comes from the reduced dependency chain: `a = a * a % M` needs to finish before the loop can proceed, and it can now execute concurrently with `r = res * a % M`.
+The iterative implementation takes about 180ns per call. The heavy calculations are the same; the improvement mainly comes from the reduced dependency chain: `a = a * a % M` needs to finish before the loop can proceed, and it can now execute concurrently with `r = r * a % M`.
 
 The performance also benefits from $n$ being a constant, [making all branches predictable](/hpc/pipelining/branching/) and letting the scheduler know what needs to be executed in advance. The compiler, however, does not take advantage of it and does not unroll the `while(n) n >>= 1` loop. We can rewrite it as a `for` loop that performs constant 30 iterations:
 
