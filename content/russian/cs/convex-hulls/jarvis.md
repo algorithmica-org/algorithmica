@@ -28,13 +28,14 @@ vector<r> jarvis(vector<r> points) {
         p0 = p;
     vector<r> hull = {p0};
     while (true) {
-        r t = p0; // кандидат на следующую точку
+        r t = points[0]; // кандидат на следующую точку
+        if (t == p0) t = points[1];  // чтобы не брать начальную точку в кандидаты
         for (r p : points)
             // лучше никакие полярные углы не считать
             if ((p - p0) ^ (t - p0) > 0)
                 t = p;
-        if (t == p0)
-            continue;
+        if (t == p0) // если вернулись к началу — выходим
+            break;
         else {
             p0 = t;
             hull.push_back(t);
