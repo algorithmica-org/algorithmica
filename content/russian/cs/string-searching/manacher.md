@@ -1,7 +1,7 @@
 ---
 title: Алгоритм Манакера
 authors:
-- Сергей Слотин
+  - Сергей Слотин
 created: 2019
 weight: 3
 ---
@@ -20,10 +20,10 @@ vector<int> pal_array(string s) {
     s = "#" + s + "$";
 
     // в этом массиве будем хранить расстояние от центра до границы палиндрома
-    vector<int> t(n, 0);
+    vector<int> r(n, 0);
 
     for(int i = 1; i <= n; i++)
-        while (s[i - t[i - 1]] == s[i + t[i - 1]])
+        while (s[i - r[i - 1]] == s[i + r[i - 1]])
             r[i-1]++;
 
     return r;
