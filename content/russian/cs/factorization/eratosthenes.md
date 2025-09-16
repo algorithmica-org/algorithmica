@@ -87,7 +87,7 @@ int d[n + 1];
 vector<int> p;
  
 for (int k = 2; k <= n; k++) {
-    if (p[k] == 0) {
+    if (d[k] == 0) {
         d[k] = k;
         p.push_back(k);
     }
