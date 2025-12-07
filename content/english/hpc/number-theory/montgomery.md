@@ -290,4 +290,4 @@ int inverse(int _a) {
 
 While vanilla binary exponentiation with a compiler-generated fast modulo trick requires ~170ns per `inverse` call, this implementation takes ~166ns, going down to ~158ns we omit `transform` and `reduce` (a reasonable use case is for `inverse` to be used as a subprocedure in a bigger modular computation). This is a small improvement, but Montgomery multiplication becomes much more advantageous for SIMD applications and larger data types.
 
-**Exercise.** Implement efficient *modular* [matix multiplication](/hpc/algorithms/matmul).
+**Exercise.** Implement efficient *modular* [matrix multiplication](/hpc/algorithms/matmul).
