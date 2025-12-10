@@ -2,10 +2,6 @@
 title: Algorithms for Modern Hardware
 menuTitle: HPC
 weight: 5
-#authors:
-#- Sergey Slotin
-#created: "Feb 2021"
-#date: 2021-09-16
 noToc: true
 ---
 
@@ -88,14 +84,14 @@ Planned table of contents:
  1.3. Models of Computation
  1.4. When to Optimize
 2. Computer Architecture
- 1.1. Instruction Set Architectures
- 1.2. Assembly Language
- 1.3. Loops and Conditionals
- 1.4. Functions and Recursion
- 1.5. Indirect Branching
- 1.6. Machine Code Layout
- 1.7. System Calls
- 1.8. Virtualization
+ 2.1. Instruction Set Architectures
+ 2.2. Assembly Language
+ 2.3. Loops and Conditionals
+ 2.4. Functions and Recursion
+ 2.5. Indirect Branching
+ 2.6. Machine Code Layout
+ 2.7. System Calls
+ 2.8. Virtualization
 3. Instruction-Level Parallelism
  3.1. Pipeline Hazards
  3.2. The Cost of Branching
