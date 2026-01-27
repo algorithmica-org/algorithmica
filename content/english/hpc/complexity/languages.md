@@ -84,7 +84,7 @@ print(duration)
 
 This code runs in 630 seconds. That's more than 10 minutes!
 
-Let's try to put this number in perspective. The CPU that ran it has a clock frequency of 1.4GHz, meaning that it does $1.4 \cdot 10^9$ cycles per second, totaling to almost $10^{15}$ for the entire computation, and about 880 cycles per multiplication in the innermost loop.
+Let's try to put this number in perspective. The CPU that ran it has a clock frequency of 1.4GHz, meaning that it does $1.4 \cdot 10^9$ cycles per second, totaling to almost $10^{12}$ for the entire computation, and about 880 cycles per multiplication in the innermost loop.
 
 This is not surprising if you consider the things that Python needs to do to figure out what the programmer meant:
 
