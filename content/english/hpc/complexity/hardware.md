@@ -58,7 +58,7 @@ Both Dennard scaling and Moore's law are not actual laws of physics, but just ob
 
 Thermodynamically, a computer is just a very efficient device for converting electrical power into heat. This heat eventually needs to be removed, and there are physical limits to how much power you can dissipate from a millimeter-scale crystal. Computer engineers, aiming to maximize performance, essentially just choose the maximum possible clock rate so that the overall power consumption stays the same. If transistors become smaller, they have less capacitance, meaning less required voltage to flip them, which in turn allows increasing the clock rate.
 
-Around 2005–2007, this strategy stopped working because of *leakage* effects: the circuit features became so small that their magnetic fields started to make the electrons in the neighboring circuitry move in directions they are not supposed to, causing unnecessary heating and occasional bit flipping.
+Around 2005–2007, this strategy stopped working because of *leakage* and *wire delay* effects: the circuit features became so small causing electrons in the neighboring circuitry move in directions they are not supposed to and increased resistances, causing unnecessary heating and occasional bit flipping.
 
 The only way to mitigate this is to increase the voltage; and to balance off power consumption you need to reduce clock frequency, which in turn makes the whole process progressively less profitable as transistor density increases. At some point, clock rates could no longer be increased by scaling, and the miniaturization trend started to slow down.
 
