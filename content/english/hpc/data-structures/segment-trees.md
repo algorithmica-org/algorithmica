@@ -148,7 +148,7 @@ To calculate the sum on a segment, we can check if the query covers the current 
 
 ```c++
 int sum(int lq, int rq) {
-    if (rb <= lq && rb <= rq) // if we're fully inside the query, return the sum
+    if (lb >= lq && rb <= rq) // if we're fully inside the query, return the sum
         return s;
     if (rq <= lb || lq >= rb) // if we don't intersect with the query, return zero
         return 0;
