@@ -24,9 +24,9 @@ vector<int> pal_array(string s) {
 
     for(int i = 1; i <= n; i++)
         while (s[i - t[i - 1]] == s[i + t[i - 1]])
-            r[i-1]++;
+            t[i-1]++;
 
-    return r;
+    return t;
 }
 ```
 
@@ -38,7 +38,8 @@ vector<int> pal_array(string s) {
 
 vector<int> manacher_odd(string s) {
     int n = (int) s.size();
-    vector<int> d(n, 1);
+    s = "$" + s + "^";
+    vector<int> d(n + 2, 1);
     int l = 0, r = 0;
     for (int i = 1; i < n; i++) {
         if (i < r)
@@ -76,7 +77,24 @@ vector<int> manacher_even(string s) {
 Также можно было не писать отдельно две реализации, а воспользоваться следующим трюком — сделать замену:
 
 $$
-S = s_1 s_2 \dots s_n \to S^* = s_1 \# s_2 \# \dots \# s_n
+S = s_1 s_2 \dots s_n \to S^* = \# s_1 \# s_2 \# \dots \# s_n \#
 $$
 
-Теперь нечётные палиндромы с центром в $s_i$ соответствуют нечётным палиндромам исходной строки, а нечётные палиндромы с центром в `#` — чётным.
+Теперь нечётные палиндромы с центром в $s_i$ соответствуют нечётным палиндромам исходной строки, а нечётные палиндромы с центром в `#` — чётным:
+
+```c++
+vector<int> manacher(string s) {
+    int n = (int)s.size();
+
+    string new_s;
+    new_s.reserve(n * 2 + 1);
+
+    new_s.push_back('#');
+    for (int i = 0; i < n; i++) {
+        new_s.push_back(s[i]);
+        new_s.push_back('#');
+    }
+
+    return manacher_odd(new_s);
+}
+```
