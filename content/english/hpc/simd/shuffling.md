@@ -86,7 +86,7 @@ It now processes around 2 bytes per cycle, rising to ~2.7 if we switch to 16-bit
 
 This solution is still very slow compared to the `popcnt` instruction, but now it can be vectorized. Instead of trying to speed it up through [gather](../moving#non-contiguous-load) instructions, we will go for another approach: make the lookup table small enough to fit inside a register and then use a special [pshufb](https://software.intel.com/sites/landingpage/IntrinsicsGuide/#text=pshuf&techs=AVX,AVX2&expand=6331) instruction to look up its values in parallel.
 
-The original `pshufb` introduced in 128-bit SSE3 takes two registers: the lookup table containing 16 byte values and a vector of 16 4-bit indices (0 to 15), specifying which bytes to pick for each position. In 256-bit AVX2, instead of a 32-byte lookup table with awkward 5-bit indices, we have an instruction that independently the same shuffling operation over two 128-bit lanes.
+The original `pshufb` introduced in 128-bit SSE3 takes two registers: the lookup table containing 16 byte values and a vector of 16 4-bit indices (0 to 15), specifying which bytes to pick for each position. In 256-bit AVX2, instead of a 32-byte lookup table with awkward 5-bit indices, we have an instruction that independently do the same shuffling operation over two 128-bit lanes.
 
 So, for our use case, we create a 16-byte lookup table with population counts for each nibble (half-byte), repeated twice:
 
