@@ -66,7 +66,7 @@ After compiling it (`g++ -O3 -march=native example.cc -o run`), we can run it wi
    0.000000000 seconds sys
 ```
 
-You can see that the execution took 0.53 seconds or 852M cycles at an effective 1.32 GHz clock rate, over which 479M instructions were executed. There were also 122.7M branches, and 15.7% of them were mispredicted.
+You can see that the execution took 0.64 seconds or 852M cycles at an effective 1.32 GHz clock rate, over which 479M instructions were executed. There were also 122.7M branches, and 15.7% of them were mispredicted.
 
 You can get a list of all supported events with `perf list`, and then specify a list of specific events you want with the `-e` option. For example, for diagnosing binary search, we mostly care about cache misses:
 
